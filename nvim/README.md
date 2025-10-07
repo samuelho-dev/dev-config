@@ -94,9 +94,21 @@ Manual plugin installation:
 **Preview:**
 - `<leader>mp` - Toggle browser preview
 - In-buffer rendering with render-markdown.nvim
+- Mermaid diagrams render inline (requires ImageMagick and `@mermaid-js/mermaid-cli`)
 
 **Outline:**
 - `<leader>o` - Toggle document outline
+
+### Mermaid Diagrams
+
+Inline previews use `image.nvim` + Mermaid CLI. Install the supporting tools once per machine:
+
+```bash
+brew install imagemagick          # or your package manager of choice
+npm install -g @mermaid-js/mermaid-cli
+```
+
+Ghostty implements the Kitty graphics protocol, so diagrams also render there (keep an eye on upstream Ghostty releases for graphics fixes).
 
 ### File Explorer
 

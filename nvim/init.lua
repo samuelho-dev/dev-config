@@ -278,7 +278,7 @@ require('lazy').setup({
       'MunifTanjim/nui.nvim',
     },
     config = function()
-      require('neo-tree').setup({
+      require('neo-tree').setup {
         close_if_last_window = true, -- Close Neo-tree if it's the last window
         log_level = 'info', -- Fix: use string instead of number for log level
         window = {
@@ -295,10 +295,22 @@ require('lazy').setup({
             hide_gitignored = false,
           },
         },
-      })
+      }
       -- Keybinding: Toggle Neo-tree with backslash
       vim.keymap.set('n', '\\', ':Neotree toggle<CR>', { desc = 'Toggle file tree', silent = true })
       vim.keymap.set('n', '<leader>e', ':Neotree toggle<CR>', { desc = 'Toggle file tree', silent = true })
+    end,
+  },
+
+  -- Keep LSP aware of file moves/renames for import updates, etc.
+  {
+    'antosha417/nvim-lsp-file-operations',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'nvim-neo-tree/neo-tree.nvim',
+    },
+    config = function()
+      require('lsp-file-operations').setup()
     end,
   },
 
@@ -1162,9 +1174,38 @@ require('lazy').setup({
   {
     'MeanderingProgrammer/render-markdown.nvim',
     ft = 'markdown',
-    dependencies = { 'nvim-treesitter/nvim-treesitter', 'nvim-tree/nvim-web-devicons' },
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+      'nvim-tree/nvim-web-devicons',
+      {
+        '3rd/image.nvim',
+        enabled = function()
+          return #vim.api.nvim_list_uis() > 0
+        end,
+        opts = {
+          backend = 'kitty',
+          integrations = {
+            markdown = {
+              enabled = true,
+              clear_in_insert_mode = false,
+              download_remote_images = false,
+              only_render_image_at_cursor = false,
+            },
+          },
+          max_height_window_percentage = 70,
+        },
+      },
+    },
     opts = {
       file_types = { 'markdown' },
+      custom_handlers = {
+        mermaid = {
+          extends = true,
+          parse = function(context)
+            return require('custom.mermaid').parse(context)
+          end,
+        },
+      },
       code = {
         sign = false,
         width = 'block',
@@ -1292,7 +1333,7 @@ require('lazy').setup({
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  --  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
@@ -1320,10 +1361,29 @@ require('lazy').setup({
   },
 })
 
--- Custom diagnostic copy keybindings for Claude Code workflows
-local diag_copy = require('custom.plugins.diagnostics-copy')
+-- Custom diagnostic copy keybindings for Cli workflows
+local diag_copy = require 'custom.plugins.diagnostics-copy'
 vim.keymap.set('n', '<leader>ce', diag_copy.copy_errors_only, { desc = '[C]opy [E]rrors to clipboard' })
 vim.keymap.set('n', '<leader>cd', diag_copy.copy_all_diagnostics, { desc = '[C]opy [D]iagnostics to clipboard' })
+
+vim.keymap.set('n', '<leader>crp', function()
+  local path = vim.fn.expand '%'
+  vim.fn.setreg('+', path)
+  vim.fn.setreg('*', path)
+  vim.notify('Copied relative path to clipboard', vim.log.levels.INFO)
+end, { desc = '[C]opy [R]elative [P]ath' })
+
+vim.keymap.set('n', '<leader>cp', function()
+  local path = vim.fn.expand '%:p'
+  vim.fn.setreg('+', path)
+  vim.fn.setreg('*', path)
+  vim.notify('Copied absolute path to clipboard', vim.log.levels.INFO)
+end, { desc = '[C]opy [P]ath (absolute)' })
+
+vim.keymap.set('n', '<leader>Rc', function()
+  vim.cmd 'source $MYVIMRC'
+  vim.notify('Reloaded Neovim config', vim.log.levels.INFO)
+end, { desc = '[R]eload Neovim [C]onfig' })
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

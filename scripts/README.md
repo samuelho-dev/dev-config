@@ -33,6 +33,7 @@ bash scripts/install.sh
 9. ✅ **Auto-installs Neovim plugins**
 10. ✅ **Auto-installs tmux plugins**
 11. ✅ Verifies everything is working
+12. ✅ Installs Mermaid CLI + ImageMagick for inline diagrams (if possible)
 
 ### After Installation
 
@@ -112,7 +113,7 @@ bash scripts/validate.sh
 
 ✅ Repository structure (all files present)
 ✅ Symlinks (pointing to correct locations)
-✅ Dependencies (git, zsh, neovim, tmux, etc.)
+✅ Dependencies (git, zsh, neovim, tmux, ImageMagick, Mermaid CLI)
 ✅ Tool versions (Neovim ≥ 0.9.0, tmux ≥ 1.9)
 ✅ External tools (Oh My Zsh, Powerlevel10k, TPM)
 

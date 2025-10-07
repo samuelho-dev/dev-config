@@ -1,41 +1,38 @@
--- Copy LSP diagnostics to clipboard for Claude Code workflows
+-- Copy LSP diagnostics to clipboard for Cli workflows
 local M = {}
 
 function M.copy_errors_only()
   local diagnostics = vim.diagnostic.get(0, { severity = vim.diagnostic.severity.ERROR })
 
   if #diagnostics == 0 then
-    vim.notify("No errors in current buffer", vim.log.levels.INFO)
+    vim.notify('No errors in current buffer', vim.log.levels.INFO)
     return
   end
 
-  local lines = {"=== ERRORS ===", ""}
+  local lines = { '=== ERRORS ===', '' }
   for _, diag in ipairs(diagnostics) do
-    table.insert(lines, string.format("Line %d: %s", diag.lnum + 1, diag.message))
+    table.insert(lines, string.format('Line %d: %s', diag.lnum + 1, diag.message))
   end
 
-  local text = table.concat(lines, "\n")
+  local text = table.concat(lines, '\n')
   vim.fn.setreg('+', text)
   vim.fn.setreg('*', text)
 
-  vim.notify(
-    string.format("Copied %d errors to clipboard", #diagnostics),
-    vim.log.levels.INFO
-  )
+  vim.notify(string.format('Copied %d errors to clipboard', #diagnostics), vim.log.levels.INFO)
 end
 
 function M.copy_all_diagnostics()
   local diagnostics = vim.diagnostic.get(0)
 
   if #diagnostics == 0 then
-    vim.notify("No diagnostics in current buffer", vim.log.levels.INFO)
+    vim.notify('No diagnostics in current buffer', vim.log.levels.INFO)
     return
   end
 
   -- Format for Claude Code readability
   local lines = {
-    "=== Diagnostics for " .. vim.fn.expand('%:p') .. " ===",
-    ""
+    '=== Diagnostics for ' .. vim.fn.expand '%:p' .. ' ===',
+    '',
   }
 
   -- Group by severity
@@ -44,7 +41,7 @@ function M.copy_all_diagnostics()
   local info = {}
 
   for _, diag in ipairs(diagnostics) do
-    local msg = string.format("Line %d: %s", diag.lnum + 1, diag.message)
+    local msg = string.format('Line %d: %s', diag.lnum + 1, diag.message)
     if diag.severity == vim.diagnostic.severity.ERROR then
       table.insert(errors, msg)
     elseif diag.severity == vim.diagnostic.severity.WARN then
@@ -55,31 +52,27 @@ function M.copy_all_diagnostics()
   end
 
   if #errors > 0 then
-    table.insert(lines, "ERRORS:")
+    table.insert(lines, 'ERRORS:')
     vim.list_extend(lines, errors)
-    table.insert(lines, "")
+    table.insert(lines, '')
   end
 
   if #warnings > 0 then
-    table.insert(lines, "WARNINGS:")
+    table.insert(lines, 'WARNINGS:')
     vim.list_extend(lines, warnings)
-    table.insert(lines, "")
+    table.insert(lines, '')
   end
 
   if #info > 0 then
-    table.insert(lines, "INFO:")
+    table.insert(lines, 'INFO:')
     vim.list_extend(lines, info)
   end
 
-  local text = table.concat(lines, "\n")
+  local text = table.concat(lines, '\n')
   vim.fn.setreg('+', text)
   vim.fn.setreg('*', text)
 
-  vim.notify(
-    string.format("Copied %d diagnostics (%d errors, %d warnings)",
-      #diagnostics, #errors, #warnings),
-    vim.log.levels.INFO
-  )
+  vim.notify(string.format('Copied %d diagnostics (%d errors, %d warnings)', #diagnostics, #errors, #warnings), vim.log.levels.INFO)
 end
 
 return M

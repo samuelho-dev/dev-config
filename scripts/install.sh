@@ -75,7 +75,7 @@ install_core_dependencies() {
 
   # Define required packages
   local core_packages=(git zsh)
-  local optional_packages=(neovim tmux fzf ripgrep lazygit)
+  local optional_packages=(neovim tmux fzf ripgrep lazygit imagemagick)
 
   # Install core packages (required)
   for package in "${core_packages[@]}"; do
@@ -107,6 +107,22 @@ install_core_dependencies() {
 
     install_package "$pkg_name" || log_warn "Optional package $package not installed"
   done
+
+  # Install Mermaid CLI if npm is available
+  if command_exists npm; then
+    if ! command_exists mmdc; then
+      log_info "Installing Mermaid CLI (mmdc) via npm..."
+      if npm install -g @mermaid-js/mermaid-cli >/dev/null 2>&1; then
+        log_success "Mermaid CLI installed"
+      else
+        log_warn "Failed to install Mermaid CLI via npm. Install manually with: npm install -g @mermaid-js/mermaid-cli"
+      fi
+    else
+      log_success "Mermaid CLI already installed"
+    fi
+  else
+    log_warn "npm not found. Mermaid CLI (mmdc) not installed. Install npm or run: npm install -g @mermaid-js/mermaid-cli"
+  fi
 
   # Version checks
   check_tool_versions
@@ -149,6 +165,18 @@ check_tool_versions() {
     log_info "Install with: brew install gh (macOS) or see https://cli.github.com/"
   else
     log_success "GitHub CLI installed"
+  fi
+
+  # Confirm Mermaid CLI and ImageMagick availability
+  if command_exists mmdc; then
+    log_success "Mermaid CLI (mmdc) installed"
+  else
+    log_warn "Mermaid CLI (mmdc) missing - Mermaid previews will not render until installed"
+  fi
+  if command_exists convert; then
+    log_success "ImageMagick installed"
+  else
+    log_warn "ImageMagick missing - image.nvim may not function correctly"
   fi
 }
 
