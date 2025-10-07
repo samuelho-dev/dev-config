@@ -1,0 +1,209 @@
+# Neovim Configuration
+
+Modern Neovim configuration based on Kickstart.nvim with LSP, completion, and git integration.
+
+## Overview
+
+This configuration provides:
+- **LSP support** for TypeScript, Python, and Lua
+- **Auto-completion** with blink.cmp
+- **Git integration** (lazygit, GitHub PRs/issues, diff viewing)
+- **Markdown support** with Obsidian vault integration
+- **Fuzzy finding** with Telescope
+- **Custom diagnostic copy** for Claude Code workflows
+
+**Leader key:** `<space>` (spacebar)
+
+## Quick Start
+
+### Installation
+
+Neovim plugins are automatically installed during `scripts/install.sh`.
+
+Manual plugin installation:
+```vim
+:Lazy sync
+```
+
+### Essential Commands
+
+| Command | Purpose |
+|---------|---------|
+| `:Lazy` | Manage plugins |
+| `:Mason` | Manage LSP servers/formatters |
+| `:checkhealth` | Diagnose issues |
+| `:LspInfo` | Check LSP status |
+
+## Key Features
+
+### LSP & Code Intelligence
+
+**Navigation:**
+- `grd` - Go to definition
+- `grr` - Find references
+- `gri` - Go to implementation
+- `grt` - Go to type definition
+- `grn` - Rename symbol
+- `gra` - Code actions
+
+**Symbols:**
+- `gO` - Document symbols
+- `gW` - Workspace symbols
+
+**Formatting:**
+- `<leader>f` - Format buffer
+- Auto-format on save (except C/C++)
+
+### Fuzzy Finding (Telescope)
+
+- `<leader>sf` - Find files
+- `<leader>sg` - Live grep
+- `<leader>sh` - Search help
+- `<leader>sk` - Search keymaps
+- `<leader><leader>` - Switch buffers
+- `<leader>/` - Search in current buffer
+
+### Git Integration
+
+**lazygit:**
+- `<leader>gg` - Open lazygit
+- `<leader>gf` - Lazygit for current file
+
+**GitHub (requires `gh` CLI):**
+- `<leader>gp` - List Pull Requests
+- `<leader>gi` - List Issues
+
+**Diff & History:**
+- `<leader>gd` - Open diff view
+- `<leader>gh` - File history
+- `<leader>gH` - Branch history
+
+**Merge Conflicts:**
+- `<leader>gco` - Choose ours
+- `<leader>gct` - Choose theirs
+- `<leader>gcb` - Choose both
+- `<leader>gcn` - Next conflict
+
+### Markdown & Note-Taking
+
+**Obsidian Integration:**
+- `gf` - Follow markdown links
+- `<leader>ch` - Toggle checkboxes
+- Auto-detects vault from file location
+
+**Preview:**
+- `<leader>mp` - Toggle browser preview
+- In-buffer rendering with render-markdown.nvim
+
+**Outline:**
+- `<leader>o` - Toggle document outline
+
+### File Explorer
+
+- `\` or `<leader>e` - Toggle Neo-tree
+- Auto-refreshes on external changes
+- Follows current file
+
+### Diagnostic Copy (Claude Code Integration)
+
+- `<leader>ce` - Copy **E**rrors only
+- `<leader>cd` - Copy all **D**iagnostics
+
+Output includes file paths, line numbers, and severity grouping - perfect for pasting into Claude Code!
+
+## Configuration
+
+### Adding LSP Servers
+
+Edit `init.lua` around line 707:
+
+```lua
+local servers = {
+  ts_ls = {},          -- TypeScript
+  pyright = {},        -- Python
+  lua_ls = {},         -- Lua
+  rust_analyzer = {},  -- Add Rust
+  gopls = {},          -- Add Go
+}
+```
+
+Restart Neovim, then `:Mason` to install.
+
+### Adding Formatters
+
+Edit `init.lua` around line 809:
+
+```lua
+formatters_by_ft = {
+  lua = { 'stylua' },
+  python = { 'ruff_format' },
+  javascript = { 'prettier' },
+  rust = { 'rustfmt' },  -- Add Rust formatter
+}
+```
+
+### Adding Plugins
+
+Add to `require('lazy').setup({ ... })` block in `init.lua`:
+
+```lua
+{
+  'author/plugin-name',
+  config = function()
+    require('plugin-name').setup()
+  end,
+},
+```
+
+Or create a file in `lua/custom/plugins/` and uncomment line 1224:
+```lua
+{ import = 'custom.plugins' },
+```
+
+## File Structure
+
+```
+nvim/
+├── init.lua                 # Main config (~1200 lines, read top-to-bottom)
+├── lazy-lock.json           # Plugin versions (committed to git)
+├── .stylua.toml             # Lua formatter config
+└── lua/
+    ├── custom/plugins/      # Your custom plugins
+    │   └── diagnostics-copy.lua
+    └── kickstart/           # Kickstart modules (optional)
+```
+
+## Updating Plugins
+
+```vim
+:Lazy update              " Update plugins
+:Lazy restore             " Restore to locked versions
+```
+
+Commit `lazy-lock.json` after updating to keep versions consistent across machines.
+
+## Troubleshooting
+
+### LSP not working
+```vim
+:LspInfo                  " Check LSP client status
+:Mason                    " Install/reinstall LSP servers
+:checkhealth lsp          " Diagnose LSP issues
+```
+
+### Completion not showing
+```vim
+:checkhealth blink        " Check blink.cmp status
+```
+
+### File not auto-reloading
+Check that autoread is enabled: `:set autoread?`
+
+Should show `autoread` (no "no" prefix).
+
+## Resources
+
+- Full keybindings: See `docs/KEYBINDINGS_NEOVIM.md` in repository root
+- Kickstart.nvim: https://github.com/nvim-lua/kickstart.nvim
+- lazy.nvim: https://github.com/folke/lazy.nvim
+- Mason: https://github.com/mason-org/mason.nvim

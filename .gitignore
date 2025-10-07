@@ -1,0 +1,33 @@
+# macOS
+.DS_Store
+
+# Vim swap files
+*.swp
+*.swo
+*~
+
+# Neovim runtime files (don't commit)
+nvim/.netrwhist
+nvim/*.shada
+
+# Neovim plugin data (managed by lazy.nvim)
+nvim/lazy-lock.json.backup
+nvim/plugin/
+nvim/.luarc.json
+
+# Zsh runtime files
+zsh/.zcompdump*
+zsh/.zsh_history
+
+# Machine-specific configuration (managed locally, not in repo)
+.zshrc.local
+
+# Backup files created by scripts
+*.backup_*
+
+# Tmux plugin data (managed by TPM)
+# Note: TPM itself should be in ~/.tmux/plugins/, not in this repo
+
+# Editor configs
+.vscode/
+.idea/
