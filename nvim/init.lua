@@ -1262,32 +1262,14 @@ require('lazy').setup(
     end,
   },
 
-  { -- Rainbow column highlighting and CSV utilities
-    'cameron-wags/rainbow_csv.nvim',
-    ft = { 'csv', 'tsv', 'csv_semicolon', 'csv_whitespace', 'csv_pipe', 'rfc_csv', 'rfc_semicolon' },
-    cmd = {
-      'RainbowDelim',
-      'RainbowDelimSimple',
-      'RainbowDelimQuoted',
-      'RainbowMultiDelim',
-      'NoRainbowDelim',
-      'RainbowNoDelim',
-      'RainbowComment',
-      'RainbowCommentMulti',
-      'NoRainbowComment',
-      'RainbowLint',
-      'CSVLint',
-      'RainbowAlign',
-      'RainbowShrink',
-      'RbSelect',
-      'RbRun',
-      'Select',
-      'Update',
-      'RainbowName',
+  { -- Modern CSV viewer with virtual text columns
+    'hat0uma/csvview.nvim',
+    ft = { 'csv' },
+    opts = {
+      view = {
+        display_mode = 'border', -- 'highlight' or 'border'
+      },
     },
-    config = function()
-      require('rainbow_csv').setup()
-    end,
   },
 
   { -- You can easily change to a different colorscheme.
