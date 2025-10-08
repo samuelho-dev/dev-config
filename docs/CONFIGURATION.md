@@ -305,6 +305,171 @@ Plugin versions are locked in `nvim/lazy-lock.json` (committed to repo).
 
 ---
 
+## Neovim Dependencies
+
+### Mason Tool Management
+Neovim uses Mason to manage LSP servers and formatters. These are automatically installed when you first open Neovim.
+
+**Check installed tools:**
+```vim
+:Mason
+```
+
+**Install specific tools:**
+```vim
+:MasonInstall stylua prettier ruff
+```
+
+**Update all tools:**
+```vim
+:MasonUpdate
+```
+
+### LSP Servers
+**TypeScript/JavaScript:**
+- `ts_ls` - Official TypeScript language server
+- Provides: autocompletion, diagnostics, go-to-definition, refactoring
+
+**Python:**
+- `pyright` - Microsoft's Python language server
+- Provides: type checking, autocompletion, import organization
+
+**Lua:**
+- `lua_ls` - Lua language server
+- Essential for editing Neovim configuration files
+
+### Formatters
+**Lua formatting:**
+```vim
+:lua vim.lsp.buf.format()
+" or use the leader key
+<leader>f
+```
+
+**Available formatters:**
+- `stylua` - Lua code formatting
+- `prettier` - JS/TS/JSON/YAML/Markdown formatting
+- `ruff` - Python formatting and linting
+
+### Build Tools
+**telescope-fzf-native:**
+- Requires `make` for native binary compilation
+- Provides faster fuzzy finding in Telescope
+- Falls back to Lua implementation if `make` unavailable
+
+**blink.cmp optimization:**
+- Requires `pkg-config` for Rust fuzzy matcher
+- Provides faster completion matching
+- Falls back to Lua implementation if `pkg-config` unavailable
+
+### External Tools
+**Mermaid CLI (mmdc):**
+- Installed via npm: `npm install -g @mermaid-js/mermaid-cli`
+- Enables Mermaid diagram rendering in markdown files
+- Used by render-markdown.nvim plugin
+
+**ImageMagick:**
+- Required for image.nvim plugin
+- Enables image preview in Neovim
+- Install: `brew install imagemagick` (macOS) or `apt install imagemagick` (Linux)
+
+---
+
+## Docker Configuration
+
+### Docker Aliases
+
+Docker aliases are available in `~/.zshrc.local` (commented out by default). Uncomment the ones you want to use:
+
+```bash
+# Basic Docker commands
+alias d='docker'
+alias dc='docker-compose'
+
+# Docker Compose shortcuts
+alias dcu='docker-compose up'
+alias dcd='docker-compose down'
+alias dcb='docker-compose build'
+alias dcr='docker-compose run'
+
+# Container management
+alias dps='docker ps'
+alias dpsa='docker ps -a'
+alias di='docker images'
+alias drm='docker rm'
+alias drmi='docker rmi'
+alias dstop='docker stop'
+alias dstart='docker start'
+
+# Interactive commands
+alias dexec='docker exec -it'
+alias dlogs='docker logs'
+
+# Maintenance
+alias dprune='docker system prune'
+```
+
+### Docker Environment Variables
+
+Add Docker-specific environment variables to `~/.zshrc.local`:
+
+```bash
+# Docker configuration
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
+# Custom Docker registry
+export DOCKER_REGISTRY="your-registry.com"
+
+# Docker Compose project name
+export COMPOSE_PROJECT_NAME="myproject"
+```
+
+### Docker Compose Overrides
+
+Create `docker-compose.override.yml` in your project directories:
+
+```yaml
+# Example override for local development
+version: '3.8'
+services:
+  app:
+    volumes:
+      - .:/app
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+```
+
+### Docker Development Workflow
+
+**Quick development setup:**
+```bash
+# Start services
+dcu -d
+
+# View logs
+dlogs -f app
+
+# Execute commands in container
+dexec app bash
+
+# Stop services
+dcd
+```
+
+**Clean up:**
+```bash
+# Remove stopped containers
+dprune
+
+# Remove all unused images
+docker image prune -a
+```
+
+---
+
 ## Platform Detection
 
 Configs automatically detect OS:

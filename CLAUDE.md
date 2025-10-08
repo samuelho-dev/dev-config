@@ -9,6 +9,7 @@ This is a **centralized development configuration repository** managing configs 
 - **Tmux** - Terminal multiplexer with plugin ecosystem
 - **Ghostty** - GPU-accelerated terminal emulator
 - **Zsh** - Shell with Oh My Zsh framework + Powerlevel10k theme
+- **Docker** - Container platform with cross-platform installation
 
 ### Architecture: Symlink-Based Version Control
 
@@ -375,6 +376,61 @@ Minimal config in `ghostty/config`:
 
 Leverages Ghostty's sensible defaults. GPU-accelerated, written in Zig for performance.
 
+## Docker Configuration
+
+### Installation & Setup
+Docker is installed as a **core dependency** with platform-specific installation:
+
+**macOS:**
+- Docker Desktop via Homebrew cask (`brew install --cask docker`)
+- Auto-starts Docker Desktop after installation
+- Waits for daemon to be ready before continuing
+
+**Linux:**
+- Supports multiple package managers (apt, dnf, pacman, zypper)
+- Falls back to official Docker installation script
+- Adds user to docker group automatically
+- Starts and enables Docker service
+
+### Version Requirements
+- **Minimum Docker version:** 20.10+
+- **Docker Compose:** Optional, supports both standalone and plugin versions
+- **Validation:** Checks daemon status and version compatibility
+
+### Machine-Specific Aliases
+Docker aliases are available in `~/.zshrc.local` (commented out by default):
+
+```bash
+# Uncomment aliases you want to use:
+alias d='docker'
+alias dc='docker-compose'
+alias dcu='docker-compose up'
+alias dcd='docker-compose down'
+alias dcb='docker-compose build'
+alias dcr='docker-compose run'
+alias dps='docker ps'
+alias dpsa='docker ps -a'
+alias di='docker images'
+alias drm='docker rm'
+alias drmi='docker rmi'
+alias dstop='docker stop'
+alias dstart='docker start'
+alias dexec='docker exec -it'
+alias dlogs='docker logs'
+alias dprune='docker system prune'
+```
+
+### Post-Installation
+After installation, test Docker with:
+```bash
+docker run hello-world
+```
+
+### Troubleshooting
+- **macOS:** If Docker Desktop doesn't start, run `open -a Docker`
+- **Linux:** If permission denied, log out/in after group changes
+- **Validation:** Run `bash scripts/validate.sh` to check Docker status
+
 ## Development Workflow
 
 ### Making Config Changes
@@ -632,8 +688,11 @@ source ~/.zshrc         # Force reload
 - zsh
 - neovim (≥ 0.9.0)
 - tmux (≥ 1.9)
-- fzf, ripgrep, fd-find
-- lazygit
+- docker (≥ 20.10)
+- fzf, ripgrep, lazygit
+- make (build tools)
+- node, npm (Node.js ecosystem)
+- imagemagick (image processing)
 
 **Shell framework:**
 - Oh My Zsh
@@ -650,12 +709,14 @@ source ~/.zshrc         # Force reload
 
 ### Optional (Install Manually)
 - GitHub CLI (`gh`) - for Octo.nvim PR/issue management
+- Docker Compose (standalone) - if not bundled with Docker Desktop
 - Claude Code workstation config (for AI-assisted development)
 
 ### Managed by Neovim (Mason)
-- LSP servers (ts_ls, pyright, lua_ls)
-- Formatters (stylua, prettier, ruff)
-- Linters (integrated with formatters)
+- **LSP servers:** ts_ls (TypeScript/JavaScript), pyright (Python), lua_ls (Lua)
+- **Formatters:** stylua (Lua), prettier (JS/TS/JSON/YAML/Markdown), ruff (Python)
+- **Build tools:** make (telescope-fzf-native), pkg-config (blink.cmp optimization)
+- **External tools:** Node.js/npm (Mermaid CLI), ImageMagick (image.nvim)
 
 ### Managed by Tmux (TPM)
 - vim-tmux-navigator

@@ -11,15 +11,34 @@ Complete installation guide for dev-config across different platforms.
 ### Auto-Installed by `install.sh`
 The following will be installed automatically if missing:
 - **Homebrew** (macOS only)
+- **Docker** (20.10+) - Container platform
 - **Neovim** (0.9.0+)
 - **tmux** (1.9+)
 - **fzf** - Fuzzy finder
 - **ripgrep** - Fast grep
 - **lazygit** - Git TUI
+- **make** - Build tools (telescope-fzf-native)
+- **node** - Node.js runtime
+- **npm** - Node package manager
+- **imagemagick** - Image processing
+- **Docker Compose** - Container orchestration (optional)
 - **Oh My Zsh** - Zsh framework
 - **Powerlevel10k** - Zsh theme
 - **zsh-autosuggestions** - Zsh plugin
 - **TPM** - Tmux Plugin Manager
+
+### Mason-Installed Tools (via Neovim)
+These are automatically installed when you first open Neovim:
+
+**LSP Servers:**
+- **ts_ls** - TypeScript/JavaScript language server
+- **pyright** - Python language server  
+- **lua_ls** - Lua language server (for Neovim config)
+
+**Formatters:**
+- **stylua** - Lua code formatter
+- **prettier** - JavaScript/TypeScript/JSON/YAML/Markdown formatter
+- **ruff** - Python formatter and linter
 
 ### Optional (Install Manually)
 - **GitHub CLI (`gh`)** - For PR/issue management in Neovim
@@ -32,6 +51,15 @@ The following will be installed automatically if missing:
 
   # Authenticate after installing
   gh auth login
+  ```
+
+- **pkg-config** - For blink.cmp Rust optimization (optional)
+  ```bash
+  # macOS
+  brew install pkg-config
+
+  # Linux (Debian/Ubuntu)
+  sudo apt install pkg-config
   ```
 
 ---
@@ -150,6 +178,79 @@ bash scripts/uninstall.sh
 ```
 
 **Note:** This removes symlinks but keeps the repository intact at `~/Projects/dev-config`.
+
+---
+
+## Docker Setup
+
+### Platform-Specific Installation
+
+**macOS:**
+- Docker Desktop installed via Homebrew cask
+- Auto-starts after installation
+- May require manual start: `open -a Docker`
+
+**Linux:**
+- Installed via package manager (apt, dnf, pacman, zypper)
+- User added to docker group automatically
+- Service started and enabled
+- **Important:** Log out and back in for group changes to take effect
+
+### Testing Docker Installation
+
+After installation, verify Docker is working:
+
+```bash
+# Test Docker daemon
+docker --version
+
+# Test Docker functionality
+docker run hello-world
+
+# Check Docker Compose (if installed)
+docker-compose --version
+# or
+docker compose version
+```
+
+### Docker Aliases
+
+Docker aliases are available in `~/.zshrc.local` (commented out by default):
+
+```bash
+# Edit ~/.zshrc.local and uncomment aliases you want:
+alias d='docker'
+alias dc='docker-compose'
+alias dcu='docker-compose up'
+alias dcd='docker-compose down'
+alias dcb='docker-compose build'
+alias dps='docker ps'
+alias di='docker images'
+# ... and more
+```
+
+### Common Issues
+
+**Docker daemon not running:**
+```bash
+# macOS
+open -a Docker
+
+# Linux
+sudo systemctl start docker
+```
+
+**Permission denied on Linux:**
+```bash
+# Add user to docker group (if not done automatically)
+sudo usermod -aG docker $USER
+
+# Log out and back in
+```
+
+**Docker Desktop not starting on macOS:**
+- Check if Docker Desktop is installed: `brew list --cask docker`
+- Reinstall if needed: `brew reinstall --cask docker`
 
 ---
 

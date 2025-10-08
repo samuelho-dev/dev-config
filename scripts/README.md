@@ -23,17 +23,18 @@ bash scripts/install.sh
 ### What It Does
 
 1. ✅ Installs Homebrew (macOS if missing)
-2. ✅ Installs dependencies (Neovim, tmux, fzf, ripgrep, lazygit)
-3. ✅ Checks versions (Neovim ≥ 0.9.0, tmux ≥ 1.9)
-4. ✅ Installs Oh My Zsh + Powerlevel10k + zsh-autosuggestions
-5. ✅ Installs TPM (Tmux Plugin Manager)
-6. ✅ Creates backups of existing configs
-7. ✅ Creates symlinks to repository
-8. ✅ Creates `.zshrc.local` for machine-specific config
-9. ✅ **Auto-installs Neovim plugins**
-10. ✅ **Auto-installs tmux plugins**
-11. ✅ Verifies everything is working
-12. ✅ Installs Mermaid CLI + ImageMagick for inline diagrams (if possible)
+2. ✅ Installs dependencies (Neovim, tmux, docker, fzf, ripgrep, lazygit)
+3. ✅ Installs build tools (make, node, npm, imagemagick)
+4. ✅ Checks versions (Neovim ≥ 0.9.0, tmux ≥ 1.9, Docker ≥ 20.10)
+5. ✅ Installs Oh My Zsh + Powerlevel10k + zsh-autosuggestions
+6. ✅ Installs TPM (Tmux Plugin Manager)
+7. ✅ Creates backups of existing configs
+8. ✅ Creates symlinks to repository
+9. ✅ Creates `.zshrc.local` for machine-specific config
+10. ✅ **Auto-installs Neovim plugins**
+11. ✅ **Auto-installs tmux plugins**
+12. ✅ Verifies everything is working
+13. ✅ Installs Mermaid CLI + ImageMagick for inline diagrams (if possible)
 
 ### After Installation
 
@@ -44,6 +45,7 @@ exec zsh
 # Everything should work automatically!
 nvim  # Plugins already installed
 tmux  # Plugins already installed
+docker run hello-world  # Test Docker installation
 ```
 
 ### Environment Variables
@@ -105,6 +107,78 @@ bash scripts/uninstall.sh
 ```bash
 bash scripts/install.sh
 ```
+
+## Docker Integration
+
+### Installation
+Docker is installed as a **core dependency** with platform-specific setup:
+
+**macOS:**
+- Installs Docker Desktop via Homebrew cask
+- Auto-starts Docker Desktop
+- Waits for daemon to be ready
+
+**Linux:**
+- Supports multiple package managers (apt, dnf, pacman, zypper)
+- Adds user to docker group
+- Starts and enables Docker service
+
+### Aliases
+Docker aliases are available in `~/.zshrc.local` (commented out by default):
+
+```bash
+# Uncomment aliases you want to use:
+alias d='docker'
+alias dc='docker-compose'
+alias dcu='docker-compose up'
+alias dcd='docker-compose down'
+alias dps='docker ps'
+alias di='docker images'
+# ... and more
+```
+
+### Testing
+After installation, test Docker:
+```bash
+docker run hello-world
+```
+
+## Neovim Dependencies
+
+### Mason-Installed Tools
+Neovim uses Mason to manage LSP servers and formatters:
+
+**LSP Servers:**
+- `ts_ls` - TypeScript/JavaScript
+- `pyright` - Python
+- `lua_ls` - Lua (for Neovim config)
+
+**Formatters:**
+- `stylua` - Lua formatting
+- `prettier` - JS/TS/JSON/YAML/Markdown
+- `ruff` - Python formatting and linting
+
+### Build Tools
+**Required for optimal performance:**
+- `make` - Builds telescope-fzf-native native binaries
+- `pkg-config` - Enables blink.cmp Rust optimization
+
+**External tools:**
+- `node`/`npm` - Mermaid CLI for diagram rendering
+- `imagemagick` - Image processing for image.nvim
+
+### Validation
+Run validation to check all dependencies:
+```bash
+bash scripts/validate.sh
+```
+
+This checks:
+- System dependencies (git, zsh, tmux, docker)
+- Build tools (make, node, npm, pkg-config)
+- External tools (imagemagick, mmdc)
+- Mason-installed tools
+- Neovim and tmux plugins
 
 ## validate.sh
 

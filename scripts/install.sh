@@ -77,18 +77,26 @@ install_core_dependencies() {
   fi
 
   # Define required packages
-  local core_packages=(git zsh tmux)
-  local optional_packages=(neovim fzf ripgrep lazygit imagemagick)
+  local core_packages=(git zsh tmux docker)
+  local optional_packages=(neovim fzf ripgrep lazygit imagemagick docker-compose make node npm)
 
   local core_failures=0
   local core_failed_list=()
 
   # Install core packages (required)
   for package in "${core_packages[@]}"; do
-    if ! install_package "$package" true; then
-      log_error "Failed to install required package: $package"
-      core_failed_list+=("$package")
-      ((core_failures++))
+    if [ "$package" = "docker" ]; then
+      if ! install_docker; then
+        log_error "Failed to install Docker"
+        core_failed_list+=("$package")
+        ((core_failures++))
+      fi
+    else
+      if ! install_package "$package" true; then
+        log_error "Failed to install required package: $package"
+        core_failed_list+=("$package")
+        ((core_failures++))
+      fi
     fi
   done
 
@@ -131,8 +139,186 @@ install_core_dependencies() {
     log_warn "npm not found. Mermaid CLI (mmdc) not installed. Install npm or run: npm install -g @mermaid-js/mermaid-cli"
   fi
 
+  # Check for build tools
+  if ! command_exists make; then
+    log_warn "make not found - telescope-fzf-native will use fallback implementation"
+    log_info "Install make for better performance: brew install make (macOS) or apt install build-essential (Linux)"
+  fi
+
+  if ! command_exists pkg-config; then
+    log_info "pkg-config not found - blink.cmp will use Lua fuzzy matcher (default)"
+    log_info "Install pkg-config for Rust optimization: brew install pkg-config (macOS) or apt install pkg-config (Linux)"
+  fi
+
   # Version checks
   check_tool_versions
+}
+
+# =============================================================================
+# Docker Installation
+# =============================================================================
+
+install_docker() {
+  log_info "Installing Docker..."
+
+  # Check if Docker is already installed and running
+  if command_exists docker && docker info >/dev/null 2>&1; then
+    log_success "Docker already installed and running"
+    return 0
+  fi
+
+  if is_macos; then
+    install_docker_macos
+  elif is_linux; then
+    install_docker_linux
+  else
+    log_error "Docker installation not supported on this platform"
+    return 1
+  fi
+}
+
+install_docker_macos() {
+  log_info "Installing Docker Desktop for macOS..."
+  
+  # Try Homebrew cask first
+  if command_exists brew; then
+    if brew list --cask docker >/dev/null 2>&1; then
+      log_success "Docker Desktop already installed via Homebrew"
+    else
+      log_info "Installing Docker Desktop via Homebrew..."
+      if brew install --cask docker; then
+        log_success "Docker Desktop installed via Homebrew"
+      else
+        log_warn "Failed to install via Homebrew, trying alternative method"
+        install_docker_macos_manual
+        return $?
+      fi
+    fi
+  else
+    log_warn "Homebrew not available, trying manual installation"
+    install_docker_macos_manual
+    return $?
+  fi
+
+  # Start Docker Desktop
+  log_info "Starting Docker Desktop..."
+  open -a Docker || log_warn "Could not start Docker Desktop automatically"
+  
+  # Wait for Docker daemon to start
+  log_info "Waiting for Docker daemon to start..."
+  local attempts=0
+  local max_attempts=30
+  while [ $attempts -lt $max_attempts ]; do
+    if docker info >/dev/null 2>&1; then
+      log_success "Docker daemon is running"
+      return 0
+    fi
+    sleep 2
+    ((attempts++))
+  done
+  
+  log_warn "Docker daemon did not start automatically. Please start Docker Desktop manually."
+  return 1
+}
+
+install_docker_macos_manual() {
+  log_info "Please install Docker Desktop manually:"
+  log_info "1. Download from: https://www.docker.com/products/docker-desktop/"
+  log_info "2. Install the .dmg file"
+  log_info "3. Start Docker Desktop"
+  log_info "4. Run this script again"
+  return 1
+}
+
+install_docker_linux() {
+  log_info "Installing Docker for Linux..."
+  
+  # Check if Docker is already installed
+  if command_exists docker; then
+    log_success "Docker already installed"
+    return 0
+  fi
+
+  # Try package manager first
+  local pm=$(detect_package_manager)
+  case $pm in
+    apt)
+      install_docker_linux_apt
+      ;;
+    dnf)
+      install_docker_linux_dnf
+      ;;
+    pacman)
+      install_docker_linux_pacman
+      ;;
+    zypper)
+      install_docker_linux_zypper
+      ;;
+    *)
+      install_docker_linux_script
+      ;;
+  esac
+
+  # Add user to docker group
+  if groups "$USER" | grep -q docker; then
+    log_success "User already in docker group"
+  else
+    log_info "Adding user to docker group..."
+    sudo usermod -aG docker "$USER"
+    log_warn "Please log out and log back in for group changes to take effect"
+  fi
+
+  # Start and enable Docker service
+  if command_exists systemctl; then
+    log_info "Starting Docker service..."
+    sudo systemctl start docker
+    sudo systemctl enable docker
+  fi
+
+  return 0
+}
+
+install_docker_linux_apt() {
+  log_info "Installing Docker via apt..."
+  
+  # Update package index
+  sudo apt update
+  
+  # Install prerequisites
+  sudo apt install -y ca-certificates curl gnupg lsb-release
+  
+  # Add Docker's official GPG key
+  sudo mkdir -p /etc/apt/keyrings
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+  
+  # Add Docker repository
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  
+  # Install Docker
+  sudo apt update
+  sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+}
+
+install_docker_linux_dnf() {
+  log_info "Installing Docker via dnf..."
+  sudo dnf install -y docker docker-compose
+}
+
+install_docker_linux_pacman() {
+  log_info "Installing Docker via pacman..."
+  sudo pacman -S --noconfirm docker docker-compose
+}
+
+install_docker_linux_zypper() {
+  log_info "Installing Docker via zypper..."
+  sudo zypper install -y docker docker-compose
+}
+
+install_docker_linux_script() {
+  log_info "Installing Docker via official installation script..."
+  curl -fsSL https://get.docker.com -o get-docker.sh
+  sudo sh get-docker.sh
+  rm get-docker.sh
 }
 
 check_tool_versions() {
@@ -164,6 +350,43 @@ check_tool_versions() {
     fi
   else
     log_warn "tmux not installed - install manually or retry"
+  fi
+
+  # Check Docker version
+  if command_exists docker; then
+    local docker_version=$(get_command_version docker)
+    if [ -n "$docker_version" ]; then
+      if version_gte "$docker_version" "20.10"; then
+        log_success "Docker $docker_version (✓ >= 20.10)"
+      else
+        log_warn "Docker $docker_version (< 20.10 - may have compatibility issues)"
+      fi
+    else
+      log_success "Docker installed"
+    fi
+    
+    # Check if Docker daemon is running
+    if docker info >/dev/null 2>&1; then
+      log_success "Docker daemon is running"
+    else
+      log_warn "Docker daemon is not running - start Docker Desktop or run: sudo systemctl start docker"
+    fi
+  else
+    log_warn "Docker not installed - install manually or retry"
+  fi
+
+  # Check Docker Compose (optional)
+  if command_exists docker-compose; then
+    local compose_version=$(get_command_version docker-compose)
+    if [ -n "$compose_version" ]; then
+      log_success "Docker Compose $compose_version"
+    else
+      log_success "Docker Compose installed"
+    fi
+  elif docker compose version >/dev/null 2>&1; then
+    log_success "Docker Compose (plugin) available"
+  else
+    log_info "Docker Compose not found - install with: brew install docker-compose (macOS) or see https://docs.docker.com/compose/install/"
   fi
 
   # Check for GitHub CLI (optional)
@@ -358,6 +581,24 @@ create_zshrc_local() {
 
 # Example: Environment variables for local development
 # export DATABASE_URL="postgresql://localhost:5432/mydb"
+
+# Docker aliases (uncomment to use)
+# alias d='docker'
+# alias dc='docker-compose'
+# alias dcu='docker-compose up'
+# alias dcd='docker-compose down'
+# alias dcb='docker-compose build'
+# alias dcr='docker-compose run'
+# alias dps='docker ps'
+# alias dpsa='docker ps -a'
+# alias di='docker images'
+# alias drm='docker rm'
+# alias drmi='docker rmi'
+# alias dstop='docker stop'
+# alias dstart='docker start'
+# alias dexec='docker exec -it'
+# alias dlogs='docker logs'
+# alias dprune='docker system prune'
 EOF
     log_success "Created .zshrc.local template"
   else
@@ -510,8 +751,15 @@ print_completion_message() {
   echo "  3. Start tmux - plugins are installed automatically"
   echo "  4. Try Git integration: <space>gg for lazygit in Neovim"
   echo "  5. Try markdown preview: <space>mp in a .md file"
+  echo "  6. Test Docker: docker run hello-world"
   echo ""
   echo "Machine-specific config: Edit ~/.zshrc.local for custom PATH/aliases"
+  echo ""
+  echo "Docker setup:"
+  echo "  - macOS: Docker Desktop should start automatically"
+  echo "  - Linux: You may need to log out/in for docker group changes"
+  echo "  - Test with: docker run hello-world"
+  echo "  - Docker aliases available in ~/.zshrc.local (uncomment to use)"
   echo ""
 }
 
