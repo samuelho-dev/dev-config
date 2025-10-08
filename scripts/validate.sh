@@ -93,7 +93,7 @@ check_dependencies() {
   local issues=0
 
   # Required dependencies
-  local required=(git zsh)
+  local required=(git zsh tmux)
   for cmd in "${required[@]}"; do
     if command_exists "$cmd"; then
       log_success "$cmd installed"
@@ -104,7 +104,7 @@ check_dependencies() {
   done
 
   # Important optional dependencies
-  local optional=(nvim tmux fzf rg lazygit gh)
+  local optional=(nvim fzf rg lazygit gh)
   for cmd in "${optional[@]}"; do
     if command_exists "$cmd"; then
       local version=""
@@ -122,19 +122,6 @@ check_dependencies() {
             log_success "$cmd installed"
           fi
           ;;
-        tmux)
-          version=$(get_command_version tmux -V)
-          if [ -n "$version" ]; then
-            if version_gte "$version" "1.9"; then
-              log_success "$cmd $version (✓ >= 1.9)"
-            else
-              log_warn "$cmd $version (< 1.9, may have issues)"
-              ((issues++))
-            fi
-          else
-            log_success "$cmd installed"
-          fi
-          ;;
         *)
           log_success "$cmd installed"
           ;;
@@ -143,6 +130,12 @@ check_dependencies() {
       log_info "$cmd not installed (optional but recommended)"
     fi
   done
+
+  if command_exists pkg-config; then
+    log_success "pkg-config installed (blink.cmp can use the Rust fuzzy matcher)"
+  else
+    log_info "pkg-config not installed; blink.cmp stays on the Lua fuzzy matcher (default configuration)"
+  fi
 
   echo $issues
 }

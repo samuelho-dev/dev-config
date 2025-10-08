@@ -47,7 +47,8 @@ OH_MY_ZSH_DIR="${ZSH:-$HOME/.oh-my-zsh}"
 ZSH_CUSTOM="${ZSH_CUSTOM:-$OH_MY_ZSH_DIR/custom}"
 P10K_THEME_DIR="$ZSH_CUSTOM/themes/powerlevel10k"
 ZSH_AUTOSUGGESTIONS_DIR="$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-TPM_DIR="${TMUX_PLUGIN_MANAGER_PATH:-$HOME/.tmux/plugins/tpm}"
+TPM_BASE_DIR="${TMUX_PLUGIN_MANAGER_PATH:-$HOME/.tmux/plugins}"
+TPM_DIR="${TPM_BASE_DIR%/}/tpm"
 
 # =============================================================================
 # Path Arrays for Iteration
@@ -100,6 +101,7 @@ print_paths() {
   echo "OH_MY_ZSH_DIR: $OH_MY_ZSH_DIR"
   echo "P10K_THEME_DIR: $P10K_THEME_DIR"
   echo "ZSH_AUTOSUGGESTIONS_DIR: $ZSH_AUTOSUGGESTIONS_DIR"
+  echo "TPM_BASE_DIR: $TPM_BASE_DIR"
   echo "TPM_DIR: $TPM_DIR"
 }
 

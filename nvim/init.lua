@@ -90,6 +90,18 @@ P.S. You can delete this when you're done too. It's your config now! :)
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+local function set_project_python()
+  local cwd = vim.fn.expand('%:p:h')
+  local venv_python = vim.fn.findfile('.venv/bin/python', cwd .. ';')
+  if venv_python ~= '' then
+    vim.g.python3_host_prog = vim.fn.fnamemodify(venv_python, ':p')
+  end
+end
+
+vim.api.nvim_create_autocmd({ 'BufEnter', 'DirChanged' }, {
+  callback = set_project_python,
+})
+
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = false
 
@@ -938,18 +950,43 @@ require('lazy').setup({
 
       snippets = { preset = 'luasnip' },
 
-      -- Blink.cmp includes an optional, recommended rust fuzzy matcher,
-      -- which automatically downloads a prebuilt binary when enabled.
-      --
-      -- By default, we use the Lua implementation instead, but you may enable
-      -- the rust implementation via `'prefer_rust_with_warning'`
-      --
-      -- See :h blink-cmp-config-fuzzy for more information
-      fuzzy = { implementation = 'lua' },
+      -- Force the Lua fuzzy matcher so we avoid native build steps that need pkg-config.
+      fuzzy = {
+        implementation = 'lua',
+        prebuilt_binaries = { download = false },
+      },
 
       -- Shows a signature help window while you type arguments for a function
       signature = { enabled = true },
     },
+  },
+
+  { -- Rainbow column highlighting and CSV utilities
+    'cameron-wags/rainbow_csv.nvim',
+    ft = { 'csv', 'tsv', 'csv_semicolon', 'csv_whitespace', 'csv_pipe', 'rfc_csv', 'rfc_semicolon' },
+    cmd = {
+      'RainbowDelim',
+      'RainbowDelimSimple',
+      'RainbowDelimQuoted',
+      'RainbowMultiDelim',
+      'NoRainbowDelim',
+      'RainbowNoDelim',
+      'RainbowComment',
+      'RainbowCommentMulti',
+      'NoRainbowComment',
+      'RainbowLint',
+      'CSVLint',
+      'RainbowAlign',
+      'RainbowShrink',
+      'RbSelect',
+      'RbRun',
+      'Select',
+      'Update',
+      'RainbowName',
+    },
+    config = function()
+      require('rainbow_csv').setup()
+    end,
   },
 
   { -- You can easily change to a different colorscheme.

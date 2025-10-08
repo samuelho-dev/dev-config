@@ -31,6 +31,9 @@ main() {
   # Step 2: Install Oh My Zsh and plugins
   install_zsh_components
 
+  # Step 2b: Ensure zsh is the default login shell
+  ensure_default_shell_is_zsh
+
   # Step 3: Install TPM (Tmux Plugin Manager)
   install_tpm
 
@@ -74,20 +77,24 @@ install_core_dependencies() {
   fi
 
   # Define required packages
-  local core_packages=(git zsh)
-  local optional_packages=(neovim tmux fzf ripgrep lazygit imagemagick)
+  local core_packages=(git zsh tmux)
+  local optional_packages=(neovim fzf ripgrep lazygit imagemagick)
+
+  local core_failures=0
+  local core_failed_list=()
 
   # Install core packages (required)
   for package in "${core_packages[@]}"; do
-    if ! command_exists "$package"; then
-      install_package "$package" || {
-        log_error "Failed to install required package: $package"
-        exit 1
-      }
-    else
-      log_success "$package already installed"
+    if ! install_package "$package" true; then
+      log_error "Failed to install required package: $package"
+      core_failed_list+=("$package")
+      ((core_failures++))
     fi
   done
+
+  if [ $core_failures -gt 0 ]; then
+    log_warn "Core package installation encountered $core_failures issue(s). Please install manually and re-run install.sh for: ${core_failed_list[*]}"
+  fi
 
   # Install optional packages (best effort)
   for package in "${optional_packages[@]}"; do
@@ -216,14 +223,90 @@ install_zsh_components() {
 }
 
 # =============================================================================
+# Default Shell Configuration
+# =============================================================================
+
+ensure_default_shell_is_zsh() {
+  log_section "🌀 Ensuring zsh is the default shell..."
+
+  local desired_shell
+  desired_shell=$(command -v zsh || true)
+
+  if [ -z "$desired_shell" ]; then
+    log_error "zsh is required but was not found on PATH after installation."
+    exit 1
+  fi
+
+  if [ -f /etc/shells ] && ! grep -qx "$desired_shell" /etc/shells; then
+    log_warn "Shell $desired_shell is not listed in /etc/shells."
+    log_warn "Add it with: sudo sh -c 'echo $desired_shell >> /etc/shells'"
+  fi
+
+  local login_shell=""
+  if command_exists getent; then
+    login_shell=$(getent passwd "$USER" | cut -d: -f7)
+  elif command_exists dscl; then
+    login_shell=$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')
+  fi
+  [ -z "$login_shell" ] && login_shell="${SHELL:-}"
+
+  if [ "$login_shell" = "$desired_shell" ]; then
+    log_success "Default shell already set to zsh"
+  else
+    log_info "Attempting to change default shell from ${login_shell:-unknown} to $desired_shell..."
+
+    if command_exists chsh; then
+      if chsh -s "$desired_shell" >/dev/null 2>&1; then
+        log_success "Default shell updated to zsh. Log out or restart your terminal to apply."
+      else
+        log_warn "Could not change default shell automatically. Run: chsh -s \"$desired_shell\""
+      fi
+    else
+      log_warn "chsh command not available. Update your default shell to $desired_shell manually."
+    fi
+  fi
+
+  # Re-evaluate current login shell after attempting to switch
+  local post_shell=""
+  if command_exists getent; then
+    post_shell=$(getent passwd "$USER" | cut -d: -f7)
+  elif command_exists dscl; then
+    post_shell=$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')
+  fi
+  [ -z "$post_shell" ] && post_shell="${SHELL:-}"
+
+  if [ "$post_shell" = "$desired_shell" ]; then
+    log_success "Verified default shell set to $desired_shell ($(zsh --version 2>/dev/null | head -n1))."
+  else
+    log_warn "Default shell is still ${post_shell:-unknown}. Run: chsh -s \"$desired_shell\" (after adding to /etc/shells if needed)."
+  fi
+
+  if [ "$desired_shell" = "/bin/zsh" ] && command_exists brew; then
+    local brew_zsh_path
+    brew_zsh_path="$(brew --prefix 2>/dev/null)/bin/zsh"
+    log_warn "Using /bin/zsh. Upgrade to Homebrew zsh with:"
+    log_warn "  brew install zsh"
+    if [ -n "$brew_zsh_path" ]; then
+      log_warn "  sudo sh -c 'echo $brew_zsh_path >> /etc/shells'"
+      log_warn "  chsh -s $brew_zsh_path"
+    else
+      log_warn "  sudo sh -c 'echo $(brew --prefix)/bin/zsh >> /etc/shells'"
+      log_warn "  chsh -s $(brew --prefix)/bin/zsh"
+    fi
+  fi
+}
+
+# =============================================================================
 # TPM Installation
 # =============================================================================
 
 install_tpm() {
   log_section "🔌 Installing TPM (Tmux Plugin Manager)..."
 
+  mkdir -p "$TPM_BASE_DIR"
+
   if [ ! -d "$TPM_DIR" ]; then
-    log_info "Installing TPM..."
+    log_info "Installing TPM into $TPM_DIR..."
     git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
     log_success "TPM installed"
   else
@@ -290,6 +373,10 @@ install_neovim_plugins() {
 
   log_info "Installing Neovim plugins via Lazy.nvim..."
 
+  if ! command_exists pkg-config; then
+    log_info "pkg-config not found; blink.cmp will use the Lua fuzzy matcher (no Rust build attempted)"
+  fi
+
   # Run Lazy sync in headless mode
   nvim --headless "+Lazy! sync" +qa 2>/dev/null || {
     log_warn "Neovim plugin installation completed with warnings (this is normal on first run)"
@@ -305,6 +392,11 @@ install_neovim_plugins() {
 install_tmux_plugins() {
   log_section "🔌 Installing tmux plugins..."
 
+  if ! command_exists tmux; then
+    log_warn "tmux not found on PATH, skipping tmux plugin installation"
+    return 1
+  fi
+
   if [ ! -d "$TPM_DIR" ]; then
     log_warn "TPM not found, skipping tmux plugin installation"
     return 1
@@ -318,11 +410,12 @@ install_tmux_plugins() {
   log_info "Installing tmux plugins via TPM..."
 
   # Run TPM install script
-  bash "$TPM_DIR/scripts/install_plugins.sh" 2>/dev/null || {
+  if bash "$TPM_DIR/scripts/install_plugins.sh"; then
+    log_success "tmux plugins installed"
+  else
     log_warn "TPM plugin installation completed with warnings"
-  }
-
-  log_success "tmux plugins installed"
+    return 1
+  fi
 }
 
 # =============================================================================
@@ -364,6 +457,26 @@ verify_installation() {
   else
     log_error "TPM not found"
     ((failed++))
+  fi
+
+  # Verify default shell
+  local desired_shell
+  desired_shell=$(command -v zsh || true)
+  if [ -n "$desired_shell" ]; then
+    local login_shell=""
+    if command_exists getent; then
+      login_shell=$(getent passwd "$USER" | cut -d: -f7)
+    elif command_exists dscl; then
+      login_shell=$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')
+    fi
+    [ -z "$login_shell" ] && login_shell="${SHELL:-}"
+
+    if [ "$login_shell" = "$desired_shell" ]; then
+      log_success "Default shell verified as zsh"
+    else
+      log_warn "Default shell is ${login_shell:-unknown}. Run: chsh -s \"$desired_shell\""
+      ((failed++))
+    fi
   fi
 
   if [ $failed -eq 0 ]; then
