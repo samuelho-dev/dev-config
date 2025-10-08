@@ -78,7 +78,7 @@ install_core_dependencies() {
 
   # Define required packages
   local core_packages=(git zsh tmux docker)
-  local optional_packages=(neovim fzf ripgrep lazygit imagemagick docker-compose make node npm)
+  local optional_packages=(neovim fzf ripgrep lazygit imagemagick docker-compose make node npm pkg-config)
 
   local core_failures=0
   local core_failed_list=()
