@@ -172,8 +172,10 @@ Other flavors available: frappe, macchiato, latte
 
 Enhanced clipboard integration.
 
-- Better copy/paste across platforms
-- Works with `y` in copy mode
+- `Prefix + y` copies the command line output or latest tmux selection.
+- `Prefix + Y` copies the current pane’s working directory.
+- Copy-mode `y` / `Y` send selections straight to the system clipboard.
+- Works with `pbcopy` (macOS), `xclip`/`xsel`, or `wl-copy` automatically.
 
 ## Configuration
 
