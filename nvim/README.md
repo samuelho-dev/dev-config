@@ -99,6 +99,12 @@ Manual plugin installation:
 **Outline:**
 - `<leader>o` - Toggle document outline
 
+### CSV Highlighting
+
+- Automatic rainbow column highlighting for CSV/TSV dialects
+- Commands like `:RainbowDelim`, `:RainbowAlign`, and `:CSVLint` for manual control
+- Loads when opening CSV-style files or running a Rainbow CSV command
+
 ### Mermaid Diagrams
 
 Inline previews use `image.nvim` + Mermaid CLI. Install the supporting tools once per machine:
@@ -207,6 +213,10 @@ Commit `lazy-lock.json` after updating to keep versions consistent across machin
 ```vim
 :checkhealth blink        " Check blink.cmp status
 ```
+
+### `pkg-config` warning on startup
+- We pin blink.cmp to the Lua fuzzy matcher, so missing `pkg-config` is expected.
+- Install `pkg-config` if you want to experiment with the optional Rust matcher.
 
 ### File not auto-reloading
 Check that autoread is enabled: `:set autoread?`

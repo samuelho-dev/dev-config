@@ -123,6 +123,11 @@ fi
 # pnpm setup (if installed)
 if [ -d "$HOME/Library/pnpm" ]; then
   export PNPM_HOME="$HOME/Library/pnpm"
+elif [ -d "${XDG_DATA_HOME:-$HOME/.local/share}/pnpm" ]; then
+  export PNPM_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/pnpm"
+fi
+
+if [ -n "$PNPM_HOME" ]; then
   case ":$PATH:" in
     *":$PNPM_HOME:"*) ;;
     *) export PATH="$PNPM_HOME:$PATH" ;;

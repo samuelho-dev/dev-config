@@ -209,18 +209,34 @@ command_exists() {
 
 install_package() {
   local package_name=$1
-  local pm=$(detect_package_manager)
+  local force_install=${2:-false}
+  local pm
+  pm=$(detect_package_manager)
 
-  if command_exists "$package_name"; then
+  if [ "$force_install" != "true" ] && command_exists "$package_name"; then
     log_success "$package_name already installed"
     return 0
+  fi
+
+  if [ "$pm" = "none" ]; then
+    log_error "No supported package manager detected. Install $package_name manually."
+    return 1
   fi
 
   log_info "Installing $package_name via $pm..."
 
   case $pm in
     brew)
-      brew install "$package_name"
+      if brew list --versions "$package_name" >/dev/null 2>&1; then
+        if [ "$force_install" = "true" ]; then
+          brew upgrade "$package_name" || brew install "$package_name"
+        else
+          log_success "$package_name already installed"
+          return 0
+        fi
+      else
+        brew install "$package_name"
+      fi
       ;;
     apt)
       sudo apt update && sudo apt install -y "$package_name"
@@ -234,30 +250,46 @@ install_package() {
     zypper)
       sudo zypper install -y "$package_name"
       ;;
-    none)
-      log_error "No package manager found. Please install $package_name manually."
-      return 1
+    *)
+      log_warn "Package manager $pm not explicitly handled; attempting generic install"
+      $pm install "$package_name"
       ;;
   esac
 
-  if [ $? -eq 0 ]; then
-    log_success "$package_name installed successfully"
-    return 0
-  else
-    log_error "Failed to install $package_name"
+  local install_status=$?
+  if [ $install_status -ne 0 ]; then
+    log_error "Failed to install $package_name with $pm (exit code $install_status)"
+    if [ "$pm" = "brew" ]; then
+      log_warn "Ensure Homebrew is healthy: brew update && brew doctor"
+    fi
+    if command_exists sudo && [ "$pm" != "brew" ]; then
+      log_warn "You may need sudo privileges to install $package_name manually."
+    fi
     return 1
   fi
+
+  refresh_package_manager_env "$pm"
+  log_success "$package_name installed successfully"
+  return 0
+}
+
+refresh_package_manager_env() {
+  local pm=$1
+  case $pm in
+    brew)
+      if command_exists brew; then
+        eval "$(brew shellenv)" || true
+        hash -r
+      fi
+      ;;
+  esac
 }
 
 # Check if running with sudo unnecessarily
 check_sudo() {
   if [ "$EUID" -eq 0 ]; then
-    log_warn "Running as root/sudo. This script should be run as a normal user."
-    read -p "Continue anyway? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-      exit 1
-    fi
+    log_error "Please rerun without sudo/root; dev-config must be installed as your normal user."
+    exit 1
   fi
 }
 
