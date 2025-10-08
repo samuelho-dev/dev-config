@@ -197,6 +197,16 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
   command = 'echohl WarningMsg | echo "File changed on disk. Buffer reloaded." | echohl None',
 })
 
+-- CSV filetype detection for csvview.nvim
+-- Neovim doesn't detect CSV files by default, so we set the filetype explicitly
+vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+  desc = 'Set filetype for CSV/TSV files',
+  pattern = { '*.csv', '*.tsv' },
+  callback = function()
+    vim.bo.filetype = 'csv'
+  end,
+})
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -1528,7 +1538,8 @@ require('lazy').setup(
       'obsidian-nvim/obsidian.nvim', -- Using maintained community fork
       version = '*',
       lazy = true,
-      event = #events > 0 and events or nil,
+      ft = 'markdown', -- Fallback: load for all markdown files if no vaults detected
+      event = #events > 0 and events or nil, -- Optimal: load only for vault files if detected
       dependencies = {
         'nvim-lua/plenary.nvim',
       },
