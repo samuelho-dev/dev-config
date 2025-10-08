@@ -725,8 +725,9 @@ require('lazy').setup(
     },
 
     -- Main LSP Configuration
-    'neovim/nvim-lspconfig',
-    dependencies = {
+    {
+      'neovim/nvim-lspconfig',
+      dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
       -- Mason must be loaded before its dependents so we need to set it up here.
       -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
@@ -1546,7 +1547,6 @@ require('lazy').setup(
       version = '*',
       lazy = true,
       event = #events > 0 and events or nil,
-      cond = #workspaces > 0, -- Only load if we found vaults
       dependencies = {
         'nvim-lua/plenary.nvim',
       },
@@ -1752,7 +1752,7 @@ require('lazy').setup(
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
-  --},
+  },
   {
     ui = {
       -- If you are using a Nerd Font: set icons to an empty table which will use the
