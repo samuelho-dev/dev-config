@@ -146,9 +146,10 @@ bash scripts/install.sh
 3. Verify repository structure
 4. **Install core dependencies:**
    - Homebrew (macOS if missing)
-   - Git, zsh (required)
-   - Neovim, tmux, fzf, ripgrep, lazygit (optional)
-   - Version checks (Neovim ≥ 0.9.0, tmux ≥ 1.9)
+   - Git, zsh, tmux, docker (required)
+   - Neovim, fzf, ripgrep, lazygit, docker-compose (optional)
+   - Build tools: make, node, npm, imagemagick (optional)
+   - Version checks (Neovim ≥ 0.9.0, tmux ≥ 1.9, Docker ≥ 20.10)
 5. **Install zsh components:**
    - Oh My Zsh
    - Powerlevel10k theme
@@ -173,6 +174,33 @@ bash scripts/install.sh
 - Cross-platform (macOS + Linux)
 - Creates backups before overwriting
 - Handles missing dependencies gracefully
+
+#### Docker Installation Details
+
+**Platform-specific installation:**
+
+**macOS:**
+- Uses Homebrew cask: `brew install --cask docker`
+- Auto-starts Docker Desktop after installation
+- Waits for daemon to be ready (30 attempts, 2s intervals)
+- Fallback to manual installation instructions if Homebrew fails
+
+**Linux:**
+- Supports multiple package managers (apt, dnf, pacman, zypper)
+- Uses official Docker repositories for apt (Ubuntu/Debian)
+- Falls back to official Docker installation script
+- Adds user to docker group automatically
+- Starts and enables Docker service via systemctl
+
+**Version validation:**
+- Checks for Docker ≥ 20.10
+- Verifies Docker daemon is running
+- Validates Docker Compose availability (standalone or plugin)
+
+**Error handling:**
+- Graceful fallback to manual installation instructions
+- Clear error messages with next steps
+- Continues installation even if Docker fails
 
 ### update.sh
 
@@ -231,9 +259,13 @@ bash scripts/uninstall.sh
    - Verify each target is a symlink
    - Check symlink points to dev-config directory
 4. **Check dependencies:**
-   - Required: git, zsh
-   - Optional: nvim, tmux, fzf, rg, lazygit, gh
-   - Version checks for nvim and tmux
+   - Required: git, zsh, tmux, docker
+   - Optional: nvim, fzf, rg, lazygit, gh, docker-compose
+   - Build tools: make, node, npm, pkg-config
+   - External tools: imagemagick, mmdc (Mermaid CLI)
+   - Version checks (Neovim ≥ 0.9.0, Docker ≥ 20.10)
+   - Docker daemon status verification
+   - Mason-installed tools validation
 5. **Check external tools:**
    - Oh My Zsh, Powerlevel10k, zsh-autosuggestions
    - TPM

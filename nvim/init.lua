@@ -197,6 +197,16 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
   command = 'echohl WarningMsg | echo "File changed on disk. Buffer reloaded." | echohl None',
 })
 
+-- CSV filetype detection for csvview.nvim
+-- Neovim doesn't detect CSV files by default, so we set the filetype explicitly
+vim.api.nvim_create_autocmd({ 'BufRead', 'BufNewFile' }, {
+  desc = 'Set filetype for CSV/TSV files',
+  pattern = { '*.csv', '*.tsv' },
+  callback = function()
+    vim.bo.filetype = 'csv'
+  end,
+})
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -725,8 +735,9 @@ require('lazy').setup(
     },
 
     -- Main LSP Configuration
-    'neovim/nvim-lspconfig',
-    dependencies = {
+    {
+      'neovim/nvim-lspconfig',
+      dependencies = {
       -- Automatically install LSPs and related tools to stdpath for Neovim
       -- Mason must be loaded before its dependents so we need to set it up here.
       -- NOTE: `opts = {}` is the same as calling `require('mason').setup({})`
@@ -1261,32 +1272,14 @@ require('lazy').setup(
     end,
   },
 
-  { -- Rainbow column highlighting and CSV utilities
-    'cameron-wags/rainbow_csv.nvim',
-    ft = { 'csv', 'tsv', 'csv_semicolon', 'csv_whitespace', 'csv_pipe', 'rfc_csv', 'rfc_semicolon' },
-    cmd = {
-      'RainbowDelim',
-      'RainbowDelimSimple',
-      'RainbowDelimQuoted',
-      'RainbowMultiDelim',
-      'NoRainbowDelim',
-      'RainbowNoDelim',
-      'RainbowComment',
-      'RainbowCommentMulti',
-      'NoRainbowComment',
-      'RainbowLint',
-      'CSVLint',
-      'RainbowAlign',
-      'RainbowShrink',
-      'RbSelect',
-      'RbRun',
-      'Select',
-      'Update',
-      'RainbowName',
+  { -- Modern CSV viewer with virtual text columns
+    'hat0uma/csvview.nvim',
+    ft = { 'csv' },
+    opts = {
+      view = {
+        display_mode = 'border', -- 'highlight' or 'border'
+      },
     },
-    config = function()
-      require('rainbow_csv').setup()
-    end,
   },
 
   { -- You can easily change to a different colorscheme.
@@ -1545,8 +1538,8 @@ require('lazy').setup(
       'obsidian-nvim/obsidian.nvim', -- Using maintained community fork
       version = '*',
       lazy = true,
-      event = #events > 0 and events or nil,
-      cond = #workspaces > 0, -- Only load if we found vaults
+      ft = 'markdown', -- Fallback: load for all markdown files if no vaults detected
+      event = #events > 0 and events or nil, -- Optimal: load only for vault files if detected
       dependencies = {
         'nvim-lua/plenary.nvim',
       },
@@ -1752,7 +1745,7 @@ require('lazy').setup(
   -- Or use telescope!
   -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
   -- you can continue same window with `<space>sr` which resumes last telescope search
-  --},
+  },
   {
     ui = {
       -- If you are using a Nerd Font: set icons to an empty table which will use the

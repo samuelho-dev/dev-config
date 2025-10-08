@@ -52,17 +52,26 @@ These are the bare minimum to run the installer:
 The installer automatically installs all required dependencies with zero manual intervention:
 
 **Core Tools:**
+- **Docker** (≥ 20.10) - Container platform
 - **Neovim** (≥ 0.9.0) - Text editor
 - **tmux** (≥ 1.9) - Terminal multiplexer
 - **Zsh** - Shell (sets as default login shell)
 - **fzf** - Fuzzy finder (Telescope, tmux-fzf)
 - **ripgrep** (rg) - Fast grep (Telescope live_grep)
 - **lazygit** - Git TUI
+- **make** - Build tools (telescope-fzf-native)
+- **node** - Node.js runtime (Mermaid CLI)
+- **npm** - Node package manager
+- **imagemagick** - Image processing
 
 **Shell Framework:**
 - **Oh My Zsh** - Zsh plugin framework
 - **Powerlevel10k** - Modern Zsh theme
 - **zsh-autosuggestions** - Fish-like autosuggestions
+
+**Mason-Installed Tools (via Neovim):**
+- **LSP Servers:** ts_ls (TypeScript), pyright (Python), lua_ls (Lua)
+- **Formatters:** stylua (Lua), prettier (JS/TS/JSON/YAML/Markdown), ruff (Python)
 
 **Plugin Managers:**
 - **Lazy.nvim** - Neovim plugin manager (auto-configured)
@@ -116,6 +125,9 @@ Install additional parsers with `:TSInstall <language>` in Neovim.
 ### Optional Dependencies
 
 These provide enhanced features but are not required:
+
+**For Container Development:**
+- **Docker Compose** (standalone) - If not bundled with Docker Desktop
 
 **For GitHub Integration (Octo.nvim):**
 - **GitHub CLI (`gh`)** - PR/issue management from Neovim
@@ -241,8 +253,10 @@ Quick reference for all dependencies and their purposes:
 | **fzf** | ✅ Yes | Fuzzy finder | Telescope, tmux-fzf, shell fuzzy search |
 | **ripgrep** (rg) | ✅ Yes | Fast grep | Telescope live_grep, code search |
 | **lazygit** | ✅ Yes | Git TUI | Neovim git integration |
+| **make** | ✅ Yes | Build tools | telescope-fzf-native compilation |
+| **node** | ✅ Yes | Node.js runtime | Mermaid CLI, npm ecosystem |
+| **npm** | ✅ Yes | Package manager | Mermaid CLI installation |
 | **imagemagick** | ✅ Best effort | Image processing | image.nvim (Neovim image rendering) |
-| **npm** | ⚠️ Optional | Package manager | Mermaid CLI installation |
 | **mmdc** | ⚠️ Optional | Mermaid renderer | render-markdown.nvim diagrams |
 | **gh** | ⚠️ Optional | GitHub CLI | Octo.nvim (PR/issue management) |
 | **pkg-config** | ⚠️ Optional | Build tool | blink.cmp Rust optimization |
@@ -294,6 +308,15 @@ Then restart tmux and Neovim to apply changes.
 ---
 
 ## Features
+
+### Docker
+- **Cross-platform installation** (macOS, Linux)
+- **Docker Desktop** for macOS via Homebrew
+- **Docker Engine** for Linux with multiple package manager support
+- **Docker Compose** support (standalone and plugin versions)
+- **Machine-specific aliases** in `~/.zshrc.local`
+- **Version validation** (Docker ≥ 20.10)
+- **Daemon status checking** and auto-start
 
 ### Neovim
 

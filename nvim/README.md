@@ -120,11 +120,12 @@ Powered by ripgrep for blazing fast search!
 **Outline:**
 - `<leader>o` - Toggle document outline
 
-### CSV Highlighting
+### CSV Viewing
 
-- Automatic rainbow column highlighting for CSV/TSV dialects
-- Commands like `:RainbowDelim`, `:RainbowAlign`, and `:CSVLint` for manual control
-- Loads when opening CSV-style files or running a Rainbow CSV command
+- Modern CSV viewer with virtual text borders (csvview.nvim)
+- Border display mode shows clean column alignment
+- Automatic activation when opening CSV files
+- No file modification - uses virtual text rendering
 
 ### Mermaid Diagrams
 
