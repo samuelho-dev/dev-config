@@ -8,7 +8,30 @@ Complete reference for all Neovim keybindings in this configuration.
 
 ## Custom Features
 
-### Diagnostic Copy (NEW)
+### Quick Save (controlsave.nvim)
+
+Custom plugin for quick file saving.
+
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `<C-s>` | Save File | Save current file (works in all modes) |
+
+**Features:**
+- 🚀 Fast: 1 chord vs 3 keystrokes (`:w<Enter>`)
+- 🛡️ Safe: Error handling for read-only/special buffers
+- 🔄 Smart: Auto-formats via conform.nvim
+- 🌍 Standard: Matches VS Code, IntelliJ, Sublime
+
+**Traditional Vim alternatives:**
+- `:w` - Save current file
+- `:wa` - Save all files
+- `:wq` - Save and quit
+- `ZZ` - Save and quit (Vim built-in)
+
+---
+
+### Diagnostic Copy
+
 Copy LSP diagnostics to clipboard for Claude Code workflows.
 
 | Keybinding | Action | Description |
@@ -27,6 +50,56 @@ Line 58: Type 'string' is not assignable to type 'number'
 WARNINGS:
 Line 12: Unused variable 'bar'
 ```
+
+---
+
+### Multiple Cursors (vim-visual-multi)
+Multiple cursor editing similar to VS Code.
+
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `<leader>m` | Start Multi-Cursor | Select word under cursor, press again for next occurrence |
+| `<C-Down>` | Add Cursor Down | Create cursor on line below |
+| `<C-Up>` | Add Cursor Up | Create cursor on line above |
+| `<C-LeftMouse>` | Add Cursor at Click | Create cursor at mouse position |
+
+**In Multi-Cursor Mode:**
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `n` | Next Occurrence | Find and select next occurrence |
+| `N` | Previous Occurrence | Find and select previous occurrence |
+| `[` | Previous Cursor | Jump to previous cursor |
+| `]` | Next Cursor | Jump to next cursor |
+| `q` | Skip Current | Skip current and get next occurrence |
+| `Q` | Remove Cursor | Remove current cursor/selection |
+| `Tab` | Toggle Mode | Switch between cursor and extend mode |
+| `<Esc>` | Exit | Exit multi-cursor mode |
+| `\\<Space>` | Show Commands | Show all VM commands menu |
+
+**Advanced:**
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `\\A` | Select All with Regex | Select all matches using regex pattern |
+| `\\\\` | Add Cursor at Position | Add single cursor at current position |
+| `\\/` | Start Regex Search | Start regex search for multi-cursor selection |
+
+### Indentation Guides (indent-blankline.nvim)
+
+Visual indentation guides are **always active** - no keybindings needed.
+
+**Commands (if you want to toggle manually):**
+| Command | Action | Description |
+|---------|--------|-------------|
+| `:IBLToggle` | Toggle Guides | Enable/disable indentation guides |
+| `:IBLToggleScope` | Toggle Scope | Enable/disable scope highlighting |
+| `:IBLEnable` | Enable | Turn on indentation guides |
+| `:IBLDisable` | Disable | Turn off indentation guides |
+
+**Features:**
+- 🟦 Vertical lines show each indentation level
+- 🟨 Current scope/block is highlighted
+- ✨ Works on blank lines
+- 🎯 Treesitter-aware for accurate scope detection
 
 ---
 
@@ -71,6 +144,53 @@ Line 12: Unused variable 'bar'
 - `<C-c>` / `<Esc>` - Close picker
 - `<CR>` - Select item
 - `<C-/>` (insert mode) or `?` (normal mode) - Show keymaps help
+
+---
+
+## Search and Replace (Spectre)
+
+Project-wide search and replace with visual preview.
+
+### Opening Spectre
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `<leader>rr` | Replace in Files | Open Spectre for project-wide search/replace |
+| `<leader>rw` | Replace Word | Replace word under cursor across project |
+| `<leader>rf` | Replace in File | Search and replace in current file only |
+| `<leader>rw` | Replace Selection | Replace selected text (visual mode) |
+
+### In Spectre UI
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `dd` | Toggle Match | Exclude/include current match |
+| `<CR>` | Jump to File | Open file at match location |
+| `<leader>R` | Replace All | Replace all enabled matches |
+| `<leader>rc` | Replace Current | Replace current line only |
+| `<leader>o` | Options Menu | Show all options |
+| `<leader>q` | To Quickfix | Send matches to quickfix list |
+| `<leader>l` | Resume Search | Resume last search |
+
+### Toggle Options (in Spectre UI)
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `ti` | Toggle Case | Ignore case on/off |
+| `th` | Toggle Hidden | Search hidden files on/off |
+| `trs` | Use sed | Switch to sed replace engine |
+| `tro` | Use oxi | Switch to oxi replace engine |
+
+**Workflow:**
+1. Press `<leader>rr` to open Spectre
+2. Enter search pattern (supports regex)
+3. Enter replacement text
+4. Review matches (use `dd` to toggle off unwanted ones)
+5. Press `<leader>R` to replace all
+
+**Features:**
+- 🔍 Powered by ripgrep (respects .gitignore)
+- 👁️ Preview before replacing
+- ⚡ Fast search across entire project
+- 🎯 Selective replace (toggle individual matches)
+- 📝 Regex support
 
 ---
 
@@ -270,6 +390,7 @@ Enhanced text objects for better selection:
 
 When you press `<leader>`, which-key will show you available key groups:
 - `<leader>s` - **[S]earch** (Telescope)
+- `<leader>r` - **[R]eplace** (Spectre - project-wide search & replace)
 - `<leader>t` - **[T]oggle** (various toggles)
 - `<leader>h` - **Git [H]unk** (Gitsigns - normal & visual)
 - `<leader>c` - **[C]opy** (diagnostics - custom)

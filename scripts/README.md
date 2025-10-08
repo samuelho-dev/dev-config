@@ -46,6 +46,11 @@ nvim  # Plugins already installed
 tmux  # Plugins already installed
 ```
 
+### Environment Variables
+
+- `ZHIPUAI_API_KEY` – required for GLM-backed completions in Minuet and CodeCompanion. Export it in your shell profile (e.g. `~/.zshrc.local`) before launching Neovim.
+- `CLAUDE_AGENT_ROOT` (optional) – override the default path (`~/Projects/claude-code-agent`) that the yarepl presets use for Claude CLI, aider, and observability commands.
+
 ### Platform Support
 
 - ✅ macOS (Intel + Apple Silicon)

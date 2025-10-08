@@ -98,6 +98,60 @@ formatters_by_ft = {
   - `<c-n>/<c-p>` or arrow keys - Select item
   - `<tab>/<s-tab>` - Navigate snippet fields
 
+### nvim-spectre (Search and Replace)
+
+**Purpose:** Project-wide search and replace with visual UI.
+
+**Features:**
+- Visual interface for search and replace
+- Preview all changes before applying
+- Toggle individual matches on/off
+- Supports regex patterns
+- Multiple search/replace engines (ripgrep + sed)
+
+**Configuration location:** Lines ~542-709
+
+**Keybindings:**
+- `<leader>rr` - Open Spectre UI (project-wide)
+- `<leader>rw` - Replace word under cursor
+- `<leader>rf` - Replace in current file only
+- `<leader>rw` (visual) - Replace selection
+
+**In Spectre UI (internal mappings):**
+- `dd` - Toggle line (exclude/include match)
+- `<cr>` - Jump to file
+- `<leader>R` - Replace all matches
+- `<leader>rc` - Replace current line
+- `<leader>o` - Show options menu
+- `ti` - Toggle ignore case
+- `th` - Toggle search hidden files
+- `trs` - Switch to sed engine
+- `<leader>q` - Send to quickfix
+- `<leader>l` - Resume last search
+
+**Important notes:**
+- Uses ripgrep (rg) for search - fast and respects .gitignore
+- Uses sed for replace by default
+- `live_update` disabled - won't auto-search while typing (performance)
+- Opens in vertical split (`vnew`)
+- Preview before replace - safe to use
+- Lazy-loaded on command or keybinding
+
+**Common workflows:**
+1. **Replace across project:** `<leader>rr` → enter search → enter replacement → review → `<leader>R`
+2. **Replace word:** Place cursor on word → `<leader>rw` → enter replacement → `<leader>R`
+3. **Replace in file:** `<leader>rf` → enter search/replace → `<leader>R`
+4. **Selective replace:** Use `dd` to toggle off unwanted matches, then `<leader>R`
+
+**Dependencies:**
+- ripgrep (rg) - already installed
+- sed - system default (macOS/Linux)
+- plenary.nvim - already installed
+
+**Commands:**
+- `:Spectre` - Open Spectre UI manually
+- `:h spectre` - Full documentation
+
 ## Custom Plugins
 
 ### diagnostics-copy.lua
@@ -131,6 +185,54 @@ Line 12: Unused variable 'bar'
 - Filters by severity: `vim.diagnostic.severity.ERROR`, `.WARN`, etc.
 - Copies to both `+` and `*` registers for cross-platform compatibility
 - Groups output by severity for readability
+
+### controlsave.lua
+
+**Purpose:** Quick save functionality with industry-standard `Ctrl+S` keybinding.
+
+**Location:** `lua/custom/plugins/controlsave.lua`
+
+**Functions:**
+- `save()` - Save current buffer with error handling
+- `save_all()` - Save all modified buffers
+- `format_and_save()` - Explicitly format then save
+
+**Keybindings (defined ~line 1788):**
+- `<C-s>` - Save file (normal, insert, visual mode)
+
+**Features:**
+- Error handling for read-only files
+- Checks for special buffer types (terminal, help, etc.)
+- Validates file has a name before saving
+- Optional save notifications (disabled by default)
+- Integration with conform.nvim format_on_save
+
+**Implementation notes:**
+- Uses `vim.cmd 'write'` for saving (same as `:w`)
+- Triggers `BufWritePre` event → conform.nvim auto-formats
+- Exits insert/visual mode before saving (standard Vim behavior)
+- Module pattern: returns table `M` with functions
+- Future-proof: `setup()` function for configuration
+
+**Configuration (optional):**
+```lua
+local controlsave = require 'custom.plugins.controlsave'
+controlsave.setup({
+  notify_on_save = true, -- Enable save notifications
+})
+```
+
+**Error handling:**
+- Read-only files → Warning notification
+- Special buffers (terminal, help) → Warning notification
+- Unnamed buffers → Suggests using `:saveas`
+
+**Why a custom plugin vs inline keybinding?**
+- Reusable save logic
+- Error handling in one place
+- Extensible (can add features later)
+- Consistent with diagnostics-copy pattern
+- Self-documenting code
 
 ## Adding Custom Plugins
 
@@ -206,6 +308,65 @@ Then uncomment line 1224 in init.lua:
 
 **markdown-preview.nvim:**
 - `<leader>mp` - Toggle browser preview
+
+### vim-visual-multi (Multiple Cursors)
+
+**Purpose:** VS Code-style multiple cursor editing.
+
+**Key keybindings:**
+- `<leader>m` - Start multi-cursor, select word (remapped from `<C-n>` to avoid blink.cmp conflict)
+- `<C-Down>/<C-Up>` - Add cursor vertically
+- `<C-LeftMouse>` - Add cursor at click
+
+**Configuration location:** Lines ~1185-1217
+
+**Important notes:**
+- Vimscript-based plugin (not Lua-native)
+- Default `<C-n>` remapped to `<leader>m` to avoid conflict with blink.cmp
+- Theme set to 'iceblue' to match tokyonight colorscheme
+- Lazy-loaded with 'VeryLazy' to minimize startup impact
+
+**Common workflows:**
+1. **Select all occurrences:** `<leader>m`, then `<leader>m` repeatedly, or use regex selection
+2. **Column editing:** Visual block select (`<C-v>`), then `<leader>m`
+3. **Vertical cursors:** `<C-Down>` or `<C-Up>` from normal mode
+4. **Pattern-based:** `\\A` to select all with regex pattern
+
+**Commands:**
+- `:h visual-multi` - Full documentation
+- `\\<Space>` - Show all VM commands (VM leader is \\)
+
+### indent-blankline.nvim (Indentation Guides)
+
+**Purpose:** Visual indentation guides with scope highlighting.
+
+**Features:**
+- Vertical lines showing indentation levels
+- Current scope/block highlighting
+- Works on blank lines
+- Treesitter-aware for accurate scope detection
+
+**Configuration location:** Lines ~1217-1252
+
+**Important notes:**
+- Uses `│` character for guides (can be customized)
+- Scope highlighting uses `Function` and `Label` highlight groups (matches tokyonight)
+- Automatically excluded from special buffers (neo-tree, lazy, mason, terminal, etc.)
+- Lazy-loaded on file open for performance
+- No user commands or keybindings - always active
+
+**Customization options:**
+- Change indent character: `char = '▏'` (options: `│`, `▏`, `┊`, `┆`)
+- Disable scope highlighting: `scope.enabled = false`
+- Show scope end underline: `scope.show_end = true`
+- Add file types to exclude list in `exclude.filetypes`
+
+**Commands:**
+- `:IBLEnable` - Enable indent guides (if disabled)
+- `:IBLDisable` - Disable indent guides
+- `:IBLToggle` - Toggle indent guides
+- `:IBLToggleScope` - Toggle scope highlighting
+- `:h ibl` - Full documentation
 
 ## Important Settings
 

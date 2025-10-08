@@ -185,6 +185,12 @@ check_tool_versions() {
   else
     log_warn "ImageMagick missing - image.nvim may not function correctly"
   fi
+
+  if [ -z "${ZHIPUAI_API_KEY:-}" ]; then
+    log_warn "ZHIPUAI_API_KEY not set - GLM-based features (Minuet & CodeCompanion) will stay offline until you export it"
+  else
+    log_success "Detected ZHIPUAI_API_KEY for GLM integrations"
+  fi
 }
 
 # =============================================================================

@@ -63,6 +63,27 @@ Manual plugin installation:
 - `<leader><leader>` - Switch buffers
 - `<leader>/` - Search in current buffer
 
+### Search and Replace (Spectre)
+
+Project-wide search and replace with visual interface:
+
+- `<leader>rr` - Open Spectre (search and replace in project)
+- `<leader>rw` - Replace word under cursor
+- `<leader>rf` - Replace in current file only
+- `<leader>rw` (visual mode) - Replace selected text
+
+**In Spectre UI:**
+- Enter search term and replacement
+- `dd` - Toggle individual match on/off
+- `<leader>R` - Replace all (after review)
+- `<leader>rc` - Replace current line only
+- `ti` - Toggle ignore case
+- `th` - Toggle search hidden files
+- `<leader>o` - Show all options
+- `<leader>q` - Send to quickfix list
+
+Powered by ripgrep for blazing fast search!
+
 ### Git Integration
 
 **lazygit:**
@@ -116,11 +137,54 @@ npm install -g @mermaid-js/mermaid-cli
 
 Ghostty implements the Kitty graphics protocol, so diagrams also render there (keep an eye on upstream Ghostty releases for graphics fixes).
 
+### AI Assistance
+
+- **Streaming Completions (Minuet)**  
+  - Powered by GLM 4.5 via `minuet-ai.nvim` + `blink.cmp`.  
+  - Export `ZHIPUAI_API_KEY` before launching Neovim.  
+  - Completions stream automatically; use `<Tab>`/`<S-Tab>` (super-tab preset) to accept or cycle.
+
+- **Chat & Refactors (CodeCompanion)**  
+  - `:CodeCompanionChat` opens a dedicated buffer backed by GLM 4.5.  
+  - Use inline actions (visual select → `:CodeCompanion`) for targeted edits.  
+  - You can still configure additional adapters (Claude, OpenAI) in `init.lua` if you need higher quality or ACP agents.
+
+- **Infrastructure REPLs (yarepl)**  
+  - `:REPLStart claude` attaches to the Claude CLI in your `CLAUDE_AGENT_ROOT` (defaults to `~/Projects/claude-code-agent`).  
+  - Additional presets: `aider`, `cursor` (runs `cursor-agent`), `observability` (runs `./scripts/start-system.sh`), and `sqlite` for the agent database.  
+  - Toggle focus/hide with `:REPLFocus`, `:REPLHide`, and send code with `:REPLSendLine` / `:REPLSendVisual`.
+
 ### File Explorer
 
 - `\` or `<leader>e` - Toggle Neo-tree
 - Auto-refreshes on external changes
 - Follows current file
+
+### Multiple Cursors
+
+- `<leader>m` - Start multi-cursor mode, select word under cursor
+- `<leader>m` (again) - Select next occurrence
+- `<C-Down>` / `<C-Up>` - Add cursor down/up
+- `<C-LeftMouse>` - Add cursor at mouse click
+
+**In multi-cursor mode:**
+- `n` / `N` - Get next/previous occurrence
+- `[` / `]` - Select next/previous cursor
+- `q` - Skip current and get next
+- `Q` - Remove current cursor
+- `Tab` - Switch between cursor and extend mode
+- `<Esc>` - Exit multi-cursor mode
+
+### Indentation Guides
+
+Visual indentation guides show vertical lines for each indentation level, making nested code easier to read.
+
+- **Automatic:** Guides appear automatically in all code files
+- **Scope highlighting:** Current code block/scope is highlighted
+- **Works with:** Spaces and tabs
+- **Excluded from:** Terminal, help files, file explorer
+
+No keybindings needed - it's always active!
 
 ### Diagnostic Copy (Claude Code Integration)
 
@@ -128,6 +192,23 @@ Ghostty implements the Kitty graphics protocol, so diagrams also render there (k
 - `<leader>cd` - Copy all **D**iagnostics
 
 Output includes file paths, line numbers, and severity grouping - perfect for pasting into Claude Code!
+
+### Quick Save (controlsave.nvim)
+
+**Custom plugin for quick file saving.**
+
+- `<C-s>` - Save current file (normal, insert, visual mode)
+
+**Features:**
+- Industry-standard `Ctrl+S` keybinding (matches VS Code, IntelliJ)
+- Works across all modes seamlessly
+- Error handling for read-only files and special buffers
+- Integrates with conform.nvim auto-format on save
+
+**Traditional Vim commands:**
+- `:w` - Save current file
+- `:wa` - Save all files
+- `:wq` - Save and quit
 
 ## Configuration
 
