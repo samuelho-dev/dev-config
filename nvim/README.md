@@ -108,9 +108,13 @@ Powered by ripgrep for blazing fast search!
 ### Markdown & Note-Taking
 
 **Obsidian Integration:**
-- `gf` - Follow markdown links
+- **Auto-detects vaults** - Searches upward for `.obsidian` directory automatically
+- **Works from any location** - No need to open nvim from vault root
+- **Handles symlinks** - Works with symlinked vaults properly
+- `<CR>` (Enter) - Smart action: follow links, toggle checkboxes, cycle headings
 - `<leader>ch` - Toggle checkboxes
-- Auto-detects vault from file location
+- `[o` / `]o` - Navigate to previous/next link
+- Zero configuration needed - adapts to any machine automatically
 
 **Preview:**
 - `<leader>mp` - Toggle browser preview
@@ -215,7 +219,7 @@ Output includes file paths, line numbers, and severity grouping - perfect for pa
 
 ### Adding LSP Servers
 
-Edit `init.lua` around line 707:
+Edit `lua/plugins/lsp.lua:149`:
 
 ```lua
 local servers = {
@@ -231,7 +235,7 @@ Restart Neovim, then `:Mason` to install.
 
 ### Adding Formatters
 
-Edit `init.lua` around line 809:
+Edit `lua/plugins/lsp.lua:221`:
 
 ```lua
 formatters_by_ft = {
@@ -244,34 +248,85 @@ formatters_by_ft = {
 
 ### Adding Plugins
 
-Add to `require('lazy').setup({ ... })` block in `init.lua`:
+**Method 1:** Add to existing category file in `lua/plugins/`:
 
 ```lua
-{
-  'author/plugin-name',
-  config = function()
-    require('plugin-name').setup()
-  end,
-},
+-- lua/plugins/editor.lua (or appropriate category)
+return {
+  -- Existing plugins...
+
+  {
+    'author/plugin-name',
+    config = function()
+      require('plugin-name').setup()
+    end,
+  },
+}
 ```
 
-Or create a file in `lua/custom/plugins/` and uncomment line 1224:
+**Method 2:** Create new category file `lua/plugins/mycategory.lua`:
+
 ```lua
-{ import = 'custom.plugins' },
+return {
+  {
+    'author/plugin-name',
+    event = 'VimEnter',
+    config = function()
+      require('plugin-name').setup()
+    end,
+  },
+}
+```
+
+Then add to `init.lua:56`:
+```lua
+{ import = 'plugins.mycategory' },
 ```
 
 ## File Structure
 
 ```
 nvim/
-├── init.lua                 # Main config (~1200 lines, read top-to-bottom)
+├── init.lua                 # Main entry point (81 lines)
 ├── lazy-lock.json           # Plugin versions (committed to git)
 ├── .stylua.toml             # Lua formatter config
+├── CLAUDE.md                # AI assistant guidance
+├── README.md                # This file
 └── lua/
-    ├── custom/plugins/      # Your custom plugins
-    │   └── diagnostics-copy.lua
-    └── kickstart/           # Kickstart modules (optional)
+    ├── config/              # Core Neovim configuration
+    │   ├── init.lua         # Loads all config modules
+    │   ├── options.lua      # Vim options
+    │   ├── autocmds.lua     # Autocommands
+    │   └── keymaps.lua      # Core keybindings
+    └── plugins/             # Plugin specifications by category
+        ├── editor.lua       # File explorer, fuzzy finder, search
+        ├── lsp.lua          # LSP configuration and formatting
+        ├── completion.lua   # Autocompletion
+        ├── ai.lua           # AI assistance
+        ├── git.lua          # Git integration
+        ├── markdown.lua     # Markdown and Obsidian
+        ├── ui.lua           # UI enhancements
+        ├── treesitter.lua   # Syntax highlighting
+        ├── tools.lua        # Utility tools
+        └── custom/          # Custom plugin utilities
+            ├── diagnostics-copy.lua
+            ├── controlsave.lua
+            └── mermaid.lua
 ```
+
+### Modular Architecture
+
+This configuration uses a **modular architecture** instead of a single monolithic file:
+
+- **config/** - Core Neovim settings (options, autocmds, keymaps)
+- **plugins/** - Plugin specifications organized by category
+- **plugins/custom/** - Custom utility modules
+
+**Benefits:**
+- 94% reduction in main file size (1823 lines → 81 lines)
+- Easy to find and modify specific features
+- Clear separation of concerns
+- Scalable for future additions
 
 ## Updating Plugins
 
