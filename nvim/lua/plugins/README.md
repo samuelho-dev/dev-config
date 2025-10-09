@@ -12,7 +12,7 @@ This directory contains plugin specifications organized by category. Each file r
 | `ai.lua` | 3 | AI-powered coding assistance |
 | `git.lua` | 5 | Git integration and workflow |
 | `markdown.lua` | 6 | Markdown editing and Obsidian |
-| `ui.lua` | 6 | Interface enhancements |
+| `ui.lua` | 7 | Interface enhancements, buffer navigation |
 | `treesitter.lua` | 1 | Syntax highlighting |
 | `tools.lua` | 1 | Utility tools (CSV viewer) |
 | `custom/` | 4 | Custom utility modules |
@@ -161,7 +161,18 @@ This directory contains plugin specifications organized by category. Each file r
 - mini.surround - Surround operations
 - mini.statusline - Simple statusline
 
+**vim-visual-multi** - Multiple cursors
+- `<leader>m` - Start multi-cursor mode
+- VS Code-style multi-cursor editing
+
 **indent-blankline.nvim** - Indentation guides
+
+**barbar.nvim** - Tabline with buffer navigation
+- `<M-1>` to `<M-9>` - Jump to buffer 1-9
+- `<M-,>` / `<M-.>` - Previous/next buffer
+- `<M-c>` - Close buffer
+- `<leader>bp` - Buffer picker mode (shows letters)
+- Numbered buffer tabs like browser tabs
 
 ### treesitter.lua - Syntax
 

@@ -63,6 +63,22 @@ Manual plugin installation:
 - `<leader><leader>` - Switch buffers
 - `<leader>/` - Search in current buffer
 
+### Buffer Navigation (Barbar)
+
+Numbered buffer navigation like browser tabs:
+
+- `<M-1>` to `<M-9>` - Jump to buffer 1-9
+- `<M-,>` / `<M-.>` - Previous/next buffer
+- `<M-c>` - Close buffer
+- `<M-p>` - Pin/unpin buffer
+- `<leader>bp` - Buffer picker (shows letters)
+- Visual tabline with file icons and git status
+
+**Opening files into specific buffers:**
+1. `<leader>bp` - Activate buffer picker
+2. Press letter (a/b/c) - Jump to that buffer
+3. Open file from Neo-tree - Opens in selected buffer
+
 ### Search and Replace (Spectre)
 
 Project-wide search and replace with visual interface:
