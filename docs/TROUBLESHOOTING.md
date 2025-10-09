@@ -249,6 +249,36 @@ bash scripts/install.sh
 
 **Solution:** Edit `~/.zshrc` - ensure the instant prompt block (lines 1-6) stays at the top.
 
+### compinit error: "no such file or directory" (Intel → ARM Mac Migration)
+**Problem:** After migrating from Intel Mac to Apple Silicon, you see:
+```
+compinit:527: no such file or directory: /usr/local/share/zsh/site-functions/_brew
+```
+This also triggers Powerlevel10k instant prompt warnings.
+
+**Root Cause:** Legacy Intel Homebrew (`/usr/local`) left broken symlinks that conflict with Apple Silicon Homebrew (`/opt/homebrew`).
+
+**Solution:**
+```bash
+# Remove broken symlink
+rm /usr/local/share/zsh/site-functions/_brew
+
+# Or remove entire legacy directory if empty
+rm -rf /usr/local/share/zsh/site-functions
+
+# Restart terminal - compinit error should be gone
+```
+
+**Prevention:** Clean Intel Homebrew before installing Apple Silicon Homebrew:
+```bash
+# Uninstall Intel Homebrew completely
+/usr/local/bin/brew uninstall --force --ignore-dependencies $(brew list --formula)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/uninstall.sh)"
+
+# Then install Apple Silicon Homebrew
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
 ### zsh-autosuggestions not working
 **Problem:** Plugin not installed or not enabled.
 
