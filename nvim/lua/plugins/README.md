@@ -6,7 +6,7 @@ This directory contains plugin specifications organized by category. Each file r
 
 | File | Plugins | Purpose |
 |------|---------|---------|
-| `editor.lua` | 5 | File explorer, fuzzy finder, search/replace |
+| `editor.lua` | 6 | File explorer, fuzzy finder, search/replace, quick nav |
 | `lsp.lua` | 7 | LSP servers, formatters, linters |
 | `completion.lua` | 2 | Autocompletion engine and snippets |
 | `ai.lua` | 3 | AI-powered coding assistance |
@@ -63,6 +63,12 @@ This directory contains plugin specifications organized by category. Each file r
 - `<leader>rr` - Open Spectre
 - `<leader>rw` - Replace word under cursor
 - Project-wide find/replace with preview
+
+**harpoon** - Quick file navigation
+- `<leader>ha` - Add file to Harpoon
+- `<leader>hm` - Toggle Harpoon menu
+- `<leader>h1-4` - Jump to files 1-4
+- Mark frequently used files for instant access
 
 **guess-indent.nvim** - Auto-detect indentation
 

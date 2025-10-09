@@ -287,4 +287,65 @@ return {
       is_insert_mode = false,
     },
   },
+
+  -- Quick file navigation - mark and jump to frequently used files
+  {
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+    },
+    keys = {
+      { '<leader>ha', desc = 'Harpoon: [A]dd file' },
+      { '<leader>hm', desc = 'Harpoon: Toggle [M]enu' },
+      { '<leader>h1', desc = 'Harpoon: File [1]' },
+      { '<leader>h2', desc = 'Harpoon: File [2]' },
+      { '<leader>h3', desc = 'Harpoon: File [3]' },
+      { '<leader>h4', desc = 'Harpoon: File [4]' },
+      { '<leader>hp', desc = 'Harpoon: [P]revious file' },
+      { '<leader>hn', desc = 'Harpoon: [N]ext file' },
+    },
+    config = function()
+      local harpoon = require 'harpoon'
+
+      -- REQUIRED
+      harpoon:setup()
+
+      -- Keybindings
+      vim.keymap.set('n', '<leader>ha', function()
+        harpoon:list():add()
+        vim.notify('Added to Harpoon', vim.log.levels.INFO)
+      end, { desc = 'Harpoon: [A]dd file' })
+
+      vim.keymap.set('n', '<leader>hm', function()
+        harpoon.ui:toggle_quick_menu(harpoon:list())
+      end, { desc = 'Harpoon: Toggle [M]enu' })
+
+      -- Navigate to specific marks (1-4 for quick access)
+      vim.keymap.set('n', '<leader>h1', function()
+        harpoon:list():select(1)
+      end, { desc = 'Harpoon: File [1]' })
+
+      vim.keymap.set('n', '<leader>h2', function()
+        harpoon:list():select(2)
+      end, { desc = 'Harpoon: File [2]' })
+
+      vim.keymap.set('n', '<leader>h3', function()
+        harpoon:list():select(3)
+      end, { desc = 'Harpoon: File [3]' })
+
+      vim.keymap.set('n', '<leader>h4', function()
+        harpoon:list():select(4)
+      end, { desc = 'Harpoon: File [4]' })
+
+      -- Navigate through list
+      vim.keymap.set('n', '<leader>hp', function()
+        harpoon:list():prev()
+      end, { desc = 'Harpoon: [P]revious file' })
+
+      vim.keymap.set('n', '<leader>hn', function()
+        harpoon:list():next()
+      end, { desc = 'Harpoon: [N]ext file' })
+    end,
+  },
 }

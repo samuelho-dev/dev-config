@@ -165,6 +165,14 @@ Ghostty implements the Kitty graphics protocol, so diagrams also render there (k
 - Auto-refreshes on external changes
 - Follows current file
 
+### Quick File Navigation (Harpoon)
+
+- `<leader>ha` - Add current file to Harpoon
+- `<leader>hm` - Toggle Harpoon menu
+- `<leader>h1-4` - Jump to marked files 1-4
+- `<leader>hp/hn` - Previous/Next in Harpoon list
+- Mark frequently used files for instant access
+
 ### Multiple Cursors
 
 - `<leader>m` - Start multi-cursor mode, select word under cursor

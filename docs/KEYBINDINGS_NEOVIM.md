@@ -251,6 +251,33 @@ Project-wide search and replace with visual preview.
 
 ---
 
+## Harpoon (Quick File Navigation)
+
+Mark and navigate between frequently used files with minimal keystrokes.
+
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `<leader>ha` | Add File | Add current file to Harpoon list |
+| `<leader>hm` | Toggle Menu | Open Harpoon quick menu |
+| `<leader>h1` | Jump to File 1 | Jump to first marked file |
+| `<leader>h2` | Jump to File 2 | Jump to second marked file |
+| `<leader>h3` | Jump to File 3 | Jump to third marked file |
+| `<leader>h4` | Jump to File 4 | Jump to fourth marked file |
+| `<leader>hp` | Previous File | Navigate to previous file in Harpoon list |
+| `<leader>hn` | Next File | Navigate to next file in Harpoon list |
+
+**Workflow:**
+1. Open a frequently used file
+2. Press `<leader>ha` to add it to Harpoon
+3. Repeat for other files (up to 4 for quick access via `<leader>h1-4`)
+4. Use `<leader>h1/2/3/4` to jump instantly between marked files
+5. Use `<leader>hm` to view/edit Harpoon list in menu
+6. Use `<leader>hp/hn` to cycle through all marked files
+
+**Use Case:** Perfect for quickly switching between 4-5 files you're actively working on (e.g., component file, test file, types file, config file, documentation).
+
+---
+
 ## Formatting
 
 | Keybinding | Action | Mode |
