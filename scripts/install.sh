@@ -643,22 +643,29 @@ setup_api_keys() {
       continue
     fi
 
-    # Prompt user for API key
+    # Prompt user to configure this provider
     echo ""
-    log_info "Configure $provider_name? (Press Enter to skip)"
+    log_info "Configure $provider_name?"
     log_info "Get your API key from: $provider_url"
 
-    read -p "Enter your $provider_name API key (or press Enter to skip): " api_key
+    read -p "Do you want to configure $provider_name? (y/n): " -n 1 -r configure_choice
+    echo "" # newline after single char input
 
-    if [ -n "$api_key" ]; then
-      # Append to .zshrc.local
-      echo "" >> "$zshrc_local"
-      echo "# $provider_name API Key (added by dev-config install.sh)" >> "$zshrc_local"
-      echo "export $key_name=\"$api_key\"" >> "$zshrc_local"
-      log_success "$provider_name API key configured ✓"
-      any_configured=true
+    if [[ $configure_choice =~ ^[Yy]$ ]]; then
+      read -p "Enter your $provider_name API key: " api_key
+
+      if [ -n "$api_key" ]; then
+        # Append to .zshrc.local
+        echo "" >> "$zshrc_local"
+        echo "# $provider_name API Key (added by dev-config install.sh)" >> "$zshrc_local"
+        echo "export $key_name=\"$api_key\"" >> "$zshrc_local"
+        log_success "$provider_name API key configured ✓"
+        any_configured=true
+      else
+        log_warn "$provider_name API key was empty, skipped"
+      fi
     else
-      log_info "$provider_name API key skipped"
+      log_info "$provider_name skipped"
     fi
   done
 
