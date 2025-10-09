@@ -2,6 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Component-Specific Documentation
+
+**Each directory has detailed CLAUDE.md and README.md files for AI and user guidance:**
+
+### Configuration Components
+- **[nvim/CLAUDE.md](nvim/CLAUDE.md)** - Neovim architecture, plugin system, LSP configuration
+- **[nvim/lua/CLAUDE.md](nvim/lua/CLAUDE.md)** - Lua module organization and require paths
+- **[nvim/lua/config/CLAUDE.md](nvim/lua/config/CLAUDE.md)** - Core configuration (options, autocmds, keymaps)
+- **[nvim/lua/plugins/CLAUDE.md](nvim/lua/plugins/CLAUDE.md)** - Plugin specifications and lazy loading
+- **[nvim/lua/plugins/custom/CLAUDE.md](nvim/lua/plugins/custom/CLAUDE.md)** - Custom utility modules
+- **[tmux/CLAUDE.md](tmux/CLAUDE.md)** - Tmux configuration and TPM plugins
+- **[zsh/CLAUDE.md](zsh/CLAUDE.md)** - Zsh configuration, Oh My Zsh, Powerlevel10k
+- **[ghostty/CLAUDE.md](ghostty/CLAUDE.md)** - Ghostty terminal configuration
+
+### Scripts & Utilities
+- **[scripts/CLAUDE.md](scripts/CLAUDE.md)** - Installation script architecture and shared libraries
+- **[scripts/lib/CLAUDE.md](scripts/lib/CLAUDE.md)** - Shared Bash functions (common.sh, paths.sh)
+
+### Documentation
+- **[docs/CLAUDE.md](docs/CLAUDE.md)** - Documentation maintenance and standards
+
+**When working on a specific component, read the component's CLAUDE.md first for detailed guidance.**
+
 ## Repository Overview
 
 This is a **centralized development configuration repository** managing configs for:
