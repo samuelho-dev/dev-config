@@ -470,12 +470,12 @@ Line 12: Unused variable 'bar'
 
 ### controlsave.lua
 
-**Purpose:** Quick save functionality with industry-standard `Ctrl+S` keybinding.
+**Purpose:** Quick save functionality with industry-standard `Ctrl+S` keybinding. Integrates with TypeScript return type stripper.
 
 **Location:** `lua/plugins/custom/controlsave.lua`
 
 **Functions:**
-- `save()` - Save current buffer with error handling
+- `save()` - Save current buffer with error handling (integrates TypeScript stripper)
 - `save_all()` - Save all modified buffers
 - `format_and_save()` - Explicitly format then save
 - `setup(opts)` - Optional configuration
@@ -487,6 +487,7 @@ Line 12: Unused variable 'bar'
 - Error handling for read-only files
 - Checks for special buffer types (terminal, help, etc.)
 - Validates file has a name before saving
+- **TypeScript integration:** Automatically strips return type annotations before saving (if enabled)
 - Optional save notifications (disabled by default)
 - Integration with conform.nvim format_on_save
 - Exits insert/visual mode before saving
@@ -498,6 +499,92 @@ controlsave.setup({
   notify_on_save = true, -- Enable save notifications
 })
 ```
+
+### typescript-return-stripper.lua
+
+**Purpose:** Automatically removes TypeScript function return type annotations when saving files. Uses tree-sitter for precise AST-based removal.
+
+**Location:** `lua/plugins/custom/typescript-return-stripper.lua`
+
+**How it works:**
+1. Triggered automatically by controlsave.lua when saving TypeScript/JavaScript files
+2. Parses buffer AST using Neovim's tree-sitter API
+3. Queries for return type annotations on functions, arrow functions, methods, and interface methods
+4. Removes `: Type` annotations (including the colon) in reverse order to preserve positions
+5. Saves the modified buffer
+
+**Supported file types:**
+- `typescript` (.ts)
+- `typescriptreact` (.tsx)
+- `javascript` (.js - if using JSDoc types)
+- `javascriptreact` (.jsx)
+
+**What gets removed:**
+```typescript
+// Before save:
+function foo(): string { return 'test'; }
+const bar = (): number => 42;
+class X { method(): void {} }
+
+// After save (Ctrl+S):
+function foo() { return 'test'; }
+const bar = () => 42;
+class X { method() {} }
+
+// Parameter types are PRESERVED:
+function withParams(a: string, b: number): string { }
+// After save:
+function withParams(a: string, b: number) { }
+```
+
+**Functions:**
+- `find_return_types(bufnr)` - Find all return type annotations via tree-sitter query
+- `strip_return_types(bufnr)` - Remove return type annotations from buffer
+- `on_save(bufnr)` - Hook called before save (checks filetype and enabled status)
+- `preview_changes(bufnr)` - Preview what would be removed (debug command)
+- `test_query(bufnr)` - Test tree-sitter parser availability (debug command)
+- `has_parser(lang)` - Check if tree-sitter parser is installed
+- `setup(opts)` - Configuration
+
+**Debug Commands (defined in config/keymaps.lua:82-97):**
+- `:TSStripPreview` - Preview return types that would be removed (doesn't modify buffer)
+- `:TSStripTest` - Test tree-sitter query and parser availability
+- `:TSStripNow` - Immediately strip return types without saving
+
+**Configuration:**
+```lua
+local stripper = require 'plugins.custom.typescript-return-stripper'
+stripper.setup({
+  enabled = true,  -- Enable/disable feature
+  filetypes = { 'typescript', 'typescriptreact', 'javascript', 'javascriptreact' },
+  dry_run = false,  -- Set true for testing (shows count but doesn't modify)
+  notify_on_strip = false,  -- Show notification when types are removed
+})
+```
+
+**Tree-sitter Query:**
+```lua
+(function_declaration
+  return_type: (type_annotation) @return_type)
+
+(arrow_function
+  return_type: (type_annotation) @return_type)
+
+(method_definition
+  return_type: (type_annotation) @return_type)
+
+(method_signature
+  return_type: (type_annotation) @return_type)
+```
+
+**Implementation details:**
+- Uses `vim.treesitter.get_parser()` and `vim.treesitter.query.parse()`
+- Iterates matches with `:iter_matches()` and captures node ranges
+- Deletes in reverse order (bottom-to-top) to preserve positions during multi-deletion
+- Includes the colon before the type annotation in deletion range
+- Safe: Only modifies TypeScript/JavaScript files with valid tree-sitter parsers
+
+**Integration:** Automatically integrated with controlsave.lua - runs before every save for supported file types.
 
 ### mermaid.lua
 

@@ -11,6 +11,7 @@ M.config = {
 
 --- Save the current buffer
 --- Works in normal, insert, and visual mode
+--- Integrates with TypeScript return type stripper if enabled
 --- @return nil
 function M.save()
   local modified = vim.bo.modified
@@ -34,6 +35,12 @@ function M.save()
   if filename == '' then
     vim.notify('No file name, use :saveas <filename>', vim.log.levels.WARN)
     return
+  end
+
+  -- Strip TypeScript return types before saving (if enabled)
+  local stripper_ok, stripper = pcall(require, 'plugins.custom.typescript-return-stripper')
+  if stripper_ok then
+    stripper.on_save(0)
   end
 
   -- Save the file

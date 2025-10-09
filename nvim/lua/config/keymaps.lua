@@ -54,7 +54,7 @@ vim.keymap.set('i', '<C-s>', function()
 end, { desc = 'Save file' })
 vim.keymap.set('v', '<C-s>', function()
   -- Exit visual mode first, then save
-  vim.cmd 'normal! '
+  vim.cmd 'normal! <Esc>'
   controlsave.save()
 end, { desc = 'Save file' })
 
@@ -78,3 +78,27 @@ vim.keymap.set('n', '<leader>Rc', function()
   vim.cmd 'source $MYVIMRC'
   vim.notify('Reloaded Neovim config', vim.log.levels.INFO)
 end, { desc = '[R]eload Neovim [C]onfig' })
+
+-- TypeScript Return Type Stripper - Debug Commands
+vim.api.nvim_create_user_command('TSStripPreview', function()
+  local stripper = require 'plugins.custom.typescript-return-stripper'
+  stripper.preview_changes(0)
+end, { desc = 'Preview TypeScript return types that would be removed' })
+
+vim.api.nvim_create_user_command('TSStripTest', function()
+  local stripper = require 'plugins.custom.typescript-return-stripper'
+  stripper.test_query(0)
+end, { desc = 'Test tree-sitter query for TypeScript' })
+
+vim.api.nvim_create_user_command('TSStripNow', function()
+  local stripper = require 'plugins.custom.typescript-return-stripper'
+  local count = stripper.strip_return_types(0)
+  vim.notify(string.format('Removed %d return type annotation%s', count, count == 1 and '' or 's'), vim.log.levels.INFO)
+end, { desc = 'Immediately strip return types without saving' })
+
+vim.api.nvim_create_user_command('TSStripDebug', function()
+  local stripper = require 'plugins.custom.typescript-return-stripper'
+  stripper.config.debug = not stripper.config.debug
+  local status = stripper.config.debug and 'ENABLED' or 'DISABLED'
+  vim.notify('TypeScript Stripper Debug: ' .. status, vim.log.levels.INFO)
+end, { desc = 'Toggle TypeScript stripper debug logging' })
