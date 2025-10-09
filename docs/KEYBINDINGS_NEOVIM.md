@@ -105,45 +105,10 @@ Visual indentation guides are **always active** - no keybindings needed.
 
 ## Navigation
 
-### Buffer Navigation (Barbar)
-
-Numbered buffer navigation with visual tabline.
-
-| Keybinding | Action | Description |
-|------------|--------|-------------|
-| `<M-1>` to `<M-9>` | Go to Buffer 1-9 | Jump directly to numbered buffer |
-| `<M-0>` | Go to Last Buffer | Jump to last buffer in list |
-| `<M-,>` | Previous Buffer | Navigate to previous buffer |
-| `<M-.>` | Next Buffer | Navigate to next buffer |
-| `<M-<>` | Move Buffer Left | Re-order current buffer to the left |
-| `<M->>` | Move Buffer Right | Re-order current buffer to the right |
-| `<M-p>` | Pin/Unpin Buffer | Pin buffer to prevent closing |
-| `<M-c>` | Close Buffer | Close current buffer |
-| `<leader>bp` | Pick Buffer | Magic buffer-picking mode (shows letters) |
-| `<leader>bb` | Sort by Number | Sort buffers by buffer number |
-| `<leader>bd` | Sort by Directory | Sort buffers by directory |
-| `<leader>bl` | Sort by Language | Sort buffers by file type |
-| `<leader>bw` | Sort by Window | Sort buffers by window number |
-| `<leader><leader>` | Find Buffers | Find existing buffers (Telescope) |
-
-**Features:**
-- 🎯 Direct navigation with `Alt+1-9` (like browser tabs)
-- 📌 Pin frequently used buffers
-- 🔤 Buffer picking mode (`<leader>bp`) shows letters for quick selection
-- 🎨 Visual tabline with file icons, git status, and diagnostics
-- 🌳 Neo-tree sidebar integration
-
-**Workflow:**
-1. Open files → Buffers appear in tabline with numbers
-2. Press `Alt+1-9` to jump directly to buffer
-3. Use `Alt+,/.` to cycle through buffers
-4. Press `Alt+p` to pin important buffers
-5. Close with `Alt+c` (pinned buffers won't close)
-
-**Opening Files into Specific Buffers:**
-1. Press `<leader>bp` → Activates buffer picker (shows letters next to each buffer)
-2. Press the letter (e.g., 'a', 'b', 'c') → Jumps to that buffer
-3. Open file from Neo-tree → File opens in the selected buffer
+### Buffer Navigation
+| Keybinding | Action |
+|------------|--------|
+| `<leader><leader>` | Find existing buffers (Telescope) |
 
 ### Window Navigation
 | Keybinding | Action |
