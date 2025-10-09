@@ -6,27 +6,49 @@ return {
     'milanglacier/minuet-ai.nvim',
     event = 'InsertEnter',
     dependencies = { 'nvim-lua/plenary.nvim' },
-    -- Only load if API key is set
+    -- Load if any supported API key is set (priority: OpenRouter > ZhipuAI > OpenAI)
     cond = function()
-      return vim.env.ZHIPUAI_API_KEY ~= nil and vim.env.ZHIPUAI_API_KEY ~= ''
+      return vim.env.OPENROUTER_API_KEY ~= nil or vim.env.ZHIPUAI_API_KEY ~= nil or vim.env.OPENAI_API_KEY ~= nil
     end,
-    opts = {
-      provider = 'openai_compatible',
-      provider_options = {
-        openai_compatible = {
+    opts = function()
+      -- Auto-detect available provider (priority order)
+      local provider_config = {}
+
+      if vim.env.OPENROUTER_API_KEY then
+        provider_config = {
+          endpoint = 'https://openrouter.ai/api/v1',
+          api_key = 'OPENROUTER_API_KEY',
+          model = 'anthropic/claude-3.5-sonnet',
+        }
+      elseif vim.env.ZHIPUAI_API_KEY then
+        provider_config = {
           endpoint = 'https://open.bigmodel.cn/api/paas/v4',
           api_key = 'ZHIPUAI_API_KEY',
           model = 'glm-4.5-chat',
-          optional = {
-            timeout = 6,
-          },
+        }
+      elseif vim.env.OPENAI_API_KEY then
+        provider_config = {
+          endpoint = 'https://api.openai.com/v1',
+          api_key = 'OPENAI_API_KEY',
+          model = 'gpt-4-turbo',
+        }
+      end
+
+      return {
+        provider = 'openai_compatible',
+        provider_options = {
+          openai_compatible = vim.tbl_extend('force', provider_config, {
+            optional = {
+              timeout = 10,
+            },
+          }),
         },
-      },
-      blink = {
-        auto_trigger = true,
-        score_bias = 120,
-      },
-    },
+        blink = {
+          auto_trigger = true,
+          score_bias = 120,
+        },
+      }
+    end,
   },
 
   -- AI chat companion (codecompanion)
@@ -37,47 +59,84 @@ return {
       'nvim-lua/plenary.nvim',
       'nvim-treesitter/nvim-treesitter',
     },
-    -- Only load if API key is set
+    -- Load if any supported API key is set
     cond = function()
-      return vim.env.ZHIPUAI_API_KEY ~= nil and vim.env.ZHIPUAI_API_KEY ~= ''
+      return vim.env.OPENROUTER_API_KEY ~= nil or vim.env.ZHIPUAI_API_KEY ~= nil or vim.env.OPENAI_API_KEY ~= nil or vim.env.ANTHROPIC_API_KEY ~= nil
     end,
-    opts = {
-      adapters = {
-        http = {
-          glm45 = function()
-            return require('codecompanion.adapters').extend('openai', {
-              name = 'glm45',
-              formatted_name = 'GLM 4.5',
-              url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-              env = { api_key = 'ZHIPUAI_API_KEY' },
-              headers = {
-                ['Content-Type'] = 'application/json',
-                Authorization = 'Bearer ${api_key}',
+    opts = function()
+      local adapters = {}
+
+      -- OpenRouter adapter (supports multiple models via one API)
+      if vim.env.OPENROUTER_API_KEY then
+        adapters.openrouter = function()
+          return require('codecompanion.adapters').extend('openai', {
+            name = 'openrouter',
+            url = 'https://openrouter.ai/api/v1/chat/completions',
+            env = { api_key = 'OPENROUTER_API_KEY' },
+            headers = {
+              ['Content-Type'] = 'application/json',
+              ['Authorization'] = 'Bearer ${api_key}',
+              ['HTTP-Referer'] = 'https://github.com/samuelho-dev/dev-config',
+              ['X-Title'] = 'Neovim CodeCompanion',
+            },
+            schema = {
+              model = {
+                default = 'anthropic/claude-3.5-sonnet',
               },
-              schema = {
-                model = {
-                  default = 'glm-4.5-chat',
-                  choices = {
-                    ['glm-4.5-chat'] = {
-                      label = 'GLM 4.5',
-                      opts = { has_vision = false },
-                    },
-                  },
-                },
+            },
+          })
+        end
+      end
+
+      -- ZhipuAI GLM adapter
+      if vim.env.ZHIPUAI_API_KEY then
+        adapters.zhipuai = function()
+          return require('codecompanion.adapters').extend('openai', {
+            name = 'zhipuai',
+            url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+            env = { api_key = 'ZHIPUAI_API_KEY' },
+            headers = {
+              ['Content-Type'] = 'application/json',
+              Authorization = 'Bearer ${api_key}',
+            },
+            schema = {
+              model = {
+                default = 'glm-4.5-chat',
               },
-              opts = {
-                tools = false,
-              },
-            })
-          end,
+            },
+            opts = {
+              tools = false,
+            },
+          })
+        end
+      end
+
+      -- OpenAI and Anthropic use built-in adapters (just need env vars set)
+
+      -- Determine default adapter (priority order)
+      local default_adapter = 'openai' -- fallback
+      if vim.env.OPENROUTER_API_KEY then
+        default_adapter = 'openrouter'
+      elseif vim.env.ANTHROPIC_API_KEY then
+        default_adapter = 'anthropic'
+      elseif vim.env.ZHIPUAI_API_KEY then
+        default_adapter = 'zhipuai'
+      elseif vim.env.OPENAI_API_KEY then
+        default_adapter = 'openai'
+      end
+
+      return {
+        adapters = adapters,
+        strategies = {
+          chat = {
+            adapter = default_adapter,
+          },
+          inline = {
+            adapter = default_adapter,
+          },
         },
-      },
-      strategies = {
-        chat = {
-          adapter = 'glm45',
-        },
-      },
-    },
+      }
+    end,
   },
 
   -- REPL integration for AI assistants (aichat, claude, aider) and languages

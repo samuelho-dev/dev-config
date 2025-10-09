@@ -43,13 +43,16 @@ main() {
   # Step 5: Create .zshrc.local if it doesn't exist
   create_zshrc_local
 
-  # Step 6: Auto-install Neovim plugins
+  # Step 6: Setup AI provider API keys
+  setup_api_keys
+
+  # Step 7: Auto-install Neovim plugins
   install_neovim_plugins
 
-  # Step 7: Auto-install tmux plugins
+  # Step 8: Auto-install tmux plugins
   install_tmux_plugins
 
-  # Step 8: Verify installation
+  # Step 9: Verify installation
   verify_installation
 
   # Done!
@@ -604,6 +607,76 @@ EOF
   else
     log_success ".zshrc.local already exists"
   fi
+}
+
+# =============================================================================
+# AI Provider API Key Setup
+# =============================================================================
+
+setup_api_keys() {
+  log_section "🔑 Setting up AI provider API keys..."
+
+  local zshrc_local="$HOME/.zshrc.local"
+
+  # Ensure .zshrc.local exists
+  if [ ! -f "$zshrc_local" ]; then
+    touch "$zshrc_local"
+  fi
+
+  # Array of providers to configure (format: KEY_NAME:Provider Name:Key Prefix:URL)
+  local providers=(
+    "OPENROUTER_API_KEY:OpenRouter:sk-or-v1-:https://openrouter.ai/keys"
+    "ZHIPUAI_API_KEY:ZhipuAI GLM:your-key-:https://open.bigmodel.cn"
+    "OPENAI_API_KEY:OpenAI:sk-:https://platform.openai.com/api-keys"
+    "ANTHROPIC_API_KEY:Anthropic Claude:sk-ant-:https://console.anthropic.com"
+  )
+
+  local any_configured=false
+
+  for provider_config in "${providers[@]}"; do
+    IFS=':' read -r key_name provider_name key_prefix provider_url <<< "$provider_config"
+
+    # Check if key already exists in .zshrc.local
+    if grep -q "export $key_name=" "$zshrc_local" 2>/dev/null; then
+      log_success "$provider_name API key already configured ✓"
+      any_configured=true
+      continue
+    fi
+
+    # Prompt user for API key
+    echo ""
+    log_info "Configure $provider_name? (Press Enter to skip)"
+    log_info "Get your API key from: $provider_url"
+
+    read -p "Enter your $provider_name API key (or press Enter to skip): " api_key
+
+    if [ -n "$api_key" ]; then
+      # Append to .zshrc.local
+      echo "" >> "$zshrc_local"
+      echo "# $provider_name API Key (added by dev-config install.sh)" >> "$zshrc_local"
+      echo "export $key_name=\"$api_key\"" >> "$zshrc_local"
+      log_success "$provider_name API key configured ✓"
+      any_configured=true
+    else
+      log_info "$provider_name API key skipped"
+    fi
+  done
+
+  # Source the updated file if any keys were configured
+  if [ "$any_configured" = true ]; then
+    # shellcheck disable=SC1090
+    source "$zshrc_local" 2>/dev/null || true
+  fi
+
+  echo ""
+  if [ "$any_configured" = true ]; then
+    log_success "API key configuration complete!"
+  else
+    log_info "No API keys configured (you can add them later by editing: ~/.zshrc.local)"
+  fi
+
+  log_info "Note: Restart your terminal or run 'source ~/.zshrc' to load the keys"
+  log_info "AI plugins (minuet, codecompanion) will only load if at least one API key is set"
 }
 
 # =============================================================================
