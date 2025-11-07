@@ -307,6 +307,55 @@ Then restart tmux and Neovim to apply changes.
 
 ---
 
+## Installation Methods
+
+### Method 1: Chezmoi (Recommended for automation)
+
+Chezmoi-based installation for reproducible environments:
+
+```bash
+# Local development
+./scripts/install-chezmoi.sh
+
+# Or install directly from GitHub
+chezmoi init --apply https://github.com/samuelho-dev/dev-config
+```
+
+**Benefits:**
+- ✅ Automatic installation in Kubernetes DevPod environments
+- ✅ Machine detection (DevPod vs local)
+- ✅ Template-based configuration (environment-specific settings)
+- ✅ Zero-touch setup on new machines
+
+### Method 2: Manual Symlinks (Legacy)
+
+Traditional symlink-based installation:
+
+```bash
+./scripts/install.sh
+```
+
+**Use when:**
+- You prefer manual control over symlink creation
+- Working on machines without Chezmoi support
+- Backward compatibility with existing setup
+
+### Kubernetes DevPod Integration
+
+DevPod environments automatically apply dotfiles via Chezmoi init container on startup. No manual installation required.
+
+**How it works:**
+1. DevPod starts with persistent home directory (`/home/vscode`)
+2. Chezmoi init container runs before main container
+3. Dotfiles cloned from GitHub and applied automatically
+4. Workspace ready with all tools and configurations
+
+**Configuration:** See `deploy/helm/charts/applications/ai-dev-env/values.yaml` in the ai-dev-env repository.
+
+For more details about Chezmoi, see [CHEZMOI.md](CHEZMOI.md).
+
+---
+
 ## Features
 
 ### Docker

@@ -1,3 +1,8 @@
+---
+id: CLAUDE
+aliases: []
+tags: []
+---
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with Neovim configuration in this directory.
@@ -7,17 +12,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with Ne
 This Neovim configuration uses a **modular architecture** - splitting configuration into logical, maintainable modules organized by function.
 
 **Design Philosophy:**
+
 - Modular structure with separate concerns (config vs plugins)
 - Plugin categorization by purpose (editor, lsp, git, ai, etc.)
 - Custom utilities in dedicated subdirectory
 - Version-locked plugins via `lazy-lock.json` (committed to git)
 - Minimal abstractions - every module is understandable
-
-**Key Improvements Over Monolithic Config:**
-- 94% reduction in main file size (1823 lines → 81 lines)
-- Easy to find and modify specific features
-- Clear separation of core config and plugins
-- Scalable architecture for future additions
 
 ## File Structure
 
@@ -59,12 +59,14 @@ nvim/
 Lazy.nvim automatically installs itself on first launch and manages all plugins.
 
 **Important commands:**
+
 - `:Lazy` - Open plugin manager UI
 - `:Lazy sync` - Install/update/remove plugins
 - `:Lazy restore` - Restore to lazy-lock.json versions
 - `:Lazy update` - Update all plugins
 
 **Plugin imports (init.lua:46-56):**
+
 ```lua
 require('lazy').setup({
   { import = 'plugins.editor' },      -- File explorer, fuzzy finder, search
@@ -88,6 +90,7 @@ require 'config'  -- Loads lua/config/init.lua
 ```
 
 This loads `lua/config/init.lua`, which in turn loads:
+
 - `config.options` - All vim options
 - `config.autocmds` - Autocommands
 - `config.keymaps` - Core keybindings
@@ -97,6 +100,7 @@ This loads `lua/config/init.lua`, which in turn loads:
 **Location:** `lua/plugins/lsp.lua`
 
 **LSP Servers (lsp.lua:149-166):**
+
 ```lua
 local servers = {
   ts_ls = {},      -- TypeScript/JavaScript
@@ -112,6 +116,7 @@ local servers = {
 ```
 
 **Adding a new LSP:**
+
 1. Edit `lua/plugins/lsp.lua:149`
 2. Add to `servers` table:
    ```lua
@@ -122,6 +127,7 @@ local servers = {
 4. Run `:Mason` to install the server
 
 **LSP Keybindings (defined in LspAttach autocommand, lsp.lua:38-68):**
+
 - `grd` - Go to definition
 - `grr` - Find references
 - `gri` - Go to implementation
@@ -133,6 +139,7 @@ local servers = {
 - `grD` - Go to declaration
 
 **Dependencies:**
+
 - `mason.nvim` - LSP server installer
 - `mason-lspconfig.nvim` - Bridge between Mason and lspconfig
 - `mason-tool-installer.nvim` - Auto-install configured tools
@@ -143,6 +150,7 @@ local servers = {
 **Location:** `lua/plugins/lsp.lua:192-233`
 
 **Managed by Conform.nvim + Mason:**
+
 ```lua
 formatters_by_ft = {
   lua = { 'stylua' },
@@ -156,6 +164,7 @@ formatters_by_ft = {
 ```
 
 **Auto-installed formatters (lsp.lua:170-174):**
+
 - `stylua` - Lua formatter
 - `prettier` - JavaScript/TypeScript/JSON/YAML/Markdown
 - `ruff` - Python formatter and linter
@@ -164,6 +173,7 @@ formatters_by_ft = {
 **Manual format:** `<leader>f`
 
 **Format on save configuration (lsp.lua:208-220):**
+
 ```lua
 format_on_save = function(bufnr)
   -- Disable for C/C++
@@ -181,23 +191,27 @@ end,
 **Location:** `lua/plugins/completion.lua`
 
 **Components:**
+
 - `blink.cmp` - Modern completion engine (fast, Lua-native)
 - `LuaSnip` - Snippet engine
 - `lazydev.nvim` - Neovim Lua API completion
 
 **Configuration highlights:**
+
 - Preset: `super-tab` (Tab to accept, Ctrl+N/P to cycle)
 - Documentation: Manual with `<c-space>` (auto_show = false)
 - Sources: LSP, path, snippets, lazydev
 - Fuzzy matcher: Lua implementation (no pkg-config needed)
 
 **Why Lua fuzzy matcher?**
+
 ```lua
 fuzzy = {
   implementation = 'lua',
   prebuilt_binaries = { download = false },
 },
 ```
+
 This avoids native build steps requiring pkg-config, making installation more reliable across platforms.
 
 **Signature help:** Enabled (shows function signatures while typing)
@@ -211,6 +225,7 @@ All AI plugins consolidated in one file for easy management.
 **Components:**
 
 **1. minuet-ai (AI-powered completion)**
+
 - OpenAI-compatible API using GLM 4.5 model
 - Integrates with blink.cmp
 - Auto-triggers inline completions
@@ -223,12 +238,14 @@ end,
 ```
 
 **2. codecompanion (AI chat assistant)**
+
 - Chat interface for code assistance
 - GLM 4.5 adapter configured
 - Commands: `:CodeCompanionChat`, `:CodeCompanion`
 - **Conditional loading:** Same as minuet-ai
 
 **3. yarepl (REPL integration)**
+
 - Connect to AI assistants (aichat, claude, aider)
 - Also supports language REPLs (python, R, bash, etc.)
 - Commands: `:REPLStart <type>`, `:REPLFocus`, `:REPLSendLine`, `:REPLSendVisual`
@@ -240,6 +257,7 @@ end,
   - `ipython`, `python`, `radian`, `R`, `bash`, `zsh` - Language REPLs
 
 **Agent root configuration:**
+
 ```lua
 local agent_root = vim.env.CLAUDE_AGENT_ROOT or vim.fn.expand '~/Projects/claude-code-agent'
 ```
@@ -249,16 +267,19 @@ local agent_root = vim.env.CLAUDE_AGENT_ROOT or vim.fn.expand '~/Projects/claude
 ### editor.lua (5 plugins)
 
 **neo-tree.nvim** - File explorer
+
 - Keybindings: `\` or `<leader>e` to toggle
 - Auto-refresh on external changes (`use_libuv_file_watcher = true`)
 - Follows current file
 - Shows hidden files and gitignored files
 
 **nvim-lsp-file-operations** - LSP-aware file operations
+
 - Updates imports when files are moved/renamed in neo-tree
 - Automatic integration
 
 **telescope.nvim** - Fuzzy finder
+
 - `<leader>sf` - Find files
 - `<leader>sg` - Live grep
 - `<leader>sh` - Search help
@@ -267,6 +288,7 @@ local agent_root = vim.env.CLAUDE_AGENT_ROOT or vim.fn.expand '~/Projects/claude
 - Includes fzf-native for faster searching
 
 **nvim-spectre** - Search and replace
+
 - `<leader>rr` - Open Spectre (project-wide)
 - `<leader>rw` - Replace word under cursor
 - `<leader>rf` - Replace in current file
@@ -274,6 +296,7 @@ local agent_root = vim.env.CLAUDE_AGENT_ROOT or vim.fn.expand '~/Projects/claude
 - Uses ripgrep + sed
 
 **guess-indent.nvim** - Auto-detect indentation
+
 - Automatically detects tabstop and shiftwidth
 - Works on file open
 
@@ -282,6 +305,7 @@ local agent_root = vim.env.CLAUDE_AGENT_ROOT or vim.fn.expand '~/Projects/claude
 See "LSP Configuration" and "Formatters & Linters" sections above.
 
 **Key plugins:**
+
 - `nvim-lspconfig` - LSP client configurations
 - `mason.nvim` - LSP/formatter installer
 - `mason-lspconfig.nvim` - Mason + lspconfig bridge
@@ -308,25 +332,30 @@ See "AI Integration" section above.
 ### git.lua (5 plugins)
 
 **gitsigns.nvim** - Git gutter signs
+
 - Shows added/changed/deleted lines in sign column
 - No specific keybindings (integrated with statusline)
 
 **lazygit.nvim** - Lazygit TUI integration
+
 - `<leader>gg` - Open lazygit
 - `<leader>gf` - Lazygit for current file
 - Best git workflow tool
 
 **octo.nvim** - GitHub PR/issue management
+
 - `<leader>gp` - List Pull Requests
 - `<leader>gi` - List Issues
 - Requires `gh` CLI authenticated
 
 **diffview.nvim** - Better diff viewing
+
 - `<leader>gd` - Open diff view
 - `<leader>gh` - File history
 - `<leader>gH` - Branch history
 
 **git-conflict.nvim** - Visual merge conflict resolution
+
 - `<leader>gco` - Choose ours
 - `<leader>gct` - Choose theirs
 - `<leader>gcb` - Choose both
@@ -338,6 +367,7 @@ See "AI Integration" section above.
 ### markdown.lua (6 plugins)
 
 **obsidian.nvim** - Obsidian vault integration
+
 - **Dynamic vault detection** - Automatically searches upward for `.obsidian` directory
 - Zero hardcoded paths - works on any machine, any directory structure
 - Opens from any location - auto-detects vault root or uses current directory
@@ -351,29 +381,35 @@ See "AI Integration" section above.
 - **Cross-machine compatible:** Single dynamic workspace adapts to any system
 
 **render-markdown.nvim** - Beautiful in-buffer markdown rendering
+
 - Code blocks, headings, lists styled visually
 - Custom Mermaid diagram handler (see custom/mermaid.lua)
 - Requires treesitter for parsing
 
 **image.nvim** - Image rendering (for Mermaid diagrams)
+
 - Kitty protocol backend
 - Works in Ghostty terminal
 - Integrates with render-markdown
 
 **markdown-preview.nvim** - Browser preview
+
 - `<leader>mp` - Toggle browser preview
 - Live updates as you type
 
 **bullets.vim** - Better bullet/task management
+
 - Auto-formatting for lists and checkboxes
 
 **outline.nvim** - Document outline
+
 - `<leader>o` - Toggle outline sidebar
 - Navigate document structure
 
 ### ui.lua (6 plugins)
 
 **which-key.nvim** - Keybinding hints
+
 - Shows pending keybindings after leader key
 - Documents key groups:
   - `<leader>s` - [S]earch
@@ -382,25 +418,30 @@ See "AI Integration" section above.
   - `<leader>h` - Git [H]unk
 
 **tokyonight.nvim** - Colorscheme
+
 - Variant: tokyonight-night
 - Italics disabled in comments
 - Loaded with high priority
 
 **todo-comments.nvim** - Highlight TODOs in comments
+
 - Highlights TODO, FIXME, NOTE, etc.
 - No signs in gutter
 
 **mini.nvim** - Collection of small plugins
+
 - `mini.ai` - Better text objects
 - `mini.surround` - Add/delete/change surroundings
 - `mini.statusline` - Simple statusline
 
 **vim-visual-multi** - Multiple cursors
+
 - `<leader>m` - Start multi-cursor, select word
 - `<C-Down>` / `<C-Up>` - Add cursor vertically
 - **Note:** Remapped from `<C-n>` to avoid blink.cmp conflict
 
 **indent-blankline.nvim** - Indentation guides
+
 - Shows vertical lines for indentation
 - Scope highlighting for current block
 - Excluded from special buffers (terminal, help, etc.)
@@ -410,11 +451,13 @@ See "AI Integration" section above.
 **nvim-treesitter** - Syntax highlighting and code understanding
 
 **Installed parsers:**
+
 - Core: bash, c, diff, html, lua, luadoc, markdown, query, vim, vimdoc
 - Web: javascript, typescript, tsx, jsdoc, json, yaml, toml, css
 - Languages: python
 
 **Features:**
+
 - `auto_install = true` - Installs missing parsers automatically
 - Highlight enabled
 - Indent enabled (except Ruby)
@@ -423,6 +466,7 @@ See "AI Integration" section above.
 ### tools.lua (1 plugin)
 
 **csvview.nvim** - Modern CSV viewer
+
 - Filetype trigger: `csv`
 - Display mode: `border` (shows column separators)
 - Uses virtual text (doesn't modify file)
@@ -441,14 +485,17 @@ Located in `lua/plugins/custom/` - these are not lazy.nvim plugin specs, but uti
 **Location:** `lua/plugins/custom/diagnostics-copy.lua`
 
 **Functions:**
+
 - `copy_errors_only()` - Copy only ERROR severity diagnostics
 - `copy_all_diagnostics()` - Copy all diagnostics grouped by severity
 
 **Keybindings (defined in config/keymaps.lua:41-43):**
+
 - `<leader>ce` - Copy Errors only
 - `<leader>cd` - Copy all Diagnostics
 
 **Output format:**
+
 ```
 === Diagnostics for /path/to/file.ts ===
 
@@ -461,6 +508,7 @@ Line 12: Unused variable 'bar'
 ```
 
 **Implementation notes:**
+
 - Uses `vim.diagnostic.get(bufnr)` to fetch diagnostics
 - Filters by severity: `vim.diagnostic.severity.ERROR`, `.WARN`, `.INFO`, `.HINT`
 - Copies to both `+` and `*` registers for cross-platform compatibility
@@ -475,15 +523,18 @@ Line 12: Unused variable 'bar'
 **Location:** `lua/plugins/custom/controlsave.lua`
 
 **Functions:**
+
 - `save()` - Save current buffer with error handling (integrates TypeScript stripper)
 - `save_all()` - Save all modified buffers
 - `format_and_save()` - Explicitly format then save
 - `setup(opts)` - Optional configuration
 
 **Keybindings (defined in config/keymaps.lua:46-59):**
+
 - `<C-s>` - Save file (normal, insert, visual mode)
 
 **Features:**
+
 - Error handling for read-only files
 - Checks for special buffer types (terminal, help, etc.)
 - Validates file has a name before saving
@@ -493,6 +544,7 @@ Line 12: Unused variable 'bar'
 - Exits insert/visual mode before saving
 
 **Configuration (optional):**
+
 ```lua
 local controlsave = require 'plugins.custom.controlsave'
 controlsave.setup({
@@ -507,6 +559,7 @@ controlsave.setup({
 **Location:** `lua/plugins/custom/typescript-return-stripper.lua`
 
 **How it works:**
+
 1. Triggered automatically by controlsave.lua when saving TypeScript/JavaScript files
 2. Parses buffer AST using Neovim's tree-sitter API
 3. Queries for return type annotations on functions, arrow functions, methods, and interface methods
@@ -514,30 +567,41 @@ controlsave.setup({
 5. Saves the modified buffer
 
 **Supported file types:**
+
 - `typescript` (.ts)
 - `typescriptreact` (.tsx)
 - `javascript` (.js - if using JSDoc types)
 - `javascriptreact` (.jsx)
 
 **What gets removed:**
+
 ```typescript
 // Before save:
-function foo(): string { return 'test'; }
+function foo(): string {
+  return "test";
+}
 const bar = (): number => 42;
-class X { method(): void {} }
+class X {
+  method(): void {}
+}
 
 // After save (Ctrl+S):
-function foo() { return 'test'; }
+function foo() {
+  return "test";
+}
 const bar = () => 42;
-class X { method() {} }
+class X {
+  method() {}
+}
 
 // Parameter types are PRESERVED:
-function withParams(a: string, b: number): string { }
+function withParams(a: string, b: number): string {}
 // After save:
-function withParams(a: string, b: number) { }
+function withParams(a: string, b: number) {}
 ```
 
 **Functions:**
+
 - `find_return_types(bufnr)` - Find all return type annotations via tree-sitter query
 - `strip_return_types(bufnr)` - Remove return type annotations from buffer
 - `on_save(bufnr)` - Hook called before save (checks filetype and enabled status)
@@ -547,11 +611,13 @@ function withParams(a: string, b: number) { }
 - `setup(opts)` - Configuration
 
 **Debug Commands (defined in config/keymaps.lua:82-97):**
+
 - `:TSStripPreview` - Preview return types that would be removed (doesn't modify buffer)
 - `:TSStripTest` - Test tree-sitter query and parser availability
 - `:TSStripNow` - Immediately strip return types without saving
 
 **Configuration:**
+
 ```lua
 local stripper = require 'plugins.custom.typescript-return-stripper'
 stripper.setup({
@@ -563,6 +629,7 @@ stripper.setup({
 ```
 
 **Tree-sitter Query:**
+
 ```lua
 (function_declaration
   return_type: (type_annotation) @return_type)
@@ -578,6 +645,7 @@ stripper.setup({
 ```
 
 **Implementation details:**
+
 - Uses `vim.treesitter.get_parser()` and `vim.treesitter.query.parse()`
 - Iterates matches with `:iter_matches()` and captures node ranges
 - Deletes in reverse order (bottom-to-top) to preserve positions during multi-deletion
@@ -595,11 +663,13 @@ stripper.setup({
 **Integration:** Custom handler for render-markdown.nvim (markdown.lua:73-80)
 
 **Requirements:**
+
 - `@mermaid-js/mermaid-cli` (`mmdc` command)
 - ImageMagick
 - `image.nvim` plugin
 
 **How it works:**
+
 1. Detects Mermaid code blocks via treesitter
 2. Generates PNG images using `mmdc` CLI
 3. Caches images in `~/.cache/nvim/mermaid-diagrams/`
@@ -607,11 +677,13 @@ stripper.setup({
 5. Updates only when content changes (hash-based caching)
 
 **State management:**
+
 - Per-buffer state tracking
 - Cleanup on buffer wipeout
 - Scheduled rendering (batch processing)
 
 **Error handling:**
+
 - Checks for `mmdc` executable
 - One-time notification if CLI missing
 - Graceful failure if image rendering not available
@@ -623,11 +695,13 @@ stripper.setup({
 Critical for Claude Code workflows:
 
 **options.lua:88-90:**
+
 ```lua
 vim.o.autoread = true
 ```
 
 **autocmds.lua:4-17:**
+
 ```lua
 vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'CursorHoldI' }, {
   command = 'checktime',
@@ -666,6 +740,7 @@ The `doautocmd FileType csv` line is essential - without it, the FileType event 
 - `hide_gitignored = false` - Show gitignored files
 
 Keybindings:
+
 - `\` or `<leader>e` - Toggle Neo-tree
 
 ### Python Virtual Environment Detection (config/options.lua:11-21)
@@ -728,6 +803,7 @@ return {
 ```
 
 Then add import in `init.lua:56`:
+
 ```lua
 { import = 'plugins.mycategory' },
 ```
@@ -748,6 +824,7 @@ return M
 ```
 
 Then require in keymaps or other files:
+
 ```lua
 local myutil = require 'plugins.custom.myutil'
 vim.keymap.set('n', '<leader>x', myutil.do_something)
@@ -756,6 +833,7 @@ vim.keymap.set('n', '<leader>x', myutil.do_something)
 ## Troubleshooting
 
 ### Plugin issues
+
 ```vim
 :checkhealth        " Diagnose all issues
 :Lazy sync          " Re-sync plugins
@@ -764,15 +842,18 @@ vim.keymap.set('n', '<leader>x', myutil.do_something)
 ```
 
 ### Diagnostics not working
+
 1. Check LSP attached: `:LspInfo`
 2. Check diagnostics config: `:lua vim.print(vim.diagnostic.config())`
 3. Check custom module loaded: `:lua print(vim.inspect(require('plugins.custom.diagnostics-copy')))`
 
 ### Completion not working
+
 1. Check blink.cmp loaded: `:Lazy`
 2. Check sources: `:lua vim.print(require('blink.cmp').get_config())`
 
 ### AI plugins not loading
+
 1. Check environment variable: `:lua print(vim.env.ZHIPUAI_API_KEY)`
 2. If missing, set in shell before launching Neovim:
    ```bash
@@ -781,6 +862,7 @@ vim.keymap.set('n', '<leader>x', myutil.do_something)
    ```
 
 ### CSV plugin not loading
+
 1. Open CSV file
 2. Check filetype: `:set filetype?` (should be `csv`)
 3. Check plugin loaded: `:Lazy` → search for csvview
@@ -791,6 +873,7 @@ vim.keymap.set('n', '<leader>x', myutil.do_something)
 **Symptom:** "module not found" errors
 
 **Check require paths:**
+
 ```vim
 :lua print(package.path)
 ```
@@ -798,12 +881,14 @@ vim.keymap.set('n', '<leader>x', myutil.do_something)
 Should include Neovim config directory.
 
 **Verify module exists:**
+
 ```vim
 :lua print(vim.inspect(require('config.options')))
 :lua print(vim.inspect(require('plugins.editor')))
 ```
 
 **Common mistakes:**
+
 - Wrong require path: `require 'custom.diagnostics-copy'` should be `require 'plugins.custom.diagnostics-copy'`
 - Missing `return` statement in plugin files
 - Syntax errors in Lua files (check with `:luafile %`)
@@ -811,11 +896,13 @@ Should include Neovim config directory.
 ## Version Consistency
 
 `lazy-lock.json` is **committed to git**. This ensures:
+
 - Identical plugin versions across machines
 - No surprises from plugin updates
 - Reproducible environment
 
 **To update plugins:**
+
 1. `:Lazy update` - Update plugins
 2. Test thoroughly
 3. Commit updated `lazy-lock.json`:
@@ -825,6 +912,7 @@ Should include Neovim config directory.
    ```
 
 **To restore locked versions:**
+
 ```vim
 :Lazy restore
 ```
@@ -840,12 +928,14 @@ All custom keybindings use `<leader>` prefix for organization.
 ### Why modular structure?
 
 **Before (Kickstart.nvim monolithic):**
+
 - Single 1823-line `init.lua` file
 - Hard to navigate and find specific features
 - Custom plugins mixed with core config
 - Difficult to disable/modify categories
 
 **After (Modular architecture):**
+
 - 81-line `init.lua` entry point
 - Clear separation: config/ vs plugins/
 - Plugin categories: editor, lsp, ai, git, etc.
@@ -855,6 +945,7 @@ All custom keybindings use `<leader>` prefix for organization.
 ### Why plugins/custom/ instead of lua/custom/plugins/?
 
 **Consistency with modular structure:**
+
 - All plugins under `lua/plugins/`
 - Custom utilities are plugin-related
 - Shorter require paths: `plugins.custom.diagnostics-copy` vs `custom.plugins.diagnostics-copy`
@@ -862,11 +953,13 @@ All custom keybindings use `<leader>` prefix for organization.
 ### Why consolidate AI plugins in ai.lua?
 
 **Before:**
+
 - minuet-ai in completion.lua
 - codecompanion scattered
 - yarepl in tools.lua
 
 **After (consolidated):**
+
 - All AI tools in one file
 - Easy to disable all AI features
 - Consistent environment variable checking
@@ -877,6 +970,7 @@ All custom keybindings use `<leader>` prefix for organization.
 **Reason:** Avoid native build dependencies
 
 **Impact:**
+
 - No pkg-config required
 - No C compiler required
 - More reliable cross-platform installation
@@ -897,16 +991,19 @@ Run `:checkhealth` to diagnose your setup. Some warnings are **intentional** and
 ```
 
 **Why this exists:**
+
 - We use `implementation = 'lua'` in `completion.lua:82-85`
 - Intentionally disabled native Rust binary to avoid build dependencies
 - Avoids requiring `pkg-config`, `cargo`, and C compiler
 
 **Trade-off:**
+
 - Lua matcher is slightly slower than Rust
 - But: More reliable cross-platform installation
 - Acceptable performance for most workflows
 
 **Fix (if you want native performance):**
+
 ```bash
 brew install pkg-config
 # Then remove lines 83-84 from completion.lua
@@ -923,10 +1020,12 @@ brew install pkg-config
 ```
 
 **Why these exist:**
+
 - Mason checks for all possible language tools
 - Only needed if you develop in those specific languages
 
 **When to fix:**
+
 - Only install if you actually develop in that language
 - Examples:
   ```bash
@@ -943,11 +1042,13 @@ brew install pkg-config
 ```
 
 **Why these exist:**
+
 - Normal behavior for plugins with prefix keys
 - `<\>` is a prefix, Neovim waits for the full sequence
 - `<sd>`, `<sf>`, `<sr>` are mini.surround prefixes
 
 **From which-key docs:**
+
 > Overlapping keymaps are only reported for informational purposes.
 > This doesn't necessarily mean there is a problem with your config.
 
@@ -960,11 +1061,13 @@ brew install pkg-config
 ```
 
 **Why this exists:**
+
 - Only needed for `:TSInstallFromGrammar` (parser development)
 - `:TSInstall` (normal usage) works fine without it
 - All parsers are pre-installed
 
 **When to fix:**
+
 ```bash
 npm install -g tree-sitter-cli  # Only if developing grammars
 ```
@@ -974,18 +1077,21 @@ npm install -g tree-sitter-cli  # Only if developing grammars
 #### Disabled providers ✅ FIXED
 
 **Previously showed:**
+
 ```
 ⚠️ WARNING Perl provider not found
 ⚠️ WARNING Ruby provider not found
 ```
 
 **Fixed in:** `lua/config/options.lua:10-13`
+
 ```lua
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
 ```
 
 **Why disabled:**
+
 - No plugins use Perl/Ruby remote plugin support
 - Legacy Vim plugin compatibility (not needed in Neovim)
 - Reduces startup time
@@ -995,10 +1101,12 @@ vim.g.loaded_ruby_provider = 0
 #### luarocks PATH issue ⚠️ TEST NEEDED
 
 **Conflicting info:**
+
 - Mason: `luarocks: not available`
 - lazy.nvim: `luarocks 3.12.2` (via hererocks)
 
 **How to test:**
+
 1. Open markdown file with Mermaid diagram
 2. Check if diagram renders (uses image.nvim → needs luarocks)
 3. If broken: Add hererocks to PATH in `~/.zshrc.local`:
@@ -1010,14 +1118,14 @@ vim.g.loaded_ruby_provider = 0
 
 ### Summary Table
 
-| Warning | Status | Action |
-|---------|--------|--------|
-| blink.cmp fuzzy lib | ✅ Expected | Ignore (intentional Lua matcher) |
-| Missing languages (Go/Rust/Java) | ✅ Optional | Install only if needed |
-| which-key overlaps | ✅ Info only | Ignore (working as designed) |
-| tree-sitter CLI | ✅ Optional | Ignore (unless developing parsers) |
-| Perl/Ruby providers | ✅ Fixed | Already disabled |
-| luarocks PATH | ⚠️ Investigate | Test Mermaid, fix if broken |
+| Warning                          | Status         | Action                             |
+| -------------------------------- | -------------- | ---------------------------------- |
+| blink.cmp fuzzy lib              | ✅ Expected    | Ignore (intentional Lua matcher)   |
+| Missing languages (Go/Rust/Java) | ✅ Optional    | Install only if needed             |
+| which-key overlaps               | ✅ Info only   | Ignore (working as designed)       |
+| tree-sitter CLI                  | ✅ Optional    | Ignore (unless developing parsers) |
+| Perl/Ruby providers              | ✅ Fixed       | Already disabled                   |
+| luarocks PATH                    | ⚠️ Investigate | Test Mermaid, fix if broken        |
 
 ### Diagnostic Commands
 
@@ -1060,6 +1168,7 @@ vim.g.loaded_ruby_provider = 0
    - Add keybindings in `config/keymaps.lua`
 
 6. **Testing changes:**
+
    ```vim
    :source $MYVIMRC          " Reload config
    :Lazy reload <plugin>     " Reload specific plugin
