@@ -15,8 +15,72 @@ Chezmoi uses a **three-state model**:
 
 When you run `chezmoi init --apply`, it:
 1. Clones your dotfiles repository to `~/.local/share/chezmoi/`
-2. Processes any templates (`.tmpl` files)
-3. Copies files to your home directory (`~/`)
+2. **Executes automation scripts** (`.chezmoiscripts/run_once_before_install.sh` calls `install.sh`)
+3. **Clones external dependencies** (Oh My Zsh, Powerlevel10k, TPM via `.chezmoiexternal.toml`)
+4. Processes any templates (`.tmpl` files)
+5. Copies files to your home directory (`~/`)
+
+**Zero-Touch Automation**: The setup is fully automated. The wrapper script in `.chezmoiscripts/` calls the existing `install.sh` script, which installs Homebrew, packages, frameworks, and configures everything. This means a single command (`chezmoi init --apply`) sets up your entire development environment.
+
+## Zero-Touch Automation Architecture
+
+This repository implements a **thin wrapper pattern** for zero-touch setup while maintaining low maintenance overhead.
+
+### Architecture Components
+
+**1. Wrapper Script** (`.chezmoiscripts/run_once_before_install.sh` - 15 lines)
+- Executes once before dotfiles are applied
+- Calls the existing `install.sh` script (420 lines, proven, tested)
+- Provides idempotent automation (safe to run multiple times)
+
+**2. External Dependencies** (`.chezmoiexternal.toml` - 30 lines)
+- Declaratively manages git repositories
+- Automatically clones Oh My Zsh, Powerlevel10k, plugins, and TPM
+- Refreshes weekly (168h = 7 days)
+- Uses shallow clones (`--depth 1`) for speed
+
+**3. Existing Installation Logic** (`scripts/install.sh` - 420 lines)
+- **Reused, not replaced** - maintains single source of truth
+- Handles Homebrew installation
+- Installs packages and frameworks
+- Configures Neovim, plugins, and other tools
+- Provides verification and error handling
+
+### Why This Design?
+
+**Problem**: Initial approach created 11 separate scripts (~800 lines of new code) which was high maintenance overhead.
+
+**Solution**: Thin wrapper pattern reuses existing `install.sh`:
+- **Only 2 new files** (wrapper + external config)
+- **Only 45 lines of new code** (vs. 800 lines)
+- **Maintains single source of truth** (install.sh)
+- **Low maintenance overhead** (the reason install.sh exists as one file)
+
+### Execution Flow
+
+```bash
+chezmoi init --apply https://github.com/samuelho-dev/dev-config
+
+# What happens:
+1. Chezmoi clones repository to ~/.local/share/chezmoi/
+2. Runs .chezmoiscripts/run_once_before_install.sh
+   └─> Calls scripts/install.sh (installs Homebrew, packages, frameworks)
+3. Clones external repos via .chezmoiexternal.toml
+   - ~/.oh-my-zsh/
+   - ~/.oh-my-zsh/custom/themes/powerlevel10k/
+   - ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions/
+   - ~/.tmux/plugins/tpm/
+4. Applies dotfiles (.zshrc, .tmux.conf, .config/nvim/, .claude/)
+5. Done! Full development environment ready.
+```
+
+### Benefits
+
+✅ **Zero-Touch**: Single command installs everything automatically
+✅ **Maintainable**: 45 lines of new code, reuses existing install.sh
+✅ **Reproducible**: Same setup on local dev machines and DevPod containers
+✅ **Idempotent**: Safe to run multiple times (Chezmoi tracks what's been done)
+✅ **Proven**: Leverages existing 420-line install.sh that's already tested
 
 ## Machine Detection
 
@@ -328,14 +392,31 @@ Access machine-specific data in templates:
 
 ### Scripts
 
-Run scripts before/after applying dotfiles:
+Chezmoi can run scripts at various stages of the dotfile application process. This repository uses:
 
+**Implemented Script**: `.chezmoiscripts/run_once_before_install.sh`
+- Runs **once** before dotfiles are applied (tracked by Chezmoi state)
+- Calls `scripts/install.sh` to install Homebrew, packages, and frameworks
+- **Idempotent**: Won't re-run unless explicitly reset with `chezmoi state delete-bucket --bucket=scriptState`
+
+**Script Naming Conventions**:
 ```bash
-# Run once (create as .chezmoiscripts/run_once_install-packages.sh)
-#!/bin/bash
-brew install fzf ripgrep
+# Run once before applying dotfiles
+.chezmoiscripts/run_once_before_install.sh
 
-# Run on every apply (create as .chezmoiscripts/run_setup-vim.sh)
+# Run on every apply
+.chezmoiscripts/run_setup-vim.sh
+
+# Run once after applying dotfiles
+.chezmoiscripts/run_once_after_configure.sh
+
+# Run when script content changes
+.chezmoiscripts/run_onchange_install-packages.sh
+```
+
+**Example: Run on every apply**:
+```bash
+# .chezmoiscripts/run_setup-vim.sh
 #!/bin/bash
 nvim --headless "+Lazy! sync" +qa
 ```
