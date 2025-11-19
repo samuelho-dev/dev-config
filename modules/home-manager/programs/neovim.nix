@@ -48,7 +48,36 @@
       defaultEditor = config.dev-config.neovim.defaultEditor;
       vimAlias = config.dev-config.neovim.vimAlias;
       viAlias = config.dev-config.neovim.viAlias;
+
+      # Install lazy-nix-helper for hybrid Nix + lazy.nvim approach
+      plugins = with pkgs.vimPlugins; [
+        lazy-nix-helper-nvim
+      ];
     };
+
+    # Install LSP servers, formatters, and build tools via Nix
+    # This allows lazy-nix-helper to disable Mason on Nix systems
+    home.packages = with pkgs; [
+      # LSP servers
+      nodePackages.typescript-language-server  # TypeScript/JavaScript
+      pyright                                   # Python
+      lua-language-server                      # Lua
+
+      # Formatters
+      stylua                    # Lua formatter
+      nodePackages.prettier     # JS/TS/JSON/YAML/Markdown
+      ruff                      # Python formatter + linter
+
+      # Build tools for Neovim plugins
+      gnumake
+      gcc
+      pkg-config
+      nodejs
+      imagemagick
+
+      # Mermaid CLI (for mermaid diagram rendering)
+      nodePackages."@mermaid-js/mermaid-cli"
+    ];
 
     # Symlink Neovim configuration if source is provided
     xdg.configFile."nvim" = lib.mkIf (config.dev-config.neovim.configSource != null) {
