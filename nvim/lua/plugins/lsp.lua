@@ -31,6 +31,23 @@ return {
       'saghen/blink.cmp',
     },
     config = function()
+      -- Setup lazy-nix-helper to detect Nix environment
+      -- This enables hybrid approach: Nix-managed LSP servers on Nix systems, Mason on others
+      local nix_ok, lazy_nix = pcall(require, 'lazy-nix-helper')
+      local use_nix = false
+
+      if nix_ok then
+        lazy_nix.setup {
+          -- Disable Mason installation on Nix systems
+          -- LSP servers, formatters, and linters are managed by Nix instead
+          install_dependencies = false,
+        }
+        use_nix = true
+        vim.notify('lazy-nix-helper: Using Nix-managed LSP servers', vim.log.levels.INFO)
+      else
+        vim.notify('lazy-nix-helper: Not on Nix, using Mason for LSP servers', vim.log.levels.INFO)
+      end
+
       --  This function gets run when an LSP attaches to a particular buffer.
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
@@ -166,25 +183,35 @@ return {
       }
 
       -- Ensure the servers and tools above are installed
-      local ensure_installed = vim.tbl_keys(servers or {})
-      vim.list_extend(ensure_installed, {
-        'stylua', -- Used to format Lua code
-        'prettier', -- JavaScript/TypeScript/JSON/YAML/Markdown formatter
-        'ruff', -- Python formatter and linter
-      })
-      require('mason-tool-installer').setup { ensure_installed = ensure_installed }
+      -- Only use Mason if NOT on Nix (Nix manages packages directly)
+      if not use_nix then
+        local ensure_installed = vim.tbl_keys(servers or {})
+        vim.list_extend(ensure_installed, {
+          'stylua', -- Used to format Lua code
+          'prettier', -- JavaScript/TypeScript/JSON/YAML/Markdown formatter
+          'ruff', -- Python formatter and linter
+        })
+        require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
-      require('mason-lspconfig').setup {
-        ensure_installed = {},
-        automatic_installation = false,
-        handlers = {
-          function(server_name)
-            local server = servers[server_name] or {}
-            server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-            require('lspconfig')[server_name].setup(server)
-          end,
-        },
-      }
+        require('mason-lspconfig').setup {
+          ensure_installed = {},
+          automatic_installation = false,
+          handlers = {
+            function(server_name)
+              local server = servers[server_name] or {}
+              server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+              require('lspconfig')[server_name].setup(server)
+            end,
+          },
+        }
+      else
+        -- On Nix: Setup LSP servers directly without Mason
+        for server_name, server_config in pairs(servers) do
+          local server = server_config or {}
+          server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+          require('lspconfig')[server_name].setup(server)
+        end
+      end
     end,
   },
 
