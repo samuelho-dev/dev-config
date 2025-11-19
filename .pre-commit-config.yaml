@@ -28,6 +28,15 @@ repos:
         pass_filenames: false
         description: Validate flake.nix syntax and structure
 
+      # Nix Home Manager syntax check
+      - id: nix-syntax-check
+        name: Home Manager Syntax Check
+        entry: nix-instantiate --eval --strict '.#homeConfigurations'
+        language: system
+        files: \.nix$
+        pass_filenames: false
+        description: Validate Home Manager configuration syntax
+
       # Secret scanning
       - id: gitleaks
         name: Detect hardcoded secrets
