@@ -139,6 +139,62 @@ return {
     end,
   },
 
+  -- AI coding assistant with LiteLLM proxy support (Cursor-like AI in Neovim)
+  {
+    'yetone/avante.nvim',
+    event = 'VeryLazy',
+    build = 'make',
+    version = false,
+    -- Load only if LiteLLM master key is available
+    cond = function()
+      return vim.env.LITELLM_MASTER_KEY ~= nil
+    end,
+    opts = {
+      provider = 'litellm',
+      providers = {
+        litellm = {
+          __inherited_from = 'openai',
+          endpoint = 'http://localhost:4000/v1',
+          model = 'claude-sonnet-4', -- Configure in LiteLLM config
+          api_key_name = 'LITELLM_MASTER_KEY',
+          timeout = 30000,
+          extra_request_body = {
+            temperature = 0.7,
+            max_tokens = 4096,
+          },
+        },
+      },
+    },
+    dependencies = {
+      'nvim-treesitter/nvim-treesitter',
+      'stevearc/dressing.nvim',
+      'nvim-lua/plenary.nvim',
+      'MunifTanjim/nui.nvim',
+      'nvim-tree/nvim-web-devicons',
+      -- Optional: Markdown rendering in chat
+      {
+        'MeanderingProgrammer/render-markdown.nvim',
+        opts = {
+          file_types = { 'markdown', 'Avante' },
+        },
+        ft = { 'markdown', 'Avante' },
+      },
+      -- Optional: Image pasting support
+      {
+        'HakonHarnes/img-clip.nvim',
+        event = 'VeryLazy',
+        opts = {
+          default = {
+            embed_image_as_base64 = false,
+            prompt_for_file_name = false,
+            drag_and_drop = { insert_mode = true },
+            use_absolute_path = true,
+          },
+        },
+      },
+    },
+  },
+
   -- REPL integration for AI assistants (aichat, claude, aider) and languages
   {
     'milanglacier/yarepl.nvim',
