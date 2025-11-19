@@ -36,10 +36,10 @@ LiteLLM Proxy is a unified API gateway for multiple LLM providers (Anthropic, Op
 │ (localhost)  │ :4000   │ (k8s cluster)   │         │ (claude models)│
 └──────────────┘         └─────────────────┘         └────────────────┘
                                  │
-                                 ├──────────────────>┌────────────────┐
-                                 │                   │  OpenAI API    │
-                                 │                   │  (gpt models)  │
-                                 │                   └────────────────┘
+┌──────────────┐                 ├──────────────────>┌────────────────┐
+│   Neovim     │────────>        │                   │  OpenAI API    │
+│ (avante.nvim)│ :4000           │                   │  (gpt models)  │
+└──────────────┘                 │                   └────────────────┘
                                  │
                                  └──────────────────>┌────────────────┐
                                                      │  Google AI API │
@@ -48,11 +48,11 @@ LiteLLM Proxy is a unified API gateway for multiple LLM providers (Anthropic, Op
 ```
 
 **Request Flow:**
-1. OpenCode sends API request to `http://localhost:4000/v1/chat/completions`
+1. OpenCode or Neovim sends API request to `http://localhost:4000/v1/chat/completions`
 2. kubectl port-forward tunnels request to LiteLLM pod in Kubernetes cluster
 3. LiteLLM authenticates request using `LITELLM_MASTER_KEY`
 4. LiteLLM routes request to appropriate provider (Anthropic, OpenAI, etc.)
-5. Response flows back through proxy to OpenCode
+5. Response flows back through proxy to client (OpenCode or Neovim)
 
 ## Prerequisites
 
@@ -297,6 +297,91 @@ View:
 - Cost per user/project
 - Model usage distribution
 - Error rates
+
+### Neovim Integration (avante.nvim)
+
+**avante.nvim** provides a Cursor-like AI coding assistant directly in Neovim, powered by your LiteLLM proxy.
+
+**Setup:**
+
+1. **Ensure LiteLLM proxy is accessible:**
+   ```bash
+   # Start port-forward (if not using Tailscale)
+   kubectl port-forward -n litellm svc/litellm 4000:4000 &
+
+   # Verify connection
+   curl -s http://localhost:4000/health
+   ```
+
+2. **Load LITELLM_MASTER_KEY:**
+   ```bash
+   cd ~/Projects/dev-config  # direnv auto-loads credentials
+
+   # Verify key is loaded
+   echo $LITELLM_MASTER_KEY
+   ```
+
+3. **Launch Neovim:**
+   ```bash
+   nvim
+   ```
+
+**Available Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `:AvanteAsk` | Open chat interface to ask AI about code |
+| `:AvanteEdit` | Request AI code edits (applies changes directly) |
+| `:AvanteToggle` | Toggle Avante chat window |
+
+**Example Workflow:**
+
+```vim
+" 1. Open file you want to modify
+:e src/components/UserProfile.tsx
+
+" 2. Ask AI about the code
+:AvanteAsk What does this component do?
+
+" 3. Request specific edits
+:AvanteEdit Add error handling for API failures
+
+" 4. Review and accept/reject changes
+" Changes appear as diff in buffer, accept with :AvanteAccept
+```
+
+**Keybindings (if configured in nvim/lua/config/keymaps.lua):**
+
+- `<leader>aa` - Quick ask (`:AvanteAsk`)
+- `<leader>ae` - Quick edit (`:AvanteEdit`)
+- `<leader>ar` - Toggle chat window (`:AvanteToggle`)
+
+**Architecture:**
+
+```
+Neovim (avante.nvim) → http://localhost:4000/v1 (kubectl port-forward)
+                      → LiteLLM Proxy (k8s cluster)
+                      → Anthropic/OpenAI/Google APIs
+```
+
+**Cost Tracking:**
+
+All avante.nvim requests go through LiteLLM proxy, so they're automatically tracked in the dashboard alongside OpenCode usage.
+
+**Performance Tips:**
+
+- Keep port-forward running in background for faster response times
+- Use Tailscale integration for zero-latency access (no port-forward needed)
+- Configure timeout in `nvim/lua/plugins/ai.lua` if experiencing slow responses
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| "Plugin not loading" | Check `LITELLM_MASTER_KEY` is set: `echo $LITELLM_MASTER_KEY` |
+| "Connection timeout" | Verify port-forward: `curl http://localhost:4000/health` |
+| "Invalid API key" | Ensure 1Password item has correct master key |
+| "Model not found" | Check LiteLLM config has `claude-sonnet-4` model configured |
 
 ## Troubleshooting
 

@@ -38,7 +38,7 @@ nvim/
         ├── editor.lua                # File explorer, fuzzy finder, search/replace
         ├── lsp.lua                   # LSP configuration and formatting
         ├── completion.lua            # Autocompletion (blink.cmp, LuaSnip)
-        ├── ai.lua                    # AI assistance (minuet, codecompanion, yarepl)
+        ├── ai.lua                    # AI assistance (avante, minuet, codecompanion, yarepl)
         ├── git.lua                   # Git integration
         ├── markdown.lua              # Markdown and Obsidian
         ├── ui.lua                    # UI enhancements
@@ -224,7 +224,71 @@ All AI plugins consolidated in one file for easy management.
 
 **Components:**
 
-**1. minuet-ai (AI-powered completion)**
+**1. avante.nvim (Cursor-like AI coding assistant)**
+
+- Chat-based AI coding assistant with inline code editing
+- Powered by LiteLLM proxy for team AI management and cost tracking
+- OpenAI-compatible endpoint integration
+- **Conditional loading:** Only loads if `LITELLM_MASTER_KEY` environment variable is set
+
+```lua
+cond = function()
+  return vim.env.LITELLM_MASTER_KEY ~= nil
+end,
+```
+
+**Configuration:**
+
+```lua
+opts = {
+  provider = 'litellm',
+  providers = {
+    litellm = {
+      __inherited_from = 'openai',
+      endpoint = 'http://localhost:4000/v1',
+      model = 'claude-sonnet-4', -- Configure in LiteLLM config
+      api_key_name = 'LITELLM_MASTER_KEY',
+      timeout = 30000,
+      extra_request_body = {
+        temperature = 0.7,
+        max_tokens = 4096,
+      },
+    },
+  },
+},
+```
+
+**Commands:**
+- `:AvanteAsk` - Ask AI about code (opens chat interface)
+- `:AvanteEdit` - Request AI code edits (applies changes directly to buffer)
+- `:AvanteToggle` - Toggle Avante chat window
+
+**Dependencies:**
+- `nvim-treesitter/nvim-treesitter` - Syntax parsing
+- `stevearc/dressing.nvim` - Enhanced UI for inputs
+- `nvim-lua/plenary.nvim` - Utility functions
+- `MunifTanjim/nui.nvim` - UI components
+- `nvim-tree/nvim-web-devicons` - File icons
+- `render-markdown.nvim` (optional) - Markdown rendering in chat
+- `img-clip.nvim` (optional) - Image pasting support
+
+**Prerequisites:**
+- LiteLLM proxy running in Kubernetes cluster
+- `kubectl port-forward -n litellm svc/litellm 4000:4000` (expose proxy to localhost)
+- `LITELLM_MASTER_KEY` environment variable loaded (via direnv or manual export)
+
+**Architecture:**
+```
+Neovim (avante.nvim) → http://localhost:4000/v1 (kubectl port-forward)
+                      → LiteLLM Proxy (k8s cluster)
+                      → Anthropic/OpenAI/Google APIs
+```
+
+**Build requirements:**
+- `make` command (for building native components during plugin installation)
+- Automatically handled by lazy.nvim with `build = 'make'`
+
+**2. minuet-ai (AI-powered completion)**
 
 - OpenAI-compatible API using GLM 4.5 model
 - Integrates with blink.cmp
@@ -237,14 +301,14 @@ cond = function()
 end,
 ```
 
-**2. codecompanion (AI chat assistant)**
+**3. codecompanion (AI chat assistant)**
 
 - Chat interface for code assistance
 - GLM 4.5 adapter configured
 - Commands: `:CodeCompanionChat`, `:CodeCompanion`
 - **Conditional loading:** Same as minuet-ai
 
-**3. yarepl (REPL integration)**
+**4. yarepl (REPL integration)**
 
 - Connect to AI assistants (aichat, claude, aider)
 - Also supports language REPLs (python, R, bash, etc.)
@@ -321,10 +385,11 @@ See "Autocompletion" section above.
 - `blink.cmp` - Completion engine
 - `LuaSnip` - Snippet engine
 
-### ai.lua (3 plugins)
+### ai.lua (4 plugins)
 
 See "AI Integration" section above.
 
+- `avante.nvim` - Cursor-like AI coding assistant (LiteLLM proxy integration)
 - `minuet-ai.nvim` - AI-powered completions
 - `codecompanion.nvim` - AI chat assistant
 - `yarepl.nvim` - REPL integration

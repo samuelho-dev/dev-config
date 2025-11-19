@@ -144,19 +144,28 @@ Ghostty implements the Kitty graphics protocol, so diagrams also render there (k
 
 ### AI Assistance
 
-- **Streaming Completions (Minuet)**  
-  - Powered by GLM 4.5 via `minuet-ai.nvim` + `blink.cmp`.  
-  - Export `ZHIPUAI_API_KEY` before launching Neovim.  
+- **Cursor-like AI in Neovim (Avante)**
+  - Powered by LiteLLM proxy for team AI management with cost tracking.
+  - Chat-based coding assistant with inline code editing.
+  - Export `LITELLM_MASTER_KEY` and start `kubectl port-forward -n litellm svc/litellm 4000:4000`.
+  - `:AvanteAsk` - Ask AI about code (chat interface).
+  - `:AvanteEdit` - Request AI code edits (applies changes directly).
+  - `<leader>aa` - Quick ask (custom keybinding).
+  - See [LiteLLM Proxy Setup](../docs/nix/07-litellm-proxy-setup.md) for full configuration.
+
+- **Streaming Completions (Minuet)**
+  - Powered by GLM 4.5 via `minuet-ai.nvim` + `blink.cmp`.
+  - Export `ZHIPUAI_API_KEY` before launching Neovim.
   - Completions stream automatically; use `<Tab>`/`<S-Tab>` (super-tab preset) to accept or cycle.
 
-- **Chat & Refactors (CodeCompanion)**  
-  - `:CodeCompanionChat` opens a dedicated buffer backed by GLM 4.5.  
-  - Use inline actions (visual select → `:CodeCompanion`) for targeted edits.  
+- **Chat & Refactors (CodeCompanion)**
+  - `:CodeCompanionChat` opens a dedicated buffer backed by GLM 4.5.
+  - Use inline actions (visual select → `:CodeCompanion`) for targeted edits.
   - You can still configure additional adapters (Claude, OpenAI) in `init.lua` if you need higher quality or ACP agents.
 
-- **Infrastructure REPLs (yarepl)**  
-  - `:REPLStart claude` attaches to the Claude CLI in your `CLAUDE_AGENT_ROOT` (defaults to `~/Projects/claude-code-agent`).  
-  - Additional presets: `aider`, `cursor` (runs `cursor-agent`), `observability` (runs `./scripts/start-system.sh`), and `sqlite` for the agent database.  
+- **Infrastructure REPLs (yarepl)**
+  - `:REPLStart claude` attaches to the Claude CLI in your `CLAUDE_AGENT_ROOT` (defaults to `~/Projects/claude-code-agent`).
+  - Additional presets: `aider`, `cursor` (runs `cursor-agent`), `observability` (runs `./scripts/start-system.sh`), and `sqlite` for the agent database.
   - Toggle focus/hide with `:REPLFocus`, `:REPLHide`, and send code with `:REPLSendLine` / `:REPLSendVisual`.
 
 ### File Explorer

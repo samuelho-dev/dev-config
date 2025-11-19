@@ -275,13 +275,23 @@ dev-config/
   OpenCode (localhost) → kubectl port-forward :4000
                        → LiteLLM Proxy (k8s cluster)
                        → Anthropic/OpenAI/Google APIs
+
+  Neovim (avante.nvim) → kubectl port-forward :4000
+                       → LiteLLM Proxy (k8s cluster)
+                       → Anthropic/OpenAI/Google APIs
   ```
 - **Implementation:**
   - OpenCode configured to use `http://localhost:4000` (LiteLLM endpoint)
+  - Neovim (avante.nvim) configured to use `http://localhost:4000/v1` (OpenAI-compatible endpoint)
   - Requires `LITELLM_MASTER_KEY` environment variable
   - Loaded from 1Password: `op read "op://Dev/litellm/MASTER_KEY"`
   - Added to `scripts/load-ai-credentials.sh` (graceful degradation if not present)
   - Separate from direct API keys (different use case, rotation schedule)
+- **Neovim Integration (avante.nvim):**
+  - Cursor-like AI coding assistant with chat interface
+  - Commands: `:AvanteAsk`, `:AvanteEdit`, `:AvanteToggle`
+  - Conditional loading: Only loads if `LITELLM_MASTER_KEY` is set
+  - Configuration in `nvim/lua/plugins/ai.lua`
 - **Setup Requirements:**
   - LiteLLM deployed in ai-dev-env Kubernetes cluster
   - kubectl port-forward to expose service locally
@@ -289,11 +299,12 @@ dev-config/
 - **Benefits:**
   - Team collaboration: Shared cost tracking and budget management
   - Flexibility: Can switch between proxy (team mode) and direct API (solo mode)
-  - Observability: Track token usage, costs, and model distribution
+  - Observability: Track token usage, costs, and model distribution across all tools (OpenCode + Neovim)
   - Reliability: Fallback support if one provider is down
 - **Documentation:**
   - Complete setup guide: `docs/nix/07-litellm-proxy-setup.md`
   - Integration with OpenCode: `docs/nix/04-opencode-integration.md`
+  - Integration with Neovim: `nvim/README.md` + `nvim/CLAUDE.md`
   - 1Password configuration: `docs/nix/05-1password-setup.md`
 
 **3. Hybrid Activation**

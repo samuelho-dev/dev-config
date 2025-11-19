@@ -103,6 +103,42 @@ Visual indentation guides are **always active** - no keybindings needed.
 
 ---
 
+### AI Assistance (avante.nvim)
+
+Cursor-like AI coding assistant powered by LiteLLM proxy for team AI management.
+
+**Commands:**
+| Command | Description |
+|---------|-------------|
+| `:AvanteAsk` | Open chat interface to ask AI about code |
+| `:AvanteEdit` | Request AI code edits (applies changes directly to buffer) |
+| `:AvanteToggle` | Toggle Avante chat window |
+
+**Keybindings (if configured):**
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `<leader>aa` | Quick Ask | Open `:AvanteAsk` with selected text or current line |
+| `<leader>ae` | Quick Edit | Open `:AvanteEdit` for AI code modifications |
+| `<leader>ar` | Toggle Chat | Toggle Avante chat window (`:AvanteToggle`) |
+
+**Prerequisites:**
+- LiteLLM proxy running: `kubectl port-forward -n litellm svc/litellm 4000:4000`
+- `LITELLM_MASTER_KEY` environment variable loaded (via direnv or manual export)
+
+**Example Workflow:**
+1. Open file to modify: `:e src/components/UserProfile.tsx`
+2. Ask AI: `:AvanteAsk What does this component do?`
+3. Request edits: `:AvanteEdit Add error handling for API failures`
+4. Review and accept/reject changes in diff view
+
+**Cost Tracking:**
+All requests go through LiteLLM proxy and are tracked in dashboard alongside OpenCode usage.
+
+**Documentation:**
+See [LiteLLM Proxy Setup](nix/07-litellm-proxy-setup.md#neovim-integration-avantenm) for full configuration details.
+
+---
+
 ## Navigation
 
 ### Buffer Navigation

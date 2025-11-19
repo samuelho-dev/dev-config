@@ -335,13 +335,14 @@ bash scripts/install.sh
 - ✅ **Isolated**: Per-project environments with zero conflicts
 - ✅ **Cross-platform**: Works on macOS (Intel/ARM) and Linux
 - ✅ **Binary cache**: 20x faster builds with Cachix (10 minutes → 30 seconds)
-- ✅ **AI integration**: OpenCode + 1Password CLI with LiteLLM proxy support for team AI management
+- ✅ **AI integration**: OpenCode + Neovim (avante.nvim) + 1Password CLI with LiteLLM proxy support for team AI management
 
 **After installation:**
 ```bash
 cd ~/Projects/dev-config  # direnv auto-activates Nix environment + AI credentials
-opencode ask "What should I work on today?"  # Uses credentials from 1Password
-# Supports both direct API access and LiteLLM proxy (team mode)
+opencode ask "What should I work on today?"  # Terminal: Uses credentials from 1Password
+nvim  # Editor: `:AvanteAsk` for Cursor-like AI coding assistant
+# All tools support both direct API access and LiteLLM proxy (team mode)
 ```
 
 **Documentation:**
