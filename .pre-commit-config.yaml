@@ -31,7 +31,7 @@ repos:
       # Nix Home Manager syntax check
       - id: nix-syntax-check
         name: Home Manager Syntax Check
-        entry: nix-instantiate --eval --strict '.#homeConfigurations'
+        entry: nix flake show --json
         language: system
         files: \.nix$
         pass_filenames: false

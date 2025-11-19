@@ -6,6 +6,7 @@
     ./programs/tmux.nix
     ./programs/zsh.nix
     ./programs/git.nix
+    ./programs/ssh.nix
     ./programs/ghostty.nix
     ./services/direnv.nix
   ];
@@ -77,11 +78,13 @@
     # - Zsh with config from dev-config repo
     # - Ghostty with config from dev-config repo
     # - Git configuration
+    # - SSH configuration with 1Password agent
     # - Direnv with nix-direnv integration
     #
     # To disable specific programs:
     # dev-config.neovim.enable = false;
     # dev-config.tmux.enable = false;
+    # dev-config.ssh.enable = false;
     # dev-config.ghostty.enable = false;
     #
     # To manage configs separately (e.g., Chezmoi):

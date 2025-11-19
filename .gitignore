@@ -24,6 +24,12 @@ zsh/.zsh_history
 # Machine-specific configuration (managed locally, not in repo)
 .zshrc.local
 
+# Machine-specific secrets (SSH keys, Git config)
+# See secrets.nix.example for template
+secrets.nix
+.config/home-manager/secrets.nix
+**/secrets.nix
+
 # Backup files created by scripts
 *.backup_*
 

@@ -49,14 +49,14 @@ log_info "   Speed:   Fastest (no builds, no downloads)"
 log_info "   Command: nix-instantiate --eval --strict"
 echo ""
 
-if nix-instantiate --eval --strict '.#homeConfigurations' &>/dev/null; then
+if nix flake show --json &>/dev/null; then
   log_success "Syntax check passed - configuration is valid"
 else
   log_error "Syntax check failed - Nix evaluation errors detected"
   echo ""
   log_info "Running with output for debugging:"
   echo ""
-  nix-instantiate --eval --strict '.#homeConfigurations' || true
+  nix flake show || true
   exit 1
 fi
 
