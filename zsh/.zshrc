@@ -81,6 +81,9 @@ plugins=(git zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
 
+# direnv integration (auto-load Nix environments)
+eval "$(direnv hook zsh)"
+
 # User configuration
 
 # export MANPATH="/usr/local/man:$MANPATH"

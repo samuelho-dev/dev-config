@@ -59,8 +59,8 @@
           imagemagick
 
           # AI development tools
-          nodePackages.opencode-ai  # OpenCode CLI
-          _1password                 # 1Password CLI
+          # nodePackages.opencode-ai  # OpenCode CLI (not in nixpkgs, install manually)
+          _1password-cli             # 1Password CLI
           jq                         # JSON parsing
 
           # Additional utilities

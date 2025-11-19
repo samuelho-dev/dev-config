@@ -3,15 +3,22 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, ... }:
+  outputs = { self, nixpkgs, home-manager, ... }:
     let
       # Support multiple systems
       systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
 
       forAllSystems = fn: nixpkgs.lib.genAttrs systems (system: fn {
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;  # Allow unfree packages (1Password CLI, etc.)
+        };
         inherit system;
       });
     in
@@ -48,8 +55,8 @@
             imagemagick
 
             # AI Development Tools
-            nodePackages.opencode-ai  # OpenCode CLI
-            _1password                 # 1Password CLI
+            # nodePackages.opencode-ai  # OpenCode CLI (not in nixpkgs, install manually)
+            _1password-cli             # 1Password CLI
             jq                         # JSON parsing for op output
 
             # Utilities
@@ -269,5 +276,17 @@
           '');
         };
       });
+
+      # Home Manager standalone configuration
+      # Uses home.nix for user-specific configuration
+      homeConfigurations = nixpkgs.lib.genAttrs systems (system:
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
+          modules = [ ./home.nix ];
+        }
+      );
     };
 }

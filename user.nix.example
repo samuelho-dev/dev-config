@@ -1,0 +1,8 @@
+# Example user configuration for Home Manager
+# Copy this to user.nix and update with your details
+# user.nix is gitignored and machine-specific
+
+{
+  username = "your-username";  # e.g., "samuelho"
+  homeDirectory = "/Users/your-username";  # macOS: /Users/username, Linux: /home/username
+}
