@@ -18,6 +18,11 @@ log_info() { echo -e "\033[0;36mℹ️  $1\033[0m" >&2; }
 log_success() { echo -e "\033[0;32m✅ $1\033[0m" >&2; }
 log_error() { echo -e "\033[0;31m❌ $1\033[0m" >&2; }
 
+# Container detection
+is_container() {
+  [ -f /.dockerenv ] || grep -q 'docker\|lxc\|containerd' /proc/1/cgroup 2>/dev/null
+}
+
 echo ""
 echo "🚀 Installing dev-config (Home Manager)"
 echo "   Declarative dotfile and package management with Nix"
@@ -69,6 +74,17 @@ echo ""
 nix run home-manager/master -- switch --flake .
 
 log_success "Home Manager activation complete!"
+
+# Fix ownership if running as root in container (DevPod SSH issue)
+if is_container && [ "$(id -u)" -eq 0 ]; then
+  ACTUAL_USER="${SUDO_USER:-vscode}"
+  log_info "Container detected, fixing ownership for user: $ACTUAL_USER"
+  chown -R "$ACTUAL_USER:$ACTUAL_USER" "$HOME" 2>/dev/null || true
+  chown -R "$ACTUAL_USER:$ACTUAL_USER" ~/.config 2>/dev/null || true
+  chown -R "$ACTUAL_USER:$ACTUAL_USER" ~/.local 2>/dev/null || true
+  log_success "Ownership fixed"
+fi
+
 echo ""
 echo "Next steps:"
 echo "  1. Restart your terminal (or run: exec zsh)"

@@ -59,3 +59,17 @@ result-*
 
 # Additional credentials
 .env.*
+
+# DevPod workspace metadata
+.devpod/
+
+# VS Code Remote Containers
+.devcontainer/docker-compose.yml
+.devcontainer/.devcontainer.json.backup
+
+# Terraform/Kubernetes (if testing locally)
+*.tfstate
+*.tfstate.*
+.terraform/
+kubeconfig*
+*.kubeconfig

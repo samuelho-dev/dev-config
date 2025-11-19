@@ -153,10 +153,9 @@ apps.activate = {
 - Sources `load-ai-credentials.sh`
 - Activates when entering dev-config directory
 
-**Legacy preserved:**
-- Original 372-line shell script backed up as `scripts/install-legacy.sh`
-- `scripts/lib/common.sh` (348 lines) - Still used by Nix activation
-- `scripts/lib/paths.sh` (96 lines) - Still single source of truth
+**Shared Libraries (Reused by Nix):**
+- `scripts/lib/common.sh` (348 lines) - Utility functions used by Nix apps
+- `scripts/lib/paths.sh` (96 lines) - Single source of truth for all paths
 
 #### New Features with Nix
 
@@ -183,6 +182,39 @@ apps.activate = {
 - No global package pollution
 - Multiple versions coexist peacefully
 
+#### DevPod Integration (Remote Development)
+
+**Remote development environments supported via:**
+- `.devcontainer/devcontainer.json` for VS Code Remote Containers
+- DevPod dotfiles integration for config management
+- Nix feature-based approach (reuses existing `flake.nix`)
+- Compatible with VS Code Remote, GitHub Codespaces, and DevPod
+
+**How it works:**
+1. Container starts with base Ubuntu image
+2. Nix installed via devcontainer feature
+3. DevPod automatically clones and installs dotfiles
+4. `scripts/install.sh` detects container and adjusts behavior
+5. All configs (Neovim, tmux, zsh) applied automatically
+
+**1Password in containers:**
+- Uses service account tokens (not biometric auth)
+- Token passed via `OP_SERVICE_ACCOUNT_TOKEN` environment variable
+- Configured in `.devcontainer/load-ai-credentials.sh`
+- Falls back gracefully if token not provided
+
+**Performance:**
+- First build: 30-60 minutes (Nix evaluation + package download)
+- Cached builds: 2-5 minutes (Nix cache hit)
+- Subsequent starts: 10-30 seconds
+
+**Files:**
+- `.devcontainer/devcontainer.json` - Container configuration
+- `.devcontainer/load-ai-credentials.sh` - 1Password loader for containers
+- `scripts/install.sh` - Container detection and ownership fixes
+
+**Documentation:** See `docs/README_DEVPOD.md` for comprehensive DevPod guide (4 documentation files, ~2,162 lines).
+
 #### Nix-Specific Files
 
 ```
@@ -192,10 +224,14 @@ dev-config/
 ├── .envrc                             # direnv auto-activation
 ├── .pre-commit-config.yaml            # Code quality hooks (Nix formatting, validation)
 ├── scripts/
-│   ├── install.sh                     # NEW: 50-line Nix bootstrap
-│   ├── install-legacy.sh              # BACKUP: Original 372-line script
-│   ├── load-ai-credentials.sh         # NEW: 1Password integration
-│   └── lib/ (UNCHANGED)               # Still used by Nix apps!
+│   ├── install.sh                     # Nix + Home Manager bootstrap (container-aware)
+│   ├── load-ai-credentials.sh         # 1Password integration
+│   └── lib/                           # Shared utilities (reused by Nix apps)
+│       ├── common.sh                  # Logging, OS detection, backups, symlinks
+│       └── paths.sh                   # Centralized path definitions
+├── .devcontainer/
+│   ├── devcontainer.json              # VS Code Remote Containers / DevPod config
+│   └── load-ai-credentials.sh         # 1Password loader for containers
 ├── docs/nix/                          # Nix documentation
 │   ├── 00-quickstart.md               # 5-minute installation guide
 │   ├── 01-concepts.md                 # Nix mental model

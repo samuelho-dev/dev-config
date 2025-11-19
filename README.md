@@ -311,11 +311,9 @@ That's it! With Nix, all packages use exact versions from `flake.lock`, so you g
 
 ---
 
-## Installation Methods
+## Installation
 
-### Method 1: Nix Flakes (Recommended)
-
-**Modern, reproducible package management** with automatic dependency installation:
+**Modern, reproducible package management** with automatic dependency installation via Nix Flakes:
 
 ```bash
 cd ~/Projects/dev-config
@@ -356,50 +354,46 @@ opencode ask "What should I work on today?"  # Uses credentials from 1Password
 
 **Time to install:** 10-15 minutes (first time), 30 seconds (subsequent machines with cache)
 
-### Method 2: Chezmoi (For Kubernetes DevPod)
+---
 
-Chezmoi-based installation for automated Kubernetes DevPod environments:
+## Remote Development with DevPod
 
+This repository supports remote development environments via [DevPod](https://devpod.sh/) and VS Code Remote Containers.
+
+**Quick Start:**
 ```bash
-# Local development
-./scripts/install-chezmoi.sh
+# Install DevPod
+brew install devpod
 
-# Or install directly from GitHub
-chezmoi init --apply https://github.com/samuelho-dev/dev-config
+# Create workspace
+devpod up . --ide vscode
 ```
 
-**Benefits:**
-- ✅ Automatic installation in Kubernetes DevPod environments
-- ✅ Machine detection (DevPod vs local)
-- ✅ Template-based configuration (environment-specific settings)
-- ✅ Zero-touch setup on new machines
-
-### Method 3: Manual Symlinks (Legacy)
-
-Traditional symlink-based installation without Nix:
-
+**With 1Password (for AI credentials):**
 ```bash
-./scripts/install-legacy.sh  # Original shell script (372 lines)
+# Set service account token
+export OP_SERVICE_ACCOUNT_TOKEN="your-token-here"
+
+# Create workspace
+devpod up . --ide vscode
 ```
 
-**Use when:**
-- You prefer manual control without Nix
-- Working on machines where Nix is not allowed
-- Backward compatibility with pre-Nix setup
+**What happens:**
+1. Container starts with Nix environment
+2. Dotfiles installed automatically via DevPod dotfiles feature
+3. All configs (Neovim, tmux, zsh) available immediately
+4. AI credentials loaded from 1Password
 
-### Kubernetes DevPod Integration
+**First run:** 30-60 minutes (Nix evaluation + packages)
+**Cached runs:** 2-5 minutes (Nix cache hit)
+**Subsequent starts:** 10-30 seconds
 
-DevPod environments automatically apply dotfiles via Chezmoi init container on startup. No manual installation required.
+**Compatibility:**
+- ✅ DevPod (docker, SSH, Kubernetes backends)
+- ✅ VS Code Remote Containers
+- ✅ GitHub Codespaces
 
-**How it works:**
-1. DevPod starts with persistent home directory (`/home/vscode`)
-2. Chezmoi init container runs before main container
-3. Dotfiles cloned from GitHub and applied automatically
-4. Workspace ready with all tools and configurations
-
-**Configuration:** See `deploy/helm/charts/applications/ai-dev-env/values.yaml` in the ai-dev-env repository.
-
-For more details about Chezmoi, see [CHEZMOI.md](CHEZMOI.md).
+**Documentation:** See [docs/README_DEVPOD.md](docs/README_DEVPOD.md) for comprehensive guide.
 
 ---
 

@@ -1,0 +1,56 @@
+{
+  "name": "dev-config",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+
+  "features": {
+    "ghcr.io/devcontainers/features/nix:1": {
+      "version": "latest",
+      "multiUser": "true"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vscodevim.vim",
+        "github.copilot",
+        "ms-azuretools.vscode-docker",
+        "jnoortheen.nix-ide"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/bin/zsh"
+          }
+        }
+      }
+    }
+  },
+
+  // Environment variables (1Password service account token)
+  // Set OP_SERVICE_ACCOUNT_TOKEN locally for automatic credential loading in containers
+  "remoteEnv": {
+    "OP_SERVICE_ACCOUNT_TOKEN": "${localEnv:OP_SERVICE_ACCOUNT_TOKEN}"
+  },
+
+  // Lifecycle hooks (critical ordering!)
+  // onCreateCommand runs BEFORE dotfiles installation
+  // postCreateCommand runs AFTER dotfiles installation
+  // postStartCommand runs on every container start
+  "onCreateCommand": ".devcontainer/load-ai-credentials.sh",
+  "postCreateCommand": "nix develop --command echo 'Nix environment ready'",
+  "postStartCommand": "[ -f .envrc ] && direnv allow || true",
+
+  // Port forwarding for common development ports
+  "forwardPorts": [3000, 5000, 8080, 9000],
+
+  // Run as vscode user (standard for dev containers)
+  "remoteUser": "vscode",
+
+  // Mount docker socket for Docker-in-Docker support
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ]
+}
