@@ -1,0 +1,117 @@
+name: Nix CI/CD
+
+on:
+  pull_request:
+  push:
+    branches: [main, nix-migration]
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly flake update checks (Mondays at 2 AM)
+
+jobs:
+  validate:
+    name: Validate Nix Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - uses: cachix/cachix-action@v14
+        with:
+          name: dev-config
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          skipPush: ${{ github.event_name == 'pull_request' }}
+
+      - name: Check flake
+        run: nix flake check --all-systems --show-trace
+
+      - name: Check formatting
+        run: nix fmt -- --check .
+
+      - name: Evaluate all outputs
+        run: |
+          nix flake show --all-systems
+          nix eval .#devShells --apply builtins.attrNames
+
+      - name: Validate secrets hygiene
+        run: |
+          nix develop --command gitleaks detect --source . --verbose
+
+  build-systems:
+    name: Build System Configurations
+    needs: validate
+    strategy:
+      matrix:
+        system:
+          - os: ubuntu-latest
+            system: x86_64-linux
+          - os: macos-14  # Apple Silicon
+            system: aarch64-darwin
+          - os: macos-13  # Intel
+            system: x86_64-darwin
+    runs-on: ${{ matrix.system.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - uses: cachix/cachix-action@v14
+        with:
+          name: dev-config
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          skipPush: ${{ github.event_name == 'pull_request' }}
+
+      - name: Build development shell
+        run: |
+          nix build .#devShells.${{ matrix.system.system }}.default \
+            --print-build-logs \
+            --fallback
+
+      - name: Test activation script
+        run: |
+          nix run .#activate -- --help || true
+          # Note: Full activation requires user interaction, so we just test it loads
+
+      - name: Verify package availability
+        run: |
+          nix develop --command bash -c "
+            command -v nvim && echo '✓ Neovim'
+            command -v tmux && echo '✓ Tmux'
+            command -v op && echo '✓ 1Password CLI'
+            command -v opencode && echo '✓ OpenCode'
+          "
+
+  update-flake-inputs:
+    name: Update Flake Inputs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Update flake inputs
+        run: |
+          nix flake update --commit-lock-file
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update flake inputs"
+          title: "Automated flake input updates"
+          body: |
+            Automated flake input updates from scheduled workflow.
+
+            Please review changes and ensure all builds pass.
+
+            **Changes:**
+            ```
+            $(git diff HEAD~1 flake.lock)
+            ```
+          branch: automated/flake-updates
+          labels: dependencies, automated

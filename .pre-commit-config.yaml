@@ -1,0 +1,72 @@
+# Pre-commit hooks for dev-config
+# Automatically installed via Nix devShell
+#
+# Manual installation:
+#   pre-commit install
+#
+# Run manually:
+#   pre-commit run --all-files
+
+repos:
+  - repo: local
+    hooks:
+      # Nix formatting
+      - id: nix-fmt
+        name: Format Nix files
+        entry: nix fmt -- --check
+        language: system
+        files: \.nix$
+        pass_filenames: false
+        description: Check Nix file formatting with alejandra
+
+      # Nix flake validation
+      - id: nix-flake-check
+        name: Validate Nix flake
+        entry: nix flake check --no-build
+        language: system
+        files: \.nix$
+        pass_filenames: false
+        description: Validate flake.nix syntax and structure
+
+      # Secret scanning
+      - id: gitleaks
+        name: Detect hardcoded secrets
+        entry: gitleaks detect --source . --verbose
+        language: system
+        pass_filenames: false
+        description: Scan for committed secrets and API keys
+
+  # Standard pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: end-of-file-fixer
+        name: Fix end of files
+      - id: check-yaml
+        name: Check YAML syntax
+        args: ['--unsafe']  # Allow custom YAML tags
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+        name: Check for merge conflict markers
+      - id: detect-private-key
+        name: Detect private keys
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint
+        name: Lint Markdown files
+        args: ['--fix', '--disable', 'MD013']  # Disable line length rule
+
+  # Shell script linting
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        name: Lint shell scripts
+        args: ['-x']  # Follow sourced files

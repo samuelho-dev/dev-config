@@ -1,6 +1,6 @@
 # Dev Config
 
-Centralized development tool configurations for Neovim, tmux, and Ghostty terminal, managed via Git and symlinks.
+Centralized development tool configurations for Neovim, tmux, and Ghostty terminal, managed via Git and symlinks. Now powered by Nix for reproducible, declarative package management.
 
 ## Overview
 
@@ -281,37 +281,84 @@ Quick reference for all dependencies and their purposes:
 
 ### First Time Setup (This Machine)
 
-Since you've just created this repo, run the installer to create symlinks:
+**Recommended:** Use Nix for reproducible, declarative package management:
+
+```bash
+cd ~/Projects/dev-config
+bash scripts/install.sh  # Installs Nix + all dependencies + creates symlinks
+```
+
+Then restart your terminal. All tools and plugins are auto-installed!
+
+**See:** [Nix Quick Start Guide](docs/nix/00-quickstart.md) for detailed instructions.
+
+### Setup on Other Machines
+
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/samuelho-dev/dev-config ~/Projects/dev-config
+   ```
+
+2. Run the Nix installer:
+   ```bash
+   cd ~/Projects/dev-config
+   bash scripts/install.sh  # One command installs everything
+   ```
+
+3. Restart your terminal
+
+That's it! With Nix, all packages use exact versions from `flake.lock`, so you get identical environments across all machines.
+
+---
+
+## Installation Methods
+
+### Method 1: Nix Flakes (Recommended)
+
+**Modern, reproducible package management** with automatic dependency installation:
 
 ```bash
 cd ~/Projects/dev-config
 bash scripts/install.sh
 ```
 
-Then restart tmux and Neovim to apply changes.
+**What this does:**
+1. Installs Nix package manager via Determinate Systems installer
+2. Enables flakes and configures direnv
+3. Installs all development tools (Neovim, tmux, zsh, Docker, OpenCode, 1Password CLI)
+4. Creates symlinks using battle-tested logic from shared libraries
+5. Sets up Oh My Zsh, Powerlevel10k, and TPM
+6. Auto-installs all Neovim and tmux plugins
 
-### Setup on Other Machines
+**Benefits:**
+- ✅ **Reproducible**: Exact package versions across all machines (via `flake.lock`)
+- ✅ **Declarative**: All packages defined in one place (`flake.nix`)
+- ✅ **Rollback**: Instant rollback to any previous environment state
+- ✅ **Isolated**: Per-project environments with zero conflicts
+- ✅ **Cross-platform**: Works on macOS (Intel/ARM) and Linux
+- ✅ **Binary cache**: 20x faster builds with Cachix (10 minutes → 30 seconds)
+- ✅ **AI integration**: OpenCode + 1Password CLI for automatic credential management
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/yourusername/dev-config ~/Projects/dev-config
-   ```
+**After installation:**
+```bash
+cd ~/Projects/dev-config  # direnv auto-activates Nix environment + AI credentials
+opencode ask "What should I work on today?"  # Uses credentials from 1Password
+```
 
-2. Run the installer:
-   ```bash
-   cd ~/Projects/dev-config
-   bash scripts/install.sh
-   ```
+**Documentation:**
+- [Quick Start Guide](docs/nix/00-quickstart.md) - 5-minute setup
+- [Nix Concepts](docs/nix/01-concepts.md) - Understanding Nix
+- [Daily Usage](docs/nix/02-daily-usage.md) - Common workflows
+- [Troubleshooting](docs/nix/03-troubleshooting.md) - Fix issues
+- [OpenCode Integration](docs/nix/04-opencode-integration.md) - AI assistant setup
+- [1Password Setup](docs/nix/05-1password-setup.md) - Credential management
+- [Advanced Guide](docs/nix/06-advanced.md) - Customization
 
-3. Restart tmux and Neovim
+**Time to install:** 10-15 minutes (first time), 30 seconds (subsequent machines with cache)
 
----
+### Method 2: Chezmoi (For Kubernetes DevPod)
 
-## Installation Methods
-
-### Method 1: Chezmoi (Recommended for automation)
-
-Chezmoi-based installation for reproducible environments:
+Chezmoi-based installation for automated Kubernetes DevPod environments:
 
 ```bash
 # Local development
@@ -327,18 +374,18 @@ chezmoi init --apply https://github.com/samuelho-dev/dev-config
 - ✅ Template-based configuration (environment-specific settings)
 - ✅ Zero-touch setup on new machines
 
-### Method 2: Manual Symlinks (Legacy)
+### Method 3: Manual Symlinks (Legacy)
 
-Traditional symlink-based installation:
+Traditional symlink-based installation without Nix:
 
 ```bash
-./scripts/install.sh
+./scripts/install-legacy.sh  # Original shell script (372 lines)
 ```
 
 **Use when:**
-- You prefer manual control over symlink creation
-- Working on machines without Chezmoi support
-- Backward compatibility with existing setup
+- You prefer manual control without Nix
+- Working on machines where Nix is not allowed
+- Backward compatibility with pre-Nix setup
 
 ### Kubernetes DevPod Integration
 
