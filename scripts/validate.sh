@@ -92,108 +92,69 @@ check_dependencies() {
 
   local issues=0
 
-  # Required dependencies
-  local required=(git zsh tmux docker)
-  for cmd in "${required[@]}"; do
+  # Required dependencies (from paths.sh)
+  for cmd in "${REQUIRED_PACKAGES[@]}"; do
     if command_exists "$cmd"; then
-      log_success "$cmd installed"
+      # Check version if specified in MIN_VERSIONS
+      if [ -n "${MIN_VERSIONS[$cmd]:-}" ]; then
+        if ! verify_tool_version "$cmd" "${MIN_VERSIONS[$cmd]}"; then
+          ((issues++))
+        fi
+      else
+        log_success "$cmd installed"
+      fi
     else
       log_error "$cmd NOT installed (required)"
       ((issues++))
     fi
   done
 
-  # Check Docker specifically
-  if command_exists docker; then
-    local docker_version=$(get_command_version docker)
-    if [ -n "$docker_version" ]; then
-      if version_gte "$docker_version" "20.10"; then
-        log_success "Docker $docker_version (✓ >= 20.10)"
-      else
-        log_warn "Docker $docker_version (< 20.10, may have compatibility issues)"
-        ((issues++))
-      fi
-    else
-      log_success "Docker installed"
-    fi
-    
-    # Check if Docker daemon is running
-    if docker info >/dev/null 2>&1; then
+  # Check Docker daemon status
+  local docker_status
+  check_docker_daemon
+  docker_status=$?
+  case $docker_status in
+    0)
       log_success "Docker daemon is running"
-    else
+      ;;
+    1)
       log_warn "Docker daemon is not running - start Docker Desktop or run: sudo systemctl start docker"
       ((issues++))
-    fi
-  else
-    log_error "Docker NOT installed (required)"
-    ((issues++))
-  fi
+      ;;
+    2)
+      # Already reported as not installed above
+      ;;
+  esac
 
-  # Check Docker Compose
-  if command_exists docker-compose; then
-    local compose_version=$(get_command_version docker-compose)
-    if [ -n "$compose_version" ]; then
-      log_success "Docker Compose $compose_version"
-    else
-      log_success "Docker Compose installed"
-    fi
-  elif docker compose version >/dev/null 2>&1; then
-    log_success "Docker Compose (plugin) available"
-  else
-    log_info "Docker Compose not found (optional but recommended)"
-  fi
-
-  # Important optional dependencies
-  local optional=(nvim fzf rg lazygit gh make node npm convert mmdc)
-  for cmd in "${optional[@]}"; do
+  # Optional dependencies (from paths.sh)
+  for cmd in "${OPTIONAL_PACKAGES[@]}"; do
     if command_exists "$cmd"; then
-      local version=""
-      case $cmd in
-        nvim)
-          version=$(get_command_version nvim)
-          if [ -n "$version" ]; then
-            if version_gte "$version" "0.9.0"; then
-              log_success "$cmd $version (✓ >= 0.9.0)"
-            else
-              log_warn "$cmd $version (< 0.9.0, may have issues)"
-              ((issues++))
-            fi
-          else
-            log_success "$cmd installed"
-          fi
-          ;;
-        *)
-          log_success "$cmd installed"
-          ;;
-      esac
+      # Check version if specified in MIN_VERSIONS
+      if [ -n "${MIN_VERSIONS[$cmd]:-}" ]; then
+        if ! verify_tool_version "$cmd" "${MIN_VERSIONS[$cmd]}"; then
+          ((issues++))
+        fi
+      else
+        log_success "$cmd installed"
+      fi
     else
       log_info "$cmd not installed (optional but recommended)"
     fi
   done
 
-  # Check build tools
-  if command_exists make; then
-    log_success "make installed (telescope-fzf-native can build native binaries)"
-  else
-    log_warn "make not installed - telescope-fzf-native will use fallback implementation"
+  # Build tools (from paths.sh) - already checked above in BUILD_PACKAGES loop
+
+  # Additional specific tool checks (with usage notes)
+  if ! command_exists make; then
+    log_verbose "telescope-fzf-native will use fallback implementation without make"
   fi
 
-  if command_exists pkg-config; then
-    log_success "pkg-config installed (blink.cmp can use the Rust fuzzy matcher)"
-  else
-    log_info "pkg-config not installed; blink.cmp stays on the Lua fuzzy matcher (default configuration)"
+  if ! command_exists pkg-config; then
+    log_verbose "blink.cmp will use Lua fuzzy matcher without pkg-config"
   fi
 
-  # Check Node.js ecosystem
-  if command_exists node; then
-    local node_version=$(get_command_version node)
-    if [ -n "$node_version" ]; then
-      log_success "Node.js $node_version installed"
-    else
-      log_success "Node.js installed"
-    fi
-  else
-    log_warn "Node.js not installed - Mermaid CLI (mmdc) will not be available"
+  if ! command_exists node; then
+    log_verbose "Mermaid CLI (mmdc) requires Node.js"
   fi
 
   if command_exists npm; then

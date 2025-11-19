@@ -39,9 +39,9 @@ return {
           },
         },
       },
+      -- Daily notes disabled to prevent automatic folder creation
       daily_notes = {
-        folder = 'daily',
-        date_format = '%Y-%m-%d',
+        folder = vim.NIL,
       },
       completion = {
         nvim_cmp = false, -- Using blink.cmp instead
@@ -77,35 +77,9 @@ return {
     dependencies = {
       'nvim-treesitter/nvim-treesitter',
       'nvim-tree/nvim-web-devicons',
-      {
-        '3rd/image.nvim',
-        enabled = function()
-          return #vim.api.nvim_list_uis() > 0
-        end,
-        opts = {
-          backend = 'kitty',
-          integrations = {
-            markdown = {
-              enabled = true,
-              clear_in_insert_mode = false,
-              download_remote_images = false,
-              only_render_image_at_cursor = false,
-            },
-          },
-          max_height_window_percentage = 70,
-        },
-      },
     },
     opts = {
       file_types = { 'markdown' },
-      custom_handlers = {
-        mermaid = {
-          extends = true,
-          parse = function(context)
-            return require('plugins.custom.mermaid').parse(context)
-          end,
-        },
-      },
       code = {
         sign = false,
         width = 'block',

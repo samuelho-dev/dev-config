@@ -15,6 +15,7 @@ readonly REPO_ROOT
 
 readonly REPO_NVIM="$REPO_ROOT/nvim"
 readonly REPO_TMUX_CONF="$REPO_ROOT/tmux/tmux.conf"
+readonly REPO_GITMUX_CONF="$REPO_ROOT/tmux/gitmux.conf"
 readonly REPO_GHOSTTY_CONFIG="$REPO_ROOT/ghostty/config"
 readonly REPO_ZSHRC="$REPO_ROOT/zsh/.zshrc"
 readonly REPO_ZPROFILE="$REPO_ROOT/zsh/.zprofile"
@@ -26,6 +27,7 @@ readonly REPO_P10K="$REPO_ROOT/zsh/.p10k.zsh"
 
 HOME_NVIM="${XDG_CONFIG_HOME:-$HOME/.config}/nvim"
 HOME_TMUX_CONF="$HOME/.tmux.conf"
+HOME_GITMUX_CONF="$HOME/.gitmux.conf"
 HOME_ZSHRC="$HOME/.zshrc"
 HOME_ZSHRC_LOCAL="$HOME/.zshrc.local"
 HOME_ZPROFILE="$HOME/.zprofile"
@@ -51,6 +53,44 @@ TPM_BASE_DIR="${TMUX_PLUGIN_MANAGER_PATH:-$HOME/.tmux/plugins}"
 TPM_DIR="${TPM_BASE_DIR%/}/tpm"
 
 # =============================================================================
+# Package Definitions (DRY - Single Source of Truth)
+# =============================================================================
+
+# Core packages required for basic functionality
+REQUIRED_PACKAGES=(
+  git
+  zsh
+  tmux
+  docker
+)
+
+# Optional packages that enhance functionality but aren't critical
+OPTIONAL_PACKAGES=(
+  neovim
+  fzf
+  ripgrep
+  lazygit
+  gitmux
+  docker-compose
+)
+
+# Build tools for Neovim plugins
+BUILD_PACKAGES=(
+  make
+  pkg-config
+  node
+  npm
+  imagemagick
+)
+
+# Minimum version requirements (tool:version)
+declare -A MIN_VERSIONS=(
+  [neovim]="0.9.0"
+  [tmux]="1.9"
+  [docker]="20.10"
+)
+
+# =============================================================================
 # Path Arrays for Iteration
 # =============================================================================
 
@@ -59,6 +99,7 @@ TPM_DIR="${TPM_BASE_DIR%/}/tpm"
 SYMLINK_SOURCES=(
   "$REPO_NVIM"
   "$REPO_TMUX_CONF"
+  "$REPO_GITMUX_CONF"
   "$REPO_GHOSTTY_CONFIG"
   "$REPO_ZSHRC"
   "$REPO_ZPROFILE"
@@ -68,6 +109,7 @@ SYMLINK_SOURCES=(
 SYMLINK_TARGETS=(
   "$HOME_NVIM"
   "$HOME_TMUX_CONF"
+  "$HOME_GITMUX_CONF"
   "$HOME_GHOSTTY_CONFIG"
   "$HOME_ZSHRC"
   "$HOME_ZPROFILE"
@@ -84,6 +126,7 @@ print_paths() {
   echo "REPO_ROOT: $REPO_ROOT"
   echo "REPO_NVIM: $REPO_NVIM"
   echo "REPO_TMUX_CONF: $REPO_TMUX_CONF"
+  echo "REPO_GITMUX_CONF: $REPO_GITMUX_CONF"
   echo "REPO_GHOSTTY_CONFIG: $REPO_GHOSTTY_CONFIG"
   echo "REPO_ZSHRC: $REPO_ZSHRC"
   echo "REPO_ZPROFILE: $REPO_ZPROFILE"
@@ -92,6 +135,7 @@ print_paths() {
   log_section "Target Paths"
   echo "HOME_NVIM: $HOME_NVIM"
   echo "HOME_TMUX_CONF: $HOME_TMUX_CONF"
+  echo "HOME_GITMUX_CONF: $HOME_GITMUX_CONF"
   echo "HOME_GHOSTTY_CONFIG: $HOME_GHOSTTY_CONFIG"
   echo "HOME_ZSHRC: $HOME_ZSHRC"
   echo "HOME_ZPROFILE: $HOME_ZPROFILE"
@@ -111,6 +155,7 @@ verify_repo_files() {
 
   [ ! -d "$REPO_NVIM" ] && missing_files+=("$REPO_NVIM")
   [ ! -f "$REPO_TMUX_CONF" ] && missing_files+=("$REPO_TMUX_CONF")
+  [ ! -f "$REPO_GITMUX_CONF" ] && missing_files+=("$REPO_GITMUX_CONF")
   [ ! -f "$REPO_GHOSTTY_CONFIG" ] && missing_files+=("$REPO_GHOSTTY_CONFIG")
   [ ! -f "$REPO_ZSHRC" ] && missing_files+=("$REPO_ZSHRC")
   [ ! -f "$REPO_ZPROFILE" ] && missing_files+=("$REPO_ZPROFILE")

@@ -186,14 +186,18 @@ Complete reference for all tmux keybindings in this configuration.
 
 ### Status Bar
 - **Position:** Bottom
-- **Update interval:** 5 seconds
+- **Update interval:** 5 seconds (+ auto-refresh on pane switch)
 - **Left side:** Session name, window index, pane index, pane title
 - **Right side:** Hostname, time, date
 
 ### Pane Border
-- **Status:** Top (shows pane title and number)
+- **Status:** Top (shows pane title, number, and git status)
 - **Active border:** Cyan
 - **Inactive border:** Gray
+- **Git status:** Shows branch, ahead/behind, staged, modified files
+  - Example: `1: editor ⎇ feature-x ↑2 ●3 ✚1`
+  - Symbols: ⎇ (branch), ↑ (ahead), ↓ (behind), ● (staged), ✖ (conflict), ✚ (modified), … (untracked), ⚑ (stash)
+  - Only shows when in a git repository
 
 ---
 
@@ -228,6 +232,25 @@ tmux                # Start tmux
 Prefix + Ctrl+r     # Restore session
 ```
 
+### Git Worktree Workflow (Multiple Branches)
+```bash
+# Window 1: feature-x
+Prefix + |          # Split pane
+# Pane borders show: "⎇ feature-x ●2 ✚1"
+nvim src/main.js    # Edit in feature-x branch
+
+# Window 2: feature-y (different worktree)
+Prefix + c          # New window
+cd ~/worktrees/feature-y
+# Pane border shows: "⎇ feature-y ↑3"
+nvim src/other.js   # Edit in feature-y branch
+
+# Each pane knows which branch it's in via pane border
+# Claude Code instances are isolated per pane automatically
+```
+
+**Note:** Set `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1` in your shell config to keep Claude Code instances isolated to their starting directory. This prevents directory changes in one pane from affecting Claude instances in other panes.
+
 ---
 
 ## Troubleshooting
@@ -252,6 +275,35 @@ tmux kill-server
 
 ### Pane Border Titles Not Showing
 Set pane title manually: `Prefix + t` and enter a title
+
+### Git Status Not Showing in Pane Borders
+1. Check if gitmux is installed:
+   ```bash
+   which gitmux
+   # Should return: /usr/local/bin/gitmux or /opt/homebrew/bin/gitmux
+   ```
+
+2. Install if missing:
+   ```bash
+   brew install gitmux  # macOS
+   ```
+
+3. Check gitmux config symlink:
+   ```bash
+   ls -la ~/.gitmux.conf
+   # Should point to ~/Projects/dev-config/tmux/gitmux.conf
+   ```
+
+4. Test gitmux manually:
+   ```bash
+   cd ~/your-git-repo
+   gitmux -cfg ~/.gitmux.conf $(pwd)
+   # Should output: ⎇ branch-name ...
+   ```
+
+5. Reload tmux: `Prefix + r`
+
+**Note:** Git status only shows when the pane's current directory is inside a git repository.
 
 ---
 
@@ -299,3 +351,7 @@ bind <key> split-window -v -c "#{pane_current_path}"
 4. **Set pane titles:** `Prefix + t` for better organization
 5. **Lazygit integration:** `Prefix + g` for quick git operations
 6. **Save your work:** `Prefix + Ctrl+s` before logging out
+7. **Check pane borders:** Shows git branch and status - know which worktree you're in!
+8. **Git worktrees:** Each pane shows its own branch - prevents accidents
+9. **Claude Code isolation:** Set `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1` to keep instances isolated
+10. **Launch from correct directory:** `cd` into the worktree before running `claude`

@@ -10,10 +10,13 @@ Single-file tmux configuration (~200 lines) with extensive plugin ecosystem mana
 
 ```
 tmux/
-└── tmux.conf          # Complete tmux configuration
+├── tmux.conf          # Complete tmux configuration
+└── gitmux.conf        # Git status formatting configuration
 ```
 
-**Symlink location:** `~/.tmux.conf`
+**Symlink locations:**
+- `~/.tmux.conf` → `~/Projects/dev-config/tmux/tmux.conf`
+- `~/.gitmux.conf` → `~/Projects/dev-config/tmux/gitmux.conf`
 
 ## Configuration Sections
 
@@ -52,13 +55,69 @@ The file is organized into logical sections:
 - `y` - Copy to clipboard (macOS: pbcopy)
 - Mouse drag also copies
 
+### Claude Code + Git Worktree Workflow
+
+**Purpose:** Run multiple isolated Claude Code instances in different tmux panes, each working on a separate git worktree/branch.
+
+**The Problem:**
+When running multiple Claude Code instances in different panes without proper isolation, directory changes in one instance can affect others, leading to commands being executed in the wrong worktree.
+
+**The Solution:**
+Use `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1` environment variable to lock each Claude instance to its starting directory.
+
+**Configuration:**
+Set in `zsh/.zshrc` (lines 137-139):
+```bash
+# Claude Code: Maintain working directory per pane (prevents directory switching)
+# Critical for git worktree workflows with multiple Claude instances
+export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1
+```
+
+**How it works:**
+- Each tmux pane maintains its own working directory (tmux default behavior)
+- Claude Code respects the environment variable and stays in its starting directory
+- Git status shown in pane borders (via gitmux) so you always know which worktree/branch you're in
+- No accidental directory switching between instances
+
+**Usage example:**
+```bash
+# Pane 1: Main branch
+cd ~/Projects/dev-config
+claude  # Works on main branch
+
+# Pane 2: Feature worktree (Prefix + |)
+cd ~/Projects/dev-config-worktrees/feature-x
+claude  # Works on feature-x branch, isolated from Pane 1
+
+# Pane 3: Another feature worktree (Prefix + |)
+cd ~/Projects/dev-config-worktrees/feature-y
+claude  # Works on feature-y branch, isolated from Panes 1 and 2
+
+# Each pane shows its git branch in the border:
+# 1: main ⎇ main ✔
+# 2: feature-x ⎇ feature-x ●2 ✚1
+# 3: feature-y ⎇ feature-y ↑3
+```
+
+**Benefits:**
+- ✅ Each Claude instance isolated to its own worktree
+- ✅ No accidental cross-worktree command execution
+- ✅ Git branch/status visible in each pane border
+- ✅ Official Claude Code environment variable (documented)
+- ✅ Works automatically - no manual setup per pane
+
 ### Status Bar Configuration (lines 106-137)
 - Position: Bottom
-- Update interval: 5 seconds
+- Update interval: 5 seconds + auto-refresh on pane switch
 - Colors: Overridden by Catppuccin theme (see plugins)
 - Left: `#S #I #P:#{pane_title}` (session, window, pane, title)
 - Right: `#H %H:%M %d-%b-%y` (hostname, time, date)
-- Pane borders: Titles shown on top
+- Pane borders: Titles shown on top + **git status** (via gitmux)
+  - Format: `#P: #{pane_title} + git status`
+  - Git status shows: branch, ahead/behind, staged, modified, conflicts
+  - Auto-updates every 5 seconds + on pane switch
+  - Example: `1: editor ⎇ feature-x ↑2 ●3 ✚1`
+  - **Critical for git worktree workflows** - always shows which branch/worktree you're in
 
 ### Popup Windows (lines 139-156)
 **Popups** are floating windows overlaid on current session.
@@ -342,6 +401,105 @@ Manually restore:
 Prefix + C-r
 ```
 
+### Git status not showing
+
+1. Check gitmux installed:
+   ```bash
+   which gitmux  # Should return a path
+   brew install gitmux  # If missing
+   ```
+
+2. Check gitmux.conf symlink:
+   ```bash
+   ls -la ~/.gitmux.conf
+   # Should point to ~/Projects/dev-config/tmux/gitmux.conf
+   ```
+
+3. Test gitmux manually:
+   ```bash
+   gitmux -cfg ~/.gitmux.conf $(pwd)
+   ```
+
+4. Reload tmux:
+   ```
+   Prefix + r
+   ```
+
+## Git Worktree Integration
+
+**Critical for working with multiple git worktrees in separate panes!**
+
+### gitmux Configuration
+
+**Purpose:** Display git branch and status in each pane border, so you always know which worktree/branch you're working on.
+
+**Configuration file:** `tmux/gitmux.conf` (symlinked to `~/.gitmux.conf`)
+
+**Features:**
+- **Per-pane git status:** Each pane shows its own git branch and changes
+- **Catppuccin Mocha colors:** Matches tmux theme
+- **Compact format:** Optimized for pane borders
+- **Auto-refresh:** Updates every 5 seconds + on pane switch
+
+**Symbols:**
+- `⎇ branch-name` - Current git branch
+- `↑2` - 2 commits ahead of remote
+- `↓1` - 1 commit behind remote
+- `●3` - 3 staged files
+- `✖1` - 1 merge conflict
+- `✚2` - 2 modified files
+- `…4` - 4 untracked files
+- `⚑1` - 1 stash
+- `✔` - Clean working directory
+
+**Example pane border:**
+```
+┌─ 1: editor ⎇ feature-x ↑2 ●3 ✚1 ─┐
+│ $ nvim src/main.js                │
+└────────────────────────────────────┘
+```
+
+Meaning: Pane 1, titled "editor", on branch "feature-x", 2 commits ahead, 3 staged files, 1 modified file.
+
+**Customizing:**
+Edit `tmux/gitmux.conf` to change:
+- Colors (Catppuccin palette)
+- Symbols (branch, staged, modified, etc.)
+- Layout (order of elements)
+- Options (branch max length, hide clean state)
+
+**Implementation:**
+```bash
+# In tmux.conf
+set -g pane-border-format "#P: #{pane_title} #(gitmux -cfg ~/.gitmux.conf '#{pane_current_path}')"
+```
+
+### Typical Git Worktree Workflow with Claude Code
+
+**Scenario:** Working on 3 features simultaneously
+
+```
+Window 1: feature-x
+  Pane 1: editor    ⎇ feature-x ●2 ✚1
+  Pane 2: terminal  ⎇ feature-x
+  Pane 3: lazygit   ⎇ feature-x
+
+Window 2: feature-y
+  Pane 1: editor    ⎇ feature-y ↑3
+  Pane 2: terminal  ⎇ feature-y
+
+Window 3: main
+  Pane 1: editor    ⎇ main ✔
+  Pane 2: tests     ⎇ main
+```
+
+**Benefits:**
+- ✅ See branch/worktree at a glance in pane borders
+- ✅ Each Claude Code instance isolated to its own worktree
+- ✅ No accidentally running commands in wrong worktree
+- ✅ Multiple features developed in parallel without conflicts
+- ✅ Git status auto-updates to show current state
+
 ## Best Practices
 
 1. **Always reload** after editing: `Prefix + r`
@@ -350,6 +508,9 @@ Prefix + C-r
 4. **Leverage vim-tmux-navigator** for seamless navigation
 5. **Save sessions manually** before risky operations: `Prefix + C-s`
 6. **Test keybindings** before committing changes
+7. **Check pane borders** for git branch before running commands in git worktrees
+8. **Launch Claude from correct directory** - `cd` into worktree before running `claude`
+9. **Use CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR** - Keeps Claude instances isolated
 
 ## Resources
 
@@ -358,3 +519,4 @@ Prefix + C-r
 - vim-tmux-navigator: https://github.com/christoomey/vim-tmux-navigator
 - Catppuccin: https://github.com/catppuccin/tmux
 - tmux-resurrect: https://github.com/tmux-plugins/tmux-resurrect
+- gitmux: https://github.com/arl/gitmux

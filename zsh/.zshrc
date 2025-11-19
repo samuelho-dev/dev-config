@@ -134,8 +134,27 @@ if [ -n "$PNPM_HOME" ]; then
   esac
 fi
 
+# Claude Code: Maintain working directory per pane (prevents directory switching)
+# Critical for git worktree workflows with multiple Claude instances
+export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1
+
 # Claude Code work profile alias
 alias claude-work='CLAUDE_CONFIG_DIR=~/.claude_work claude'
+alias claude-2='CLAUDE_CONFIG_DIR=~/.claude_2 claude'
 
 # Source machine-specific configuration (gitignored)
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/samuelho/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /opt/homebrew/bin/terraform terraform
+
+# Added by Windsurf
+export PATH="/Users/samuelho/.codeium/windsurf/bin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/samuelho/.antigravity/antigravity/bin:$PATH"

@@ -10,14 +10,119 @@ source "$SCRIPT_DIR/lib/common.sh"
 source "$SCRIPT_DIR/lib/paths.sh"
 
 # =============================================================================
+# Usage Information
+# =============================================================================
+
+show_usage() {
+  cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Zero-touch installation script for dev-config. Installs dependencies, creates
+symlinks, and configures plugins automatically.
+
+OPTIONS:
+  -y, --yes             Skip all confirmation prompts (auto-yes)
+  --skip-api-keys       Skip AI provider API key setup
+  --dry-run             Show what would be done without making changes
+  -v, --verbose         Enable verbose logging
+  -h, --help            Show this help message
+
+EXAMPLES:
+  # Interactive installation
+  bash scripts/install.sh
+
+  # Fully automated (CI/CD)
+  bash scripts/install.sh --yes --skip-api-keys
+
+  # Preview changes without executing
+  bash scripts/install.sh --dry-run
+
+  # Verbose output for debugging
+  bash scripts/install.sh --verbose
+
+EOF
+}
+
+# =============================================================================
+# Installation Tracking
+# =============================================================================
+
+# Arrays to track installation state for summary
+declare -a INSTALLED_PACKAGES=()
+declare -a SKIPPED_PACKAGES=()
+declare -a FAILED_PACKAGES=()
+
+# NOTE: Utility functions (get_current_shell, verify_tool_version, wait_with_spinner)
+# are now in lib/common.sh to eliminate duplication
+
+# =============================================================================
 # Main Installation
 # =============================================================================
 
 main() {
-  log_section "🚀 Installing dev-config..."
+  # Parse command-line flags
+  local AUTO_YES=0
+  local SKIP_API_KEYS=0
 
-  # Safety check
+  while [[ $# -gt 0 ]]; do
+    case $1 in
+      -h|--help)
+        show_usage
+        exit 0
+        ;;
+      -y|--yes)
+        AUTO_YES=1
+        shift
+        ;;
+      --dry-run)
+        DRY_RUN=1
+        shift
+        ;;
+      -v|--verbose)
+        VERBOSE=1
+        shift
+        ;;
+      --skip-api-keys)
+        SKIP_API_KEYS=1
+        shift
+        ;;
+      -h|--help)
+        echo "Usage: $0 [-y|--yes] [--skip-api-keys] [-h|--help]"
+        echo ""
+        echo "Options:"
+        echo "  -y, --yes           Auto-confirm all prompts (non-interactive mode)"
+        echo "  --skip-api-keys     Skip API key configuration"
+        echo "  -h, --help          Show this help message"
+        exit 0
+        ;;
+      *)
+        log_error "Unknown option: $1"
+        echo "Usage: $0 [-y|--yes] [--skip-api-keys] [-h|--help]"
+        exit 1
+        ;;
+    esac
+  done
+
+  # Export flags for use in subfunctions
+  export AUTO_YES SKIP_API_KEYS DRY_RUN VERBOSE
+
+  if [ "$DRY_RUN" -eq 1 ]; then
+    log_section "🔍 DRY-RUN MODE - No changes will be made"
+  else
+    log_section "🚀 Installing dev-config..."
+  fi
+
+  # Pre-flight checks
   check_sudo
+
+  # Initialize Homebrew environment if installed
+  init_brew
+
+  # Check network connectivity (required for downloads)
+  if ! check_network; then
+    log_error "Network connectivity required for installation. Please check your internet connection."
+    exit 1
+  fi
 
   # Verify repository structure
   if ! verify_repo_files; then
@@ -43,8 +148,12 @@ main() {
   # Step 5: Create .zshrc.local if it doesn't exist
   create_zshrc_local
 
-  # Step 6: Setup AI provider API keys
-  setup_api_keys
+  # Step 6: Setup AI provider API keys (optional)
+  if [ "$SKIP_API_KEYS" -eq 0 ]; then
+    setup_api_keys
+  else
+    log_info "⏭️  Skipping API key setup (--skip-api-keys flag provided)"
+  fi
 
   # Step 7: Auto-install Neovim plugins
   install_neovim_plugins
@@ -52,7 +161,10 @@ main() {
   # Step 8: Auto-install tmux plugins
   install_tmux_plugins
 
-  # Step 9: Verify installation
+  # Step 9: Print installation summary
+  print_installation_summary
+
+  # Step 10: Verify installation
   verify_installation
 
   # Done!
@@ -66,95 +178,141 @@ main() {
 install_core_dependencies() {
   log_section "📦 Installing core dependencies..."
 
-  # Install Homebrew on macOS if missing
-  if is_macos && ! command_exists brew; then
-    log_info "Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  ensure_homebrew_installed
+  install_required_packages
+  install_optional_packages
+  install_npm_tools
+  verify_build_tools
+  check_tool_versions
+}
 
+# Ensure Homebrew is installed on macOS
+ensure_homebrew_installed() {
+  if ! is_macos; then
+    return 0
+  fi
+
+  if command_exists brew; then
+    log_success "Homebrew already installed"
+    SKIPPED_PACKAGES+=("homebrew")
+    return 0
+  fi
+
+  log_info "⏳ Installing Homebrew (this may take 3-5 minutes)..."
+  if /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
     # Add brew to PATH for current session
     if [ -f /opt/homebrew/bin/brew ]; then
       eval "$(/opt/homebrew/bin/brew shellenv)"
     elif [ -f /usr/local/bin/brew ]; then
       eval "$(/usr/local/bin/brew shellenv)"
     fi
+    log_success "Homebrew installed"
+    INSTALLED_PACKAGES+=("homebrew")
+  else
+    log_error "Failed to install Homebrew"
+    FAILED_PACKAGES+=("homebrew")
+    return 1
   fi
+}
 
-  # Define required packages
-  local core_packages=(git zsh tmux docker)
-  local optional_packages=(neovim fzf ripgrep lazygit imagemagick docker-compose make node npm pkg-config)
+# Install required packages (fail if any critical package fails)
+install_required_packages() {
+  local packages=(git zsh tmux docker)
+  local failures=0
+  local failed_list=()
 
-  local core_failures=0
-  local core_failed_list=()
-
-  # Install core packages (required)
-  for package in "${core_packages[@]}"; do
+  for package in "${packages[@]}"; do
     if [ "$package" = "docker" ]; then
       if ! install_docker; then
         log_error "Failed to install Docker"
-        core_failed_list+=("$package")
-        ((core_failures++))
+        failed_list+=("$package")
+        FAILED_PACKAGES+=("$package")
+        ((failures++))
       fi
     else
-      if ! install_package "$package" true; then
-        log_error "Failed to install required package: $package"
-        core_failed_list+=("$package")
-        ((core_failures++))
-      fi
-    fi
-  done
-
-  if [ $core_failures -gt 0 ]; then
-    log_warn "Core package installation encountered $core_failures issue(s). Please install manually and re-run install.sh for: ${core_failed_list[*]}"
-  fi
-
-  # Install optional packages (best effort)
-  for package in "${optional_packages[@]}"; do
-    # Handle package name differences
-    local pkg_name=$package
-    if is_linux; then
-      case $package in
-        lazygit)
-          # lazygit might not be in repos, skip gracefully
-          if ! install_package "$package" 2>/dev/null; then
-            log_warn "lazygit not available via package manager. Install manually from: https://github.com/jesseduffield/lazygit"
-            continue
-          fi
-          ;;
-      esac
-    fi
-
-    install_package "$pkg_name" || log_warn "Optional package $package not installed"
-  done
-
-  # Install Mermaid CLI if npm is available
-  if command_exists npm; then
-    if ! command_exists mmdc; then
-      log_info "Installing Mermaid CLI (mmdc) via npm..."
-      if npm install -g @mermaid-js/mermaid-cli >/dev/null 2>&1; then
-        log_success "Mermaid CLI installed"
+      if command_exists "$package"; then
+        log_success "$package already installed"
+        SKIPPED_PACKAGES+=("$package")
+      elif install_package "$package" true; then
+        INSTALLED_PACKAGES+=("$package")
       else
-        log_warn "Failed to install Mermaid CLI via npm. Install manually with: npm install -g @mermaid-js/mermaid-cli"
+        log_error "Failed to install required package: $package"
+        failed_list+=("$package")
+        FAILED_PACKAGES+=("$package")
+        ((failures++))
       fi
-    else
-      log_success "Mermaid CLI already installed"
     fi
-  else
-    log_warn "npm not found. Mermaid CLI (mmdc) not installed. Install npm or run: npm install -g @mermaid-js/mermaid-cli"
+  done
+
+  if [ $failures -gt 0 ]; then
+    log_warn "Core package installation encountered $failures issue(s). Please install manually: ${failed_list[*]}"
+  fi
+}
+
+# Install optional packages (best effort, warnings only)
+install_optional_packages() {
+  local packages=(neovim fzf ripgrep lazygit gitmux imagemagick docker-compose make node npm pkg-config)
+
+  for package in "${packages[@]}"; do
+    # Check if already installed
+    if command_exists "$package"; then
+      SKIPPED_PACKAGES+=("$package")
+      continue
+    fi
+
+    # Handle special cases
+    if is_linux && [ "$package" = "lazygit" ]; then
+      if ! install_package "$package" 2>/dev/null; then
+        log_warn "lazygit not available via package manager. Install manually from: https://github.com/jesseduffield/lazygit"
+        FAILED_PACKAGES+=("$package")
+        continue
+      fi
+      INSTALLED_PACKAGES+=("$package")
+    else
+      if install_package "$package"; then
+        INSTALLED_PACKAGES+=("$package")
+      else
+        log_warn "Optional package $package not installed"
+        FAILED_PACKAGES+=("$package")
+      fi
+    fi
+  done
+}
+
+# Install npm-based tools
+install_npm_tools() {
+  if ! command_exists npm; then
+    log_warn "npm not found. Mermaid CLI (mmdc) not installed."
+    return 0
   fi
 
-  # Check for build tools
+  if command_exists mmdc; then
+    log_success "Mermaid CLI already installed"
+    SKIPPED_PACKAGES+=("mermaid-cli")
+    return 0
+  fi
+
+  log_info "⏳ Installing Mermaid CLI (mmdc) via npm..."
+  if npm install -g @mermaid-js/mermaid-cli >/dev/null 2>&1; then
+    log_success "Mermaid CLI installed"
+    INSTALLED_PACKAGES+=("mermaid-cli")
+  else
+    log_warn "Failed to install Mermaid CLI. Install manually: npm install -g @mermaid-js/mermaid-cli"
+    FAILED_PACKAGES+=("mermaid-cli")
+  fi
+}
+
+# Verify build tools are available
+verify_build_tools() {
   if ! command_exists make; then
     log_warn "make not found - telescope-fzf-native will use fallback implementation"
-    log_info "Install make for better performance: brew install make (macOS) or apt install build-essential (Linux)"
+    log_info "Install make: brew install make (macOS) or apt install build-essential (Linux)"
   fi
 
   if ! command_exists pkg-config; then
     log_info "pkg-config not found - blink.cmp will use Lua fuzzy matcher (default)"
-    log_info "Install pkg-config for Rust optimization: brew install pkg-config (macOS) or apt install pkg-config (Linux)"
+    log_info "Install pkg-config: brew install pkg-config (macOS) or apt install pkg-config (Linux)"
   fi
-
-  # Version checks
-  check_tool_versions
 }
 
 # =============================================================================
@@ -203,25 +361,24 @@ install_docker_macos() {
     return $?
   fi
 
+  # Check if Docker daemon is already running
+  if docker info >/dev/null 2>&1; then
+    log_success "Docker daemon already running"
+    return 0
+  fi
+
   # Start Docker Desktop
   log_info "Starting Docker Desktop..."
   open -a Docker || log_warn "Could not start Docker Desktop automatically"
-  
-  # Wait for Docker daemon to start
-  log_info "Waiting for Docker daemon to start..."
-  local attempts=0
-  local max_attempts=30
-  while [ $attempts -lt $max_attempts ]; do
-    if docker info >/dev/null 2>&1; then
-      log_success "Docker daemon is running"
-      return 0
-    fi
-    sleep 2
-    ((attempts++))
-  done
-  
-  log_warn "Docker daemon did not start automatically. Please start Docker Desktop manually."
-  return 1
+
+  # Wait for Docker daemon to start with progress indicator
+  if wait_with_spinner "Waiting for Docker daemon" "docker info" 60 2; then
+    log_success "Docker daemon is running"
+    return 0
+  else
+    log_warn "Docker daemon did not start. Please start Docker Desktop manually."
+    return 1
+  fi
 }
 
 install_docker_macos_manual() {
@@ -327,96 +484,36 @@ install_docker_linux_script() {
 check_tool_versions() {
   log_section "🔍 Checking tool versions..."
 
-  # Check Neovim version
-  if command_exists nvim; then
-    local nvim_version=$(get_command_version nvim)
-    if [ -n "$nvim_version" ]; then
-      if version_gte "$nvim_version" "0.9.0"; then
-        log_success "Neovim $nvim_version (✓ >= 0.9.0)"
-      else
-        log_warn "Neovim $nvim_version (< 0.9.0 - may have issues)"
-      fi
-    fi
-  else
-    log_warn "Neovim not installed - install manually or retry"
-  fi
+  # Check required tool versions
+  verify_tool_version "nvim" "0.9.0" || true
+  verify_tool_version "tmux" "1.9" "-V" || true
+  verify_tool_version "docker" "20.10" || true
 
-  # Check tmux version
-  if command_exists tmux; then
-    local tmux_version=$(get_command_version tmux -V)
-    if [ -n "$tmux_version" ]; then
-      if version_gte "$tmux_version" "1.9"; then
-        log_success "tmux $tmux_version (✓ >= 1.9)"
-      else
-        log_warn "tmux $tmux_version (< 1.9 - may have issues)"
-      fi
-    fi
-  else
-    log_warn "tmux not installed - install manually or retry"
-  fi
-
-  # Check Docker version
+  # Check Docker daemon status
   if command_exists docker; then
-    local docker_version=$(get_command_version docker)
-    if [ -n "$docker_version" ]; then
-      if version_gte "$docker_version" "20.10"; then
-        log_success "Docker $docker_version (✓ >= 20.10)"
-      else
-        log_warn "Docker $docker_version (< 20.10 - may have compatibility issues)"
-      fi
-    else
-      log_success "Docker installed"
-    fi
-    
-    # Check if Docker daemon is running
     if docker info >/dev/null 2>&1; then
       log_success "Docker daemon is running"
     else
-      log_warn "Docker daemon is not running - start Docker Desktop or run: sudo systemctl start docker"
+      log_warn "Docker daemon not running - start Docker Desktop or run: sudo systemctl start docker"
     fi
-  else
-    log_warn "Docker not installed - install manually or retry"
   fi
 
-  # Check Docker Compose (optional)
+  # Check optional tools
   if command_exists docker-compose; then
     local compose_version=$(get_command_version docker-compose)
-    if [ -n "$compose_version" ]; then
-      log_success "Docker Compose $compose_version"
-    else
-      log_success "Docker Compose installed"
-    fi
+    [ -n "$compose_version" ] && log_success "Docker Compose $compose_version" || log_success "Docker Compose installed"
   elif docker compose version >/dev/null 2>&1; then
     log_success "Docker Compose (plugin) available"
   else
-    log_info "Docker Compose not found - install with: brew install docker-compose (macOS) or see https://docs.docker.com/compose/install/"
+    log_info "Docker Compose not found - optional"
   fi
 
-  # Check for GitHub CLI (optional)
-  if ! command_exists gh; then
-    log_info "GitHub CLI (gh) not installed - optional for PR/issue management"
-    log_info "Install with: brew install gh (macOS) or see https://cli.github.com/"
-  else
-    log_success "GitHub CLI installed"
-  fi
+  command_exists gh && log_success "GitHub CLI installed" || log_info "GitHub CLI not installed (optional for PR/issue management)"
+  command_exists mmdc && log_success "Mermaid CLI (mmdc) installed" || log_warn "Mermaid CLI missing - Mermaid previews disabled"
+  command_exists convert && log_success "ImageMagick installed" || log_warn "ImageMagick missing - image.nvim disabled"
 
-  # Confirm Mermaid CLI and ImageMagick availability
-  if command_exists mmdc; then
-    log_success "Mermaid CLI (mmdc) installed"
-  else
-    log_warn "Mermaid CLI (mmdc) missing - Mermaid previews will not render until installed"
-  fi
-  if command_exists convert; then
-    log_success "ImageMagick installed"
-  else
-    log_warn "ImageMagick missing - image.nvim may not function correctly"
-  fi
-
-  if [ -z "${ZHIPUAI_API_KEY:-}" ]; then
-    log_warn "ZHIPUAI_API_KEY not set - GLM-based features (Minuet & CodeCompanion) will stay offline until you export it"
-  else
-    log_success "Detected ZHIPUAI_API_KEY for GLM integrations"
-  fi
+  # Check API keys
+  [ -n "${ZHIPUAI_API_KEY:-}" ] && log_success "ZHIPUAI_API_KEY detected for GLM integrations" || log_warn "ZHIPUAI_API_KEY not set - GLM features offline"
 }
 
 # =============================================================================
@@ -437,18 +534,14 @@ install_zsh_components() {
 
   # Install Powerlevel10k theme
   if [ ! -d "$P10K_THEME_DIR" ]; then
-    log_info "Installing Powerlevel10k theme..."
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_THEME_DIR"
-    log_success "Powerlevel10k installed"
+    install_git_repo "https://github.com/romkatv/powerlevel10k.git" "$P10K_THEME_DIR" 1
   else
     log_success "Powerlevel10k already installed"
   fi
 
   # Install zsh-autosuggestions plugin
   if [ ! -d "$ZSH_AUTOSUGGESTIONS_DIR" ]; then
-    log_info "Installing zsh-autosuggestions..."
-    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_AUTOSUGGESTIONS_DIR"
-    log_success "zsh-autosuggestions installed"
+    install_git_repo "https://github.com/zsh-users/zsh-autosuggestions" "$ZSH_AUTOSUGGESTIONS_DIR"
   else
     log_success "zsh-autosuggestions already installed"
   fi
@@ -469,62 +562,61 @@ ensure_default_shell_is_zsh() {
     exit 1
   fi
 
+  # Check if shell is in /etc/shells
   if [ -f /etc/shells ] && ! grep -qx "$desired_shell" /etc/shells; then
     log_warn "Shell $desired_shell is not listed in /etc/shells."
     log_warn "Add it with: sudo sh -c 'echo $desired_shell >> /etc/shells'"
   fi
 
-  local login_shell=""
-  if command_exists getent; then
-    login_shell=$(getent passwd "$USER" | cut -d: -f7)
-  elif command_exists dscl; then
-    login_shell=$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')
-  fi
-  [ -z "$login_shell" ] && login_shell="${SHELL:-}"
+  # Get current default shell
+  local current_shell=$(get_current_shell)
 
-  if [ "$login_shell" = "$desired_shell" ]; then
-    log_success "Default shell already set to zsh"
-  else
-    log_info "Attempting to change default shell from ${login_shell:-unknown} to $desired_shell..."
+  # Check if already using zsh
+  if [[ "$current_shell" == *"zsh" ]]; then
+    log_success "Default shell already set to zsh ($current_shell)"
 
-    if command_exists chsh; then
-      if chsh -s "$desired_shell" >/dev/null 2>&1; then
-        log_success "Default shell updated to zsh. Log out or restart your terminal to apply."
-      else
-        log_warn "Could not change default shell automatically. Run: chsh -s \"$desired_shell\""
+    # Check if using old system zsh (only warn if version < 5.0)
+    if [ "$current_shell" = "/bin/zsh" ] && command_exists brew; then
+      local zsh_version=$(zsh --version 2>/dev/null | awk '{print $2}')
+      if [ -n "$zsh_version" ] && ! version_gte "$zsh_version" "5.0"; then
+        local brew_zsh_path="$(brew --prefix 2>/dev/null)/bin/zsh"
+        log_warn "Using old system zsh $zsh_version. Consider upgrading to Homebrew zsh:"
+        log_warn "  brew install zsh && sudo sh -c 'echo $brew_zsh_path >> /etc/shells' && chsh -s $brew_zsh_path"
       fi
-    else
-      log_warn "chsh command not available. Update your default shell to $desired_shell manually."
     fi
+    return 0
   fi
 
-  # Re-evaluate current login shell after attempting to switch
-  local post_shell=""
-  if command_exists getent; then
-    post_shell=$(getent passwd "$USER" | cut -d: -f7)
-  elif command_exists dscl; then
-    post_shell=$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')
-  fi
-  [ -z "$post_shell" ] && post_shell="${SHELL:-}"
+  # Need to change shell
+  log_info "Current shell: $current_shell"
 
-  if [ "$post_shell" = "$desired_shell" ]; then
-    log_success "Verified default shell set to $desired_shell ($(zsh --version 2>/dev/null | head -n1))."
+  # Check if non-interactive mode
+  if [ "${AUTO_YES:-0}" -eq 0 ]; then
+    read -p "Change default shell to zsh? (y/n): " -n 1 -r
+    echo
+    [[ ! $REPLY =~ ^[Yy]$ ]] && return 0
+  fi
+
+  # Attempt to change shell
+  if ! command_exists chsh; then
+    log_warn "chsh command not available. Update shell manually to: $desired_shell"
+    return 1
+  fi
+
+  log_info "Changing default shell to: $desired_shell"
+  if chsh -s "$desired_shell" >/dev/null 2>&1; then
+    log_success "Default shell updated to zsh. Log out or restart your terminal to apply."
   else
-    log_warn "Default shell is still ${post_shell:-unknown}. Run: chsh -s \"$desired_shell\" (after adding to /etc/shells if needed)."
+    log_warn "Could not change shell automatically. Run: chsh -s \"$desired_shell\""
+    return 1
   fi
 
-  if [ "$desired_shell" = "/bin/zsh" ] && command_exists brew; then
-    local brew_zsh_path
-    brew_zsh_path="$(brew --prefix 2>/dev/null)/bin/zsh"
-    log_warn "Using /bin/zsh. Upgrade to Homebrew zsh with:"
-    log_warn "  brew install zsh"
-    if [ -n "$brew_zsh_path" ]; then
-      log_warn "  sudo sh -c 'echo $brew_zsh_path >> /etc/shells'"
-      log_warn "  chsh -s $brew_zsh_path"
-    else
-      log_warn "  sudo sh -c 'echo $(brew --prefix)/bin/zsh >> /etc/shells'"
-      log_warn "  chsh -s $(brew --prefix)/bin/zsh"
-    fi
+  # Verify the change
+  local new_shell=$(get_current_shell)
+  if [[ "$new_shell" == *"zsh" ]]; then
+    log_success "Verified: Default shell is now zsh ($(zsh --version 2>/dev/null | head -n1))"
+  else
+    log_warn "Shell change may require logout to take effect. Current: $new_shell"
   fi
 }
 
@@ -538,9 +630,7 @@ install_tpm() {
   mkdir -p "$TPM_BASE_DIR"
 
   if [ ! -d "$TPM_DIR" ]; then
-    log_info "Installing TPM into $TPM_DIR..."
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
-    log_success "TPM installed"
+    install_git_repo "https://github.com/tmux-plugins/tpm" "$TPM_DIR"
   else
     log_success "TPM already installed"
   fi
@@ -554,14 +644,23 @@ create_all_symlinks() {
   log_section "🔗 Creating symlinks..."
 
   local timestamp=$(date +%Y%m%d_%H%M%S)
+  local failed=0
 
-  # Create symlinks using the centralized paths
-  create_symlink "$REPO_NVIM" "$HOME_NVIM" "$timestamp"
-  create_symlink "$REPO_TMUX_CONF" "$HOME_TMUX_CONF" "$timestamp"
-  create_symlink "$REPO_GHOSTTY_CONFIG" "$HOME_GHOSTTY_CONFIG" "$timestamp"
-  create_symlink "$REPO_ZSHRC" "$HOME_ZSHRC" "$timestamp"
-  create_symlink "$REPO_ZPROFILE" "$HOME_ZPROFILE" "$timestamp"
-  create_symlink "$REPO_P10K" "$HOME_P10K" "$timestamp"
+  # Array-driven symlink creation (DRY principle)
+  # Automatically syncs with SYMLINK_SOURCES/SYMLINK_TARGETS arrays in paths.sh
+  for i in "${!SYMLINK_SOURCES[@]}"; do
+    if ! create_symlink "${SYMLINK_SOURCES[$i]}" "${SYMLINK_TARGETS[$i]}" "$timestamp"; then
+      ((failed++)) || true
+    fi
+  done
+
+  if [ $failed -gt 0 ]; then
+    log_warn "Failed to create $failed symlink(s). Run 'bash scripts/validate.sh' for details."
+    return 1
+  fi
+
+  log_success "All symlinks created successfully"
+  return 0
 }
 
 # =============================================================================
@@ -636,9 +735,16 @@ setup_api_keys() {
   for provider_config in "${providers[@]}"; do
     IFS=':' read -r key_name provider_name key_prefix provider_url <<< "$provider_config"
 
+    # Check if key is already set in environment
+    if [ -n "${!key_name:-}" ]; then
+      log_success "$provider_name API key already set in environment ✓"
+      any_configured=true
+      continue
+    fi
+
     # Check if key already exists in .zshrc.local
     if grep -q "export $key_name=" "$zshrc_local" 2>/dev/null; then
-      log_success "$provider_name API key already configured ✓"
+      log_success "$provider_name API key already configured in .zshrc.local ✓"
       any_configured=true
       continue
     fi
@@ -698,7 +804,14 @@ install_neovim_plugins() {
     return 1
   fi
 
-  log_info "Installing Neovim plugins via Lazy.nvim..."
+  # Check if plugins are already installed
+  local lazy_dir="$HOME/.local/share/nvim/lazy"
+  if [ -d "$lazy_dir" ] && [ "$(find "$lazy_dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)" -gt 5 ]; then
+    log_success "Neovim plugins already installed (found $(find "$lazy_dir" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ') plugins)"
+    return 0
+  fi
+
+  log_info "⏳ Installing Neovim plugins via Lazy.nvim (this may take 1-2 minutes)..."
 
   if ! command_exists pkg-config; then
     log_info "pkg-config not found; blink.cmp will use the Lua fuzzy matcher (no Rust build attempted)"
@@ -734,7 +847,23 @@ install_tmux_plugins() {
     return 1
   fi
 
-  log_info "Installing tmux plugins via TPM..."
+  # Check if key plugins are already installed
+  local plugins_dir="$HOME/.tmux/plugins"
+  local key_plugins=("vim-tmux-navigator" "tmux-resurrect" "tmux-yank" "catppuccin")
+  local installed_count=0
+
+  for plugin in "${key_plugins[@]}"; do
+    if [ -d "$plugins_dir/$plugin" ] || [ -d "$plugins_dir/tmux-$plugin" ]; then
+      ((installed_count++))
+    fi
+  done
+
+  if [ $installed_count -ge 3 ]; then
+    log_success "tmux plugins already installed ($installed_count/${#key_plugins[@]} key plugins found)"
+    return 0
+  fi
+
+  log_info "⏳ Installing tmux plugins via TPM..."
 
   # Run TPM install script
   if bash "$TPM_DIR/scripts/install_plugins.sh"; then
@@ -816,6 +945,38 @@ verify_installation() {
 }
 
 # =============================================================================
+# Installation Summary
+# =============================================================================
+
+print_installation_summary() {
+  log_section "📊 Installation Summary"
+
+  echo ""
+
+  # Installed packages
+  if [ ${#INSTALLED_PACKAGES[@]} -gt 0 ]; then
+    echo -e "${COLOR_GREEN}✅ Installed (${#INSTALLED_PACKAGES[@]}):${COLOR_RESET}"
+    printf "   %s\n" "${INSTALLED_PACKAGES[@]}" | sort | column
+  fi
+
+  # Skipped packages (already installed)
+  if [ ${#SKIPPED_PACKAGES[@]} -gt 0 ]; then
+    echo ""
+    echo -e "${COLOR_CYAN}⏭️  Skipped (${#SKIPPED_PACKAGES[@]} already installed):${COLOR_RESET}"
+    printf "   %s\n" "${SKIPPED_PACKAGES[@]}" | sort | column
+  fi
+
+  # Failed packages
+  if [ ${#FAILED_PACKAGES[@]} -gt 0 ]; then
+    echo ""
+    echo -e "${COLOR_YELLOW}⚠️  Failed/Unavailable (${#FAILED_PACKAGES[@]}):${COLOR_RESET}"
+    printf "   %s\n" "${FAILED_PACKAGES[@]}" | sort | column
+  fi
+
+  echo ""
+}
+
+# =============================================================================
 # Completion Message
 # =============================================================================
 
@@ -844,4 +1005,4 @@ print_completion_message() {
 }
 
 # Run main installation
-main
+main "$@"

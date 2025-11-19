@@ -499,6 +499,70 @@ When encountering LSP errors:
 
 Perfect for troubleshooting with AI assistance.
 
+### Claude Code + Git Worktrees (Parallel Development)
+
+**Purpose:** Run multiple Claude Code instances simultaneously, each working on a different git worktree/branch in separate tmux panes.
+
+**The Problem:**
+Without proper isolation, multiple Claude Code instances can interfere with each other's working directories, causing commands to execute in the wrong worktree.
+
+**The Solution:**
+This configuration automatically isolates Claude Code instances using the official `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` environment variable.
+
+**Configuration:**
+Already set in `zsh/.zshrc` (lines 137-139):
+```bash
+# Claude Code: Maintain working directory per pane (prevents directory switching)
+export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1
+```
+
+**Usage:**
+```bash
+# Create git worktrees for parallel development
+git worktree add ../dev-config-feature-x -b feature-x
+git worktree add ../dev-config-feature-y -b feature-y
+
+# Tmux workflow:
+# Pane 1: Main branch
+cd ~/Projects/dev-config
+claude  # Instance 1: works on main branch
+
+# Pane 2: Feature X (Prefix + |)
+cd ~/Projects/dev-config-feature-x
+claude  # Instance 2: works on feature-x, isolated from Instance 1
+
+# Pane 3: Feature Y (Prefix + |)
+cd ~/Projects/dev-config-feature-y
+claude  # Instance 3: works on feature-y, isolated from Instances 1 and 2
+```
+
+**Visual Indicators:**
+Each pane border shows git branch and status via gitmux:
+```
+┌─ 1: main ⎇ main ✔ ─────────┐
+│ $ claude                    │
+└─────────────────────────────┘
+
+┌─ 2: feature-x ⎇ feature-x ●2 ✚1 ─┐
+│ $ claude                          │
+└───────────────────────────────────┘
+
+┌─ 3: feature-y ⎇ feature-y ↑3 ─┐
+│ $ claude                       │
+└────────────────────────────────┘
+```
+
+**Benefits:**
+- ✅ Multiple features developed in parallel
+- ✅ Each Claude instance isolated to its worktree
+- ✅ No accidental cross-worktree command execution
+- ✅ Git status visible in pane borders
+- ✅ Official Claude Code configuration (documented)
+
+**Documentation:**
+- Full workflow: `tmux/CLAUDE.md` → "Claude Code + Git Worktree Workflow"
+- Keybindings: `docs/KEYBINDINGS_TMUX.md` → "Git Worktree Workflow"
+
 ## File Structure
 
 ```
