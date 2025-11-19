@@ -248,46 +248,17 @@ EOF
               log_success "Created .zshrc.local"
             fi
 
-            # Install Oh My Zsh if missing
-            if [ ! -d "$OH_MY_ZSH_DIR" ]; then
-              log_info "Installing Oh My Zsh..."
-              RUNZSH=no KEEP_ZSHRC=yes sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
-              log_success "Oh My Zsh installed"
-            fi
+            # NOTE: Oh My Zsh, Powerlevel10k, zsh-autosuggestions now installed via Home Manager
+            # See modules/home-manager/programs/zsh.nix
 
-            # Install Powerlevel10k theme
-            if [ ! -d "$P10K_THEME_DIR" ]; then
-              log_info "Installing Powerlevel10k..."
-              git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$P10K_THEME_DIR"
-              log_success "Powerlevel10k installed"
-            fi
+            # NOTE: Tmux plugins now installed via Home Manager
+            # See modules/home-manager/programs/tmux.nix
 
-            # Install zsh-autosuggestions
-            if [ ! -d "$ZSH_AUTOSUGGESTIONS_DIR" ]; then
-              log_info "Installing zsh-autosuggestions..."
-              git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_AUTOSUGGESTIONS_DIR"
-              log_success "zsh-autosuggestions installed"
-            fi
-
-            # Install TPM
-            if [ ! -d "$TPM_DIR" ]; then
-              log_info "Installing TPM..."
-              git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
-              log_success "TPM installed"
-            fi
-
-            # Auto-install Neovim plugins
+            # Auto-install Neovim plugins (lazy.nvim handles plugin management)
             if command -v nvim &> /dev/null; then
               log_info "Installing Neovim plugins (headless)..."
               nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
               log_success "Neovim plugins installed"
-            fi
-
-            # Auto-install tmux plugins
-            if [ -f "$TPM_DIR/scripts/install_plugins.sh" ]; then
-              log_info "Installing tmux plugins..."
-              bash "$TPM_DIR/scripts/install_plugins.sh" &>/dev/null
-              log_success "tmux plugins installed"
             fi
 
             log_success "Activation complete!"
