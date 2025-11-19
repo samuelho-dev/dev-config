@@ -6,6 +6,7 @@
     ./programs/tmux.nix
     ./programs/zsh.nix
     ./programs/git.nix
+    ./programs/ghostty.nix
     ./services/direnv.nix
   ];
 
@@ -74,16 +75,19 @@
     # - Neovim with config from dev-config repo
     # - Tmux with config from dev-config repo
     # - Zsh with config from dev-config repo
+    # - Ghostty with config from dev-config repo
     # - Git configuration
     # - Direnv with nix-direnv integration
     #
     # To disable specific programs:
     # dev-config.neovim.enable = false;
     # dev-config.tmux.enable = false;
+    # dev-config.ghostty.enable = false;
     #
     # To manage configs separately (e.g., Chezmoi):
     # dev-config.neovim.configSource = null;
     # dev-config.tmux.configSource = null;
     # dev-config.zsh.zshrcSource = null;
+    # dev-config.ghostty.configSource = null;
   };
 }
