@@ -403,6 +403,152 @@ For more details about Chezmoi, see [CHEZMOI.md](CHEZMOI.md).
 
 ---
 
+## SSH Authentication with 1Password
+
+Secure GitHub authentication and Git commit signing using **1Password SSH Agent**. This approach stores SSH private keys in your encrypted 1Password vault instead of on disk.
+
+### Why 1Password SSH Agent?
+
+**Security Benefits:**
+- ✅ Private keys **never** touch disk (encrypted in 1Password vault)
+- ✅ Biometric unlock (Touch ID/Face ID/Windows Hello)
+- ✅ No secrets committed to Git (safe for public repositories)
+- ✅ Keys sync across devices via 1Password cloud
+- ✅ Automatic key rotation and management
+
+**Developer Experience:**
+- ✅ Single setup for both SSH authentication and commit signing
+- ✅ No manual SSH key management or backup
+- ✅ Works seamlessly with Git, GitHub, and SSH connections
+- ✅ Integrates with existing 1Password workflow
+
+### Architecture
+
+```
+1Password Vault (Encrypted Cloud Storage)
+  ├── SSH Private Key (never exported to disk)
+  └── SSH Public Key
+        ↓
+1Password SSH Agent (Local Socket)
+        ↓
+SSH Client / Git Signing
+        ↓
+GitHub (Authentication + Commit Signing)
+
+Configuration Files:
+  ✅ modules/home-manager/programs/ssh.nix (SSH agent integration)
+  ✅ modules/home-manager/programs/git.nix (commit signing config)
+  ✅ ~/.config/home-manager/secrets.nix (machine-specific, gitignored)
+
+Public Repository (Safe to commit):
+  ✅ SSH configuration modules
+  ✅ Git signing configuration
+  ✅ Template files (secrets.nix.example)
+  ❌ Private keys (stored in 1Password only)
+```
+
+### Quick Setup
+
+**Prerequisites:**
+- 1Password account (free for personal use)
+- 1Password desktop app installed
+
+**Setup Steps:**
+1. **Enable 1Password SSH Agent** (Settings → Developer)
+2. **Create SSH key in 1Password** (New Item → SSH Key)
+3. **Add public key to GitHub** (Settings → SSH and GPG keys)
+   - Add as **Authentication key** (required)
+   - Add same key as **Signing key** (recommended)
+4. **Create secrets.nix** with your Git identity and public key
+5. **Test authentication**: `ssh -T git@github.com`
+
+**Total time:** 5-10 minutes
+
+### Workflow
+
+**Clone repositories (auto-converts HTTPS to SSH):**
+```bash
+# Even with HTTPS URL, Git uses SSH automatically
+git clone https://github.com/username/repo.git
+
+# Behind the scenes: Rewritten to ssh://git@github.com/username/repo.git
+```
+
+**Commit with automatic signing:**
+```bash
+git commit -m "Your commit message"
+# No -S flag needed - commits automatically signed with your SSH key
+# 1Password prompts for biometric authentication on first use
+```
+
+**Push to GitHub:**
+```bash
+git push origin main
+# Uses SSH authentication via 1Password agent
+# Biometric unlock if session expired
+```
+
+**Verify commit signatures:**
+```bash
+git log --show-signature
+# Shows "Good signature" with your SSH key
+```
+
+### Security Model
+
+**What's stored where:**
+
+| Data | Location | Committed to Git? |
+|------|----------|-------------------|
+| SSH Private Key | 1Password vault (encrypted) | ❌ Never |
+| SSH Public Key | GitHub + secrets.nix | ⚠️ secrets.nix only (gitignored) |
+| SSH Agent Config | modules/home-manager/programs/ssh.nix | ✅ Yes (safe - no secrets) |
+| Git Signing Config | modules/home-manager/programs/git.nix | ✅ Yes (safe - no secrets) |
+| Git User Info | secrets.nix | ❌ No (gitignored) |
+
+**secrets.nix example** (machine-specific, not committed):
+```nix
+{
+  gitUserName = "Your Name";
+  gitUserEmail = "your-email@example.com";
+  sshSigningKey = "ssh-ed25519 AAAAC3... your-email@example.com";
+}
+```
+
+### Multi-Machine Setup
+
+Same SSH key works across all your devices via 1Password sync:
+
+**First machine:**
+1. Generate SSH key in 1Password
+2. Add to GitHub
+3. Create secrets.nix
+
+**Additional machines:**
+1. Install 1Password desktop app
+2. Sign in (SSH keys auto-sync)
+3. Enable SSH agent
+4. Create secrets.nix (same public key)
+5. Done!
+
+No manual key copying or transfer needed.
+
+### Documentation
+
+**Complete guides:**
+- **[1Password SSH Setup Guide](docs/nix/08-1password-ssh.md)** - Comprehensive step-by-step instructions
+- **[1Password Credentials](docs/nix/05-1password-setup.md)** - General 1Password integration
+- **[Installation Guide](docs/INSTALLATION.md#1password-ssh-setup-recommended)** - Setup during installation
+
+**Troubleshooting:**
+- "Could not open a connection to your authentication agent" → Check 1Password SSH agent enabled
+- "Permission denied (publickey)" → Verify SSH key added to GitHub as Authentication key
+- "Bad signature" → Ensure SSH key added as Signing key (not just Authentication)
+
+See [docs/nix/08-1password-ssh.md](docs/nix/08-1password-ssh.md) for detailed troubleshooting.
+
+---
+
 ## Features
 
 ### Docker

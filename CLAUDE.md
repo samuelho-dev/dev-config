@@ -203,7 +203,9 @@ dev-config/
 │   ├── 03-troubleshooting.md          # FAQ and issue resolution
 │   ├── 04-opencode-integration.md     # OpenCode + 1Password setup
 │   ├── 05-1password-setup.md          # Credential management
-│   └── 06-advanced.md                 # Customization guide
+│   ├── 06-advanced.md                 # Customization guide
+│   ├── 07-testing.md                  # Dry-run testing (3-tier strategy)
+│   └── 08-1password-ssh.md            # SSH authentication + commit signing
 ├── .github/workflows/
 │   └── nix-ci.yml                     # CI/CD pipeline (multi-platform builds)
 └── NIX_MIGRATION_SUMMARY.md           # Implementation summary
@@ -230,6 +232,68 @@ dev-config/
 - **Decision:** Configure Cachix in flake.nix for team binary caching
 - **Rationale:** First build ~10 minutes, cached builds ~30 seconds (20x faster!), team-wide benefit
 - **Status:** Configured in flake.nix, requires Cachix account setup
+
+**5. SSH Authentication with 1Password**
+- **Decision:** Use 1Password SSH Agent for GitHub authentication and commit signing
+- **Rationale:**
+  - Private keys never touch disk (encrypted in 1Password vault)
+  - Safe for public repositories (no secrets committed)
+  - Works across all machines via 1Password cloud sync
+  - Biometric unlock (Touch ID/Face ID)
+  - Single setup for both authentication and signing
+- **Implementation:**
+  - `modules/home-manager/programs/ssh.nix` - SSH agent configuration
+  - `modules/home-manager/programs/git.nix` - Git commit signing with `op-ssh-sign`
+  - `secrets.nix` pattern for machine-specific data (gitignored)
+  - Automatic HTTPS→SSH URL rewriting for GitHub
+- **Security Model:**
+  - Public repo: SSH config modules, Git signing config, template files
+  - Gitignored: `secrets.nix` (Git user info + SSH public key)
+  - 1Password only: SSH private keys (never exported)
+
+**6. secrets.nix Pattern (Machine-Specific Configuration)**
+- **Decision:** Use gitignored `secrets.nix` file for machine-specific configuration
+- **Rationale:**
+  - Keeps public repository safe (no user emails, SSH keys, or identifiers)
+  - Each machine has its own `~/.config/home-manager/secrets.nix`
+  - Template (`secrets.nix.example`) committed to guide users
+  - Imported by Home Manager modules for configuration
+- **Contents:**
+  ```nix
+  {
+    gitUserName = "Your Name";
+    gitUserEmail = "your-email@example.com";
+    sshSigningKey = "ssh-ed25519 AAAAC3... your-email@example.com";
+  }
+  ```
+- **Usage in modules:**
+  ```nix
+  # modules/home-manager/programs/git.nix
+  let
+    secrets = import ~/.config/home-manager/secrets.nix;
+  in {
+    programs.git = {
+      userName = secrets.gitUserName;
+      userEmail = secrets.gitUserEmail;
+      signing.key = secrets.sshSigningKey;
+    };
+  }
+  ```
+
+**7. Dry-Run Testing Strategy**
+- **Decision:** Implement 3-tier testing system for safe configuration validation
+- **Rationale:** Allows testing Nix changes before applying them system-wide
+- **Implementation:**
+  - Tier 1: `nix flake show --json` - Syntax validation (fastest, no builds)
+  - Tier 2: `home-manager build --flake .` - Build test without activation
+  - Tier 3: `home-manager switch --dry-run` - Preview changes
+  - Script: `scripts/test-config.sh` (automated 3-tier testing)
+  - Pre-commit hook: `nix flake show --json` runs on every commit
+- **Benefits:**
+  - Catch syntax errors before committing
+  - Test builds without system changes
+  - Preview what will change on activation
+  - Prevent broken configurations from being committed
 
 #### Integration with ai-dev-env
 
@@ -1200,6 +1264,23 @@ DEPENDENCIES=(
    - Update component-specific CLAUDE.md for architecture changes
    - Update README.md for user-facing feature changes
    - Keep `docs/` directory guides in sync
+
+8. **SSH/1Password Authentication Pattern:**
+   - **Never commit** `secrets.nix` (gitignored)
+   - SSH private keys stored in 1Password vault only
+   - SSH agent config in `modules/home-manager/programs/ssh.nix`
+   - Git signing config in `modules/home-manager/programs/git.nix`
+   - Template file `secrets.nix.example` documents required fields
+   - Testing: `ssh -T git@github.com` and `git log --show-signature`
+   - Troubleshooting guide: `docs/nix/08-1password-ssh.md`
+
+9. **Testing Nix Configuration Changes:**
+   - **Always test before committing** with `bash scripts/test-config.sh`
+   - Tier 1: `nix flake show --json` (instant syntax check)
+   - Tier 2: `home-manager build --flake .` (build without activation)
+   - Tier 3: `home-manager switch --dry-run` (preview changes)
+   - Pre-commit hook runs Tier 1 automatically
+   - Fix syntax errors before they break user environments
 
 **Common tasks:**
 - Adding Neovim plugin: `nvim/CLAUDE.md` lines 260-300

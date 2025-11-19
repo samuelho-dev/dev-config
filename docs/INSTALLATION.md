@@ -104,6 +104,202 @@ Open Neovim and tmux - everything should work automatically.
 
 ---
 
+## 1Password SSH Setup (Recommended)
+
+Secure SSH authentication and Git commit signing using 1Password SSH Agent. This approach stores private keys in your encrypted 1Password vault instead of on disk.
+
+### Why 1Password SSH Agent?
+
+**Security:**
+- Private keys never touch disk (encrypted in 1Password vault)
+- Biometric unlock (Touch ID/Face ID/Windows Hello)
+- No secrets committed to Git (safe for public repos)
+
+**Convenience:**
+- Keys sync across all your devices via 1Password
+- No manual SSH key management
+- Auto-fill for SSH passphrases
+- Commit signing with single setup
+
+### Prerequisites
+
+1. **1Password Account** - [Sign up](https://1password.com) (free for personal use)
+2. **1Password Desktop App** - Install from website or:
+   ```bash
+   # macOS
+   brew install --cask 1password
+   ```
+3. **1Password CLI** (auto-installed by `install.sh`)
+
+### Step 1: Enable 1Password SSH Agent
+
+**macOS/Windows:**
+1. Open 1Password desktop app
+2. Settings → Developer
+3. Enable **"Use the SSH agent"**
+4. Enable **"Display key names when authorizing connections"** (optional but helpful)
+
+**Linux:**
+See [1Password SSH Agent Setup Guide](https://developer.1password.com/docs/ssh/get-started#step-3-turn-on-the-1password-ssh-agent)
+
+### Step 2: Create or Import SSH Key
+
+**Option A: Generate new SSH key in 1Password (Recommended)**
+
+1. 1Password desktop app → **New Item** → **SSH Key**
+2. **Name:** "GitHub SSH Key"
+3. Click **"Generate a new key"**
+4. **Key Type:** Ed25519 (recommended) or RSA 4096
+5. **Save**
+
+**Option B: Import existing SSH key**
+
+1. 1Password desktop app → **New Item** → **SSH Key**
+2. **Name:** "GitHub SSH Key"
+3. **Private Key:** Paste contents of `~/.ssh/id_ed25519`
+4. **Public Key:** Paste contents of `~/.ssh/id_ed25519.pub`
+5. **Save**
+
+### Step 3: Get Your SSH Public Key
+
+**From 1Password Desktop:**
+1. Open your SSH key item
+2. Click **"Copy Public Key"**
+
+**From CLI:**
+```bash
+# After authenticating 1Password CLI
+op read "op://Dev/GitHub SSH Key/public key"
+```
+
+**Manual extraction (if needed):**
+```bash
+# View all SSH keys in 1Password
+ssh-add -L
+```
+
+### Step 4: Add SSH Key to GitHub
+
+Add your SSH public key to GitHub for **both authentication and signing**.
+
+**For Authentication (Required):**
+1. GitHub → **Settings** → **SSH and GPG keys**
+2. **New SSH key** → **Authentication key**
+3. **Title:** "1Password - [Your Computer Name]"
+4. **Key:** Paste public key (starts with `ssh-ed25519` or `ssh-rsa`)
+5. **Add SSH key**
+
+**For Signing (Recommended):**
+1. GitHub → **Settings** → **SSH and GPG keys**
+2. **New SSH key** → **Signing key**
+3. **Title:** "1Password - Signing Key"
+4. **Key:** Paste the **same** public key
+5. **Add SSH key**
+
+**Test authentication:**
+```bash
+ssh -T git@github.com
+# Expected: "Hi <username>! You've successfully authenticated..."
+```
+
+### Step 5: Create secrets.nix
+
+Create machine-specific configuration file (gitignored, not committed):
+
+```bash
+# Copy template
+cp secrets.nix.example ~/.config/home-manager/secrets.nix
+
+# Edit with your details
+nvim ~/.config/home-manager/secrets.nix
+```
+
+**Example secrets.nix:**
+```nix
+{
+  # Your Git identity (used for commits)
+  gitUserName = "Your Name";
+  gitUserEmail = "your-email@example.com";
+
+  # Your SSH public key from 1Password (for commit signing)
+  # Get from 1Password or: op read "op://Dev/GitHub SSH Key/public key"
+  sshSigningKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... your-email@example.com";
+}
+```
+
+**Important:**
+- Replace with your actual values
+- Use the **same public key** you added to GitHub
+- Never commit this file (already gitignored)
+
+### Step 6: Apply Configuration
+
+```bash
+# Activate Nix environment (if using Nix)
+cd ~/Projects/dev-config
+nix run .#activate
+
+# Or reload shell config
+source ~/.zshrc
+```
+
+### Step 7: Verify Setup
+
+**Test SSH authentication:**
+```bash
+ssh -T git@github.com
+# Expected: "Hi <username>! You've successfully authenticated..."
+```
+
+**Test Git commit signing:**
+```bash
+cd ~/Projects/dev-config
+git commit --allow-empty -m "Test commit signing"
+git log --show-signature -1
+# Should show "Good signature" with your SSH key
+```
+
+**Test 1Password CLI:**
+```bash
+# Should prompt for 1Password authentication
+op whoami
+```
+
+### Troubleshooting 1Password SSH
+
+**"Could not open a connection to your authentication agent"**
+- Ensure 1Password SSH agent is enabled in settings
+- Restart 1Password desktop app
+- Check socket path:
+  ```bash
+  # macOS
+  ls -la ~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+
+  # Linux
+  ls -la ~/.1password/agent.sock
+  ```
+
+**"Permission denied (publickey)"**
+- Verify SSH key added to GitHub (Authentication key)
+- Test with verbose output: `ssh -Tvvv git@github.com`
+- Check 1Password SSH agent logs in 1Password desktop app
+
+**"Bad signature" when verifying commits**
+- Ensure SSH key added to GitHub as **Signing key** (not just Authentication)
+- Verify `sshSigningKey` in `secrets.nix` matches GitHub public key
+- Check Git config: `git config --get gpg.ssh.program`
+
+**"op: not found" errors**
+- Ensure 1Password CLI installed: `which op`
+- If missing, install manually:
+  ```bash
+  brew install 1password-cli
+  ```
+
+For more troubleshooting, see [docs/nix/08-1password-ssh.md](nix/08-1password-ssh.md)
+
+---
+
 ## Installing on Additional Machines
 
 On any other machine:
