@@ -335,12 +335,13 @@ bash scripts/install.sh
 - ✅ **Isolated**: Per-project environments with zero conflicts
 - ✅ **Cross-platform**: Works on macOS (Intel/ARM) and Linux
 - ✅ **Binary cache**: 20x faster builds with Cachix (10 minutes → 30 seconds)
-- ✅ **AI integration**: OpenCode + 1Password CLI for automatic credential management
+- ✅ **AI integration**: OpenCode + 1Password CLI with LiteLLM proxy support for team AI management
 
 **After installation:**
 ```bash
 cd ~/Projects/dev-config  # direnv auto-activates Nix environment + AI credentials
 opencode ask "What should I work on today?"  # Uses credentials from 1Password
+# Supports both direct API access and LiteLLM proxy (team mode)
 ```
 
 **Documentation:**
@@ -351,6 +352,7 @@ opencode ask "What should I work on today?"  # Uses credentials from 1Password
 - [OpenCode Integration](docs/nix/04-opencode-integration.md) - AI assistant setup
 - [1Password Setup](docs/nix/05-1password-setup.md) - Credential management
 - [Advanced Guide](docs/nix/06-advanced.md) - Customization
+- [LiteLLM Proxy Setup](docs/nix/07-litellm-proxy-setup.md) - Team AI management with cost tracking
 
 **Time to install:** 10-15 minutes (first time), 30 seconds (subsequent machines with cache)
 
@@ -530,7 +532,7 @@ No manual key copying or transfer needed.
 ### Documentation
 
 **Complete guides:**
-- **[1Password SSH Setup Guide](docs/nix/08-1password-ssh.md)** - Comprehensive step-by-step instructions
+- **[1Password SSH Setup Guide](docs/nix/09-1password-ssh.md)** - Comprehensive step-by-step instructions
 - **[1Password Credentials](docs/nix/05-1password-setup.md)** - General 1Password integration
 - **[Installation Guide](docs/INSTALLATION.md#1password-ssh-setup-recommended)** - Setup during installation
 
@@ -539,7 +541,7 @@ No manual key copying or transfer needed.
 - "Permission denied (publickey)" → Verify SSH key added to GitHub as Authentication key
 - "Bad signature" → Ensure SSH key added as Signing key (not just Authentication)
 
-See [docs/nix/08-1password-ssh.md](docs/nix/08-1password-ssh.md) for detailed troubleshooting.
+See [docs/nix/09-1password-ssh.md](docs/nix/09-1password-ssh.md) for detailed troubleshooting.
 
 ---
 

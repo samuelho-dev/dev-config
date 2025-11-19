@@ -47,6 +47,15 @@ if [ -z "$GOOGLE_AI_API_KEY" ]; then
   fi
 fi
 
+# LiteLLM Proxy (for cluster integration)
+if [ -z "$LITELLM_MASTER_KEY" ]; then
+  LITELLM_MASTER_KEY=$(op read "op://Dev/litellm/MASTER_KEY" 2>/dev/null)
+  if [ -n "$LITELLM_MASTER_KEY" ]; then
+    export LITELLM_MASTER_KEY
+    echo "  ✓ Loaded: LITELLM_MASTER_KEY"
+  fi
+fi
+
 # Optional: Additional providers
 # Uncomment and add to your 1Password "ai" item as needed
 

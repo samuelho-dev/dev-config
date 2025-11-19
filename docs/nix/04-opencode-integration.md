@@ -106,6 +106,71 @@ opencode analyze  # Analyzes project structure
 opencode explain <file>  # Explains specific file
 ```
 
+## LiteLLM Proxy Integration
+
+For team environments with centralized LLM management, OpenCode can route all API requests through a LiteLLM proxy server running in your Kubernetes cluster.
+
+### Why Use LiteLLM Proxy?
+
+- **Cost Tracking:** Monitor token usage across team
+- **Unified API:** Single endpoint for all LLM providers
+- **Fallback Support:** Automatic failover between providers
+- **Rate Limiting:** Prevent API quota exhaustion
+- **Team Management:** Centralized credential management
+
+### Setup
+
+**Complete setup guide:** [LiteLLM Proxy Setup](07-litellm-proxy-setup.md)
+
+**Quick start:**
+
+1. **Ensure OpenCode is configured for LiteLLM:**
+   ```bash
+   cat ~/.config/opencode/opencode.json
+   ```
+
+   Should contain:
+   ```json
+   {
+     "provider": {
+       "anthropic": {
+         "options": {
+           "baseURL": "http://localhost:4000",
+           "apiKey": "{env:LITELLM_MASTER_KEY}"
+         }
+       }
+     }
+   }
+   ```
+
+2. **Start kubectl port-forward:**
+   ```bash
+   kubectl port-forward -n litellm svc/litellm 4000:4000 &
+   ```
+
+3. **Load credentials:**
+   ```bash
+   cd ~/Projects/dev-config  # Automatically loads LITELLM_MASTER_KEY
+   ```
+
+4. **Use OpenCode normally:**
+   ```bash
+   opencode ask "What is this codebase?"
+   # Requests go through LiteLLM proxy → Anthropic API
+   ```
+
+### Direct API vs LiteLLM Proxy
+
+**Direct API (default for local development):**
+- Uses `ANTHROPIC_API_KEY` directly
+- No proxy/cluster dependency
+- Good for: Personal projects, offline work
+
+**LiteLLM Proxy (recommended for team environments):**
+- Uses `LITELLM_MASTER_KEY` + cluster proxy
+- Requires kubectl port-forward
+- Good for: Team collaboration, cost tracking
+
 ## Configuration
 
 OpenCode configuration is managed via environment variables:

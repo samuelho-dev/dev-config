@@ -32,7 +32,7 @@ These are automatically installed when you first open Neovim:
 
 **LSP Servers:**
 - **ts_ls** - TypeScript/JavaScript language server
-- **pyright** - Python language server  
+- **pyright** - Python language server
 - **lua_ls** - Lua language server (for Neovim config)
 
 **Formatters:**
@@ -296,7 +296,7 @@ op whoami
   brew install 1password-cli
   ```
 
-For more troubleshooting, see [docs/nix/08-1password-ssh.md](nix/08-1password-ssh.md)
+For more troubleshooting, see [docs/nix/09-1password-ssh.md](nix/09-1password-ssh.md)
 
 ---
 

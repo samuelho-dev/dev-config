@@ -163,7 +163,9 @@ apps.activate = {
 - AI coding agent (open-source Claude Code alternative)
 - Installed via `nodePackages.opencode-ai`
 - Authenticated with 1Password CLI credentials
+- Supports both direct API access and LiteLLM proxy (team mode)
 - Usage: `opencode ask "Explain this codebase"`
+- Documentation: `docs/nix/04-opencode-integration.md`, `docs/nix/07-litellm-proxy-setup.md`
 
 **1Password CLI:**
 - Secure credential management
@@ -240,8 +242,9 @@ dev-config/
 │   ├── 04-opencode-integration.md     # OpenCode + 1Password setup
 │   ├── 05-1password-setup.md          # Credential management
 │   ├── 06-advanced.md                 # Customization guide
-│   ├── 07-testing.md                  # Dry-run testing (3-tier strategy)
-│   └── 08-1password-ssh.md            # SSH authentication + commit signing
+│   ├── 07-litellm-proxy-setup.md      # LiteLLM proxy integration (team AI management)
+│   ├── 08-testing.md                  # Dry-run testing (3-tier strategy)
+│   └── 09-1password-ssh.md            # SSH authentication + commit signing
 ├── .github/workflows/
 │   └── nix-ci.yml                     # CI/CD pipeline (multi-platform builds)
 └── NIX_MIGRATION_SUMMARY.md           # Implementation summary
@@ -258,6 +261,40 @@ dev-config/
 - **Decision:** Use `op read` with secret references instead of JSON parsing
 - **Rationale:** Recommended 2025 method, more secure (secrets never touch disk), simpler syntax
 - **Implementation:** `export ANTHROPIC_API_KEY=$(op read "op://Dev/ai/ANTHROPIC_API_KEY")`
+
+**2b. LiteLLM Proxy Integration (Team/Cluster AI Management)**
+- **Decision:** Support LiteLLM proxy for team-based AI usage with centralized credential management
+- **Rationale:**
+  - Cost tracking and monitoring across team members
+  - Unified API gateway for multiple LLM providers (Anthropic, OpenAI, Google)
+  - Automatic fallback between providers for reliability
+  - Rate limiting to prevent quota exhaustion
+  - Centralized audit logs for compliance
+- **Architecture:**
+  ```
+  OpenCode (localhost) → kubectl port-forward :4000
+                       → LiteLLM Proxy (k8s cluster)
+                       → Anthropic/OpenAI/Google APIs
+  ```
+- **Implementation:**
+  - OpenCode configured to use `http://localhost:4000` (LiteLLM endpoint)
+  - Requires `LITELLM_MASTER_KEY` environment variable
+  - Loaded from 1Password: `op read "op://Dev/litellm/MASTER_KEY"`
+  - Added to `scripts/load-ai-credentials.sh` (graceful degradation if not present)
+  - Separate from direct API keys (different use case, rotation schedule)
+- **Setup Requirements:**
+  - LiteLLM deployed in ai-dev-env Kubernetes cluster
+  - kubectl port-forward to expose service locally
+  - 1Password "litellm" item with MASTER_KEY field
+- **Benefits:**
+  - Team collaboration: Shared cost tracking and budget management
+  - Flexibility: Can switch between proxy (team mode) and direct API (solo mode)
+  - Observability: Track token usage, costs, and model distribution
+  - Reliability: Fallback support if one provider is down
+- **Documentation:**
+  - Complete setup guide: `docs/nix/07-litellm-proxy-setup.md`
+  - Integration with OpenCode: `docs/nix/04-opencode-integration.md`
+  - 1Password configuration: `docs/nix/05-1password-setup.md`
 
 **3. Hybrid Activation**
 - **Decision:** Shell scripts call Nix, not the reverse

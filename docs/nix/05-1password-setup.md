@@ -66,6 +66,27 @@ This guide shows you how to configure 1Password CLI for automatic AI credential 
 - Field Type: Password
 - Value: Your LangSmith API key
 
+## Step 2b: Create "litellm" Item (For Team/Cluster Integration)
+
+If you're using LiteLLM proxy for team-based AI usage tracking and centralized credential management, create a separate item:
+
+1. In "Dev" vault, click "New Item"
+2. Select "API Credential" as template
+3. Title: `litellm`
+4. Add custom field:
+
+**LiteLLM Master Key:**
+- Field Label: `MASTER_KEY`
+- Field Type: Password (concealed)
+- Value: Your LiteLLM proxy master key (get from cluster: `kubectl get secret litellm-secrets -n litellm -o jsonpath='{.data.LITELLM_MASTER_KEY}' | base64 -d`)
+
+**Why separate item?**
+- Different use case: Proxy authentication vs direct API access
+- Different rotation schedule: Cluster key vs provider keys
+- Clearer organization: `ai` for direct API, `litellm` for proxy
+
+**For complete LiteLLM setup:** See [LiteLLM Proxy Setup Guide](07-litellm-proxy-setup.md)
+
 ## Step 3: Authenticate 1Password CLI
 
 ### Initial Sign-In
@@ -123,6 +144,7 @@ cd ~/Projects/dev-config
 #   ✓ Loaded: ANTHROPIC_API_KEY
 #   ✓ Loaded: OPENAI_API_KEY
 #   ✓ Loaded: GOOGLE_AI_API_KEY
+#   ✓ Loaded: LITELLM_MASTER_KEY
 # ✅ AI credentials loaded from 1Password
 ```
 
