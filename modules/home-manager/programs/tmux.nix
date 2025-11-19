@@ -63,6 +63,19 @@
       baseIndex = config.dev-config.tmux.baseIndex;
       mouse = config.dev-config.tmux.mouse;
       historyLimit = config.dev-config.tmux.historyLimit;
+
+      # Install tmux plugins via Nix (replaces TPM)
+      plugins = with pkgs.tmuxPlugins; [
+        sensible           # tmux-sensible
+        resurrect          # tmux-resurrect (save/restore sessions)
+        continuum          # tmux-continuum (auto-save)
+        battery            # tmux-battery (battery status)
+        cpu                # tmux-cpu (CPU/RAM status)
+        catppuccin         # catppuccin/tmux (theme)
+        vim-tmux-navigator # christoomey/vim-tmux-navigator
+        yank               # tmux-yank (clipboard integration)
+        tmux-fzf           # sainnhe/tmux-fzf (fuzzy finder)
+      ];
     };
 
     # Symlink tmux configuration if source is provided
