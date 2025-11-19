@@ -1,6 +1,6 @@
 #!/bin/bash
-# Zero-touch Nix bootstrap for dev-config
-# Replaces 372-line shell script with 50-line Nix-powered installation
+# Nix + Home Manager bootstrap for dev-config
+# Fully declarative installation using Home Manager modules
 #
 # Usage:
 #   bash scripts/install.sh
@@ -8,8 +8,8 @@
 # What this does:
 #   1. Installs Nix (if not present)
 #   2. Enables flakes
-#   3. Activates dev environment (symlinks, plugins, tools)
-#   4. Sets zsh as default shell
+#   3. Installs Home Manager
+#   4. Activates Home Manager configuration (symlinks, plugins, packages)
 
 set -e
 
@@ -19,8 +19,8 @@ log_success() { echo -e "\033[0;32m✅ $1\033[0m" >&2; }
 log_error() { echo -e "\033[0;31m❌ $1\033[0m" >&2; }
 
 echo ""
-echo "🚀 Installing dev-config (Nix-powered)"
-echo "   This will install all dependencies and configure your environment"
+echo "🚀 Installing dev-config (Home Manager)"
+echo "   Declarative dotfile and package management with Nix"
 echo ""
 
 # Step 1: Install Nix if not present
@@ -47,24 +47,42 @@ EOF
   log_success "Nix flakes enabled"
 fi
 
-# Step 3: Activate dev environment (builds packages, creates symlinks)
-log_info "Activating dev-config environment (this may take 5-10 minutes on first run)..."
-nix run .#activate
+# Step 3: Install Home Manager if not present
+if ! command -v home-manager &>/dev/null; then
+  log_info "Installing Home Manager..."
+  nix run home-manager/master -- --version
+  log_success "Home Manager installed"
+else
+  log_success "Home Manager already installed"
+fi
 
-# Step 4: Set default shell to zsh (via Nix)
-log_info "Setting default shell to zsh..."
-nix run .#set-shell
+# Step 4: Activate Home Manager configuration
+log_info "Activating Home Manager (this may take 10-15 minutes on first run)..."
+log_info "Home Manager will:"
+log_info "  - Install all packages (Neovim, tmux, zsh, Docker, LSP servers, etc.)"
+log_info "  - Create symlinks for dotfiles"
+log_info "  - Install Oh My Zsh, Powerlevel10k, plugins"
+log_info "  - Install tmux plugins"
+log_info "  - Configure everything declaratively"
+echo ""
 
-log_success "Installation complete!"
+nix run home-manager/master -- switch --flake .
+
+log_success "Home Manager activation complete!"
 echo ""
 echo "Next steps:"
 echo "  1. Restart your terminal (or run: exec zsh)"
-echo "  2. (Optional) Sign in to 1Password: op signin"
-echo "  3. AI credentials will auto-load when you enter dev-config directory"
-echo "  4. Use OpenCode: opencode (credentials auto-injected if 1Password authenticated)"
+echo "  2. (Optional) Set zsh as default shell:"
+echo "     chsh -s \$(which zsh)"
+echo "  3. (Optional) Sign in to 1Password: op signin"
+echo "  4. AI credentials will auto-load when you enter dev-config directory"
+echo ""
+echo "Updating configuration:"
+echo "  1. Edit files in ~/Projects/dev-config"
+echo "  2. Run: home-manager switch --flake ~/Projects/dev-config"
 echo ""
 echo "For more information:"
-echo "  - Quick start: docs/nix/00-quickstart.md"
-echo "  - OpenCode setup: docs/nix/04-opencode-integration.md"
-echo "  - 1Password setup: docs/nix/05-1password-setup.md"
+echo "  - Neovim config: nvim/CLAUDE.md, nvim/README.md"
+echo "  - Tmux config: tmux/CLAUDE.md, tmux/README.md"
+echo "  - Zsh config: zsh/CLAUDE.md, zsh/README.md"
 echo ""

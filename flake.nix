@@ -190,86 +190,9 @@
         };
       });
 
-      # Apps for activation and configuration
+      # Apps for configuration utilities
+      # NOTE: Activation now handled by Home Manager (home-manager switch --flake .)
       apps = forAllSystems ({ pkgs, system, ... }: {
-        # Main activation script (creates symlinks using existing lib/common.sh)
-        activate = {
-          type = "app";
-          program = toString (pkgs.writeShellScript "activate" ''
-            set -e
-
-            # Colors
-            CYAN='\033[0;36m'
-            GREEN='\033[0;32m'
-            NC='\033[0m'
-
-            log_info() { echo -e "''${CYAN}ℹ️  $1''${NC}" >&2; }
-            log_success() { echo -e "''${GREEN}✅ $1''${NC}" >&2; }
-
-            # Source existing library functions (reuse proven logic!)
-            source ${./scripts/lib/common.sh}
-            source ${./scripts/lib/paths.sh}
-
-            TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
-
-            log_info "Creating symlinks with backups..."
-
-            # Neovim
-            create_symlink "$REPO_NVIM" "$HOME_NVIM" "$TIMESTAMP"
-
-            # Tmux
-            create_symlink "$REPO_TMUX_CONF" "$HOME_TMUX_CONF" "$TIMESTAMP"
-            create_symlink "$REPO_GITMUX_CONF" "$HOME_GITMUX_CONF" "$TIMESTAMP"
-
-            # Zsh
-            create_symlink "$REPO_ZSHRC" "$HOME_ZSHRC" "$TIMESTAMP"
-            create_symlink "$REPO_ZPROFILE" "$HOME_ZPROFILE" "$TIMESTAMP"
-            create_symlink "$REPO_P10K" "$HOME_P10K" "$TIMESTAMP"
-
-            # Ghostty (platform-specific)
-            create_symlink "$REPO_GHOSTTY_CONFIG" "$HOME_GHOSTTY_CONFIG" "$TIMESTAMP"
-
-            # Create .zshrc.local if missing
-            if [ ! -f "$HOME_ZSHRC_LOCAL" ]; then
-              log_info "Creating .zshrc.local template..."
-              cat > "$HOME_ZSHRC_LOCAL" <<'EOF'
-# Machine-specific zsh configuration (gitignored)
-# Add your custom PATH, aliases, secrets here
-
-# Example: Docker aliases (uncomment to use)
-# alias d='docker'
-# alias dc='docker-compose'
-# alias dcu='docker-compose up'
-# alias dcd='docker-compose down'
-
-# Example: Custom PATH
-# export PATH="$HOME/custom/bin:$PATH"
-EOF
-              log_success "Created .zshrc.local"
-            fi
-
-            # NOTE: Oh My Zsh, Powerlevel10k, zsh-autosuggestions now installed via Home Manager
-            # See modules/home-manager/programs/zsh.nix
-
-            # NOTE: Tmux plugins now installed via Home Manager
-            # See modules/home-manager/programs/tmux.nix
-
-            # Auto-install Neovim plugins (lazy.nvim handles plugin management)
-            if command -v nvim &> /dev/null; then
-              log_info "Installing Neovim plugins (headless)..."
-              nvim --headless "+Lazy! sync" +qa 2>/dev/null || true
-              log_success "Neovim plugins installed"
-            fi
-
-            log_success "Activation complete!"
-            echo ""
-            echo "Next steps:"
-            echo "  1. Restart your terminal (or run: exec zsh)"
-            echo "  2. Sign in to 1Password: op signin"
-            echo "  3. AI credentials will auto-load in dev-config directory"
-          '');
-        };
-
         # Set default shell to zsh
         set-shell = {
           type = "app";

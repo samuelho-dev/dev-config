@@ -1,6 +1,0 @@
-{{- $isDevPod := env "KUBERNETES_SERVICE_HOST" | not | not -}}
-
-[data]
-  isDevPod = {{ $isDevPod }}
-  hostname = {{ .chezmoi.hostname | quote }}
-  username = {{ .chezmoi.username | quote }}
