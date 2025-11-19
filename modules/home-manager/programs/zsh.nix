@@ -63,6 +63,28 @@
       enableCompletion = config.dev-config.zsh.enableCompletion;
       autosuggestion.enable = config.dev-config.zsh.enableAutosuggestions;
       syntaxHighlighting.enable = config.dev-config.zsh.enableSyntaxHighlighting;
+
+      # Enable Oh My Zsh via Home Manager
+      oh-my-zsh = {
+        enable = true;
+        theme = "powerlevel10k/powerlevel10k";
+        plugins = [
+          "git"
+          # Note: zsh-autosuggestions handled by programs.zsh.autosuggestion above
+        ];
+      };
+    };
+
+    # Install Powerlevel10k theme via Nix
+    home.packages = with pkgs; [
+      zsh-powerlevel10k
+      # zsh-autosuggestions already enabled via programs.zsh.autosuggestion
+    ];
+
+    # Symlink Powerlevel10k theme to Oh My Zsh custom themes directory
+    # This makes it available for the theme = "powerlevel10k/powerlevel10k" setting
+    home.file.".oh-my-zsh/custom/themes/powerlevel10k" = {
+      source = "${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k";
     };
 
     # Symlink zsh configurations if sources are provided
