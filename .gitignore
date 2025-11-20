@@ -30,6 +30,10 @@ secrets.nix
 .config/home-manager/secrets.nix
 **/secrets.nix
 
+# Machine-specific user configuration
+# See user.nix.example for template
+user.nix
+
 # Backup files created by scripts
 *.backup_*
 
@@ -43,6 +47,9 @@ secrets.nix
 # Nix build outputs
 result
 result-*
+
+# Pre-commit
+.pre-commit-*
 
 # Direnv cache
 .direnv/

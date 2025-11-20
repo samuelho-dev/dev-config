@@ -14,6 +14,74 @@ This is a **centralized development configuration repository** using **Nix + Hom
 - **Git** - Version control with 1Password SSH signing
 - **Docker** - Container platform (NixOS module only)
 
+## DevOps Development Shell
+
+The `devShells.default` output provides a **comprehensive DevOps environment** with 40+ tools organized by category. This is the **single source of truth** for development tooling, imported by consumer projects like `ai-dev-env`.
+
+### Tool Categories
+
+**Core Development Tools:**
+- git, zsh, tmux, docker, neovim
+- fzf, ripgrep, fd, bat, lazygit, gitmux
+
+**Runtimes:**
+- nodejs_20, bun, python3
+
+**Kubernetes Ecosystem:**
+- kubectl, helm, helm-docs, k9s, kind, argocd
+
+**Cloud Providers:**
+- awscli2 (AWS), doctl (DigitalOcean)
+
+**Infrastructure as Code:**
+- terraform, terraform-docs
+
+**Security & Compliance:**
+- gitleaks, kubeseal, sops
+
+**Data Processing:**
+- jq (JSON), yq-go (YAML)
+
+**CI/CD & Git:**
+- gh (GitHub CLI), act (local Actions), pre-commit
+
+**AI Development:**
+- 1Password CLI (credential management)
+- OpenCode (installed separately, not in nixpkgs)
+
+**Utilities:**
+- direnv, nix-direnv, gnumake, pkg-config, imagemagick
+
+### Usage
+
+**Standalone (in dev-config repo):**
+```bash
+# Enter development shell
+nix develop
+
+# Or use direnv for automatic activation
+direnv allow
+cd ~/Projects/dev-config  # Auto-loads environment
+```
+
+**Imported by consumer projects:**
+```nix
+# In consumer flake.nix
+inputs.dev-config.url = "github:samuelho-dev/dev-config";
+
+devShells.default = dev-config.devShells.${system}.default.overrideAttrs (old: {
+  shellHook = old.shellHook + ''
+    # Project-specific extensions here
+  '';
+});
+```
+
+### First Load vs Subsequent Loads
+
+- **First load**: Downloads ~40 packages (~500MB) from Nix cache (5-10 minutes)
+- **Subsequent loads**: Instant (<1 second) - everything cached locally
+- **nix-direnv**: Caches flake evaluation for 100x faster reloads
+
 ## Architecture: Nix + Home Manager (Current)
 
 **As of January 2025, this repository uses Home Manager for declarative configuration management.**
@@ -90,16 +158,56 @@ bash scripts/install.sh
 5. Configures Git with SSH signing (1Password integration)
 6. Sets up direnv auto-activation
 
+### Machine-Specific Configuration (user.nix)
+
+Home Manager requires machine-specific values (username, home directory) that vary per machine and should never be committed to Git.
+
+**Initial Setup:**
+
+1. **Create user configuration from template:**
+   ```bash
+   cp user.nix.example user.nix
+   ```
+
+2. **Edit with your machine-specific details:**
+   ```nix
+   # user.nix (gitignored, machine-specific)
+   {
+     username = "your-username";              # e.g., "samuelho"
+     homeDirectory = "/Users/your-username";  # macOS: /Users/username, Linux: /home/username
+   }
+   ```
+
+3. **Stage the file for Nix visibility (required for flakes):**
+   ```bash
+   git add -f user.nix
+   ```
+
+   **Why stage a gitignored file?** Nix flakes can only access Git-tracked files during evaluation.
+   Staging with `-f` makes user.nix visible to Nix while `.gitignore` prevents accidental commits.
+
+   **Safety:** The file stays in "Changes to be committed" but won't be committed because:
+   - `.gitignore` blocks commits
+   - Use `git commit` (not `git commit -a`) to avoid overriding gitignore
+   - Pre-commit hooks (if configured) will reject commits containing gitignored files
+
+4. **Apply Home Manager configuration:**
+   ```bash
+   home-manager switch --flake .#aarch64-darwin  # macOS ARM64
+   # or
+   home-manager switch --flake .#x86_64-linux    # Linux x86_64
+   ```
+
 ### Updating Configuration
 
-**Edit any file in the repository, then:**
+**After modifying any configuration files:**
 
 ```bash
 # Apply changes:
 home-manager switch --flake ~/Projects/dev-config
 
-# Or test changes first (dry-run):
-bash scripts/test-config.sh
+# Or use the helper script:
+bash scripts/apply-home-manager.sh
 
 # Update packages to latest versions:
 nix flake update

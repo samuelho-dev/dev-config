@@ -1,14 +1,20 @@
 { config, pkgs, ... }:
 
+let
+  # Import machine-specific user configuration
+  # NOTE: user.nix must be staged in Git (git add -f user.nix) for flake evaluation
+  # but gitignored to prevent accidental commits. This is a Nix flake limitation.
+  user = import ./user.nix;
+in
 {
   # Import dev-config Home Manager module
   imports = [ ./modules/home-manager ];
 
   # Home Manager needs to know your username and home directory
-  # These will be set automatically by the install script
+  # Loaded from user.nix (machine-specific, gitignored)
   home = {
-    username = builtins.getEnv "USER";
-    homeDirectory = builtins.getEnv "HOME";
+    username = user.username;
+    homeDirectory = user.homeDirectory;
     stateVersion = "24.05";  # Don't change this
   };
 
@@ -16,8 +22,15 @@
   dev-config = {
     enable = true;
 
-    # Disable zsh module temporarily (using existing dotfiles)
-    zsh.enable = false;
+    # Enable zsh module for direnv integration
+    zsh = {
+      enable = true;
+      # Let Home Manager manage .zshrc for direnv integration
+      # (Custom .zshrc from repo conflicts with Home Manager's generated config)
+      zshrcSource = null;
+      zprofileSource = null;
+      p10kSource = null;
+    };
 
     # Disable ghostty on macOS (not available on darwin)
     ghostty.enable = false;

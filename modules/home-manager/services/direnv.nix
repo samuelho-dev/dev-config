@@ -31,6 +31,7 @@
     programs.direnv = {
       enable = true;
       package = config.dev-config.direnv.package;
+      enableZshIntegration = true;  # Auto-add direnv hooks to zsh
       nix-direnv = lib.mkIf config.dev-config.direnv.enableNixDirenv {
         enable = true;
         package = config.dev-config.direnv.nix-direnv.package;
