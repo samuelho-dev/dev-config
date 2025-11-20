@@ -1,6 +1,9 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   imports = [
     ./base-packages.nix
     ./users.nix
@@ -10,9 +13,11 @@
 
   # Global dev-config options
   options.dev-config = {
-    enable = lib.mkEnableOption "dev-config NixOS module" // {
-      default = true;
-    };
+    enable =
+      lib.mkEnableOption "dev-config NixOS module"
+      // {
+        default = true;
+      };
   };
 
   config = lib.mkIf config.dev-config.enable {

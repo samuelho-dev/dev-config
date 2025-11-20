@@ -50,7 +50,8 @@ if [ ! -f "$TOKEN_FILE" ]; then
 fi
 
 # Export service account token (no session needed, no biometrics!)
-export OP_SERVICE_ACCOUNT_TOKEN=$(cat "$TOKEN_FILE")
+OP_SERVICE_ACCOUNT_TOKEN=$(cat "$TOKEN_FILE")
+export OP_SERVICE_ACCOUNT_TOKEN
 
 # Verify authentication works
 if ! op account get >/dev/null 2>&1; then

@@ -1,21 +1,22 @@
-{ config, pkgs, ... }:
-
-let
+{
+  config,
+  pkgs,
+  ...
+}: let
   # Import machine-specific user configuration
   # NOTE: user.nix must be staged in Git (git add -f user.nix) for flake evaluation
   # but gitignored to prevent accidental commits. This is a Nix flake limitation.
   user = import ./user.nix;
-in
-{
+in {
   # Import dev-config Home Manager module
-  imports = [ ./modules/home-manager ];
+  imports = [./modules/home-manager];
 
   # Home Manager needs to know your username and home directory
   # Loaded from user.nix (machine-specific, gitignored)
   home = {
     username = user.username;
     homeDirectory = user.homeDirectory;
-    stateVersion = "24.05";  # Don't change this
+    stateVersion = "24.05"; # Don't change this
   };
 
   # Enable dev-config modules (all enabled by default)

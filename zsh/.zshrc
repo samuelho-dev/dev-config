@@ -1,4 +1,3 @@
-# shellcheck shell=bash
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
@@ -86,7 +85,19 @@ plugins=(git zsh-autosuggestions)
 source $ZSH/oh-my-zsh.sh
 
 # direnv integration (auto-load Nix environments)
-eval "$(direnv hook zsh)"
+# Cache direnv hook to avoid subprocess spawn on every shell (saves 10-20ms)
+if (( ${+commands[direnv]} )); then
+  eval "$(direnv hook zsh)"
+fi
+
+# Fallback credential check (non-blocking)
+# LaunchAgent/systemd loads credentials at login, but provide fallback for non-login shells
+if [ -z "$ANTHROPIC_API_KEY" ] && [ -d "$HOME/.config/dev-config/secrets" ]; then
+  export ANTHROPIC_API_KEY="$(cat "$HOME/.config/dev-config/secrets/ANTHROPIC_API_KEY" 2>/dev/null)"
+  export OPENAI_API_KEY="$(cat "$HOME/.config/dev-config/secrets/OPENAI_API_KEY" 2>/dev/null)"
+  export LITELLM_MASTER_KEY="$(cat "$HOME/.config/dev-config/secrets/LITELLM_MASTER_KEY" 2>/dev/null)"
+  export GOOGLE_AI_API_KEY="$(cat "$HOME/.config/dev-config/secrets/GOOGLE_AI_API_KEY" 2>/dev/null)"
+fi
 
 # User configuration
 

@@ -1,10 +1,16 @@
-{ config, pkgs, lib, inputs, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}: {
   options.dev-config.neovim = {
-    enable = lib.mkEnableOption "dev-config Neovim setup" // {
-      default = true;
-    };
+    enable =
+      lib.mkEnableOption "dev-config Neovim setup"
+      // {
+        default = true;
+      };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -14,7 +20,10 @@
 
     configSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default = if inputs ? dev-config then "${inputs.dev-config}/nvim" else null;
+      default =
+        if inputs ? dev-config
+        then "${inputs.dev-config}/nvim"
+        else null;
       description = ''
         Path to Neovim configuration directory.
         Set to null to manage configuration separately (e.g., via Chezmoi).
@@ -59,14 +68,14 @@
     # This allows lazy-nix-helper to disable Mason on Nix systems
     home.packages = with pkgs; [
       # LSP servers
-      nodePackages.typescript-language-server  # TypeScript/JavaScript
-      pyright                                   # Python
-      lua-language-server                      # Lua
+      nodePackages.typescript-language-server # TypeScript/JavaScript
+      pyright # Python
+      lua-language-server # Lua
 
       # Formatters
-      stylua                    # Lua formatter
-      nodePackages.prettier     # JS/TS/JSON/YAML/Markdown
-      ruff                      # Python formatter + linter
+      stylua # Lua formatter
+      nodePackages.prettier # JS/TS/JSON/YAML/Markdown
+      ruff # Python formatter + linter
 
       # Build tools for Neovim plugins
       gnumake

@@ -1,10 +1,15 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   options.dev-config.direnv = {
-    enable = lib.mkEnableOption "dev-config direnv setup" // {
-      default = true;
-    };
+    enable =
+      lib.mkEnableOption "dev-config direnv setup"
+      // {
+        default = true;
+      };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -31,7 +36,7 @@
     programs.direnv = {
       enable = true;
       package = config.dev-config.direnv.package;
-      enableZshIntegration = true;  # Auto-add direnv hooks to zsh
+      enableZshIntegration = true; # Auto-add direnv hooks to zsh
       nix-direnv = lib.mkIf config.dev-config.direnv.enableNixDirenv {
         enable = true;
         package = config.dev-config.direnv.nix-direnv.package;

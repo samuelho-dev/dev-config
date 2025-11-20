@@ -1,16 +1,22 @@
-{ config, pkgs, lib, ... }:
-
-let
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}: let
   # Import secrets.nix if it exists (for git user config and SSH signing key)
   secretsPath = "${config.xdg.configHome}/home-manager/secrets.nix";
-  secrets = if builtins.pathExists secretsPath
+  secrets =
+    if builtins.pathExists secretsPath
     then import secretsPath
     else {};
 in {
   options.dev-config.git = {
-    enable = lib.mkEnableOption "dev-config git setup" // {
-      default = true;
-    };
+    enable =
+      lib.mkEnableOption "dev-config git setup"
+      // {
+        default = true;
+      };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -56,7 +62,7 @@ in {
       enable = lib.mkEnableOption "Git commit signing";
 
       format = lib.mkOption {
-        type = lib.types.enum [ "openpgp" "ssh" "x509" ];
+        type = lib.types.enum ["openpgp" "ssh" "x509"];
         default = "ssh";
         description = "Signing format (use 'ssh' for 1Password)";
       };
@@ -112,23 +118,26 @@ in {
         signByDefault = config.dev-config.git.signing.signByDefault;
       };
 
-      extraConfig = {
-        init.defaultBranch = config.dev-config.git.defaultBranch;
-        core.editor = config.dev-config.git.editor;
+      extraConfig =
+        {
+          init.defaultBranch = config.dev-config.git.defaultBranch;
+          core.editor = config.dev-config.git.editor;
 
-        # SSH signing with 1Password
-        gpg = lib.mkIf (config.dev-config.git.signing.enable && config.dev-config.git.signing.format == "ssh") {
-          format = "ssh";
-          ssh.program = if pkgs.stdenv.isDarwin
-            then "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
-            else "${pkgs._1password-gui}/bin/op-ssh-sign";
-        };
+          # SSH signing with 1Password
+          gpg = lib.mkIf (config.dev-config.git.signing.enable && config.dev-config.git.signing.format == "ssh") {
+            format = "ssh";
+            ssh.program =
+              if pkgs.stdenv.isDarwin
+              then "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+              else "${pkgs._1password-gui}/bin/op-ssh-sign";
+          };
 
-        # Prefer SSH URLs for GitHub (auto-rewrite HTTPS to SSH)
-        url = lib.mkIf config.dev-config.git.preferSSH {
-          "ssh://git@github.com/".insteadOf = "https://github.com/";
-        };
-      } // config.dev-config.git.extraConfig;
+          # Prefer SSH URLs for GitHub (auto-rewrite HTTPS to SSH)
+          url = lib.mkIf config.dev-config.git.preferSSH {
+            "ssh://git@github.com/".insteadOf = "https://github.com/";
+          };
+        }
+        // config.dev-config.git.extraConfig;
     };
   };
 }

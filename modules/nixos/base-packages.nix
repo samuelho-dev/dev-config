@@ -1,10 +1,15 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   options.dev-config.packages = {
-    enable = lib.mkEnableOption "dev-config base packages" // {
-      default = true;
-    };
+    enable =
+      lib.mkEnableOption "dev-config base packages"
+      // {
+        default = true;
+      };
 
     extraPackages = lib.mkOption {
       type = lib.types.listOf lib.types.package;
@@ -16,43 +21,45 @@
 
   config = lib.mkIf config.dev-config.packages.enable {
     environment.systemPackages = lib.mkDefault (
-      with pkgs; [
-        # Core system utilities
-        git
-        zsh
-        tmux
-        docker
+      with pkgs;
+        [
+          # Core system utilities
+          git
+          zsh
+          tmux
+          docker
 
-        # Text editors and IDE tools
-        neovim
+          # Text editors and IDE tools
+          neovim
 
-        # CLI utilities for fuzzy finding and search
-        fzf
-        ripgrep
-        fd
-        bat
+          # CLI utilities for fuzzy finding and search
+          fzf
+          ripgrep
+          fd
+          bat
 
-        # Git tools
-        lazygit
-        gitmux
+          # Git tools
+          lazygit
+          gitmux
 
-        # Build dependencies
-        gnumake
-        pkg-config
-        nodejs_20
-        imagemagick
+          # Build dependencies
+          gnumake
+          pkg-config
+          nodejs_20
+          imagemagick
 
-        # AI development tools
-        nodePackages.opencode-ai  # OpenCode CLI
-        _1password                 # 1Password CLI
-        jq                         # JSON parsing for op output
+          # AI development tools
+          nodePackages.opencode-ai # OpenCode CLI
+          _1password # 1Password CLI
+          jq # JSON parsing for op output
 
-        # Additional utilities
-        gh          # GitHub CLI (for Octo.nvim PR/issue management)
-        direnv      # Auto-activate environments
-        nix-direnv  # Nix integration for direnv
-        pre-commit  # Git hooks framework
-      ] ++ config.dev-config.packages.extraPackages
+          # Additional utilities
+          gh # GitHub CLI (for Octo.nvim PR/issue management)
+          direnv # Auto-activate environments
+          nix-direnv # Nix integration for direnv
+          pre-commit # Git hooks framework
+        ]
+        ++ config.dev-config.packages.extraPackages
     );
   };
 }

@@ -1,10 +1,15 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   options.dev-config.shell = {
-    enable = lib.mkEnableOption "Zsh shell configuration" // {
-      default = true;
-    };
+    enable =
+      lib.mkEnableOption "Zsh shell configuration"
+      // {
+        default = true;
+      };
 
     defaultShell = lib.mkOption {
       type = lib.types.package;

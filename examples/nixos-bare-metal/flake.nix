@@ -18,7 +18,13 @@
     };
   };
 
-  outputs = { self, nixpkgs, dev-config, home-manager, ... }: {
+  outputs = {
+    self,
+    nixpkgs,
+    dev-config,
+    home-manager,
+    ...
+  }: {
     nixosConfigurations = {
       # Example server configuration
       dev-server = nixpkgs.lib.nixosSystem {

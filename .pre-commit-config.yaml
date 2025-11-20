@@ -13,10 +13,10 @@ repos:
       # Nix formatting
       - id: nix-fmt
         name: Format Nix files
-        entry: nix fmt -- --check
+        entry: nix fmt
         language: system
         files: \.nix$
-        pass_filenames: false
+        pass_filenames: true
         description: Check Nix file formatting with alejandra
 
       # Nix flake validation
@@ -78,4 +78,5 @@ repos:
     hooks:
       - id: shellcheck
         name: Lint shell scripts
-        args: ['-x']  # Follow sourced files
+        args: ['-x', '-e', 'SC1091']  # Follow sourced files, exclude SC1091 (info about not following sources)
+        exclude: ^zsh/  # Exclude zsh config files (not bash scripts)

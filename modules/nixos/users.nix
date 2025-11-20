@@ -1,6 +1,9 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   options.dev-config.users = lib.mkOption {
     type = lib.types.attrsOf (lib.types.submodule {
       options = {
@@ -14,9 +17,9 @@
 
         extraGroups = lib.mkOption {
           type = lib.types.listOf lib.types.str;
-          default = [ "docker" "wheel" ];
+          default = ["docker" "wheel"];
           description = "Additional groups for the user";
-          example = [ "docker" "wheel" "audio" "video" ];
+          example = ["docker" "wheel" "audio" "video"];
         };
 
         isSystemUser = lib.mkOption {
@@ -50,12 +53,17 @@
   };
 
   config = {
-    users.users = lib.mapAttrs (username: cfg: lib.mkIf cfg.enable {
-      isNormalUser = !cfg.isSystemUser;
-      isSystemUser = cfg.isSystemUser;
-      shell = cfg.shell;
-      extraGroups = cfg.extraGroups;
-      home = if cfg.home != null then cfg.home else "/home/${username}";
-    }) config.dev-config.users;
+    users.users = lib.mapAttrs (username: cfg:
+      lib.mkIf cfg.enable {
+        isNormalUser = !cfg.isSystemUser;
+        isSystemUser = cfg.isSystemUser;
+        shell = cfg.shell;
+        extraGroups = cfg.extraGroups;
+        home =
+          if cfg.home != null
+          then cfg.home
+          else "/home/${username}";
+      })
+    config.dev-config.users;
   };
 }

@@ -1,10 +1,15 @@
-{ config, pkgs, lib, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  ...
+}: {
   options.dev-config.docker = {
-    enable = lib.mkEnableOption "Docker virtualization" // {
-      default = true;
-    };
+    enable =
+      lib.mkEnableOption "Docker virtualization"
+      // {
+        default = true;
+      };
 
     autoAddUsers = lib.mkOption {
       type = lib.types.bool;
@@ -30,11 +35,13 @@
 
     # Automatically add dev-config users to docker group
     users.users = lib.mkIf config.dev-config.docker.autoAddUsers (
-      lib.mapAttrs (username: userCfg:
-        lib.mkIf (userCfg.enable && !(builtins.elem "docker" userCfg.extraGroups)) {
-          extraGroups = [ "docker" ];
-        }
-      ) config.dev-config.users
+      lib.mapAttrs (
+        username: userCfg:
+          lib.mkIf (userCfg.enable && !(builtins.elem "docker" userCfg.extraGroups)) {
+            extraGroups = ["docker"];
+          }
+      )
+      config.dev-config.users
     );
   };
 }

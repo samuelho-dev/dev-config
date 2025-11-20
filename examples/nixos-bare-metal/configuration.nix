@@ -1,6 +1,10 @@
-{ config, pkgs, lib, inputs, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}: {
   # System settings
   system.stateVersion = "24.05";
 
@@ -35,23 +39,23 @@
     # Developer account
     developer = {
       enable = true;
-      extraGroups = [ "docker" "wheel" ];  # Docker access + sudo
+      extraGroups = ["docker" "wheel"]; # Docker access + sudo
     };
 
     # CI/CD service account
     ci-runner = {
       enable = true;
-      isSystemUser = true;  # System account
-      extraGroups = [ "docker" ];  # Docker access only
+      isSystemUser = true; # System account
+      extraGroups = ["docker"]; # Docker access only
     };
   };
 
   # Additional dev-config options (all optional, these are defaults)
   dev-config = {
     # Enable/disable components
-    packages.enable = true;  # Base developer packages
-    docker.enable = true;    # Docker virtualization
-    shell.enable = true;     # Zsh shell configuration
+    packages.enable = true; # Base developer packages
+    docker.enable = true; # Docker virtualization
+    shell.enable = true; # Zsh shell configuration
 
     # Add extra packages beyond defaults
     packages.extraPackages = with pkgs; [
@@ -71,9 +75,9 @@
     useUserPackages = true;
 
     # Developer user configuration
-    users.developer = { pkgs, ... }: {
+    users.developer = {pkgs, ...}: {
       # Import dev-config Home Manager module
-      imports = [ inputs.dev-config.homeManagerModules.default ];
+      imports = [inputs.dev-config.homeManagerModules.default];
 
       home.stateVersion = "24.05";
 
@@ -90,14 +94,14 @@
     };
 
     # CI runner user configuration (minimal)
-    users.ci-runner = { pkgs, ... }: {
-      imports = [ inputs.dev-config.homeManagerModules.default ];
+    users.ci-runner = {pkgs, ...}: {
+      imports = [inputs.dev-config.homeManagerModules.default];
 
       home.stateVersion = "24.05";
 
       # Minimal config for CI
       dev-config = {
-        packages.enable = false;  # No user packages
+        packages.enable = false; # No user packages
         neovim.enable = false;
         tmux.enable = false;
         zsh.enable = false;
@@ -127,7 +131,7 @@
   # Firewall
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 22 ];  # SSH
+    allowedTCPPorts = [22]; # SSH
   };
 
   # Automatic garbage collection
@@ -139,6 +143,6 @@
 
   # Enable flakes
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = ["nix-command" "flakes"];
   };
 }

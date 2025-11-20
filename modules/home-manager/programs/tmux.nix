@@ -1,10 +1,16 @@
-{ config, pkgs, lib, inputs, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}: {
   options.dev-config.tmux = {
-    enable = lib.mkEnableOption "dev-config tmux setup" // {
-      default = true;
-    };
+    enable =
+      lib.mkEnableOption "dev-config tmux setup"
+      // {
+        default = true;
+      };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -14,7 +20,10 @@
 
     configSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default = if inputs ? dev-config then "${inputs.dev-config}/tmux/tmux.conf" else null;
+      default =
+        if inputs ? dev-config
+        then "${inputs.dev-config}/tmux/tmux.conf"
+        else null;
       description = ''
         Path to tmux configuration file.
         Set to null to manage configuration separately (e.g., via Chezmoi).
@@ -24,7 +33,10 @@
 
     gitmuxConfigSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default = if inputs ? dev-config then "${inputs.dev-config}/tmux/gitmux.conf" else null;
+      default =
+        if inputs ? dev-config
+        then "${inputs.dev-config}/tmux/gitmux.conf"
+        else null;
       description = "Path to gitmux configuration file";
       example = lib.literalExpression ''"''${inputs.dev-config}/tmux/gitmux.conf"'';
     };
@@ -66,15 +78,15 @@
 
       # Install tmux plugins via Nix (replaces TPM)
       plugins = with pkgs.tmuxPlugins; [
-        sensible           # tmux-sensible
-        resurrect          # tmux-resurrect (save/restore sessions)
-        continuum          # tmux-continuum (auto-save)
-        battery            # tmux-battery (battery status)
-        cpu                # tmux-cpu (CPU/RAM status)
-        catppuccin         # catppuccin/tmux (theme)
+        sensible # tmux-sensible
+        resurrect # tmux-resurrect (save/restore sessions)
+        continuum # tmux-continuum (auto-save)
+        battery # tmux-battery (battery status)
+        cpu # tmux-cpu (CPU/RAM status)
+        catppuccin # catppuccin/tmux (theme)
         vim-tmux-navigator # christoomey/vim-tmux-navigator
-        yank               # tmux-yank (clipboard integration)
-        tmux-fzf           # sainnhe/tmux-fzf (fuzzy finder)
+        yank # tmux-yank (clipboard integration)
+        tmux-fzf # sainnhe/tmux-fzf (fuzzy finder)
       ];
     };
 

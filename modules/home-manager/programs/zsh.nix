@@ -1,10 +1,16 @@
-{ config, pkgs, lib, inputs, ... }:
-
 {
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}: {
   options.dev-config.zsh = {
-    enable = lib.mkEnableOption "dev-config zsh setup" // {
-      default = true;
-    };
+    enable =
+      lib.mkEnableOption "dev-config zsh setup"
+      // {
+        default = true;
+      };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -14,7 +20,10 @@
 
     zshrcSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default = if inputs ? dev-config then "${inputs.dev-config}/zsh/.zshrc" else null;
+      default =
+        if inputs ? dev-config
+        then "${inputs.dev-config}/zsh/.zshrc"
+        else null;
       description = ''
         Path to .zshrc configuration file.
         Set to null to manage configuration separately (e.g., via Chezmoi).
@@ -24,14 +33,20 @@
 
     zprofileSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default = if inputs ? dev-config then "${inputs.dev-config}/zsh/.zprofile" else null;
+      default =
+        if inputs ? dev-config
+        then "${inputs.dev-config}/zsh/.zprofile"
+        else null;
       description = "Path to .zprofile configuration file";
       example = lib.literalExpression ''"''${inputs.dev-config}/zsh/.zprofile"'';
     };
 
     p10kSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default = if inputs ? dev-config then "${inputs.dev-config}/zsh/.p10k.zsh" else null;
+      default =
+        if inputs ? dev-config
+        then "${inputs.dev-config}/zsh/.p10k.zsh"
+        else null;
       description = "Path to Powerlevel10k theme configuration";
       example = lib.literalExpression ''"''${inputs.dev-config}/zsh/.p10k.zsh"'';
     };
@@ -93,13 +108,8 @@
         # Source Powerlevel10k configuration
         [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-        # Load AI credentials from cache (fallback for terminal sessions)
-        SECRETS_DIR="$HOME/.config/dev-config/secrets"
-
-        for key in ANTHROPIC_API_KEY OPENAI_API_KEY LITELLM_MASTER_KEY; do
-          secret_file="$SECRETS_DIR/$key"
-          [ -f "$secret_file" ] && export "$key=$(cat "$secret_file")"
-        done
+        # Credentials loaded by LaunchAgent (macOS) or systemd (Linux) at login
+        # No need for per-shell loading - eliminates 50ms overhead
       '';
     };
 

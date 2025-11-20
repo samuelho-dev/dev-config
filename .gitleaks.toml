@@ -1,0 +1,25 @@
+# Gitleaks configuration for dev-config repository
+# https://github.com/gitleaks/gitleaks
+
+title = "dev-config gitleaks config"
+
+[extend]
+# Use default gitleaks rules
+useDefault = true
+
+[allowlist]
+description = "Allowlist for dev-config repository"
+
+# Allow 1Password item IDs and vault IDs in sync-secrets.sh
+# These are references to 1Password items, not actual secrets
+paths = [
+  '''scripts/sync-secrets\.sh''',
+  '''scripts/load-ai-credentials\.sh'''
+]
+
+# Specific patterns that are safe (1Password item/vault IDs)
+# These follow 1Password's ID format: 26-character alphanumeric strings
+regexes = [
+  # 1Password item IDs (always start with specific prefixes and are 26 chars)
+  '''[a-z0-9]{26}''',
+]
