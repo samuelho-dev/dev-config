@@ -7,7 +7,7 @@
     onePasswordAgent = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = true;
+        default = true;  # Enable 1Password SSH agent
         description = "Use 1Password SSH agent for authentication and signing";
       };
 
@@ -42,7 +42,9 @@
         "github.com" = {
           hostname = "github.com";
           user = "git";
-          forwardAgent = false;  # Security best practice: disable agent forwarding for GitHub
+          identityFile = "~/.ssh/id_1password";  # SSH key synced from 1Password
+          identitiesOnly = true;                  # Only use specified identity file
+          forwardAgent = false;                   # Security best practice: disable agent forwarding
         };
       };
     };

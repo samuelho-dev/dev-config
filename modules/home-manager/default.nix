@@ -9,6 +9,7 @@
     ./programs/ssh.nix
     ./programs/ghostty.nix
     ./services/direnv.nix
+    ./services/ai-env.nix
   ];
 
   # Global dev-config options for Home Manager

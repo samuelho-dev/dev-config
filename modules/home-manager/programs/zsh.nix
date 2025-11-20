@@ -70,6 +70,10 @@
         # Theme loads correctly via Nix symlinks after init completes
         ZSH_DISABLE_COMPFIX=true
 
+        # Point to home directory for custom themes/plugins
+        # This makes the Powerlevel10k symlink discoverable
+        ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
+
         # Suppress direnv verbose loading messages
         export DIRENV_LOG_FORMAT=""
       '';
