@@ -64,6 +64,16 @@
       autosuggestion.enable = config.dev-config.zsh.enableAutosuggestions;
       syntaxHighlighting.enable = config.dev-config.zsh.enableSyntaxHighlighting;
 
+      # Suppress oh-my-zsh warnings and direnv verbose output
+      initExtraBeforeCompInit = ''
+        # Silence oh-my-zsh warnings during initialization
+        # Theme loads correctly via Nix symlinks after init completes
+        ZSH_DISABLE_COMPFIX=true
+
+        # Suppress direnv verbose loading messages
+        export DIRENV_LOG_FORMAT=""
+      '';
+
       # Enable Oh My Zsh via Home Manager
       oh-my-zsh = {
         enable = true;
