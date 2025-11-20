@@ -87,6 +87,20 @@
           # Note: zsh-autosuggestions handled by programs.zsh.autosuggestion above
         ];
       };
+
+      # Additional initialization (runs after oh-my-zsh loads)
+      initExtra = ''
+        # Source Powerlevel10k configuration
+        [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+        # Load AI credentials from cache (fallback for terminal sessions)
+        SECRETS_DIR="$HOME/.config/dev-config/secrets"
+
+        for key in ANTHROPIC_API_KEY OPENAI_API_KEY LITELLM_MASTER_KEY; do
+          secret_file="$SECRETS_DIR/$key"
+          [ -f "$secret_file" ] && export "$key=$(cat "$secret_file")"
+        done
+      '';
     };
 
     # Install Powerlevel10k theme via Nix

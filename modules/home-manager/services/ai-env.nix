@@ -93,15 +93,7 @@ EOF
       };
     };
 
-    # Shell fallback (all platforms, works for terminal apps)
-    programs.zsh.initExtra = ''
-      # Load AI credentials from cache (fallback for terminal sessions)
-      SECRETS_DIR="$HOME/.config/dev-config/secrets"
-
-      for key in ANTHROPIC_API_KEY OPENAI_API_KEY LITELLM_MASTER_KEY; do
-        secret_file="$SECRETS_DIR/$key"
-        [ -f "$secret_file" ] && export "$key=$(cat "$secret_file")"
-      done
-    '';
+    # Note: Shell fallback moved to programs/zsh.nix initExtra
+    # This prevents Nix module conflict (multiple definitions of programs.zsh.initExtra)
   };
 }
