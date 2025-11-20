@@ -1,0 +1,133 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Automated dependency updates for dev-config repository",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":separateMajorReleases"
+  ],
+  "timezone": "America/Los_Angeles",
+  "schedule": [
+    "after 10pm every weekday",
+    "before 5am every weekday",
+    "every weekend"
+  ],
+  "labels": ["dependencies", "renovate"],
+  "assignees": ["samuelho-dev"],
+  "reviewers": ["samuelho-dev"],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "branchConcurrentLimit": 10,
+  "platformAutomerge": false,
+  "ignoreTests": false,
+  "packageRules": [
+    {
+      "description": "Nix flake.lock updates - Weekly, auto-merge minor/patch",
+      "matchManagers": ["nix"],
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "schedule": ["every weekend"],
+      "commitMessagePrefix": "chore(nix):",
+      "automerge": false,
+      "assignees": [],
+      "labels": ["dependencies", "nix", "automated"]
+    },
+    {
+      "description": "Pre-commit hooks - Auto-merge patch updates",
+      "matchManagers": ["pre-commit"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "commitMessagePrefix": "chore(pre-commit):",
+      "labels": ["dependencies", "pre-commit", "auto-merge"]
+    },
+    {
+      "description": "Pre-commit hooks - Manual review for major/minor",
+      "matchManagers": ["pre-commit"],
+      "matchUpdateTypes": ["major", "minor"],
+      "automerge": false,
+      "commitMessagePrefix": "chore(pre-commit):",
+      "labels": ["dependencies", "pre-commit", "needs-review"]
+    },
+    {
+      "description": "GitHub Actions - Auto-merge patch updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "automergeType": "pr",
+      "commitMessagePrefix": "chore(ci):",
+      "labels": ["dependencies", "github-actions", "auto-merge"]
+    },
+    {
+      "description": "GitHub Actions - Manual review for major/minor",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["major", "minor"],
+      "automerge": false,
+      "commitMessagePrefix": "chore(ci):",
+      "labels": ["dependencies", "github-actions", "needs-review"]
+    },
+    {
+      "description": "Group Nix package updates together",
+      "groupName": "nix-packages",
+      "matchManagers": ["nix"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "schedule": ["every weekend"]
+    },
+    {
+      "description": "Security updates - High priority, immediate",
+      "matchUpdateTypes": ["patch"],
+      "matchDepPatterns": ["*"],
+      "matchCurrentVersion": "!/^0/",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "security",
+      "automerge": true,
+      "automergeType": "pr",
+      "labels": ["security", "auto-merge"],
+      "schedule": ["at any time"]
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 3am on Monday"],
+    "commitMessageAction": "Update",
+    "commitMessageTopic": "lock files",
+    "commitMessagePrefix": "chore(deps):"
+  },
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "🤖 Dependency Updates Dashboard",
+  "dependencyDashboardHeader": "This dashboard shows all pending dependency updates. Review and merge as needed.",
+  "dependencyDashboardLabels": ["dependencies", "renovate-dashboard"],
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "update",
+  "commitBody": "🤖 Generated with [Renovate](https://renovatebot.com)\n\nCo-Authored-By: Renovate Bot <bot@renovateapp.com>",
+  "prCreation": "immediate",
+  "prBodyTemplate": "{{{header}}}{{{table}}}{{{notes}}}{{{changelogs}}}{{{configDescription}}}{{{controls}}}{{{footer}}}",
+  "prBodyColumns": [
+    "Package",
+    "Change",
+    "Type",
+    "Update",
+    "New value",
+    "References"
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security", "vulnerability"],
+    "assignees": ["samuelho-dev"],
+    "reviewers": ["samuelho-dev"],
+    "schedule": ["at any time"],
+    "prPriority": 10
+  },
+  "stabilityDays": 3,
+  "prCreationRestrictions": {
+    "minimumReleaseAge": "3 days"
+  },
+  "semanticCommits": "enabled",
+  "commitMessageExtra": "to {{newVersion}}",
+  "gitAuthor": "Renovate Bot <bot@renovateapp.com>",
+  "enabledManagers": [
+    "nix",
+    "pre-commit",
+    "github-actions"
+  ]
+}
