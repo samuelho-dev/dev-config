@@ -2,11 +2,163 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Component-Specific Documentation
+## Repository Overview
 
-**Each directory has detailed CLAUDE.md and README.md files for AI and user guidance:**
+This is a **centralized development configuration repository** using **Nix + Home Manager** for declarative, reproducible dotfile and package management.
 
-### Configuration Components
+**Managed configurations:**
+- **Neovim** - Text editor with LSP, completion, git integration
+- **Tmux** - Terminal multiplexer with plugin ecosystem
+- **Ghostty** - GPU-accelerated terminal emulator
+- **Zsh** - Shell with Oh My Zsh framework + Powerlevel10k theme
+- **Git** - Version control with 1Password SSH signing
+- **Docker** - Container platform (NixOS module only)
+
+## Architecture: Nix + Home Manager (Current)
+
+**As of January 2025, this repository uses Home Manager for declarative configuration management.**
+
+### Why Home Manager?
+
+**Previous approach (shell scripts):**
+- Imperative installation with shell scripts
+- Manual package management per platform
+- No version locking
+- Difficult to reproduce environments
+
+**Current approach (Home Manager):**
+- Declarative configuration in `modules/home-manager/`
+- All packages and dotfiles managed by Nix
+- Version locking via `flake.lock`
+- Identical environments across machines
+- Single command activation: `home-manager switch --flake .`
+
+### Key Files
+
+```
+dev-config/
+├── flake.nix                          # Nix flake configuration
+├── flake.lock                         # Version lock file (committed)
+├── home.nix                           # Home Manager entry point
+├── modules/
+│   ├── home-manager/                  # Home Manager modules (main configuration)
+│   │   ├── default.nix                # Main module exporter
+│   │   ├── programs/
+│   │   │   ├── neovim.nix             # Neovim configuration + symlink
+│   │   │   ├── tmux.nix               # Tmux configuration + symlink
+│   │   │   ├── zsh.nix                # Zsh configuration + symlink
+│   │   │   ├── git.nix                # Git configuration
+│   │   │   ├── ssh.nix                # SSH + 1Password agent
+│   │   │   └── ghostty.nix            # Ghostty configuration + symlink
+│   │   └── services/
+│   │       └── direnv.nix             # Direnv auto-activation
+│   └── nixos/                         # NixOS modules (for servers)
+│       ├── default.nix                # Main module exporter
+│       ├── base-packages.nix          # Core system packages
+│       ├── docker.nix                 # Docker daemon configuration
+│       ├── shell.nix                  # Zsh system configuration
+│       └── users.nix                  # User account management
+├── scripts/
+│   └── install.sh                     # Bootstrap script (installs Nix + Home Manager)
+├── nvim/, tmux/, zsh/, ghostty/       # Actual dotfiles (managed by Home Manager)
+└── docs/nix/                          # Nix documentation (9 guides)
+```
+
+### Installation Workflow (Current)
+
+```bash
+# One command installs everything:
+bash scripts/install.sh
+
+# What this does:
+# 1. Installs Nix (Determinate Systems installer)
+# 2. Enables flakes
+# 3. Installs Home Manager
+# 4. Activates configuration: nix run home-manager/master -- switch --flake .
+```
+
+**Home Manager activation:**
+1. Installs all packages (Neovim, tmux, zsh, Git, etc.)
+2. Creates symlinks for dotfiles:
+   - `~/.config/nvim/` → `~/Projects/dev-config/nvim/`
+   - `~/.tmux.conf` → `~/Projects/dev-config/tmux/tmux.conf`
+   - `~/.zshrc` → `~/Projects/dev-config/zsh/.zshrc`
+   - `~/.p10k.zsh` → `~/Projects/dev-config/zsh/.p10k.zsh`
+   - Ghostty config (platform-specific path)
+3. Installs Oh My Zsh, Powerlevel10k, plugins
+4. Installs Tmux Plugin Manager (TPM)
+5. Configures Git with SSH signing (1Password integration)
+6. Sets up direnv auto-activation
+
+### Updating Configuration
+
+**Edit any file in the repository, then:**
+
+```bash
+# Apply changes:
+home-manager switch --flake ~/Projects/dev-config
+
+# Or test changes first (dry-run):
+bash scripts/test-config.sh
+
+# Update packages to latest versions:
+nix flake update
+home-manager switch --flake ~/Projects/dev-config
+```
+
+### Home Manager Module System
+
+**Module structure (modules/home-manager/):**
+
+Each program has a dedicated module with this pattern:
+
+```nix
+# modules/home-manager/programs/neovim.nix
+{ config, lib, pkgs, inputs ? {}, ... }:
+
+with lib;
+let
+  cfg = config.dev-config.neovim;
+in {
+  options.dev-config.neovim = {
+    enable = mkEnableOption "Neovim configuration";
+
+    configSource = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = if inputs ? dev-config then "${inputs.dev-config}/nvim" else null;
+      description = "Path to Neovim configuration directory";
+    };
+  };
+
+  config = mkIf cfg.enable {
+    # Install Neovim package
+    home.packages = [ pkgs.neovim ];
+
+    # Create symlink to dotfiles (from flake input or null)
+    xdg.configFile."nvim".source = cfg.configSource;
+  };
+}
+```
+
+**Key concepts:**
+- **`mkEnableOption`**: Creates `dev-config.<program>.enable` option
+- **`mkIf cfg.enable`**: Only applies configuration if enabled
+- **`home.packages`**: Installs packages via Nix
+- **`xdg.configFile`**: Creates symlinks in XDG config directory
+- **`inputs ? dev-config`**: Checks if dev-config is available as flake input (allows both standalone and flake composition usage)
+
+**All modules are enabled by default in `home.nix`:**
+```nix
+dev-config = {
+  enable = true;  # Enables all sub-modules
+};
+```
+
+### Component-Specific Documentation
+
+**Each directory has detailed CLAUDE.md and README.md files:**
+
+#### Configuration Components
 - **[nvim/CLAUDE.md](nvim/CLAUDE.md)** - Neovim architecture, plugin system, LSP configuration
 - **[nvim/lua/CLAUDE.md](nvim/lua/CLAUDE.md)** - Lua module organization and require paths
 - **[nvim/lua/config/CLAUDE.md](nvim/lua/config/CLAUDE.md)** - Core configuration (options, autocmds, keymaps)
@@ -16,1296 +168,599 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **[zsh/CLAUDE.md](zsh/CLAUDE.md)** - Zsh configuration, Oh My Zsh, Powerlevel10k
 - **[ghostty/CLAUDE.md](ghostty/CLAUDE.md)** - Ghostty terminal configuration
 
-### Scripts & Utilities
-- **[scripts/CLAUDE.md](scripts/CLAUDE.md)** - Installation script architecture and shared libraries
-- **[scripts/lib/CLAUDE.md](scripts/lib/CLAUDE.md)** - Shared Bash functions (common.sh, paths.sh)
+#### Scripts & Utilities
+- **[scripts/CLAUDE.md](scripts/CLAUDE.md)** - Installation script architecture (legacy reference)
 
-### Documentation
+#### Documentation
 - **[docs/CLAUDE.md](docs/CLAUDE.md)** - Documentation maintenance and standards
 
 **When working on a specific component, read the component's CLAUDE.md first for detailed guidance.**
 
-## Repository Overview
+## Common Development Tasks
 
-This is a **centralized development configuration repository** managing configs for:
-- **Neovim** - Text editor with LSP, completion, git integration
-- **Tmux** - Terminal multiplexer with plugin ecosystem
-- **Ghostty** - GPU-accelerated terminal emulator
-- **Zsh** - Shell with Oh My Zsh framework + Powerlevel10k theme
-- **Docker** - Container platform with cross-platform installation
+### Adding a New Package
 
-### Architecture: Symlink-Based Version Control
+**Edit `modules/home-manager/default.nix`:**
 
-**Real config files** live in `~/Projects/dev-config/` (this Git repo).
-**Symlinks** from standard locations point to these files:
-
-```
-~/.config/nvim/         → ~/Projects/dev-config/nvim/
-~/.tmux.conf            → ~/Projects/dev-config/tmux/tmux.conf
-~/.zshrc                → ~/Projects/dev-config/zsh/.zshrc
-~/.zprofile             → ~/Projects/dev-config/zsh/.zprofile
-~/.p10k.zsh             → ~/Projects/dev-config/zsh/.p10k.zsh
-~/Library/.../ghostty/config → ~/Projects/dev-config/ghostty/config (macOS)
-~/.config/ghostty/config → ~/Projects/dev-config/ghostty/config (Linux)
-```
-
-This enables:
-- ✅ Version control for all configs
-- ✅ Sync configs across multiple machines
-- ✅ Easy backup/restore
-- ✅ Safe experimentation with git branches
-
-### Architecture: Shared Library System
-
-**Scripts use a DRY (Don't Repeat Yourself) architecture** with shared libraries:
-
-```
-scripts/
-├── lib/
-│   ├── common.sh    # Shared utilities (logging, OS detection, backups, symlinks)
-│   └── paths.sh     # Centralized path definitions (single source of truth)
-├── install.sh       # Uses shared libraries (90% code reduction)
-├── update.sh        # Uses shared libraries
-├── uninstall.sh     # Uses shared libraries
-└── validate.sh      # Diagnostic tool for troubleshooting
-```
-
-**Key shared functions:**
-- `log_info()`, `log_success()`, `log_warn()`, `log_error()` - Color-coded logging
-- `detect_os()` - Returns "macos", "linux", "windows", "unknown"
-- `detect_package_manager()` - Returns brew/apt/dnf/pacman/zypper/none
-- `create_backup()`, `create_symlink()`, `remove_symlink()` - Atomic operations
-- `install_package()` - Platform-agnostic package installation
-- `get_repo_root()` - Auto-detect via `git rev-parse` (no hardcoded paths!)
-
-**Benefits:**
-- ✅ Zero code duplication across scripts
-- ✅ Consistent error handling and logging
-- ✅ Platform detection abstraction
-- ✅ Easier maintenance and testing
-
-### Architecture: Nix Flakes (Modern Package Management)
-
-**As of January 2025, dev-config uses Nix flakes** for reproducible, declarative package management while preserving the battle-tested shared library system.
-
-#### Why Nix Migration?
-
-**Previous approach (shell scripts):**
-- 372-line `install.sh` with imperative package installation
-- Manual dependency management for each platform
-- No version locking (packages updated whenever `brew`/`apt` runs)
-- Difficult to reproduce identical environments
-
-**New approach (Nix flakes):**
-- 50-line `install.sh` that bootstraps Nix
-- Declarative package definitions in `flake.nix`
-- Version locking via `flake.lock` (committed to Git)
-- Identical environments across all machines
-- 86% code reduction (372 lines → 50 lines)
-
-#### Hybrid Architecture
-
-**Code reuse strategy:**
-- Nix manages **package installation** (Neovim, tmux, zsh, Docker, OpenCode, 1Password CLI)
-- Shared libraries handle **symlink creation** and **backups** (reuses existing `scripts/lib/common.sh`)
-- Best of both worlds: Nix reproducibility + battle-tested logic
-
-**Example from flake.nix:**
 ```nix
-apps.activate = {
-  type = "app";
-  program = toString (pkgs.writeShellScript "activate" ''
-    source ${./scripts/lib/common.sh}  # Reuse existing functions!
-    source ${./scripts/lib/paths.sh}
-    create_symlink "$REPO_NVIM" "$HOME_NVIM" "$TIMESTAMP"
-    # ... uses all existing backup/symlink logic
-  '');
+home.packages = with pkgs; [
+  # Existing packages...
+  kubectl  # Add new package here
+];
+```
+
+Then apply:
+```bash
+home-manager switch --flake .
+```
+
+### Adding a New Program Module
+
+1. **Create module file:** `modules/home-manager/programs/yourprogram.nix`
+
+```nix
+{ config, lib, pkgs, inputs ? {}, ... }:
+
+with lib;
+let
+  cfg = config.dev-config.yourprogram;
+in {
+  options.dev-config.yourprogram = {
+    enable = mkEnableOption "Your Program configuration";
+
+    configSource = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = if inputs ? dev-config then "${inputs.dev-config}/yourprogram" else null;
+      description = "Path to Your Program configuration directory";
+    };
+  };
+
+  config = mkIf cfg.enable {
+    home.packages = [ pkgs.yourprogram ];
+
+    # Create symlink to dotfiles (from flake input or null)
+    xdg.configFile."yourprogram".source = cfg.configSource;
+  };
+}
+```
+
+2. **Export module in `modules/home-manager/default.nix`:**
+
+```nix
+imports = [
+  ./programs/yourprogram.nix
+  # ... other imports
+];
+```
+
+3. **Enable in `home.nix`:**
+
+```nix
+dev-config = {
+  enable = true;
+  # Optional: explicitly enable
+  yourprogram.enable = true;
 };
 ```
 
-#### Nix Components
+### Modifying Existing Dotfiles
 
-**flake.nix (Main Configuration):**
-- Defines all development packages
-- Three Nix apps: `activate`, `set-shell`, `setup-opencode`
-- Binary cache configuration (Cachix)
-- DevShell with auto-loading AI credentials
+Dotfiles in `nvim/`, `tmux/`, `zsh/`, `ghostty/` are **still edited directly** and version controlled in Git. Home Manager only creates symlinks to these files.
 
-**flake.lock (Version Pinning):**
-- Exact package versions committed to Git
-- Same `flake.lock` = identical environment on any machine
-- Update with `nix flake update`
+**Workflow:**
+1. Edit dotfiles: `nvim ~/Projects/dev-config/nvim/init.lua`
+2. Commit changes: `git add . && git commit -m "Update Neovim config"`
+3. No Home Manager rebuild needed (symlinks automatically reflect changes)
+4. Reload application:
+   - Neovim: Restart
+   - Tmux: `Prefix + r`
+   - Zsh: `source ~/.zshrc`
 
-**scripts/install.sh (50-line Bootstrap):**
-- Installs Nix via Determinate Systems installer
-- Enables flakes
-- Delegates to Nix apps for activation
-- Preserves zero-touch installation UX
+### Testing Configuration Changes
 
-**scripts/load-ai-credentials.sh (1Password Integration):**
-- Fetches API keys from 1Password "Dev" vault
-- Uses `op read` with secret reference syntax (op://Vault/Item/Field)
-- Exports: ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_AI_API_KEY
-- Graceful degradation if 1Password not authenticated
+**3-tier testing strategy:**
 
-**.envrc (direnv Auto-Activation):**
-- `use flake` - Auto-loads Nix environment
-- Sources `load-ai-credentials.sh`
-- Activates when entering dev-config directory
+```bash
+# Tier 1: Syntax validation (instant)
+nix flake show --json
 
-**Shared Libraries (Reused by Nix):**
-- `scripts/lib/common.sh` (348 lines) - Utility functions used by Nix apps
-- `scripts/lib/paths.sh` (96 lines) - Single source of truth for all paths
+# Tier 2: Build without activation
+home-manager build --flake .
 
-#### New Features with Nix
+# Tier 3: Preview changes (dry-run)
+home-manager switch --flake . --dry-run
 
-**OpenCode Integration:**
-- AI coding agent (open-source Claude Code alternative)
-- Installed via `nodePackages.opencode-ai`
-- Authenticated with 1Password CLI credentials
-- Supports both direct API access and LiteLLM proxy (team mode)
-- Usage: `opencode ask "Explain this codebase"`
-- Documentation: `docs/nix/04-opencode-integration.md`, `docs/nix/07-litellm-proxy-setup.md`
+# Or use automated script:
+bash scripts/test-config.sh
+```
 
-**1Password CLI:**
-- Secure credential management
-- No secrets on disk
-- Automatic loading via direnv
-- Team-wide secret sharing via vaults
+## SSH Authentication with 1Password
 
-**Binary Caching (Cachix):**
-- First build: 5-10 minutes
-- Cached builds: 10-30 seconds (20x faster!)
-- Team-wide benefit
-- Configured in `flake.nix`
+**All SSH authentication and Git commit signing uses 1Password SSH Agent.**
 
-**Environment Isolation:**
-- Per-project Nix environments
-- No global package pollution
-- Multiple versions coexist peacefully
+### Security Model
 
-#### DevPod Integration (Remote Development)
+- **SSH private keys**: Stored in 1Password vault (never on disk)
+- **SSH public keys**: Stored in `~/.config/home-manager/secrets.nix` (gitignored)
+- **Git user info**: Also in `secrets.nix` (gitignored)
+- **Configuration modules**: Committed to Git (no secrets)
 
-**Remote development environments supported via:**
-- `.devcontainer/devcontainer.json` for VS Code Remote Containers
-- DevPod dotfiles integration for config management
-- Nix feature-based approach (reuses existing `flake.nix`)
-- Compatible with VS Code Remote, GitHub Codespaces, and DevPod
+### Machine-Specific Configuration
 
-**How it works:**
+Each machine has its own `~/.config/home-manager/secrets.nix`:
+
+```nix
+{
+  gitUserName = "Your Name";
+  gitUserEmail = "your-email@example.com";
+  sshSigningKey = "ssh-ed25519 AAAAC3... your-email@example.com";
+}
+```
+
+**How it's used:**
+
+```nix
+# modules/home-manager/programs/git.nix
+let
+  secrets = import ~/.config/home-manager/secrets.nix;
+in {
+  programs.git = {
+    userName = secrets.gitUserName;
+    userEmail = secrets.gitUserEmail;
+    signing.key = secrets.sshSigningKey;
+  };
+}
+```
+
+### Setup Workflow
+
+1. Enable 1Password SSH Agent (Settings → Developer)
+2. Create SSH key in 1Password (New Item → SSH Key)
+3. Add public key to GitHub (Authentication + Signing)
+4. Create `~/.config/home-manager/secrets.nix` with your info
+5. Run `home-manager switch --flake .`
+
+**Testing:**
+```bash
+ssh -T git@github.com                    # Test authentication
+git log --show-signature                  # Verify commit signing
+```
+
+**Documentation:** See [docs/nix/09-1password-ssh.md](docs/nix/09-1password-ssh.md)
+
+## AI Integration (OpenCode + 1Password)
+
+**OpenCode** (AI coding assistant) and **Neovim (avante.nvim)** both integrate with:
+1. **Direct API access** - Use API keys from 1Password
+2. **LiteLLM proxy** - Team mode with cost tracking (requires `LITELLM_MASTER_KEY`)
+
+### Credential Loading
+
+**Automatic via direnv:**
+```bash
+cd ~/Projects/dev-config  # Activates direnv
+# AI credentials auto-loaded from 1Password
+```
+
+**Manual:**
+```bash
+source scripts/load-ai-credentials.sh
+```
+
+**What gets loaded:**
+```bash
+export ANTHROPIC_API_KEY="..."       # Claude API
+export OPENAI_API_KEY="..."          # OpenAI API
+export GOOGLE_AI_API_KEY="..."       # Google AI API
+export LITELLM_MASTER_KEY="..."      # LiteLLM proxy (optional)
+```
+
+**Documentation:**
+- [docs/nix/04-opencode-integration.md](docs/nix/04-opencode-integration.md) - OpenCode setup
+- [docs/nix/05-1password-setup.md](docs/nix/05-1password-setup.md) - 1Password configuration
+- [docs/nix/07-litellm-proxy-setup.md](docs/nix/07-litellm-proxy-setup.md) - LiteLLM team mode
+
+## DevPod Integration (Remote Development)
+
+This repository supports remote development via **DevPod** and **VS Code Remote Containers**.
+
+**Quick start:**
+```bash
+devpod up . --ide vscode
+```
+
+**What happens:**
 1. Container starts with base Ubuntu image
 2. Nix installed via devcontainer feature
-3. DevPod automatically clones and installs dotfiles
-4. `scripts/install.sh` detects container and adjusts behavior
-5. All configs (Neovim, tmux, zsh) applied automatically
+3. Home Manager configuration applied
+4. All dotfiles and plugins ready
 
-**1Password in containers:**
-- Uses service account tokens (not biometric auth)
-- Token passed via `OP_SERVICE_ACCOUNT_TOKEN` environment variable
-- Configured in `.devcontainer/load-ai-credentials.sh`
-- Falls back gracefully if token not provided
+**Configuration:**
+- `.devcontainer/devcontainer.json` - Container definition
+- `.devcontainer/load-ai-credentials.sh` - 1Password loader (service accounts)
 
-**Performance:**
-- First build: 30-60 minutes (Nix evaluation + package download)
-- Cached builds: 2-5 minutes (Nix cache hit)
-- Subsequent starts: 10-30 seconds
+**Documentation:** [docs/README_DEVPOD.md](docs/README_DEVPOD.md)
 
-**Files:**
-- `.devcontainer/devcontainer.json` - Container configuration
-- `.devcontainer/load-ai-credentials.sh` - 1Password loader for containers
-- `scripts/install.sh` - Container detection and ownership fixes
+## Key Architectural Decisions
 
-**Documentation:** See `docs/README_DEVPOD.md` for comprehensive DevPod guide (4 documentation files, ~2,162 lines).
+### 1. Home Manager Module System
+- **Decision:** Use Home Manager instead of custom shell scripts
+- **Rationale:** Declarative, reproducible, version-locked, cross-platform
+- **Implementation:** All configuration in `modules/home-manager/`
 
-#### Nix-Specific Files
+### 2. Flake Input Pattern for Config Sources
+- **Decision:** Use `inputs ? dev-config` pattern with configSource options
+- **Rationale:** Supports both standalone installation AND flake composition, graceful degradation, no hardcoded paths
+- **Implementation:** All modules define `configSource` options that check `if inputs ? dev-config then "${inputs.dev-config}/path" else null`
+- **Benefits:** Can be used as standalone Home Manager config OR imported as flake input in other projects
 
-```
-dev-config/
-├── flake.nix                          # Main Nix configuration
-├── flake.lock                         # Version lock file (committed)
-├── .envrc                             # direnv auto-activation
-├── .pre-commit-config.yaml            # Code quality hooks (Nix formatting, validation)
-├── scripts/
-│   ├── install.sh                     # Nix + Home Manager bootstrap (container-aware)
-│   ├── load-ai-credentials.sh         # 1Password integration
-│   └── lib/                           # Shared utilities (reused by Nix apps)
-│       ├── common.sh                  # Logging, OS detection, backups, symlinks
-│       └── paths.sh                   # Centralized path definitions
-├── .devcontainer/
-│   ├── devcontainer.json              # VS Code Remote Containers / DevPod config
-│   └── load-ai-credentials.sh         # 1Password loader for containers
-├── docs/nix/                          # Nix documentation
-│   ├── 00-quickstart.md               # 5-minute installation guide
-│   ├── 01-concepts.md                 # Nix mental model
-│   ├── 02-daily-usage.md              # Common workflows
-│   ├── 03-troubleshooting.md          # FAQ and issue resolution
-│   ├── 04-opencode-integration.md     # OpenCode + 1Password setup
-│   ├── 05-1password-setup.md          # Credential management
-│   ├── 06-advanced.md                 # Customization guide
-│   ├── 07-litellm-proxy-setup.md      # LiteLLM proxy integration (team AI management)
-│   ├── 08-testing.md                  # Dry-run testing (3-tier strategy)
-│   └── 09-1password-ssh.md            # SSH authentication + commit signing
-├── .github/workflows/
-│   └── nix-ci.yml                     # CI/CD pipeline (multi-platform builds)
-└── NIX_MIGRATION_SUMMARY.md           # Implementation summary
-```
+### 3. 1Password SSH Agent
+- **Decision:** Store SSH keys in 1Password vault, not on disk
+- **Rationale:** Zero secrets on disk, biometric unlock, cloud sync, safe for public repos
+- **Implementation:** `modules/home-manager/programs/ssh.nix` + `secrets.nix` pattern
 
-#### Key Architectural Decisions
+### 4. Module Enable Options
+- **Decision:** All modules have `enable` option, all enabled by default
+- **Rationale:** Easy to disable components per-machine, explicit configuration
+- **Implementation:** `mkEnableOption` + `mkIf cfg.enable` pattern
 
-**1. Code Reuse Strategy**
-- **Decision:** Wrap existing `scripts/lib/common.sh` functions in Nix instead of rewriting
-- **Rationale:** 348 lines of battle-tested backup/symlink logic, already handles edge cases, 60% faster implementation
-- **Implementation:** Nix apps source shell libraries and call existing functions
+### 5. Dual Module Export (NixOS + Home Manager)
+- **Decision:** Export both `nixosModules` and `homeManagerModules` from flake
+- **Rationale:** Reusable across projects (ai-dev-env integration), single source of truth
+- **Implementation:** `flake.nix` outputs both module types
 
-**2. 1Password CLI Integration**
-- **Decision:** Use `op read` with secret references instead of JSON parsing
-- **Rationale:** Recommended 2025 method, more secure (secrets never touch disk), simpler syntax
-- **Implementation:** `export ANTHROPIC_API_KEY=$(op read "op://Dev/ai/ANTHROPIC_API_KEY")`
+## NixOS Modules (For Servers)
 
-**2b. LiteLLM Proxy Integration (Team/Cluster AI Management)**
-- **Decision:** Support LiteLLM proxy for team-based AI usage with centralized credential management
-- **Rationale:**
-  - Cost tracking and monitoring across team members
-  - Unified API gateway for multiple LLM providers (Anthropic, OpenAI, Google)
-  - Automatic fallback between providers for reliability
-  - Rate limiting to prevent quota exhaustion
-  - Centralized audit logs for compliance
-- **Architecture:**
-  ```
-  OpenCode (localhost) → kubectl port-forward :4000
-                       → LiteLLM Proxy (k8s cluster)
-                       → Anthropic/OpenAI/Google APIs
+**Located in `modules/nixos/` - used for NixOS systems only.**
 
-  Neovim (avante.nvim) → kubectl port-forward :4000
-                       → LiteLLM Proxy (k8s cluster)
-                       → Anthropic/OpenAI/Google APIs
-  ```
-- **Implementation:**
-  - OpenCode configured to use `http://localhost:4000` (LiteLLM endpoint)
-  - Neovim (avante.nvim) configured to use `http://localhost:4000/v1` (OpenAI-compatible endpoint)
-  - Requires `LITELLM_MASTER_KEY` environment variable
-  - Loaded from 1Password: `op read "op://Dev/litellm/MASTER_KEY"`
-  - Added to `scripts/load-ai-credentials.sh` (graceful degradation if not present)
-  - Separate from direct API keys (different use case, rotation schedule)
-- **Neovim Integration (avante.nvim):**
-  - Cursor-like AI coding assistant with chat interface
-  - Commands: `:AvanteAsk`, `:AvanteEdit`, `:AvanteToggle`
-  - Conditional loading: Only loads if `LITELLM_MASTER_KEY` is set
-  - Configuration in `nvim/lua/plugins/ai.lua`
-- **Setup Requirements:**
-  - LiteLLM deployed in ai-dev-env Kubernetes cluster
-  - kubectl port-forward to expose service locally
-  - 1Password "litellm" item with MASTER_KEY field
-- **Benefits:**
-  - Team collaboration: Shared cost tracking and budget management
-  - Flexibility: Can switch between proxy (team mode) and direct API (solo mode)
-  - Observability: Track token usage, costs, and model distribution across all tools (OpenCode + Neovim)
-  - Reliability: Fallback support if one provider is down
-- **Documentation:**
-  - Complete setup guide: `docs/nix/07-litellm-proxy-setup.md`
-  - Integration with OpenCode: `docs/nix/04-opencode-integration.md`
-  - Integration with Neovim: `nvim/README.md` + `nvim/CLAUDE.md`
-  - 1Password configuration: `docs/nix/05-1password-setup.md`
+These modules configure **system-level** settings (not user-level like Home Manager):
 
-**3. Hybrid Activation**
-- **Decision:** Shell scripts call Nix, not the reverse
-- **Rationale:** Familiar entry point (`bash scripts/install.sh`), Nix handles packages, shell handles user interaction
-- **Benefits:** Zero learning curve for users, gradual Nix adoption
+- **base-packages.nix** - System-wide packages (git, zsh, tmux, docker, etc.)
+- **docker.nix** - Docker daemon configuration + user groups
+- **shell.nix** - Zsh as default shell system-wide
+- **users.nix** - User account creation with zsh
 
-**4. Binary Cache (Cachix)**
-- **Decision:** Configure Cachix in flake.nix for team binary caching
-- **Rationale:** First build ~10 minutes, cached builds ~30 seconds (20x faster!), team-wide benefit
-- **Status:** Configured in flake.nix, requires Cachix account setup
+**Usage in NixOS configuration:**
 
-**5. SSH Authentication with 1Password**
-- **Decision:** Use 1Password SSH Agent for GitHub authentication and commit signing
-- **Rationale:**
-  - Private keys never touch disk (encrypted in 1Password vault)
-  - Safe for public repositories (no secrets committed)
-  - Works across all machines via 1Password cloud sync
-  - Biometric unlock (Touch ID/Face ID)
-  - Single setup for both authentication and signing
-- **Implementation:**
-  - `modules/home-manager/programs/ssh.nix` - SSH agent configuration
-  - `modules/home-manager/programs/git.nix` - Git commit signing with `op-ssh-sign`
-  - `secrets.nix` pattern for machine-specific data (gitignored)
-  - Automatic HTTPS→SSH URL rewriting for GitHub
-- **Security Model:**
-  - Public repo: SSH config modules, Git signing config, template files
-  - Gitignored: `secrets.nix` (Git user info + SSH public key)
-  - 1Password only: SSH private keys (never exported)
-
-**6. secrets.nix Pattern (Machine-Specific Configuration)**
-- **Decision:** Use gitignored `secrets.nix` file for machine-specific configuration
-- **Rationale:**
-  - Keeps public repository safe (no user emails, SSH keys, or identifiers)
-  - Each machine has its own `~/.config/home-manager/secrets.nix`
-  - Template (`secrets.nix.example`) committed to guide users
-  - Imported by Home Manager modules for configuration
-- **Contents:**
-  ```nix
-  {
-    gitUserName = "Your Name";
-    gitUserEmail = "your-email@example.com";
-    sshSigningKey = "ssh-ed25519 AAAAC3... your-email@example.com";
-  }
-  ```
-- **Usage in modules:**
-  ```nix
-  # modules/home-manager/programs/git.nix
-  let
-    secrets = import ~/.config/home-manager/secrets.nix;
-  in {
-    programs.git = {
-      userName = secrets.gitUserName;
-      userEmail = secrets.gitUserEmail;
-      signing.key = secrets.sshSigningKey;
-    };
-  }
-  ```
-
-**7. Dry-Run Testing Strategy**
-- **Decision:** Implement 3-tier testing system for safe configuration validation
-- **Rationale:** Allows testing Nix changes before applying them system-wide
-- **Implementation:**
-  - Tier 1: `nix flake show --json` - Syntax validation (fastest, no builds)
-  - Tier 2: `home-manager build --flake .` - Build test without activation
-  - Tier 3: `home-manager switch --dry-run` - Preview changes
-  - Script: `scripts/test-config.sh` (automated 3-tier testing)
-  - Pre-commit hook: `nix flake show --json` runs on every commit
-- **Benefits:**
-  - Catch syntax errors before committing
-  - Test builds without system changes
-  - Preview what will change on activation
-  - Prevent broken configurations from being committed
-
-#### Integration with ai-dev-env
-
-**Planned (Phase 4):**
-1. Export `nixosModules` and `homeManagerModules` from `flake.nix`
-2. Import in ai-dev-env to eliminate duplicated Nix configuration
-3. Single source of truth for developer tooling across all projects
-
-**Example export (future):**
 ```nix
-# flake.nix
+# /etc/nixos/configuration.nix
 {
-  nixosModules.dev-config = { config, pkgs, ... }: {
-    imports = [
-      ./modules/neovim.nix
-      ./modules/tmux.nix
-      ./modules/zsh.nix
-    ];
+  imports = [
+    # Import from dev-config flake
+    inputs.dev-config.nixosModules.default
+  ];
+
+  dev-config = {
+    enable = true;
+    docker.enable = true;
   };
 }
 ```
 
-**Example import in ai-dev-env (future):**
+**For desktops/laptops:** Use Home Manager modules only (not NixOS modules).
+
+## Using dev-config as Flake Input
+
+All dev-config modules support being imported as flake inputs via the `inputs ? dev-config` pattern. This enables **flake composition** - you can use dev-config modules in other projects without duplicating code.
+
+### Pattern Explanation
+
+**The `inputs ? dev-config` pattern:**
+
 ```nix
-# ai-dev-env/flake.nix
-{
-  inputs.dev-config.url = "github:samuelho-dev/dev-config";
-
-  nixosConfigurations.my-server = nixpkgs.lib.nixosSystem {
-    modules = [
-      dev-config.nixosModules.dev-config  # Import dev-config module
-      ./configuration.nix
-    ];
-  };
-}
-```
-
-## Setup and Management Scripts
-
-### Initial Setup (New Machine) - Nix-Based
-
-```bash
-cd ~/Projects/dev-config
-bash scripts/install.sh  # NEW: 50-line Nix bootstrap
-```
-
-**What install.sh does (Nix-Powered Zero-Touch Installation):**
-1. **Installs Nix** via Determinate Systems installer (if not present)
-2. **Enables flakes** in `~/.config/nix/nix.conf`
-3. **Installs direnv** and configures shell hooks
-4. **Runs `nix run .#activate`** which:
-   - Sources `scripts/lib/common.sh` and `scripts/lib/paths.sh` (reuses existing functions)
-   - Installs all packages from `flake.nix`: Neovim, tmux, zsh, Docker, OpenCode, 1Password CLI, etc.
-   - Creates timestamped backups of existing configs
-   - Creates symlinks from home directory to repo files
-   - Installs Oh My Zsh, Powerlevel10k, zsh-autosuggestions
-   - Installs Tmux Plugin Manager (TPM)
-   - Auto-installs Neovim plugins (headless mode)
-   - Auto-installs tmux plugins (via TPM script)
-   - Creates `.zshrc.local` template for machine-specific config
-5. **Sets zsh as default shell** (via `nix run .#set-shell`)
-6. **Verifies** all installations
-
-**After install:**
-1. Restart terminal
-2. `cd ~/Projects/dev-config` - direnv auto-activates Nix environment + AI credentials
-3. All tools and plugins are ready!
-
-**Legacy fallback:**
-If Nix is not desired, use `bash scripts/install-legacy.sh` (original 372-line shell script).
-
-### Update Configuration (Pull Latest Changes)
-```bash
-cd ~/Projects/dev-config
-bash scripts/update.sh
-```
-
-Pulls latest changes, stashes uncommitted changes if needed, reloads tmux config automatically.
-
-### Uninstall (Remove Symlinks)
-```bash
-cd ~/Projects/dev-config
-bash scripts/uninstall.sh
-```
-
-Removes all symlinks and restores most recent backups.
-
-### Validate Installation (Troubleshooting)
-```bash
-cd ~/Projects/dev-config
-bash scripts/validate.sh
-```
-
-**What validate.sh checks:**
-- Repository structure integrity
-- Symlinks pointing correctly
-- Dependencies installed (git, zsh, neovim, tmux, fzf, ripgrep, lazygit)
-- Tool versions (Neovim ≥ 0.9.0, tmux ≥ 1.9)
-- External tools (Oh My Zsh, TPM, Powerlevel10k)
-- Provides actionable fix suggestions
-
-Use this if something breaks or after updating system packages.
-
-## Neovim Configuration
-
-### Base & Architecture
-- **Base:** Kickstart.nvim (~1200 line single-file config at `nvim/init.lua`)
-- **Plugin Manager:** lazy.nvim
-- **Plugin Lock:** `nvim/lazy-lock.json` committed to git for version consistency
-- **Custom Plugins:** `nvim/lua/custom/plugins/`
-
-### LSP Servers
-Configured in `init.lua` around line 705:
-- `ts_ls` - TypeScript/JavaScript
-- `pyright` - Python
-- `lua_ls` - Lua (for Neovim config editing)
-
-**Adding new LSP:** Add to `servers` table, run `:Mason` in Neovim.
-
-### Formatters & Linters
-Managed by Conform.nvim + Mason:
-- **Lua:** stylua
-- **Python:** ruff (format + lint)
-- **JS/TS/JSON/YAML/Markdown:** prettier
-
-Auto-format on save enabled (except C/C++). Manual format: `<leader>f`.
-
-### Key Custom Features
-
-#### 1. Diagnostic Copy for Claude Code (nvim/lua/custom/plugins/diagnostics-copy.lua)
-**Purpose:** Quickly copy LSP errors/warnings to clipboard for pasting into AI assistants.
-
-- `<leader>ce` - Copy **Errors** only
-- `<leader>cd` - Copy all **Diagnostics** (errors, warnings, info)
-
-**Output format:** Groups by severity with file paths and line numbers.
-
-**Implementation:** Uses `vim.diagnostic.get()` API, copies to both `+` and `*` registers.
-
-#### 2. Git Workflow Integration
-
-**Lazygit.nvim:**
-- `<leader>gg` - Open lazygit TUI (stage, commit, push, stash, branches)
-- `<leader>gf` - Lazygit for current file only
-- Full git operations without leaving Neovim
-
-**Octo.nvim - GitHub Integration:**
-- `<leader>gp` - List/review Pull Requests
-- `<leader>gi` - Manage Issues
-- Review PRs, add comments, approve/request changes in Neovim
-- **Requires:** GitHub CLI (`gh`) authenticated
-
-**Diffview.nvim:**
-- `<leader>gd` - Open diff view
-- `<leader>gh` - File history for current file
-- `<leader>gH` - Full branch history
-
-**Git-conflict.nvim - Merge Conflicts:**
-- `<leader>gco` - Choose Ours
-- `<leader>gct` - Choose Theirs
-- `<leader>gcb` - Choose Both
-- `<leader>gc0` - Choose None
-- `<leader>gcn` / `<leader>gcp` - Next/Previous conflict
-
-**Gitsigns - Gutter Integration:**
-- Git changes in sign column
-- Stage/unstage hunks
-- Git blame inline
-
-#### 3. Markdown & Note-Taking
-
-**Obsidian.nvim:**
-- Full Obsidian vault integration (using maintained `obsidian-nvim/obsidian.nvim` fork)
-- **Auto-vault detection:** Scans common locations for `.obsidian` directories
-  - Searches: `~/Documents`, `~/Library/Mobile Documents/iCloud~md~obsidian`, `~/Dropbox`, `~/vaults`, `~`
-  - Automatically configures workspaces for all detected vaults
-- **Smart activation:** Only loads for markdown files inside detected vaults
-- Regular markdown files outside vaults work normally (no Obsidian features applied)
-- Wikilinks, daily notes, tag support
-- `gf` - Follow markdown links
-- `<leader>ch` - Toggle checkboxes
-- Zero configuration required - works across machines automatically
-
-**Render-markdown.nvim:**
-- Beautiful in-buffer markdown rendering
-- Code blocks, headings, lists rendered visually
-- No browser needed for preview
-
-**Markdown-preview.nvim:**
-- `<leader>mp` - Toggle browser preview
-- Live updates as you type
-
-**Bullets.vim:**
-- Auto-formatting for bullet lists and tasks
-
-**Outline.nvim:**
-- `<leader>o` - Toggle document outline
-- Navigate code/markdown structure
-
-#### 4. File Explorer & Navigation
-- **Neo-tree:** Toggle with `\` or `<leader>e`
-- **Telescope:** Fuzzy finder - `<leader>sf` (files), `<leader>sg` (grep)
-
-#### 5. Auto-Reload for External Changes (Claude Code Optimized)
-**Critical for AI-assisted development workflows.**
-
-**File Buffer Auto-Reload:**
-- `autoread` enabled - automatically reloads files when changed externally
-- Triggers on: FocusGained, BufEnter, CursorHold, CursorHoldI events
-- Notification shown when file reloaded from disk
-- Works seamlessly when Claude Code modifies files
-
-**Neo-tree Auto-Refresh:**
-- `use_libuv_file_watcher` enabled - uses OS-level file watching
-- Detects all filesystem changes (add/delete/move/rename)
-- Works from: terminal, other Neovim instances, git operations
-- No manual refresh (`R`) needed
-
-**Why this matters:**
-- Claude Code can modify files → You see changes instantly
-- Git branch switches → Files auto-reload
-- Terminal operations → Reflected immediately
-- Zero manual intervention required
-
-### Plugin Management
-- `:Lazy` - Open plugin manager
-- `:Lazy update` - Update plugins
-- `:Lazy restore` - Restore to lazy-lock.json versions (for cross-machine consistency)
-- `:Mason` - Manage LSP servers/formatters
-
-## Tmux Configuration
-
-### Core Settings
-- **Prefix:** `Ctrl+a` (not default `Ctrl+b`)
-- **Split panes:** `|` horizontal, `-` vertical
-- **Base index:** 1 (windows and panes start at 1, not 0)
-- **Copy mode:** Vi-style keybindings
-- **Mouse:** Enabled
-- **History:** 10,000 lines
-
-### Essential Plugins (Managed by TPM)
-
-**vim-tmux-navigator:**
-- **Critical:** Seamless navigation between Vim and tmux panes
-- `Ctrl+h/j/k/l` - Navigate without prefix key
-- Works across both Neovim splits and tmux panes
-
-**tmux-resurrect + tmux-continuum:**
-- `Prefix + Ctrl+s` - Save session
-- `Prefix + Ctrl+r` - Restore session
-- Auto-save every 60 minutes
-- Survives reboots
-
-**tmux-fzf:**
-- `` Prefix + ` `` - Session switcher popup
-- Fuzzy search for sessions/windows/panes
-
-**catppuccin/tmux:**
-- Mocha flavor theme
-- Styled status bar
-
-**tmux-yank:**
-- Enhanced clipboard integration
-
-### Popup Features
-- `Prefix + !` - Quick shell popup (60% × 75%)
-- `` Prefix + ` `` - fzf session switcher
-- `Prefix + g` - Lazygit popup (80% × 80%)
-
-### TPM Plugin Management
-After modifying `tmux.conf` plugins:
-- `Prefix + I` - Install new plugins
-- `Prefix + U` - Update all plugins
-- `Prefix + Alt+u` - Remove unlisted plugins
-
-**TPM Location:** `~/.tmux/plugins/tpm` (installed by install.sh)
-
-## Zsh & Shell Configuration
-
-### Framework: Oh My Zsh
-Installed to `~/.oh-my-zsh/` by install.sh.
-
-### Theme: Powerlevel10k
-- Modern, fast, customizable prompt
-- Configuration: `zsh/.p10k.zsh` (1739 lines, fully customized)
-- Reconfigure: `p10k configure`
-
-### Plugins
-- **zsh-autosuggestions:** Fish-like auto-suggestions from history
-
-### Config Files
-- **`.zshrc`** - Main shell config (Oh My Zsh, plugins, aliases, functions)
-- **`.zprofile`** - Login shell config (PATH settings, environment variables)
-- **`.p10k.zsh`** - Powerlevel10k theme configuration
-- **`.zshrc.local`** - Machine-specific config (gitignored, created by install.sh)
-
-### Machine-Specific Configuration Pattern
-
-**Purpose:** Separate shared config (in Git) from machine-specific config (not in Git).
-
-**Location:** `~/.zshrc.local` (in home directory, NOT in repo)
-
-**Created by:** `install.sh` with template
-
-**Sourced by:** `.zshrc` at the very end (line 136)
-
-**Use cases:**
-```bash
-# Edit machine-specific config
-nvim ~/.zshrc.local
-
-# Examples:
-export PATH="$HOME/work-tools/bin:$PATH"    # Work-specific tools
-alias vpn="sudo openvpn /work/vpn.ovpn"     # Work VPN
-export DATABASE_URL="postgresql://..."      # Local database
-export API_KEY="secret-key"                 # API keys (never commit!)
-
-# Language-specific setups:
-export GOPATH="$HOME/go"                    # Go workspace
-export NVM_DIR="$HOME/.nvm"                 # Node Version Manager
-[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-
-# Reload:
-source ~/.zshrc
+# Every module uses this pattern:
+configSource = lib.mkOption {
+  default = if inputs ? dev-config    # ← Check if dev-config available
+    then "${inputs.dev-config}/nvim"  # ← Use from flake input
+    else null;                         # ← Graceful degradation
+};
 ```
 
 **Benefits:**
-- ✅ Secrets stay out of Git
-- ✅ Different config on work vs personal machines
-- ✅ Survives updates to shared `.zshrc`
-- ✅ No merge conflicts when syncing
+- ✅ **Standalone mode**: Works when used directly (install.sh)
+- ✅ **Composition mode**: Works when imported as flake input
+- ✅ **No hardcoded paths**: Adapts automatically
+- ✅ **Type-safe**: Nix validates paths at evaluation time
 
-**Platform-Agnostic PATH Configuration:**
+### Example: Import in Another Flake
 
-All PATH additions use existence checks:
-```bash
-# Example from .zshrc (lines 113-136)
-[ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
+**Add dev-config as input:**
 
-if [ -d "$HOME/.bun" ]; then
-  export BUN_INSTALL="$HOME/.bun"
-  [ -d "$BUN_INSTALL/bin" ] && export PATH="$BUN_INSTALL/bin:$PATH"
-  [ -s "$BUN_INSTALL/_bun" ] && source "$BUN_INSTALL/_bun"
-fi
+```nix
+# flake.nix in another project (e.g., ai-dev-env)
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    dev-config.url = "github:samuelho-dev/dev-config";
+    # OR for local development:
+    # dev-config.url = "path:/Users/you/Projects/dev-config";
+  };
+
+  outputs = { self, nixpkgs, home-manager, dev-config, ... }: {
+    homeConfigurations.myuser = home-manager.lib.homeManagerConfiguration {
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      modules = [
+        # Import dev-config Home Manager module
+        dev-config.homeManagerModules.default
+
+        # Configure which programs to enable
+        {
+          home = {
+            username = "myuser";
+            homeDirectory = "/home/myuser";
+            stateVersion = "24.05";
+          };
+
+          dev-config = {
+            enable = true;
+
+            # Enable specific programs
+            neovim.enable = true;
+            tmux.enable = true;
+            zsh.enable = true;
+            git = {
+              enable = true;
+              userName = "Your Name";
+              userEmail = "your@email.com";
+              signing = {
+                enable = true;
+                key = "ssh-ed25519 AAA...";
+              };
+            };
+
+            # Disable others
+            ssh.enable = false;
+            ghostty.enable = false;
+          };
+        }
+      ];
+    };
+  };
+}
 ```
 
-This ensures configs work on any machine, regardless of what's installed.
+### Example: NixOS System with dev-config
 
-## Ghostty Terminal Configuration
+```nix
+# /etc/nixos/configuration.nix
+{ config, pkgs, ... }:
 
-Minimal config in `ghostty/config`:
-- **Theme:** Cursor Dark
-- **Keybind:** `cmd+shift+r` - Prompt surface title
+{
+  imports = [
+    ./hardware-configuration.nix
+    inputs.dev-config.nixosModules.default
+  ];
 
-Leverages Ghostty's sensible defaults. GPU-accelerated, written in Zig for performance.
+  # System configuration
+  dev-config = {
+    enable = true;
+    docker.enable = true;  # System-wide Docker daemon
+  };
 
-## Docker Configuration
+  # User configuration with Home Manager
+  home-manager.users.myuser = {
+    imports = [ inputs.dev-config.homeManagerModules.default ];
 
-### Installation & Setup
-Docker is installed as a **core dependency** with platform-specific installation:
-
-**macOS:**
-- Docker Desktop via Homebrew cask (`brew install --cask docker`)
-- Auto-starts Docker Desktop after installation
-- Waits for daemon to be ready before continuing
-
-**Linux:**
-- Supports multiple package managers (apt, dnf, pacman, zypper)
-- Falls back to official Docker installation script
-- Adds user to docker group automatically
-- Starts and enables Docker service
-
-### Version Requirements
-- **Minimum Docker version:** 20.10+
-- **Docker Compose:** Optional, supports both standalone and plugin versions
-- **Validation:** Checks daemon status and version compatibility
-
-### Machine-Specific Aliases
-Docker aliases are available in `~/.zshrc.local` (commented out by default):
-
-```bash
-# Uncomment aliases you want to use:
-alias d='docker'
-alias dc='docker-compose'
-alias dcu='docker-compose up'
-alias dcd='docker-compose down'
-alias dcb='docker-compose build'
-alias dcr='docker-compose run'
-alias dps='docker ps'
-alias dpsa='docker ps -a'
-alias di='docker images'
-alias drm='docker rm'
-alias drmi='docker rmi'
-alias dstop='docker stop'
-alias dstart='docker start'
-alias dexec='docker exec -it'
-alias dlogs='docker logs'
-alias dprune='docker system prune'
+    dev-config = {
+      enable = true;
+      neovim.enable = true;
+      tmux.enable = true;
+      zsh.enable = true;
+    };
+  };
+}
 ```
 
-### Post-Installation
-After installation, test Docker with:
+### How It Works Internally
+
+**When used standalone (install.sh):**
+1. `flake.nix` passes itself as `inputs.dev-config`
+2. Modules receive `inputs = { dev-config = /nix/store/...; }`
+3. `inputs ? dev-config` evaluates to `true`
+4. configSource = `"/nix/store/.../dev-config/nvim"`
+
+**When imported as flake input:**
+1. Parent flake passes dev-config as input
+2. Modules receive `inputs = { dev-config = <flake>; }`
+3. `inputs ? dev-config` evaluates to `true`
+4. configSource = `"<dev-config-flake>/nvim"`
+
+**When inputs not provided (rare):**
+1. Modules receive empty `inputs = {}`
+2. `inputs ? dev-config` evaluates to `false`
+3. configSource = `null` (no config applied)
+
+### Updating Flake Input
+
+**In the consuming project:**
+
 ```bash
-docker run hello-world
+# Update to latest main branch
+nix flake lock --update-input dev-config
+
+# Pin to specific commit
+nix flake update dev-config --override-input dev-config github:samuelho-dev/dev-config/abc1234
+
+# Use local dev version
+nix flake update dev-config --override-input dev-config path:/Users/you/Projects/dev-config
+```
+
+### Testing Flake Composition
+
+```bash
+# In dev-config repository
+cd ~/Projects/dev-config
+
+# Test that it can be imported
+nix flake show
+
+# Expected output:
+# github:samuelho-dev/dev-config
+# ├───homeManagerModules
+# │   └───default: Home Manager module
+# └───nixosModules
+#     └───default: NixOS module
 ```
 
 ### Troubleshooting
-- **macOS:** If Docker Desktop doesn't start, run `open -a Docker`
-- **Linux:** If permission denied, log out/in after group changes
-- **Validation:** Run `bash scripts/validate.sh` to check Docker status
 
-## Development Workflow
+**Issue: "attribute 'dev-config' missing"**
+- Cause: Parent flake not passing `inputs` to module
+- Fix: Add `specialArgs = { inherit inputs; };` to homeManagerConfiguration
 
-### Making Config Changes
+**Issue: "configSource is null"**
+- Cause: `inputs.dev-config` not available to modules
+- Check: `nix eval .#homeManagerModules.default` in dev-config
+- Fix: Ensure parent flake passes inputs correctly
 
-**Edit configs:**
+### secrets.nix with Flake Composition
+
+When using dev-config as a flake input, you still need to create `~/.config/home-manager/secrets.nix` on each machine:
+
 ```bash
-nvim ~/Projects/dev-config/nvim/init.lua         # Neovim
-nvim ~/Projects/dev-config/tmux/tmux.conf        # Tmux
-nvim ~/Projects/dev-config/zsh/.zshrc            # Zsh main config
-nvim ~/Projects/dev-config/ghostty/config        # Ghostty
+# On target machine
+cp /path/to/dev-config/secrets.nix.example ~/.config/home-manager/secrets.nix
+nvim ~/.config/home-manager/secrets.nix  # Edit with your values
 ```
 
-**Apply changes:**
-- **Neovim:** Restart Neovim
-- **Tmux:** `Prefix + r` to reload config
-- **Zsh:** `source ~/.zshrc` or restart terminal
-- **Ghostty:** Immediate (no restart needed)
-
-**Commit and push:**
-```bash
-cd ~/Projects/dev-config
-git add .
-git commit -m "Description of changes"
-git push origin main
-```
-
-### Syncing to Other Machines
-
-On target machine:
-```bash
-cd ~/Projects/dev-config
-bash scripts/update.sh
-```
-
-Then restart applications as needed.
-
-### Diagnostic Copy Workflow (Neovim + Claude Code)
-
-When encountering LSP errors:
-1. In Neovim: `<leader>ce` (errors only) or `<leader>cd` (all diagnostics)
-2. Paste into Claude Code chat
-3. Output includes file paths, line numbers, severity grouping
-
-Perfect for troubleshooting with AI assistance.
-
-### Claude Code + Git Worktrees (Parallel Development)
-
-**Purpose:** Run multiple Claude Code instances simultaneously, each working on a different git worktree/branch in separate tmux panes.
-
-**The Problem:**
-Without proper isolation, multiple Claude Code instances can interfere with each other's working directories, causing commands to execute in the wrong worktree.
-
-**The Solution:**
-This configuration automatically isolates Claude Code instances using the official `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR` environment variable.
-
-**Configuration:**
-Already set in `zsh/.zshrc` (lines 137-139):
-```bash
-# Claude Code: Maintain working directory per pane (prevents directory switching)
-export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1
-```
-
-**Usage:**
-```bash
-# Create git worktrees for parallel development
-git worktree add ../dev-config-feature-x -b feature-x
-git worktree add ../dev-config-feature-y -b feature-y
-
-# Tmux workflow:
-# Pane 1: Main branch
-cd ~/Projects/dev-config
-claude  # Instance 1: works on main branch
-
-# Pane 2: Feature X (Prefix + |)
-cd ~/Projects/dev-config-feature-x
-claude  # Instance 2: works on feature-x, isolated from Instance 1
-
-# Pane 3: Feature Y (Prefix + |)
-cd ~/Projects/dev-config-feature-y
-claude  # Instance 3: works on feature-y, isolated from Instances 1 and 2
-```
-
-**Visual Indicators:**
-Each pane border shows git branch and status via gitmux:
-```
-┌─ 1: main ⎇ main ✔ ─────────┐
-│ $ claude                    │
-└─────────────────────────────┘
-
-┌─ 2: feature-x ⎇ feature-x ●2 ✚1 ─┐
-│ $ claude                          │
-└───────────────────────────────────┘
-
-┌─ 3: feature-y ⎇ feature-y ↑3 ─┐
-│ $ claude                       │
-└────────────────────────────────┘
-```
-
-**Benefits:**
-- ✅ Multiple features developed in parallel
-- ✅ Each Claude instance isolated to its worktree
-- ✅ No accidental cross-worktree command execution
-- ✅ Git status visible in pane borders
-- ✅ Official Claude Code configuration (documented)
-
-**Documentation:**
-- Full workflow: `tmux/CLAUDE.md` → "Claude Code + Git Worktree Workflow"
-- Keybindings: `docs/KEYBINDINGS_TMUX.md` → "Git Worktree Workflow"
-
-## File Structure
-
-```
-dev-config/
-├── nvim/                           # Neovim config (Kickstart.nvim base)
-│   ├── init.lua                    # Main config (~1200 lines)
-│   ├── lazy-lock.json              # Plugin versions (committed for consistency)
-│   ├── lua/custom/plugins/
-│   │   ├── diagnostics-copy.lua    # Claude Code integration
-│   │   └── init.lua                # Custom plugin loader
-│   ├── .stylua.toml                # Lua formatter config
-│   ├── CLAUDE.md                   # AI guidance for Neovim config
-│   └── README.md                   # User documentation
-├── tmux/
-│   ├── tmux.conf                   # Tmux config (~200 lines)
-│   ├── CLAUDE.md                   # AI guidance for tmux config
-│   └── README.md                   # User documentation
-├── ghostty/
-│   ├── config                      # Ghostty terminal config (minimal)
-│   ├── CLAUDE.md                   # AI guidance for Ghostty config
-│   └── README.md                   # User documentation
-├── zsh/
-│   ├── .zshrc                      # Main shell config
-│   ├── .zprofile                   # Login shell (PATH)
-│   ├── .p10k.zsh                   # Powerlevel10k theme (1739 lines)
-│   ├── CLAUDE.md                   # AI guidance for Zsh config
-│   └── README.md                   # User documentation
-├── scripts/
-│   ├── lib/
-│   │   ├── common.sh               # Shared utilities (348 lines)
-│   │   └── paths.sh                # Centralized path definitions (96 lines)
-│   ├── install.sh                  # Zero-touch installation (372 lines)
-│   ├── update.sh                   # Pull changes, reload configs (111 lines)
-│   ├── uninstall.sh                # Remove symlinks, restore backups (75 lines)
-│   ├── validate.sh                 # Diagnostic tool (185 lines)
-│   ├── CLAUDE.md                   # AI guidance for scripts (most detailed)
-│   └── README.md                   # User documentation
-├── docs/
-│   ├── INSTALLATION.md             # Complete installation guide
-│   ├── CONFIGURATION.md            # Customization guide
-│   ├── TROUBLESHOOTING.md          # Common issues and solutions
-│   ├── KEYBINDINGS_NEOVIM.md       # Complete Neovim keybinding reference
-│   └── KEYBINDINGS_TMUX.md         # Complete tmux keybinding reference
-├── .gitignore                      # Excludes runtime files, .zshrc.local
-├── .editorconfig                   # Editor consistency
-├── LICENSE                         # MIT License
-├── CLAUDE.md                       # This file (high-level AI guidance)
-├── README.md                       # User-facing documentation
-└── REFACTORING_SUMMARY.md          # Refactoring change log
-```
-
-**Component-Specific Documentation:**
-- Each directory has its own `CLAUDE.md` for detailed AI guidance
-- Each directory has its own `README.md` for user documentation
-- Root `CLAUDE.md` provides high-level architecture overview
-- Root `README.md` provides user-friendly introduction
+The git module will automatically import this file if present, regardless of whether dev-config is used standalone or as a flake input.
 
 ## Important Commands
 
+### Home Manager
+```bash
+# Apply configuration
+home-manager switch --flake ~/Projects/dev-config
+
+# Build without activating (test)
+home-manager build --flake ~/Projects/dev-config
+
+# Preview changes (dry-run)
+home-manager switch --flake ~/Projects/dev-config --dry-run
+
+# Update packages to latest
+cd ~/Projects/dev-config
+nix flake update
+home-manager switch --flake .
+```
+
+### Nix Flakes
+```bash
+# Validate syntax
+nix flake show --json
+
+# Update all inputs (nixpkgs, home-manager)
+nix flake update
+
+# Lock specific input
+nix flake lock --update-input nixpkgs
+
+# Show package information
+nix search nixpkgs neovim
+```
+
 ### Neovim
-- `:checkhealth` - Diagnose setup issues
-- `:LspInfo` - Show LSP client status
-- `:Mason` - Install/manage LSP servers
-- `:Lazy` - Manage plugins
-- `:Lazy restore` - Restore plugins to lazy-lock.json versions
+```bash
+:checkhealth                    # Diagnose setup issues
+:LspInfo                        # Show LSP client status
+:Mason                          # Install/manage LSP servers
+:Lazy                           # Manage plugins
+:Lazy restore                   # Restore to lazy-lock.json versions
+```
 
 ### Tmux
-- `Prefix + r` - Reload config
-- `Prefix + I` - Install plugins (TPM)
-- `Prefix + U` - Update plugins (TPM)
-- `Prefix + ?` - Show all keybindings
+```bash
+Prefix + r                      # Reload config
+Prefix + I                      # Install plugins (TPM)
+Prefix + U                      # Update plugins (TPM)
+Prefix + ?                      # Show all keybindings
+```
 
 ### Shell
-- `source ~/.zshrc` - Reload shell config
-- `p10k configure` - Reconfigure Powerlevel10k theme
+```bash
+source ~/.zshrc                 # Reload shell config
+p10k configure                  # Reconfigure Powerlevel10k
+```
 
 ### Git (in this repo)
 ```bash
-cd ~/Projects/dev-config
-git status                    # Check changes
-git add .                     # Stage all
-git commit -m "message"       # Commit
-git push origin main          # Push to remote
+git status                      # Check changes
+git add .                       # Stage all
+git commit -m "message"         # Commit (auto-signed with 1Password SSH key)
+git push origin main            # Push to remote
 ```
-
-## Cross-Machine Compatibility & Platform Support
-
-### Supported Platforms
-
-**macOS:**
-- ✅ Apple Silicon (M1/M2/M3) - Homebrew at `/opt/homebrew`
-- ✅ Intel - Homebrew at `/usr/local`
-- Platform detection via `uname -m` (arm64 vs x86_64)
-
-**Linux:**
-- ✅ Debian/Ubuntu (apt)
-- ✅ Fedora/RHEL/CentOS (dnf)
-- ✅ Arch/Manjaro (pacman)
-- ✅ openSUSE (zypper)
-- Homebrew for Linux at `/home/linuxbrew/.linuxbrew`
-
-### Cross-Platform Features
-
-**Auto-Detection:**
-- OS detection via `uname -s`
-- Package manager detection (checks for brew/apt/dnf/pacman/zypper)
-- Homebrew path detection (3 locations)
-- Ghostty config path (macOS vs Linux)
-
-**Platform-Agnostic Paths:**
-- All configs use `$HOME` and environment variables
-- No hardcoded usernames or paths
-- Auto-detection via `git rev-parse` for repo root
-- Existence checks before PATH additions
-
-**Example from `.zprofile` (lines 12-20):**
-```bash
-if [ -f /opt/homebrew/bin/brew ]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"  # macOS Apple Silicon
-elif [ -f /usr/local/bin/brew ]; then
-  eval "$(/usr/local/bin/brew shellenv)"     # macOS Intel
-elif [ -f /home/linuxbrew/.linuxbrew/bin/brew ]; then
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"  # Linux
-fi
-```
-
-### Version Consistency
-
-**lazy-lock.json:**
-- **Critical:** Committed to git per lazy.nvim best practices
-- Ensures identical Neovim plugin versions across machines
-- Use `:Lazy restore` on new machine to match versions
-- Use `:Lazy sync` to update lock file with current versions
-
-**TPM Installation:**
-- Auto-installed by `install.sh` to `~/.tmux/plugins/tpm`
-- Plugins auto-installed during initial setup
-- Use `Prefix + U` to update all tmux plugins
-
-**Oh My Zsh & Powerlevel10k:**
-- Auto-installed if not present
-- Safe to run `install.sh` multiple times (checks for existing installations)
-
-**lazygit:**
-- Auto-installed by `install.sh` via detected package manager
-- macOS: Homebrew (`brew install lazygit`)
-- Linux: apt/pacman/dnf/zypper
-
-**GitHub CLI (Optional):**
-- Required for Octo.nvim (PR/issue management)
-- Install manually:
-```bash
-brew install gh           # macOS/Linux (Homebrew)
-sudo apt install gh       # Debian/Ubuntu
-sudo dnf install gh       # Fedora
-gh auth login             # Authenticate
-```
-
-### Machine-Specific Differences
-
-Use `~/.zshrc.local` for machine-specific configuration:
-- Work vs personal machine aliases
-- Machine-specific PATH additions
-- Local development environment variables
-- Secrets and API keys
-- Language-specific tools (NVM, Go, Rust, etc.)
-
-See "Machine-Specific Configuration Pattern" section above.
 
 ## Troubleshooting
 
+### Home Manager Issues
+
+**"Cannot find secrets.nix":**
+```bash
+# Create secrets.nix from template:
+mkdir -p ~/.config/home-manager
+cp secrets.nix.example ~/.config/home-manager/secrets.nix
+nvim ~/.config/home-manager/secrets.nix  # Edit with your info
+```
+
+**"Symlink already exists":**
+```bash
+# Remove existing symlinks/files first:
+rm ~/.config/nvim ~/.tmux.conf ~/.zshrc ~/.zprofile ~/.p10k.zsh
+# Then re-run:
+home-manager switch --flake .
+```
+
+**"Build failed" / Nix errors:**
+```bash
+# Test configuration first:
+bash scripts/test-config.sh
+
+# Check syntax:
+nix flake show --json
+
+# Validate build without activating:
+home-manager build --flake .
+```
+
 ### Symlinks Not Working
-Verify with `ls -la`:
+
+Verify symlinks point to repository:
 ```bash
-ls -la ~/.config/nvim
-ls -la ~/.tmux.conf
-ls -la ~/.zshrc
-```
-All should show `->` pointing to `~/Projects/dev-config/`.
-
-### Tmux Plugins Not Installing
-1. Check TPM: `ls ~/.tmux/plugins/tpm`
-2. If missing: `git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm`
-3. Reload: `Prefix + r`
-4. Install: `Prefix + I`
-
-### Neovim Plugins Out of Sync
-```vim
-:Lazy restore     " Restore to lazy-lock.json versions
-:Lazy sync        " Update lazy-lock.json with current versions
+ls -la ~/.config/nvim           # Should show → ~/Projects/dev-config/nvim
+ls -la ~/.tmux.conf             # Should show → ~/Projects/dev-config/tmux/tmux.conf
+ls -la ~/.zshrc                 # Should show → ~/Projects/dev-config/zsh/.zshrc
 ```
 
-### Git Plugins Not Working
-- **lazygit:** Check `which lazygit` (should return path)
-- **Octo.nvim:** Run `gh auth status` (should show authenticated)
-
-### Shell Config Not Loading
+If symlinks are missing or broken, re-run Home Manager:
 ```bash
-echo $ZSH               # Should show ~/.oh-my-zsh
-echo $ZSH_THEME         # Should show powerlevel10k/powerlevel10k
-source ~/.zshrc         # Force reload
+home-manager switch --flake ~/Projects/dev-config
 ```
 
-## Dependencies Summary
+### 1Password SSH Issues
 
-### Auto-Installed by install.sh
-**Core tools:**
-- Homebrew (macOS only, if not present)
-- git
-- zsh
-- neovim (≥ 0.9.0)
-- tmux (≥ 1.9)
-- docker (≥ 20.10)
-- fzf, ripgrep, lazygit
-- make (build tools)
-- node, npm (Node.js ecosystem)
-- imagemagick (image processing)
-
-**Shell framework:**
-- Oh My Zsh
-- Powerlevel10k theme
-- zsh-autosuggestions plugin
-
-**Plugin managers:**
-- Tmux Plugin Manager (TPM)
-- Neovim plugins (via lazy.nvim headless install)
-- tmux plugins (via TPM script)
-
-**Machine-specific config:**
-- `.zshrc.local` template
-
-### Optional (Install Manually)
-- GitHub CLI (`gh`) - for Octo.nvim PR/issue management
-- Docker Compose (standalone) - if not bundled with Docker Desktop
-- Claude Code workstation config (for AI-assisted development)
-
-### Managed by Neovim (Mason)
-- **LSP servers:** ts_ls (TypeScript/JavaScript), pyright (Python), lua_ls (Lua)
-- **Formatters:** stylua (Lua), prettier (JS/TS/JSON/YAML/Markdown), ruff (Python)
-- **Build tools:** make (telescope-fzf-native), pkg-config (blink.cmp optimization)
-- **External tools:** Node.js/npm (Mermaid CLI), ImageMagick (image.nvim)
-
-### Managed by Tmux (TPM)
-- vim-tmux-navigator
-- tmux-resurrect + tmux-continuum
-- tmux-fzf
-- catppuccin/tmux
-- tmux-yank
-- tmux-battery, tmux-cpu
-
-## Architecture Deep Dive
-
-### Shared Library System (`scripts/lib/`)
-
-**Purpose:** Eliminate code duplication, provide consistent interfaces.
-
-**`scripts/lib/common.sh` (348 lines):**
-
-Key functions:
+**"Could not open a connection to your authentication agent":**
 ```bash
-# Logging with colors
-log_info "message"     # Blue
-log_success "message"  # Green
-log_warn "message"     # Yellow
-log_error "message"    # Red
-
-# Platform detection
-detect_os()              # Returns: macos, linux, windows, unknown
-is_macos()               # Boolean check
-is_linux()               # Boolean check
-detect_package_manager() # Returns: brew, apt, dnf, pacman, zypper, none
-
-# Version comparison
-version_gte "2.0.0" "1.9.0"  # Returns 0 (true) or 1 (false)
-
-# File operations (atomic with backups)
-create_backup "/path/to/file" "timestamp"
-create_symlink "/source" "/target" "timestamp"
-remove_symlink "/target"  # Restores most recent backup
-
-# Package management
-install_package "package-name"  # Uses detected package manager
-
-# Repository detection
-get_repo_root  # Uses git rev-parse (no hardcoded paths!)
+# Check 1Password SSH agent is enabled:
+# 1Password → Settings → Developer → SSH Agent (should be ON)
 ```
 
-**`scripts/lib/paths.sh` (96 lines):**
-
-Single source of truth for all paths:
+**"Permission denied (publickey)":**
 ```bash
-# Auto-detected repo root
-REPO_ROOT=$(get_repo_root)
-
-# Component directories
-REPO_NVIM="$REPO_ROOT/nvim"
-REPO_TMUX="$REPO_ROOT/tmux"
-REPO_GHOSTTY="$REPO_ROOT/ghostty"
-REPO_ZSH="$REPO_ROOT/zsh"
-
-# Home directories (platform-aware)
-HOME_NVIM="$HOME/.config/nvim"
-HOME_TMUX_CONF="$HOME/.tmux.conf"
-HOME_ZSHRC="$HOME/.zshrc"
-HOME_ZPROFILE="$HOME/.zprofile"
-HOME_P10K="$HOME/.p10k.zsh"
-
-# Platform-specific Ghostty path
-if is_macos; then
-  HOME_GHOSTTY_CONFIG="$HOME/Library/Application Support/com.mitchellh.ghostty/config"
-else
-  HOME_GHOSTTY_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/ghostty/config"
-fi
-
-# Arrays for iteration
-SYMLINK_PAIRS=(
-  "$REPO_NVIM:$HOME_NVIM"
-  "$REPO_TMUX_CONF:$HOME_TMUX_CONF"
-  # ... etc
-)
+# Verify SSH key added to GitHub as Authentication key
+# GitHub → Settings → SSH and GPG keys → Add SSH key (Authentication)
 ```
 
-**Benefits:**
-- Change a path once, affects all scripts
-- No path duplication
-- Platform differences handled centrally
-- Easy to add new symlinks
-
-### Script Workflows
-
-**`scripts/install.sh` workflow:**
-1. Source shared libraries
-2. Detect OS and package manager
-3. Install/update Homebrew (macOS)
-4. Install core dependencies with version checks
-5. Install Oh My Zsh + Powerlevel10k + plugins
-6. Install TPM
-7. Create timestamped backups of existing configs
-8. Create symlinks using shared functions
-9. Auto-install Neovim plugins (headless)
-10. Auto-install tmux plugins (TPM script)
-11. Create `.zshrc.local` template
-12. Verify all symlinks and installations
-13. Print success message with next steps
-
-**`scripts/update.sh` workflow:**
-1. Source shared libraries
-2. Check if repo is clean or has uncommitted changes
-3. Prompt to stash if dirty
-4. Auto-detect current branch
-5. Pull latest changes
-6. Reload tmux config automatically
-7. Remind to restart Neovim and shell
-8. Verify symlinks still intact
-
-**`scripts/uninstall.sh` workflow:**
-1. Source shared libraries
-2. Confirm with user (destructive operation)
-3. Remove all symlinks using shared function
-4. Restore most recent backups
-5. Optionally remove Oh My Zsh, TPM
-6. Print success message
-
-**`scripts/validate.sh` workflow:**
-1. Source shared libraries
-2. Check repository structure integrity
-3. Verify all symlinks point correctly
-4. Check core dependencies installed
-5. Verify tool versions (Neovim ≥ 0.9.0, tmux ≥ 1.9)
-6. Check Oh My Zsh, TPM, Powerlevel10k installed
-7. Print detailed report with fix suggestions
-
-### Adding New Components
-
-**To add a new symlink:**
-
-1. Add to `scripts/lib/paths.sh`:
+**"Bad signature":**
 ```bash
-REPO_NEW_TOOL="$REPO_ROOT/newtool"
-HOME_NEW_TOOL="$HOME/.config/newtool"
+# Verify SSH key added to GitHub as Signing key
+# GitHub → Settings → SSH and GPG keys → Add SSH key (Signing)
 ```
 
-2. Add to `SYMLINK_PAIRS` array:
-```bash
-SYMLINK_PAIRS=(
-  # ... existing pairs ...
-  "$REPO_NEW_TOOL:$HOME_NEW_TOOL"
-)
-
-SYMLINK_TARGETS=(
-  # ... existing targets ...
-  "$HOME_NEW_TOOL"
-)
-```
-
-3. All scripts automatically pick up the change!
-
-**To add a new dependency:**
-
-Add to `install.sh` dependencies section:
-```bash
-DEPENDENCIES=(
-  # ... existing deps ...
-  "newtool"
-)
-```
-
-`install_package()` function handles platform-specific installation automatically.
+**Documentation:** [docs/nix/09-1password-ssh.md](docs/nix/09-1password-ssh.md)
 
 ## For Future Claude Code Instances
 
@@ -1315,61 +770,66 @@ DEPENDENCIES=(
    - `nvim/CLAUDE.md` for Neovim changes
    - `tmux/CLAUDE.md` for tmux changes
    - `zsh/CLAUDE.md` for shell changes
-   - `scripts/CLAUDE.md` for script architecture (most detailed!)
+   - `modules/home-manager/programs/*.nix` for Home Manager modules
 
-2. **Use shared libraries when modifying scripts:**
-   - Source `lib/common.sh` and `lib/paths.sh`
-   - Use provided logging functions
-   - Use platform detection functions
-   - Add paths to `paths.sh` (don't hardcode!)
+2. **Home Manager module patterns:**
+   - Use `mkEnableOption` for all programs
+   - Use `mkIf cfg.enable` to conditionally apply config
+   - Define `configSource` options using `inputs ? dev-config` pattern for flake composition support
+   - Use `xdg.configFile` or `home.file` for symlinks (source from configSource option)
+   - Export modules in `modules/home-manager/default.nix`
 
-3. **Test cross-platform:**
-   - Verify existence checks (`[ -d "$HOME/tool" ]`)
-   - No hardcoded paths or usernames
-   - Use `$HOME`, `$REPO_ROOT`, environment variables
-
-4. **Machine-specific config pattern:**
-   - Never commit `.zshrc.local` to Git
-   - Use it for secrets, machine-specific PATH, aliases
-   - Document in `zsh/CLAUDE.md` or `zsh/README.md`
-
-5. **Version consistency:**
-   - Commit `nvim/lazy-lock.json` after plugin updates
-   - Test with `:Lazy restore` on different machine
-   - Document breaking changes in commit messages
-
-6. **Auto-reload features:**
-   - Neovim auto-reloads files when changed externally
-   - Neo-tree auto-refreshes on filesystem changes
-   - tmux config reloads with `Prefix + r`
-   - Zsh config reloads with `source ~/.zshrc`
-
-7. **Documentation:**
-   - Update component-specific CLAUDE.md for architecture changes
-   - Update README.md for user-facing feature changes
-   - Keep `docs/` directory guides in sync
-
-8. **SSH/1Password Authentication Pattern:**
-   - **Never commit** `secrets.nix` (gitignored)
-   - SSH private keys stored in 1Password vault only
-   - SSH agent config in `modules/home-manager/programs/ssh.nix`
-   - Git signing config in `modules/home-manager/programs/git.nix`
-   - Template file `secrets.nix.example` documents required fields
-   - Testing: `ssh -T git@github.com` and `git log --show-signature`
-   - Troubleshooting guide: `docs/nix/08-1password-ssh.md`
-
-9. **Testing Nix Configuration Changes:**
+3. **Testing changes:**
    - **Always test before committing** with `bash scripts/test-config.sh`
    - Tier 1: `nix flake show --json` (instant syntax check)
    - Tier 2: `home-manager build --flake .` (build without activation)
    - Tier 3: `home-manager switch --dry-run` (preview changes)
-   - Pre-commit hook runs Tier 1 automatically
-   - Fix syntax errors before they break user environments
 
-**Common tasks:**
-- Adding Neovim plugin: `nvim/CLAUDE.md` lines 260-300
-- Adding tmux plugin: `tmux/CLAUDE.md` lines 172-193
-- Adding LSP server: `nvim/CLAUDE.md` lines 210-235
-- Adding zsh plugin: `zsh/CLAUDE.md` lines 205-224
-- Adding script symlink: `scripts/CLAUDE.md` lines 220-250
-- Cross-platform testing: `scripts/CLAUDE.md` lines 252-289
+4. **Never commit secrets:**
+   - `~/.config/home-manager/secrets.nix` is gitignored
+   - SSH private keys stay in 1Password vault
+   - Only public SSH keys and user info go in `secrets.nix`
+
+5. **Version consistency:**
+   - Commit `flake.lock` after updates
+   - Commit `nvim/lazy-lock.json` after plugin updates
+   - Document breaking changes in commit messages
+
+6. **Cross-platform compatibility:**
+   - Test on macOS (Intel + Apple Silicon)
+   - Test on Linux (Debian/Ubuntu, Fedora, Arch)
+   - Verify in DevPod container
+   - Use platform detection: `pkgs.stdenv.isDarwin`, `pkgs.stdenv.isLinux`
+
+7. **Documentation:**
+   - Update component-specific CLAUDE.md for architecture changes
+   - Update README.md for user-facing feature changes
+   - Update `docs/nix/` guides for Nix-related changes
+   - Keep this CLAUDE.md synchronized with current architecture
+
+## Common Tasks Reference
+
+### Adding Neovim Plugin
+See `nvim/CLAUDE.md` lines 260-300 for detailed instructions.
+
+### Adding Tmux Plugin
+See `tmux/CLAUDE.md` lines 172-193 for detailed instructions.
+
+### Adding LSP Server
+See `nvim/CLAUDE.md` lines 210-235 for detailed instructions.
+
+### Adding Zsh Plugin
+See `zsh/CLAUDE.md` lines 205-224 for detailed instructions.
+
+### Modifying Home Manager Module
+1. Edit `modules/home-manager/programs/<program>.nix`
+2. Test: `bash scripts/test-config.sh`
+3. Apply: `home-manager switch --flake .`
+4. Commit changes
+
+### Cross-Platform Testing
+Run in multiple environments:
+- macOS: Direct installation
+- Linux: Direct installation
+- DevPod: Container environment
+- NixOS: Server environment (uses `nixosModules`)

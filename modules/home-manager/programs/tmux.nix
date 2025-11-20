@@ -24,9 +24,9 @@
 
     gitmuxConfigSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default = if inputs ? dev-config then "${inputs.dev-config}/tmux/.gitmux.conf" else null;
+      default = if inputs ? dev-config then "${inputs.dev-config}/tmux/gitmux.conf" else null;
       description = "Path to gitmux configuration file";
-      example = lib.literalExpression ''"''${inputs.dev-config}/tmux/.gitmux.conf"'';
+      example = lib.literalExpression ''"''${inputs.dev-config}/tmux/gitmux.conf"'';
     };
 
     # Declarative options matching our tmux.conf settings

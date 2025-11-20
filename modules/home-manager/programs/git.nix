@@ -1,6 +1,12 @@
 { config, pkgs, lib, ... }:
 
-{
+let
+  # Import secrets.nix if it exists (for git user config and SSH signing key)
+  secretsPath = "${config.xdg.configHome}/home-manager/secrets.nix";
+  secrets = if builtins.pathExists secretsPath
+    then import secretsPath
+    else {};
+in {
   options.dev-config.git = {
     enable = lib.mkEnableOption "dev-config git setup" // {
       default = true;
@@ -15,15 +21,21 @@
     # Core git configuration
     userName = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "Git user name (required for commits)";
+      default = secrets.gitUserName or null;
+      description = ''
+        Git user name (required for commits).
+        Automatically imported from ~/.config/home-manager/secrets.nix if present.
+      '';
       example = "John Doe";
     };
 
     userEmail = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "Git user email (required for commits)";
+      default = secrets.gitUserEmail or null;
+      description = ''
+        Git user email (required for commits).
+        Automatically imported from ~/.config/home-manager/secrets.nix if present.
+      '';
       example = "john@example.com";
     };
 
@@ -51,9 +63,10 @@
 
       key = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
-        default = null;
+        default = secrets.sshSigningKey or null;
         description = ''
-          SSH public key for signing (from ~/.config/home-manager/secrets.nix).
+          SSH public key for signing.
+          Automatically imported from ~/.config/home-manager/secrets.nix if present.
           Example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... your-email@example.com"
         '';
       };
