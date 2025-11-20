@@ -42,7 +42,7 @@
         "github.com" = {
           hostname = "github.com";
           user = "git";
-          identityFile = "~/.ssh/id_1password";  # SSH key synced from 1Password
+          identityFile = "~/.ssh/personal";      # SSH key synced from 1Password
           identitiesOnly = true;                  # Only use specified identity file
           forwardAgent = false;                   # Security best practice: disable agent forwarding
         };

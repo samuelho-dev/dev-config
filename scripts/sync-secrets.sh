@@ -98,7 +98,7 @@ fi
 
 # SSH Private Key (GitHub authentication)
 SSH_SECRETS_ITEM="vtcsjphterploxdgzvsu3rm7le"
-SSH_KEY_FILE="$HOME/.ssh/id_1password"
+SSH_KEY_FILE="$HOME/.ssh/personal"
 SSH_PASSPHRASE_FILE="$HOME/.config/dev-config/secrets/SSH_PASSPHRASE"
 
 log_info "Fetching SSH key and passphrase from 1Password..."

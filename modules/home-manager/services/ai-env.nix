@@ -34,7 +34,7 @@
             done
 
             # Add SSH key to ssh-agent with passphrase from 1Password
-            if [ -f "$HOME/.ssh/id_1password" ] && [ -f "$SECRETS_DIR/SSH_PASSPHRASE" ]; then
+            if [ -f "$HOME/.ssh/personal" ] && [ -f "$SECRETS_DIR/SSH_PASSPHRASE" ]; then
               # Start ssh-agent if not running
               if ! pgrep -u "$USER" ssh-agent > /dev/null; then
                 eval "$(ssh-agent -s)" >> /tmp/ai-env-load.log 2>&1
@@ -46,7 +46,7 @@
               if [ -n "$PASSPHRASE" ]; then
                 # Use expect to provide passphrase to ssh-add
                 expect <<EOF >> /tmp/ai-env-load.log 2>&1 || true
-                  spawn ssh-add "$HOME/.ssh/id_1password"
+                  spawn ssh-add "$HOME/.ssh/personal"
                   expect "Enter passphrase"
                   send "$PASSPHRASE\r"
                   expect eof
