@@ -48,8 +48,9 @@ echo "Credentials status:"
 # Check each credential
 check_cred() {
   local key="$1"
-  if [[ -n "${!key:-}" ]]; then
-    echo "✅ $key (length: ${#!key} chars)"
+  local value="${!key:-}"
+  if [[ -n "$value" ]]; then
+    echo "✅ $key (length: ${#value} chars)"
   else
     echo "❌ $key (not set)"
   fi
