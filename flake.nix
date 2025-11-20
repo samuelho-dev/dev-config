@@ -67,12 +67,13 @@
           ];
 
           shellHook = ''
-            echo "🤖 AI Development Environment"
-            echo "  Neovim: $(nvim --version 2>/dev/null | head -n1)"
-            echo "  Tmux: $(tmux -V 2>/dev/null)"
-            echo "  OpenCode: $(opencode --version 2>/dev/null || echo 'not found')"
-            echo "  1Password CLI: $(op --version 2>/dev/null || echo 'not found')"
-            echo ""
+            # Redirect to stderr - P10k instant prompt ignores stderr
+            echo "🤖 AI Development Environment" >&2
+            echo "  Neovim: $(nvim --version 2>/dev/null | head -n1)" >&2
+            echo "  Tmux: $(tmux -V 2>/dev/null)" >&2
+            echo "  OpenCode: $(opencode --version 2>/dev/null || echo 'not found')" >&2
+            echo "  1Password CLI: $(op --version 2>/dev/null || echo 'not found')" >&2
+            echo "" >&2
 
             # Load AI credentials from 1Password
             if command -v op &>/dev/null && command -v jq &>/dev/null; then
@@ -81,14 +82,14 @@
                 # Fetch all AI tokens from "Dev" vault, "ai" item
                 source ${./scripts/load-ai-credentials.sh}
               else
-                echo "⚠️  Not signed in to 1Password. Run: op signin"
+                echo "⚠️  Not signed in to 1Password. Run: op signin" >&2
               fi
             fi
 
             # Install pre-commit hooks if not already installed
             if [ ! -f .git/hooks/pre-commit ]; then
-              echo "🔧 Installing pre-commit hooks..."
-              ${pkgs.pre-commit}/bin/pre-commit install
+              echo "🔧 Installing pre-commit hooks..." >&2
+              ${pkgs.pre-commit}/bin/pre-commit install >&2
             fi
           '';
         };
@@ -150,8 +151,8 @@
             imagemagick
 
             # AI development tools
-            nodePackages.opencode-ai  # OpenCode CLI
-            _1password                 # 1Password CLI
+            # nodePackages.opencode-ai  # OpenCode CLI (not in nixpkgs)
+            _1password-cli             # 1Password CLI
             jq                         # JSON parsing
 
             # Additional utilities
@@ -191,7 +192,8 @@
             git zsh tmux docker neovim
             fzf ripgrep fd bat lazygit gitmux
             gnumake pkg-config nodejs_20 imagemagick
-            nodePackages.opencode-ai _1password jq
+            # nodePackages.opencode-ai  # Not in nixpkgs, install manually
+            _1password-cli jq
             gh direnv nix-direnv pre-commit
           ];
         };
@@ -286,6 +288,7 @@
             config.allowUnfree = true;
           };
           modules = [ ./home.nix ];
+          extraSpecialArgs = { inputs = { dev-config = self; }; };
         }
       );
     };

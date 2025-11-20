@@ -16,10 +16,17 @@
   dev-config = {
     enable = true;
 
+    # Disable zsh module temporarily (using existing dotfiles)
+    zsh.enable = false;
+
+    # Disable ghostty on macOS (not available on darwin)
+    ghostty.enable = false;
+
+    # Disable neovim module temporarily (nixpkgs compatibility)
+    neovim.enable = false;
+
     # Optional: Disable specific programs
-    # neovim.enable = false;
     # tmux.enable = false;
-    # zsh.enable = false;
     # ssh.enable = false;
     # direnv.enable = false;
 

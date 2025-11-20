@@ -51,7 +51,7 @@
 
       # Install lazy-nix-helper for hybrid Nix + lazy.nvim approach
       plugins = with pkgs.vimPlugins; [
-        lazy-nix-helper-nvim
+        # lazy-nix-helper-nvim  # Not available in current nixpkgs
       ];
     };
 
