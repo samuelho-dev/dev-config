@@ -117,7 +117,8 @@
         signByDefault = cfg.signing.signByDefault;
       };
 
-      extraConfig =
+      # Git settings (renamed from extraConfig)
+      settings =
         {
           init.defaultBranch = cfg.defaultBranch;
           core.editor = cfg.editor;

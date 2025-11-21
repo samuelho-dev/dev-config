@@ -79,19 +79,31 @@
       autosuggestion.enable = config.dev-config.zsh.enableAutosuggestions;
       syntaxHighlighting.enable = config.dev-config.zsh.enableSyntaxHighlighting;
 
+      # Initialization content (runs before compinit with mkOrder 550)
       # Suppress oh-my-zsh warnings and direnv verbose output
-      initExtraBeforeCompInit = ''
-        # Silence oh-my-zsh warnings during initialization
-        # Theme loads correctly via Nix symlinks after init completes
-        ZSH_DISABLE_COMPFIX=true
+      initContent = lib.mkMerge [
+        (lib.mkOrder 550 ''
+          # Silence oh-my-zsh warnings during initialization
+          # Theme loads correctly via Nix symlinks after init completes
+          ZSH_DISABLE_COMPFIX=true
 
-        # Point to home directory for custom themes/plugins
-        # This makes the Powerlevel10k symlink discoverable
-        ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
+          # Point to home directory for custom themes/plugins
+          # This makes the Powerlevel10k symlink discoverable
+          ZSH_CUSTOM="$HOME/.oh-my-zsh/custom"
 
-        # Suppress direnv verbose loading messages
-        export DIRENV_LOG_FORMAT=""
-      '';
+          # Suppress direnv verbose loading messages
+          export DIRENV_LOG_FORMAT=""
+        '')
+
+        # Additional initialization (runs after compinit - default order)
+        ''
+          # Source Powerlevel10k configuration
+          [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+          # Credentials loaded by LaunchAgent (macOS) or systemd (Linux) at login
+          # No need for per-shell loading - eliminates 50ms overhead
+        ''
+      ];
 
       # Enable Oh My Zsh via Home Manager
       oh-my-zsh = {
@@ -102,15 +114,6 @@
           # Note: zsh-autosuggestions handled by programs.zsh.autosuggestion above
         ];
       };
-
-      # Additional initialization (runs after oh-my-zsh loads)
-      initExtra = ''
-        # Source Powerlevel10k configuration
-        [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-        # Credentials loaded by LaunchAgent (macOS) or systemd (Linux) at login
-        # No need for per-shell loading - eliminates 50ms overhead
-      '';
     };
 
     # Install Powerlevel10k theme via Nix

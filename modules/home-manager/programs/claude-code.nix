@@ -44,7 +44,7 @@ in {
       cfg.profiles;
 
     # Load OAuth tokens from sops secrets into environment
-    programs.zsh.initExtra = let
+    programs.zsh.initContent = let
       # Check if sops secrets are configured for Claude
       sopsEnabled = config.sops.secrets ? "claude/oauth-token";
 
