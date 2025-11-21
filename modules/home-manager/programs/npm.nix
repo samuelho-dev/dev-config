@@ -4,6 +4,31 @@
   pkgs,
   ...
 }: let
+  # TODO: Complete sops-nix integration for npm tokens
+  #
+  # Current Status: Module disabled (npm.enable = false in home.nix)
+  #
+  # Implementation Plan:
+  # 1. Add sops secret declarations in home.nix:
+  #    sops.secrets."npm/token" = {};
+  #    sops.secrets."npm/github-token" = {};
+  #
+  # 2. Update this module to read tokens from sops paths:
+  #    npmToken = lib.mkOption {
+  #      default = if config.sops.secrets ? "npm/token"
+  #                then builtins.readFile config.sops.secrets."npm/token".path
+  #                else null;
+  #    };
+  #
+  # 3. Use config.sops.secrets."npm/token".path in npmrcContent
+  #
+  # 4. Test with actual npm registry authentication
+  #
+  # 5. Re-enable module in home.nix
+  #
+  # Security Note: Never use builtins.pathExists or builtins.readFile during
+  # evaluation - these expose secrets to the Nix store. Only reference
+  # sops.secrets.*.path which are decrypted at activation time.
   cfg = config.dev-config.npm;
 
   # Generate .npmrc content with sops-managed authentication tokens

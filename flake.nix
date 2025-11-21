@@ -39,8 +39,8 @@
           See docs/nix/README.md for details.
         '';
 
-    # Support multiple systems
-    systems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
+    # Support multiple systems (using nixpkgs convention)
+    systems = nixpkgs.lib.systems.flakeExposed;
 
     forAllSystems = fn:
       nixpkgs.lib.genAttrs systems (system:
@@ -186,7 +186,10 @@
           inputs.sops-nix.homeManagerModules.sops
         ];
         extraSpecialArgs = {
-          inherit self inputs;
+          inherit self;
+          # Pass inputs with dev-config = self for standalone mode
+          # This allows modules to use "inputs.dev-config" consistently
+          inputs = inputs // {dev-config = self;};
           inherit (userConfig) username homeDirectory;
         };
       };
@@ -202,7 +205,10 @@
           inputs.sops-nix.homeManagerModules.sops
         ];
         extraSpecialArgs = {
-          inherit self inputs;
+          inherit self;
+          # Pass inputs with dev-config = self for standalone mode
+          # This allows modules to use "inputs.dev-config" consistently
+          inputs = inputs // {dev-config = self;};
           inherit (userConfig) username homeDirectory;
         };
       };
