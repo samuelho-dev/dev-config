@@ -44,6 +44,10 @@
       "ai/google-ai-key" = {};
       "ai/litellm-master-key" = {};
       "ai/openrouter-key" = {};
+
+      # NPM authentication tokens (used by npm.nix module)
+      "npm/token" = {};
+      "npm/github-token" = {};
     };
   };
 
@@ -79,9 +83,9 @@
     # Claude Code multi-profile authentication disabled (too complex to manage with Nix)
     claude-code.enable = false;
 
-    # NPM authentication disabled (configure manually with sops secrets)
-    # To enable: add tokens to secrets/default.yaml and configure npm module
-    npm.enable = false;
+    # NPM authentication (tokens managed via sops-nix)
+    # Add npm/token and npm/github-token to secrets/default.yaml
+    npm.enable = true;
 
     # Optional: Disable specific programs
     # tmux.enable = false;

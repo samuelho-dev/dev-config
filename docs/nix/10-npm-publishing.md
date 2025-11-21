@@ -1,5 +1,15 @@
 # NPM Publishing Configuration
 
+> **✅ INTEGRATED WITH SOPS-NIX**
+>
+> As of January 2025, the npm module is fully integrated with sops-nix for secure token management. Tokens are encrypted in `secrets/default.yaml` and never exposed to the Nix store.
+>
+> **Security benefits:**
+> - Tokens encrypted at rest using age encryption
+> - Tokens decrypted only during Home Manager activation
+> - Tokens injected into `~/.npmrc` with 600 permissions
+> - No secrets in Nix store or evaluation output
+
 This guide covers configuring npm authentication for publishing packages to both the public npm registry and GitHub Packages from your local development environment.
 
 ## Overview

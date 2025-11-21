@@ -4,50 +4,65 @@
   pkgs,
   ...
 }: let
-  # TODO: Complete sops-nix integration for npm tokens
-  #
-  # Current Status: Module disabled (npm.enable = false in home.nix)
-  #
-  # Implementation Plan:
-  # 1. Add sops secret declarations in home.nix:
-  #    sops.secrets."npm/token" = {};
-  #    sops.secrets."npm/github-token" = {};
-  #
-  # 2. Update this module to read tokens from sops paths:
-  #    npmToken = lib.mkOption {
-  #      default = if config.sops.secrets ? "npm/token"
-  #                then builtins.readFile config.sops.secrets."npm/token".path
-  #                else null;
-  #    };
-  #
-  # 3. Use config.sops.secrets."npm/token".path in npmrcContent
-  #
-  # 4. Test with actual npm registry authentication
-  #
-  # 5. Re-enable module in home.nix
-  #
-  # Security Note: Never use builtins.pathExists or builtins.readFile during
-  # evaluation - these expose secrets to the Nix store. Only reference
-  # sops.secrets.*.path which are decrypted at activation time.
   cfg = config.dev-config.npm;
 
-  # Generate .npmrc content with sops-managed authentication tokens
-  npmrcContent = lib.concatStringsSep "\n" (
-    lib.filter (x: x != "") [
-      # Public npm registry authentication
-      (lib.optionalString (cfg.npmToken != null)
-        "//registry.npmjs.org/:_authToken=${cfg.npmToken}")
+  # Read tokens from sops secrets at activation time (not evaluation time)
+  # This is secure - tokens are decrypted only during home-manager activation
+  # and never exposed to the Nix store
+  npmToken =
+    if config.sops.secrets ? "npm/token"
+    then config.sops.secrets."npm/token".path
+    else null;
 
-      # GitHub Packages configuration
-      (lib.optionalString (cfg.githubPackagesToken != null) ''
+  githubPackagesToken =
+    if config.sops.secrets ? "npm/github-token"
+    then config.sops.secrets."npm/github-token".path
+    else null;
+
+  # Generate .npmrc content template (tokens injected at activation time)
+  # Note: We use placeholder tokens that get replaced by the onChange script
+  npmrcTemplate = lib.concatStringsSep "\n" (
+    lib.filter (x: x != "") [
+      # Public npm registry authentication (if token available)
+      (lib.optionalString (npmToken != null)
+        "//registry.npmjs.org/:_authToken=__NPM_TOKEN__")
+
+      # GitHub Packages configuration (if token available)
+      (lib.optionalString (githubPackagesToken != null) ''
         @${cfg.githubScope}:registry=https://npm.pkg.github.com/
-        //npm.pkg.github.com/:_authToken=${cfg.githubPackagesToken}
+        //npm.pkg.github.com/:_authToken=__GITHUB_PACKAGES_TOKEN__
       '')
 
       # Additional registry configuration
       (lib.optionalString (cfg.extraConfig != "") cfg.extraConfig)
     ]
   );
+
+  # Shell script to inject tokens from sops secrets
+  injectTokensScript = ''
+    # Read tokens from sops secret files and inject into .npmrc
+    NPMRC="$HOME/.npmrc"
+
+    ${lib.optionalString (npmToken != null) ''
+      if [ -f "${npmToken}" ]; then
+        NPM_TOKEN=$(cat "${npmToken}")
+        sed -i.bak "s|__NPM_TOKEN__|$NPM_TOKEN|g" "$NPMRC"
+      fi
+    ''}
+
+    ${lib.optionalString (githubPackagesToken != null) ''
+      if [ -f "${githubPackagesToken}" ]; then
+        GITHUB_TOKEN=$(cat "${githubPackagesToken}")
+        sed -i.bak "s|__GITHUB_PACKAGES_TOKEN__|$GITHUB_TOKEN|g" "$NPMRC"
+      fi
+    ''}
+
+    # Clean up backup file
+    rm -f "$NPMRC.bak"
+
+    # Set restrictive permissions
+    chmod 600 "$NPMRC"
+  '';
 in {
   options.dev-config.npm = {
     enable = lib.mkOption {
@@ -56,37 +71,22 @@ in {
       description = ''
         Whether to enable npm authentication and registry configuration.
 
-        Tokens are managed via sops-nix (not stored in Nix store).
-        Configure tokens in secrets/default.yaml under npm section.
+        Tokens are automatically loaded from sops secrets:
+        - npm/token: NPM registry authentication (registry.npmjs.org)
+        - npm/github-token: GitHub Packages authentication (npm.pkg.github.com)
+
+        Configuration:
+        1. Add tokens to secrets/default.yaml:
+           npm:
+             token: npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+             github-token: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+        2. Encrypt with sops:
+           sops secrets/default.yaml
+
+        Security: Tokens are never exposed to Nix store. They are decrypted
+        at Home Manager activation time and injected into ~/.npmrc with 600 permissions.
       '';
-    };
-
-    npmToken = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = ''
-        NPM authentication token for registry.npmjs.org.
-
-        Automatically loaded from sops secret: npm/token
-        Get token from: https://www.npmjs.com/settings/~/tokens
-
-        Security: Token is NOT stored in Nix store. Managed by sops-nix.
-      '';
-      example = "npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-    };
-
-    githubPackagesToken = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = ''
-        GitHub Personal Access Token for GitHub Packages (npm.pkg.github.com).
-
-        Automatically loaded from sops secret: npm/github-token
-        Requires scopes: repo, write:packages, read:packages
-
-        Security: Token is NOT stored in Nix store. Managed by sops-nix.
-      '';
-      example = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     };
 
     githubScope = lib.mkOption {
@@ -114,12 +114,10 @@ in {
 
   config = lib.mkIf cfg.enable {
     # Generate .npmrc in home directory with sops-managed tokens
-    home.file.".npmrc" = lib.mkIf (cfg.npmToken != null || cfg.githubPackagesToken != null) {
-      text = npmrcContent;
-      # Restrict permissions for security (tokens are sensitive)
-      onChange = ''
-        chmod 600 ~/.npmrc
-      '';
+    home.file.".npmrc" = lib.mkIf (npmToken != null || githubPackagesToken != null) {
+      text = npmrcTemplate;
+      # Inject tokens from sops secrets at activation time
+      onChange = injectTokensScript;
     };
 
     # Ensure Node.js tooling is available
