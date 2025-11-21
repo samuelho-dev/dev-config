@@ -35,7 +35,7 @@ in {
         };
       });
       default = {
-        default = {
+        claude = {
           configDir = "~/.claude";
           opReference = "op://Dev/ai/claude-code-oauth-token";
         };
@@ -43,7 +43,7 @@ in {
           configDir = "~/.claude-2";
           opReference = "op://Dev/ai/claude-code-oauth-token-2";
         };
-        work = {
+        claude-work = {
           configDir = "~/.claude-work";
           opReference = "op://Dev/ai/claude-code-oauth-token-work";
         };
