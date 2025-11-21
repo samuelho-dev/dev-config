@@ -1,8 +1,8 @@
 {
   config,
   pkgs,
-  username ? builtins.getEnv "USER",
-  homeDirectory ? builtins.getEnv "HOME",
+  username,
+  homeDirectory,
   ...
 }: {
   # Import dev-config Home Manager module
@@ -36,6 +36,8 @@
       "ai/openai-key" = {};
       "ai/google-ai-key" = {};
       "ai/litellm-master-key" = {};
+      "npm/token" = {};
+      "npm/github-token" = {};
     };
   };
 
@@ -70,6 +72,20 @@
 
     # Claude Code multi-profile authentication disabled (too complex to manage with Nix)
     claude-code.enable = false;
+
+    # NPM authentication with sops-managed tokens (SECURITY: tokens NOT in Nix store)
+    npm = {
+      enable = true;
+      # Tokens loaded from sops secrets (secrets/default.yaml)
+      npmToken =
+        if config.sops.secrets ? "npm/token"
+        then builtins.readFile config.sops.secrets."npm/token".path
+        else null;
+      githubPackagesToken =
+        if config.sops.secrets ? "npm/github-token"
+        then builtins.readFile config.sops.secrets."npm/github-token".path
+        else null;
+    };
 
     # Optional: Disable specific programs
     # tmux.enable = false;

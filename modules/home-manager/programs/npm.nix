@@ -4,16 +4,9 @@
   lib,
   ...
 }: let
-  # Import secrets.nix if it exists (for npm tokens)
-  secretsPath = "${config.xdg.configHome}/home-manager/secrets.nix";
-  secrets =
-    if builtins.pathExists secretsPath
-    then import secretsPath
-    else {};
-
   cfg = config.dev-config.npm;
 
-  # Generate .npmrc content with authentication tokens
+  # Generate .npmrc content with sops-managed authentication tokens
   npmrcContent = lib.concatStringsSep "\n" (
     lib.filter (x: x != "") [
       # Public npm registry authentication
@@ -32,31 +25,41 @@
   );
 in {
   options.dev-config.npm = {
-    enable =
-      lib.mkEnableOption "dev-config npm authentication and registry configuration"
-      // {
-        default = true;
-      };
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Whether to enable npm authentication and registry configuration.
 
-    # NPM authentication tokens
+        Tokens are managed via sops-nix (not stored in Nix store).
+        Configure tokens in secrets/default.yaml under npm section.
+      '';
+    };
+
     npmToken = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = secrets.npmToken or null;
+      default = null;
       description = ''
         NPM authentication token for registry.npmjs.org.
-        Automatically imported from ~/.config/home-manager/secrets.nix if present.
+
+        Automatically loaded from sops secret: npm/token
         Get token from: https://www.npmjs.com/settings/~/tokens
+
+        Security: Token is NOT stored in Nix store. Managed by sops-nix.
       '';
       example = "npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     };
 
     githubPackagesToken = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = secrets.githubPackagesToken or null;
+      default = null;
       description = ''
         GitHub Personal Access Token for GitHub Packages (npm.pkg.github.com).
-        Automatically imported from ~/.config/home-manager/secrets.nix if present.
+
+        Automatically loaded from sops secret: npm/github-token
         Requires scopes: repo, write:packages, read:packages
+
+        Security: Token is NOT stored in Nix store. Managed by sops-nix.
       '';
       example = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
     };
@@ -85,7 +88,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # Generate .npmrc in home directory
+    # Generate .npmrc in home directory with sops-managed tokens
     home.file.".npmrc" = lib.mkIf (cfg.npmToken != null || cfg.githubPackagesToken != null) {
       text = npmrcContent;
       # Restrict permissions for security (tokens are sensitive)
@@ -94,11 +97,10 @@ in {
       '';
     };
 
-    # Ensure Node.js with npm is available
-    # (Already installed via modules/home-manager/default.nix line 68)
+    # Ensure Node.js tooling is available
     home.packages = with pkgs; [
-      # npm comes bundled with nodejs_20
-      # pnpm is a separate package (not yet in home.packages)
+      # npm comes bundled with nodejs_20 (installed via modules/home-manager/default.nix)
+      # pnpm is a separate package
       pnpm
     ];
   };

@@ -20,6 +20,25 @@
     sops-nix,
     ...
   }: let
+    # Validate user.nix exists and load it
+    userConfigPath = ./user.nix;
+    userConfig =
+      if builtins.pathExists userConfigPath
+      then import userConfigPath
+      else
+        throw ''
+          ERROR: user.nix not found!
+
+          This file contains machine-specific configuration (username, home directory).
+
+          Create it from the template:
+            cp user.nix.example user.nix
+            # Edit with your username and home directory
+            git add -f user.nix  # Required for flake evaluation
+
+          See docs/nix/README.md for details.
+        '';
+
     # Support multiple systems
     systems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
 
@@ -198,7 +217,7 @@
 
     # Home Manager configurations (machine-specific)
     homeConfigurations = {
-      # macOS ARM64 (M1/M2/M3)
+      # macOS ARM64 (M1/M2/M3) - uses user.nix for username/homeDirectory
       "samuelho-macbook" = home-manager.lib.homeManagerConfiguration {
         pkgs = import nixpkgs {
           system = "aarch64-darwin";
@@ -210,12 +229,11 @@
         ];
         extraSpecialArgs = {
           inherit self inputs;
-          username = "samuelho";
-          homeDirectory = "/Users/samuelho";
+          inherit (userConfig) username homeDirectory;
         };
       };
 
-      # Linux x86_64
+      # Linux x86_64 - uses user.nix for username/homeDirectory
       "samuelho-linux" = home-manager.lib.homeManagerConfiguration {
         pkgs = import nixpkgs {
           system = "x86_64-linux";
@@ -227,8 +245,7 @@
         ];
         extraSpecialArgs = {
           inherit self inputs;
-          username = "samuelho";
-          homeDirectory = "/home/samuelho";
+          inherit (userConfig) username homeDirectory;
         };
       };
     };
