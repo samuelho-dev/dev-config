@@ -53,20 +53,19 @@ in {
   };
 
   config = mkIf cfg.enable {
-    # Create shell aliases for each profile with 1Password OAuth injection
+    # Create shell aliases for each profile with OAuth token injection from 1Password
+    # This is required for multi-account support since Claude Code stores tokens globally in Keychain
     programs.zsh.shellAliases =
       mapAttrs
       (
         name: profile: let
-          # Build environment variable string for authentication
+          # Inject OAuth token from 1Password if configured
           authEnv =
             if profile.opReference != null
             then "CLAUDE_CODE_OAUTH_TOKEN=$(op read '${profile.opReference}' 2>/dev/null || echo '')"
-            else if profile.apiKey != null
-            then "ANTHROPIC_API_KEY=$(op read '${profile.apiKey}' 2>/dev/null || echo '')"
             else "";
 
-          # Add config directory
+          # Set config directory
           configEnv = "CLAUDE_CONFIG_DIR=${profile.configDir}";
 
           # Combine environment variables
@@ -74,7 +73,7 @@ in {
             if authEnv != ""
             then "${authEnv} ${configEnv}"
             else configEnv;
-        in "${fullEnv} claude"
+        in "${fullEnv} command claude"
       )
       cfg.profiles;
 
@@ -126,15 +125,11 @@ in {
         echo "Checking authentication status for all profiles..."
         echo ""
         ${concatStringsSep "\n        " (mapAttrsToList (name: profile: ''
-          echo "Profile: ${name}"
-          if CLAUDE_CONFIG_DIR="${profile.configDir}" ${
-            if profile.opReference != null
-            then "CLAUDE_CODE_OAUTH_TOKEN=$(op read '${profile.opReference}' 2>/dev/null || echo '')"
-            else ""
-          } claude /status 2>&1 | grep -q "Authenticated"; then
+          echo "Profile: ${name} (${profile.configDir})"
+          if CLAUDE_CONFIG_DIR="${profile.configDir}" claude /status 2>&1 | grep -q "Authenticated"; then
             echo "  ✓ Authenticated"
           else
-            echo "  ✗ Not authenticated"
+            echo "  ✗ Not authenticated (run: ${name} /login)"
           fi
           echo ""
         '')

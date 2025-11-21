@@ -42,8 +42,8 @@ in {
     # Enable yazi terminal file manager (with full preview support)
     yazi.enable = true;
 
-    # Enable Claude Code multi-profile authentication (default, claude-2, work)
-    claude-code.enable = true;
+    # Claude Code multi-profile authentication disabled (too complex to manage with Nix)
+    claude-code.enable = false;
 
     # Optional: Disable specific programs
     # tmux.enable = false;
