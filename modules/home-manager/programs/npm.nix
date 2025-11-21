@@ -38,30 +38,39 @@
     ]
   );
 
-  # Shell script to inject tokens from sops secrets
-  injectTokensScript = ''
-    # Read tokens from sops secret files and inject into .npmrc
-    NPMRC="$HOME/.npmrc"
+  # Shell script to generate .npmrc with actual tokens from sops secrets
+  generateNpmrcScript = ''
+        # Generate .npmrc file at activation time with real tokens
+        NPMRC="$HOME/.npmrc"
 
-    ${lib.optionalString (npmToken != null) ''
+        # Remove existing file/symlink
+        rm -f "$NPMRC"
+
+        # Create new .npmrc with actual tokens
+        cat > "$NPMRC" <<'NPMRC_EOF'
+    ${npmrcTemplate}
+    NPMRC_EOF
+
+        # Inject real tokens from sops secrets
+        ${lib.optionalString (npmToken != null) ''
       if [ -f "${npmToken}" ]; then
         NPM_TOKEN=$(cat "${npmToken}")
-        sed -i.bak "s|__NPM_TOKEN__|$NPM_TOKEN|g" "$NPMRC"
+        ${pkgs.gnused}/bin/sed -i.bak "s|__NPM_TOKEN__|$NPM_TOKEN|g" "$NPMRC"
       fi
     ''}
 
-    ${lib.optionalString (githubPackagesToken != null) ''
+        ${lib.optionalString (githubPackagesToken != null) ''
       if [ -f "${githubPackagesToken}" ]; then
         GITHUB_TOKEN=$(cat "${githubPackagesToken}")
-        sed -i.bak "s|__GITHUB_PACKAGES_TOKEN__|$GITHUB_TOKEN|g" "$NPMRC"
+        ${pkgs.gnused}/bin/sed -i.bak "s|__GITHUB_PACKAGES_TOKEN__|$GITHUB_TOKEN|g" "$NPMRC"
       fi
     ''}
 
-    # Clean up backup file
-    rm -f "$NPMRC.bak"
+        # Clean up backup file
+        rm -f "$NPMRC.bak"
 
-    # Set restrictive permissions
-    chmod 600 "$NPMRC"
+        # Set restrictive permissions
+        chmod 600 "$NPMRC" 2>/dev/null || true
   '';
 in {
   options.dev-config.npm = {
@@ -113,12 +122,11 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # Generate .npmrc in home directory with sops-managed tokens
-    home.file.".npmrc" = lib.mkIf (npmToken != null || githubPackagesToken != null) {
-      text = npmrcTemplate;
-      # Inject tokens from sops secrets at activation time
-      onChange = injectTokensScript;
-    };
+    # Generate .npmrc at activation time with sops-managed tokens
+    # Run after sops-nix to ensure secrets are decrypted
+    home.activation.generateNpmrc = lib.mkIf (npmToken != null || githubPackagesToken != null) (
+      lib.hm.dag.entryAfter ["sops-nix"] generateNpmrcScript
+    );
 
     # Ensure Node.js tooling is available
     home.packages = [
