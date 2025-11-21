@@ -165,17 +165,17 @@ dev-config.packages = {
   enable = false;  # Disable all defaults
 };
 
-environment.systemPackages = with pkgs; [
+environment.systemPackages = [
   # Your custom package list
-  git neovim tmux
-  custom-tool
+  pkgs.git pkgs.neovim pkgs.tmux
+  pkgs.custom-tool
 ];
 
 # OR: Keep defaults, add extras
-dev-config.packages.extraPackages = with pkgs; [
-  kubectl
-  k9s
-  argocd
+dev-config.packages.extraPackages = [
+  pkgs.kubectl
+  pkgs.k9s
+  pkgs.argocd
 ];
 ```
 
@@ -529,14 +529,14 @@ dev-config = {
   imports = [ inputs.dev-config.nixosModules.default ];
 
   # Keep base dev tools
-  dev-config.packages.extraPackages = with pkgs; [
+  dev-config.packages.extraPackages = [
     # Add infrastructure-specific tools
-    kubectl
-    kubernetes-helm
-    argocd
-    k9s
-    terraform
-    doctl  # DigitalOcean CLI
+    pkgs.kubectl
+    pkgs.kubernetes-helm
+    pkgs.argocd
+    pkgs.k9s
+    pkgs.terraform
+    pkgs.doctl  # DigitalOcean CLI
   ];
 
   # Infrastructure admin users
@@ -568,10 +568,10 @@ dev-config = {
       };
 
       # Add infrastructure-specific packages
-      packages.extraPackages = with pkgs; [
-        kubectl
-        k9s
-        argocd
+      packages.extraPackages = [
+        pkgs.kubectl
+        pkgs.k9s
+        pkgs.argocd
       ];
     };
   };
@@ -592,10 +592,10 @@ dev-config = {
 
   # Minimal package set
   dev-config.packages.enable = false;
-  environment.systemPackages = with pkgs; [
-    git
-    neovim
-    tmux
+  environment.systemPackages = [
+    pkgs.git
+    pkgs.neovim
+    pkgs.tmux
   ];
 
   # Single admin user

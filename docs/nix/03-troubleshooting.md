@@ -400,8 +400,8 @@ nix search nixpkgs postgres
 # Returns: postgresql, postgresql_15, postgresqlTestHook
 
 # Use correct name in flake.nix:
-packages = with pkgs; [
-  postgresql  # ✅ Correct
+packages = [
+  pkgs.postgresql  # ✅ Correct
   # postgres  # ❌ Wrong
 ];
 ```
@@ -546,16 +546,16 @@ error: collision between `/nix/store/.../bin/python` and `/nix/store/.../bin/pyt
 
 **Common scenario:**
 ```nix
-packages = with pkgs; [
-  python3      # Provides /bin/python
-  python39     # Also provides /bin/python - CONFLICT!
+packages = [
+  pkgs.python3      # Provides /bin/python
+  pkgs.python39     # Also provides /bin/python - CONFLICT!
 ];
 ```
 
 **Solution:** Choose one version:
 ```nix
-packages = with pkgs; [
-  python3      # Use default Python 3
+packages = [
+  pkgs.python3      # Use default Python 3
   # python39   # Remove conflicting version
 ];
 ```
@@ -642,8 +642,8 @@ After `nix flake update`, previously available command not found.
 nix search nixpkgs <package-name>
 
 # If renamed, update flake.nix:
-packages = with pkgs; [
-  newPackageName  # Updated name
+packages = [
+  pkgs.newPackageName  # Updated name
   # oldPackageName  # No longer exists
 ];
 ```

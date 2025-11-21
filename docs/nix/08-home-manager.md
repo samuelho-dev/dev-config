@@ -200,11 +200,11 @@ By default, dev-config symlinks all config files:
   imports = [ dev-config.homeManagerModules.default ];
 
   # Add packages beyond defaults
-  dev-config.packages.extraPackages = with pkgs; [
+  dev-config.packages.extraPackages = [
     # Infrastructure tools
-    kubectl
-    k9s
-    terraform
+    pkgs.kubectl
+    pkgs.k9s
+    pkgs.terraform
 
     # Language tools
     nodejs_20
@@ -311,10 +311,10 @@ By default, dev-config symlinks all config files:
     };
 
     # Laptop-specific packages
-    packages.extraPackages = with pkgs; [
-      spotify
-      slack
-      zoom-us
+    packages.extraPackages = [
+      pkgs.spotify
+      pkgs.slack
+      pkgs.zoom-us
     ];
   };
 }
@@ -341,9 +341,9 @@ By default, dev-config symlinks all config files:
     packages.enable = false;
 
     # Minimal server packages
-    home.packages = with pkgs; [
-      git neovim tmux
-      htop
+    home.packages = [
+      pkgs.git neovim tmux
+      pkgs.htop
     ];
   };
 }
@@ -406,9 +406,9 @@ home-manager switch --flake ~/.config/home-manager#user@server
     };
 
     # Laptop-specific overrides
-    packages.extraPackages = with pkgs; [
-      spotify
-      slack
+    packages.extraPackages = [
+      pkgs.spotify
+      pkgs.slack
     ];
   };
 }
@@ -432,9 +432,9 @@ in
   dev-config = {
     # GUI tools only on laptop
     packages.extraPackages = lib.optionals isLaptop (with pkgs; [
-      spotify
-      slack
-      zoom-us
+      pkgs.spotify
+      pkgs.slack
+      pkgs.zoom-us
     ]);
 
     # Disable tmux on laptop (use terminal tabs)

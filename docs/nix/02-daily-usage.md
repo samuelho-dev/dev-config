@@ -85,12 +85,23 @@ git push origin main
 nvim flake.nix
 ```
 
-Add package to `packages` list:
+**Note:** Packages are centrally managed in `pkgs/default.nix` (single source of truth).
+
+Add package to appropriate category in `pkgs/default.nix`:
 ```nix
-packages = with pkgs; [
-  # ... existing packages ...
-  postgresql  # NEW: Add PostgreSQL client
-];
+# pkgs/default.nix
+{pkgs}: {
+  # ... existing categories ...
+
+  # Add to relevant category
+  data = [
+    pkgs.jq
+    pkgs.yq-go
+    pkgs.postgresql  # NEW: Add PostgreSQL client
+  ];
+
+  # ... rest of file ...
+}
 ```
 
 **Rebuild environment:**
@@ -106,22 +117,29 @@ which psql  # Should show /nix/store/.../bin/psql
 
 **Commit changes:**
 ```bash
-git add flake.nix
-git commit -m "feat: add PostgreSQL client"
+git add pkgs/default.nix
+git commit -m "feat: add PostgreSQL client to data tools"
 git push origin main
 ```
 
 ### 3. Removing a Package
 
-**Edit flake.nix:**
+**Edit `pkgs/default.nix`:**
 ```nix
-packages = with pkgs; [
-  git
-  zsh
-  # Removed: docker (if you no longer need it)
-  neovim
-  tmux
-];
+# pkgs/default.nix
+{pkgs}: {
+  # ... existing categories ...
+
+  core = [
+    pkgs.git
+    pkgs.zsh
+    # Removed: pkgs.docker (if you no longer need it)
+    pkgs.neovim
+    pkgs.tmux
+  ];
+
+  # ... rest of file ...
+}
 ```
 
 **Rebuild and test:**

@@ -21,9 +21,9 @@ This guide covers advanced Nix techniques for customizing and extending your dev
   outputs = { self, nixpkgs }: {
     devShells = forAllSystems ({ pkgs, ... }: {
       default = pkgs.mkShell {
-        packages = with pkgs; [
+        packages = [
           # Override Neovim version
-          (neovim.override {
+          (pkgs.neovim.override {
             viAlias = true;
             vimAlias = true;
           })
@@ -105,8 +105,8 @@ stdenv.mkDerivation rec {
     sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
   };
 
-  nativeBuildInputs = with pkgs; [ makeWrapper ];
-  buildInputs = with pkgs; [ bash jq curl ];
+  nativeBuildInputs = [ pkgs.makeWrapper ];
+  buildInputs = [ pkgs.bash pkgs.jq pkgs.curl ];
 
   installPhase = ''
     mkdir -p $out/bin
@@ -117,10 +117,10 @@ stdenv.mkDerivation rec {
       --prefix PATH : ${lib.makeBinPath [ pkgs.jq pkgs.curl ]}
   '';
 
-  meta = with lib; {
+  meta = {
     description = "My custom development tool";
-    license = licenses.mit;
-    platforms = platforms.unix;
+    license = lib.licenses.mit;
+    platforms = lib.platforms.unix;
   };
 }
 ```
@@ -128,8 +128,8 @@ stdenv.mkDerivation rec {
 **Use in flake.nix:**
 
 ```nix
-packages = with pkgs; [
-  (callPackage ./pkgs/my-dev-tool {})
+packages = [
+  (pkgs.callPackage ./pkgs/my-dev-tool {})
 ];
 ```
 
@@ -146,17 +146,17 @@ packages = with pkgs; [
     devShells = forAllSystems ({ pkgs, ... }: {
       # Default shell (general development)
       default = pkgs.mkShell {
-        packages = with pkgs; [ git neovim tmux ];
+        packages = [ pkgs.git pkgs.neovim pkgs.tmux ];
       };
 
       # Python development shell
       python = pkgs.mkShell {
-        packages = with pkgs; [
-          python311
-          python311Packages.pip
-          python311Packages.virtualenv
-          python311Packages.pytest
-          poetry
+        packages = [
+          pkgs.python311
+          pkgs.python311Packages.pip
+          pkgs.python311Packages.virtualenv
+          pkgs.python311Packages.pytest
+          pkgs.poetry
         ];
         shellHook = ''
           echo "🐍 Python development environment"
@@ -166,11 +166,11 @@ packages = with pkgs; [
 
       # Node.js development shell
       nodejs = pkgs.mkShell {
-        packages = with pkgs; [
-          nodejs_20
-          nodePackages.npm
-          nodePackages.pnpm
-          nodePackages.typescript
+        packages = [
+          pkgs.nodejs_20
+          pkgs.nodePackages.npm
+          pkgs.nodePackages.pnpm
+          pkgs.nodePackages.typescript
         ];
         shellHook = ''
           echo "📦 Node.js development environment"
@@ -181,11 +181,11 @@ packages = with pkgs; [
 
       # Kubernetes ops shell
       k8s = pkgs.mkShell {
-        packages = with pkgs; [
-          kubectl
-          kubernetes-helm
-          k9s
-          argocd
+        packages = [
+          pkgs.kubectl
+          pkgs.kubernetes-helm
+          pkgs.k9s
+          pkgs.argocd
         ];
         shellHook = ''
           echo "☸️  Kubernetes operations environment"
@@ -259,9 +259,9 @@ direnv reload
 
     homeManagerModules = {
       dev-config = { config, pkgs, ... }: {
-        home.packages = with pkgs; [
-          neovim tmux zsh
-          fzf ripgrep fd bat lazygit
+        home.packages = [
+          pkgs.neovim pkgs.tmux pkgs.zsh
+          pkgs.fzf pkgs.ripgrep pkgs.fd pkgs.bat pkgs.lazygit
         ];
 
         programs.neovim = {
@@ -313,25 +313,25 @@ direnv reload
 ```nix
 { pkgs }:
 
-with pkgs; [
+[
   # Core development tools
-  git gh lazygit gitmux
-  neovim tmux zsh
+  pkgs.git pkgs.gh pkgs.lazygit pkgs.gitmux
+  pkgs.neovim pkgs.tmux pkgs.zsh
 
   # CLI utilities
-  fzf ripgrep fd bat eza
-  jq yq-go
-  htop btop
+  pkgs.fzf pkgs.ripgrep pkgs.fd pkgs.bat pkgs.eza
+  pkgs.jq pkgs.yq-go
+  pkgs.htop pkgs.btop
 
   # Language tools
-  nodejs_20 python311 go
+  pkgs.nodejs_20 pkgs.python311 pkgs.go
 
   # Container tools
-  docker kubectl kubernetes-helm
+  pkgs.docker pkgs.kubectl pkgs.kubernetes-helm
 
   # AI tools
-  nodePackages.opencode-ai
-  _1password
+  pkgs.nodePackages.opencode-ai
+  pkgs._1password
 ]
 ```
 
@@ -356,7 +356,7 @@ with pkgs; [
 pkgs.writeShellApplication {
   name = "setup-work";
 
-  runtimeInputs = with pkgs; [ git gh openssh ];
+  runtimeInputs = [ pkgs.git pkgs.gh pkgs.openssh ];
 
   text = ''
     echo "🔧 Setting up work environment..."
@@ -413,7 +413,7 @@ nix run .#setup-work
 pkgs.writeShellApplication {
   name = "deploy";
 
-  runtimeInputs = with pkgs; [ git kubectl argocd ];
+  runtimeInputs = [ pkgs.git pkgs.kubectl pkgs.argocd ];
 
   text = ''
     set -euo pipefail
@@ -632,12 +632,12 @@ nix-store --generate-binary-cache-key my-cache /etc/nix/cache-key.sec /etc/nix/c
   outputs = { self, nixpkgs }: {
     devShells = forAllSystems ({ pkgs, ... }: {
       default = pkgs.mkShell {
-        packages = with pkgs; [
-          python311
-          python311Packages.pip
-          python311Packages.virtualenv
-          poetry
-          ruff
+        packages = [
+          pkgs.python311
+          pkgs.python311Packages.pip
+          pkgs.python311Packages.virtualenv
+          pkgs.poetry
+          pkgs.ruff
         ];
 
         shellHook = ''

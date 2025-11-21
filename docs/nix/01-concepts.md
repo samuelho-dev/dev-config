@@ -182,10 +182,10 @@ nix flake lock --update-input nixpkgs
 All tools are declared in one place:
 
 ```nix
-packages = with pkgs; [
-  git zsh tmux docker neovim
-  fzf ripgrep lazygit
-  nodePackages.opencode-ai
+packages = [
+  pkgs.git zsh tmux docker neovim
+  pkgs.fzf ripgrep lazygit
+  pkgs.nodePackages.opencode-ai
   _1password
 ];
 ```

@@ -226,12 +226,11 @@ Each program has a dedicated module with this pattern:
 # modules/home-manager/programs/neovim.nix
 { config, lib, pkgs, inputs ? {}, ... }:
 
-with lib;
 let
   cfg = config.dev-config.neovim;
 in {
   options.dev-config.neovim = {
-    enable = mkEnableOption "Neovim configuration";
+    enable = lib.mkEnableOption "Neovim configuration";
 
     configSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
@@ -240,7 +239,7 @@ in {
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Install Neovim package
     home.packages = [ pkgs.neovim ];
 
@@ -251,7 +250,8 @@ in {
 ```
 
 **Key concepts:**
-- **`mkEnableOption`**: Creates `dev-config.<program>.enable` option
+- **Explicit `lib.` prefixes**: Always use `lib.mkEnableOption`, `lib.mkIf`, `lib.types.*` (never `with lib;`)
+- **`mkEnableOption`**: Creates `dev-config.<program>.enable` option (defaults to false)
 - **`mkIf cfg.enable`**: Only applies configuration if enabled
 - **`home.packages`**: Installs packages via Nix
 - **`xdg.configFile`**: Creates symlinks in XDG config directory
@@ -291,13 +291,25 @@ dev-config = {
 
 ### Adding a New Package
 
-**Edit `modules/home-manager/default.nix`:**
+**Note:** Packages are now managed centrally in `pkgs/default.nix` for DRY principle.
+
+**To add a new package, edit `pkgs/default.nix`:**
 
 ```nix
-home.packages = with pkgs; [
-  # Existing packages...
-  kubectl  # Add new package here
-];
+# pkgs/default.nix
+{pkgs}: {
+  # ... existing categories ...
+
+  # Add to appropriate category
+  kubernetes = [
+    pkgs.kubectl
+    pkgs.kubernetes-helm
+    pkgs.k9s
+    pkgs.your-new-tool  # Add here
+  ];
+
+  # ... rest of file ...
+}
 ```
 
 Then apply:
@@ -312,12 +324,11 @@ home-manager switch --flake .
 ```nix
 { config, lib, pkgs, inputs ? {}, ... }:
 
-with lib;
 let
   cfg = config.dev-config.yourprogram;
 in {
   options.dev-config.yourprogram = {
-    enable = mkEnableOption "Your Program configuration";
+    enable = lib.mkEnableOption "Your Program configuration";
 
     configSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
@@ -326,7 +337,7 @@ in {
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home.packages = [ pkgs.yourprogram ];
 
     # Create symlink to dotfiles (from flake input or null)
@@ -334,6 +345,12 @@ in {
   };
 }
 ```
+
+**Important patterns:**
+- Never use `with lib;` or `with pkgs;` - always use explicit prefixes
+- Use `lib.mkEnableOption` (defaults to false) for optional modules
+- Use `lib.mkOption { type = lib.types.bool; default = true; }` for enabled-by-default modules
+- Use alphabetical parameter order: `{ config, lib, pkgs, inputs, ... }`
 
 2. **Export module in `modules/home-manager/default.nix`:**
 
@@ -626,6 +643,34 @@ devpod up . --ide vscode
 - **Decision:** Export both `nixosModules` and `homeManagerModules` from flake
 - **Rationale:** Reusable across projects (ai-dev-env integration), single source of truth
 - **Implementation:** `flake.nix` outputs both module types
+
+### 6. Anti-Pattern Elimination (January 2025 Audit)
+- **Decision:** Eliminate all Nix anti-patterns and enforce 2025 best practices
+- **Rationale:** Improve maintainability, static analysis, cross-compilation support
+- **Implementation:**
+  - Never use `with lib;` or `with pkgs;` - always explicit prefixes
+  - Use `lib.mkOption { default = true; }` instead of `mkEnableOption // { default = true; }`
+  - Alphabetical function parameters: `{ config, lib, pkgs, inputs, ... }`
+  - Modern system enumeration: `nixpkgs.lib.systems.flakeExposed`
+- **Audit Results:** 27 files modified, 23+ anti-patterns eliminated, 4 security vulnerabilities fixed
+- **Documentation:** See `AUDIT_SUMMARY.md` for complete audit report
+
+### 7. DRY Package Management
+- **Decision:** Centralized package definitions in `pkgs/default.nix`
+- **Rationale:** Single source of truth, eliminate duplication, easier maintenance
+- **Implementation:** All packages organized by category (core, runtimes, kubernetes, cloud, etc.)
+- **Benefits:** Consistent across devShells and Home Manager, easy to add/remove packages
+- **Eliminated:** ~60 lines of duplicate package definitions
+
+### 8. Security-First Secrets Management
+- **Decision:** No secrets during Nix evaluation, runtime decryption only
+- **Rationale:** Prevent secret exposure to `/nix/store`, ensure zero secrets on disk
+- **Implementation:**
+  - sops-nix for encrypted secrets with age encryption
+  - 1Password CLI for just-in-time credential injection (.envrc)
+  - `dotenv_if_exists` instead of `source_env` (direnv security model)
+  - Never use `builtins.pathExists` or `builtins.readFile` for secrets during evaluation
+- **Security Fixes:** npm token exposure, .envrc bypass, builtins.getEnv non-functionality
 
 ## NixOS Modules (For Servers)
 
