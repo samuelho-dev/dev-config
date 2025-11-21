@@ -436,10 +436,130 @@ All phases validated with:
 
 ---
 
+## Phase 6: NPM Module sops-nix Integration ✅
+
+**Objective:** Implement secure npm token management with sops-nix
+
+**Date:** January 2025 (Post-Audit)
+
+### Background
+
+During Phase 1, the npm module was disabled due to security vulnerabilities (using `builtins.pathExists` which exposes secrets to Nix store). The module required proper sops-nix integration to securely manage npm tokens.
+
+### Implementation
+
+#### 6.1 Token Storage in sops
+
+**Added tokens to encrypted secrets:**
+```yaml
+npm:
+  token: <npm-token-redacted>
+  github-token: <github-token-redacted>
+```
+
+**Security:**
+- Tokens encrypted at rest with age encryption
+- Tokens stored in `secrets/default.yaml` (tracked, encrypted)
+- Decrypted only during Home Manager activation
+- Never exposed to Nix store during evaluation
+
+#### 6.2 Module Architecture Rewrite
+
+**Problem:** Initial implementation used `home.file` which creates immutable symlinks to Nix store, preventing token injection.
+
+**Solution:** Changed to `home.activation` pattern:
+```nix
+home.activation.generateNpmrc = lib.mkIf (npmToken != null || githubPackagesToken != null) (
+  lib.hm.dag.entryAfter ["sops-nix"] generateNpmrcScript
+);
+```
+
+**Key features:**
+- Creates mutable .npmrc file (not symlink) at activation time
+- Injects real tokens from sops secrets after sops-nix decryption
+- Sets 600 permissions (owner read/write only)
+- Uses explicit path to gnused for reproducibility
+- Runs after "sops-nix" activation to ensure secrets are decrypted
+
+#### 6.3 Home Manager Integration
+
+**Updated home.nix:**
+```nix
+sops.secrets = {
+  # ... existing secrets ...
+
+  # NPM authentication tokens (used by npm.nix module)
+  "npm/token" = {};
+  "npm/github-token" = {};
+};
+
+dev-config.npm.enable = true;  # Re-enabled module
+```
+
+### Testing & Verification
+
+✅ **Authentication Tests:**
+```bash
+$ npm whoami --registry https://registry.npmjs.org
+samuelho-dev
+
+$ npm whoami --registry https://npm.pkg.github.com
+samuelho-dev
+```
+
+✅ **Publish Tests (dry-run):**
+- npm registry: Publishing successful (dry-run)
+- GitHub Packages: Publishing successful (dry-run)
+- pnpm: Publishing successful (dry-run)
+
+✅ **Security Verification:**
+- File permissions: 600 (owner read/write only)
+- Token format: npm token 40 chars, GitHub token 68 chars
+- No placeholders: Real tokens injected correctly
+- Activation order: sops-nix → generateNpmrc (correct)
+
+### Files Modified
+
+**Phase 6.1: Initial sops Integration**
+- `modules/home-manager/programs/npm.nix` - Complete rewrite with sops support
+- `home.nix` - Added npm secret declarations, re-enabled module
+- `docs/nix/10-npm-publishing.md` - Updated status to integrated
+- `secrets/default.yaml` - Added encrypted npm tokens
+
+**Phase 6.2: Activation Fix**
+- `modules/home-manager/programs/npm.nix` - Changed from home.file to home.activation
+- `secrets/default.yaml` - Updated with tokens from 1Password
+
+### Git Commits
+
+- `c1d3cfb` - feat(npm): implement sops-nix integration for secure token management
+- `e6afeb4` - fix(npm): use home.activation instead of home.file for mutable .npmrc
+
+### Impact
+
+**Before:**
+- ❌ npm module disabled (security vulnerability)
+- ❌ No npm publishing capability
+- ❌ Tokens would be exposed to Nix store
+
+**After:**
+- ✅ Full sops-nix integration
+- ✅ Secure token management (encrypted at rest)
+- ✅ Automatic .npmrc generation with real tokens
+- ✅ Authentication to both npm registry and GitHub Packages
+- ✅ Support for npm, pnpm, and other package managers
+- ✅ No secrets in Nix store or evaluation output
+
+---
+
 ## Recommendations for Future Work
 
 ### High Priority
-1. **Complete npm.nix sops integration** - Follow documented plan in Phase 4.5
+1. ✅ **Complete npm.nix sops integration** - DONE (commits c1d3cfb, e6afeb4)
+   - Implemented full sops-nix integration with home.activation pattern
+   - Tokens encrypted in secrets/default.yaml with age encryption
+   - Automatic token injection at Home Manager activation time
+   - Verified authentication to both npm registry and GitHub Packages
 2. **Consider rootless Docker** - For production NixOS deployments
 3. **Add CI/CD validation** - GitHub Actions for nix flake check
 
