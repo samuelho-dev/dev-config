@@ -26,18 +26,24 @@
     defaultSymlinkPath = "${config.home.homeDirectory}/.local/share/sops-nix/secrets";
     defaultSecretsMountPoint = "${config.home.homeDirectory}/.local/share/sops-nix/secrets.d";
 
-    # Define secrets (create secrets/default.yaml with sops)
+    # Define secrets (matches structure in secrets/default.yaml)
     secrets = {
+      # Git configuration (used by git.nix module)
       "git/userName" = {};
       "git/userEmail" = {};
       "git/signingKey" = {};
+
+      # Claude Code OAuth tokens (used by claude-code.nix module)
       "claude/oauth-token" = {};
+      "claude/oauth-token-2" = {};
+      "claude/oauth-token-work" = {};
+
+      # AI service API keys (optional, for manual use)
       "ai/anthropic-key" = {};
       "ai/openai-key" = {};
       "ai/google-ai-key" = {};
       "ai/litellm-master-key" = {};
-      "npm/token" = {};
-      "npm/github-token" = {};
+      "ai/openrouter-key" = {};
     };
   };
 
@@ -73,19 +79,9 @@
     # Claude Code multi-profile authentication disabled (too complex to manage with Nix)
     claude-code.enable = false;
 
-    # NPM authentication with sops-managed tokens (SECURITY: tokens NOT in Nix store)
-    npm = {
-      enable = true;
-      # Tokens loaded from sops secrets (secrets/default.yaml)
-      npmToken =
-        if config.sops.secrets ? "npm/token"
-        then builtins.readFile config.sops.secrets."npm/token".path
-        else null;
-      githubPackagesToken =
-        if config.sops.secrets ? "npm/github-token"
-        then builtins.readFile config.sops.secrets."npm/github-token".path
-        else null;
-    };
+    # NPM authentication disabled (configure manually with sops secrets)
+    # To enable: add tokens to secrets/default.yaml and configure npm module
+    npm.enable = false;
 
     # Optional: Disable specific programs
     # tmux.enable = false;
