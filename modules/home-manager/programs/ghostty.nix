@@ -1,16 +1,16 @@
 {
   config,
-  pkgs,
   lib,
+  pkgs,
   inputs,
   ...
 }: {
   options.dev-config.ghostty = {
-    enable =
-      lib.mkEnableOption "dev-config Ghostty setup"
-      // {
-        default = true;
-      };
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable dev-config Ghostty setup";
+    };
 
     package = lib.mkOption {
       type = lib.types.package;

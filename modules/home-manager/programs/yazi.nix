@@ -3,33 +3,32 @@
   lib,
   pkgs,
   ...
-}:
-with lib; let
+}: let
   cfg = config.dev-config.yazi;
 in {
   options.dev-config.yazi = {
-    enable = mkEnableOption "Yazi terminal file manager";
+    enable = lib.mkEnableOption "Yazi terminal file manager";
 
-    extraPackages = mkOption {
-      type = types.listOf types.package;
-      default = with pkgs; [
+    extraPackages = lib.mkOption {
+      type = lib.types.listOf lib.types.package;
+      default = [
         # File previews
-        ffmpegthumbnailer # Video thumbnails and previews
-        poppler # PDF previews
-        imagemagick # Image processing/conversion
+        pkgs.ffmpegthumbnailer # Video thumbnails and previews
+        pkgs.poppler # PDF previews
+        pkgs.imagemagick # Image processing/conversion
 
         # Archive support
-        p7zip # Archive extraction and preview
+        pkgs.p7zip # Archive extraction and preview
 
         # Data processing
-        jq # JSON file previews
-        yq-go # YAML file previews
+        pkgs.jq # JSON file previews
+        pkgs.yq-go # YAML file previews
       ];
       description = "Extra packages for Yazi file previews and operations";
     };
 
-    settings = mkOption {
-      type = types.attrs;
+    settings = lib.mkOption {
+      type = lib.types.attrs;
       default = {
         manager = {
           ratio = [1 4 3];
@@ -47,8 +46,8 @@ in {
       description = "Yazi configuration settings (yazi.toml)";
     };
 
-    keymap = mkOption {
-      type = types.attrs;
+    keymap = lib.mkOption {
+      type = lib.types.attrs;
       default = {
         manager.prepend_keymap = [
           {
@@ -71,14 +70,14 @@ in {
       description = "Yazi keymap configuration (keymap.toml)";
     };
 
-    theme = mkOption {
-      type = types.attrs;
+    theme = lib.mkOption {
+      type = lib.types.attrs;
       default = {};
       description = "Yazi theme configuration (theme.toml). Leave empty to use defaults.";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     programs.yazi = {
       enable = true;
 

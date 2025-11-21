@@ -1,7 +1,7 @@
 {
   config,
-  pkgs,
   lib,
+  pkgs,
   ...
 }: let
   cfg = config.dev-config.npm;
@@ -98,10 +98,10 @@ in {
     };
 
     # Ensure Node.js tooling is available
-    home.packages = with pkgs; [
+    home.packages = [
       # npm comes bundled with nodejs_20 (installed via modules/home-manager/default.nix)
       # pnpm is a separate package
-      pnpm
+      pkgs.pnpm
     ];
   };
 }

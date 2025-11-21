@@ -1,7 +1,7 @@
 {
   config,
-  pkgs,
   lib,
+  pkgs,
   inputs,
   ...
 }: {
@@ -21,19 +21,19 @@
 
   # Global dev-config options for Home Manager
   options.dev-config = {
-    enable =
-      lib.mkEnableOption "dev-config Home Manager module"
-      // {
-        default = true;
-      };
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable dev-config Home Manager module";
+    };
 
     # Package list for user-level installation
     packages = {
-      enable =
-        lib.mkEnableOption "dev-config user packages"
-        // {
-          default = true;
-        };
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable dev-config user packages";
+      };
 
       extraPackages = lib.mkOption {
         type = lib.types.listOf lib.types.package;

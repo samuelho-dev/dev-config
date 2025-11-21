@@ -48,9 +48,9 @@
   };
 
   # Add sops and age packages for secrets management
-  home.packages = with pkgs; [
-    sops
-    age
+  home.packages = [
+    pkgs.sops
+    pkgs.age
   ];
 
   # Enable dev-config modules (all enabled by default)

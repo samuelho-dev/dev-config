@@ -1,16 +1,16 @@
 {
   config,
-  pkgs,
   lib,
+  pkgs,
   inputs,
   ...
 }: {
   options.dev-config.zsh = {
-    enable =
-      lib.mkEnableOption "dev-config zsh setup"
-      // {
-        default = true;
-      };
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable dev-config zsh setup";
+    };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -117,8 +117,8 @@
     };
 
     # Install Powerlevel10k theme via Nix
-    home.packages = with pkgs; [
-      zsh-powerlevel10k
+    home.packages = [
+      pkgs.zsh-powerlevel10k
       # zsh-autosuggestions already enabled via programs.zsh.autosuggestion
     ];
 

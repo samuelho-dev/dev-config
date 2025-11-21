@@ -1,7 +1,7 @@
 {
   config,
-  pkgs,
   lib,
+  pkgs,
   ...
 }: {
   imports = [
@@ -20,9 +20,9 @@
 
   config = lib.mkIf config.dev-config.enable {
     # Minimal system packages (only essentials)
-    environment.systemPackages = with pkgs; [
-      git # System-wide version control
-      vim # Minimal editor for emergency access
+    environment.systemPackages = [
+      pkgs.git # System-wide version control
+      pkgs.vim # Minimal editor for emergency access
     ];
 
     # This module provides minimal system-level configuration:

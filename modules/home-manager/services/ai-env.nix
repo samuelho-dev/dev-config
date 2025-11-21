@@ -5,11 +5,11 @@
   ...
 }: {
   options.dev-config.ai-env = {
-    enable =
-      lib.mkEnableOption "AI environment variables system-wide loader"
-      // {
-        default = true;
-      };
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable AI environment variables system-wide loader";
+    };
   };
 
   config = lib.mkIf config.dev-config.ai-env.enable {

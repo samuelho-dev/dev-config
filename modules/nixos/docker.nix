@@ -1,15 +1,15 @@
 {
   config,
-  pkgs,
   lib,
+  pkgs,
   ...
 }: {
   options.dev-config.docker = {
-    enable =
-      lib.mkEnableOption "Docker virtualization"
-      // {
-        default = true;
-      };
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable Docker virtualization";
+    };
 
     autoAddUsers = lib.mkOption {
       type = lib.types.bool;

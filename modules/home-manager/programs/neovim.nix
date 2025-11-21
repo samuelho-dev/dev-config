@@ -1,16 +1,16 @@
 {
   config,
-  pkgs,
   lib,
+  pkgs,
   inputs,
   ...
 }: {
   options.dev-config.neovim = {
-    enable =
-      lib.mkEnableOption "dev-config Neovim setup"
-      // {
-        default = true;
-      };
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable dev-config Neovim setup";
+    };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -66,26 +66,26 @@
 
     # Install LSP servers, formatters, and build tools via Nix
     # This allows lazy-nix-helper to disable Mason on Nix systems
-    home.packages = with pkgs; [
+    home.packages = [
       # LSP servers
-      nodePackages.typescript-language-server # TypeScript/JavaScript
-      pyright # Python
-      lua-language-server # Lua
+      pkgs.nodePackages.typescript-language-server # TypeScript/JavaScript
+      pkgs.pyright # Python
+      pkgs.lua-language-server # Lua
 
       # Formatters
-      stylua # Lua formatter
-      nodePackages.prettier # JS/TS/JSON/YAML/Markdown
-      ruff # Python formatter + linter
+      pkgs.stylua # Lua formatter
+      pkgs.nodePackages.prettier # JS/TS/JSON/YAML/Markdown
+      pkgs.ruff # Python formatter + linter
 
       # Build tools for Neovim plugins
-      gnumake
-      gcc
-      pkg-config
-      nodejs
-      imagemagick
+      pkgs.gnumake
+      pkgs.gcc
+      pkgs.pkg-config
+      pkgs.nodejs
+      pkgs.imagemagick
 
       # Mermaid CLI (for mermaid diagram rendering)
-      nodePackages."@mermaid-js/mermaid-cli"
+      pkgs.nodePackages."@mermaid-js/mermaid-cli"
     ];
 
     # Symlink Neovim configuration if source is provided

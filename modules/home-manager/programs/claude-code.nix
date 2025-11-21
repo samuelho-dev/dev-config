@@ -3,18 +3,17 @@
   lib,
   pkgs,
   ...
-}:
-with lib; let
+}: let
   cfg = config.dev-config.claude-code;
 in {
   options.dev-config.claude-code = {
-    enable = mkEnableOption "Claude Code CLI with multi-profile authentication";
+    enable = lib.mkEnableOption "Claude Code CLI with multi-profile authentication";
 
-    profiles = mkOption {
-      type = types.attrsOf (types.submodule {
+    profiles = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule {
         options = {
-          configDir = mkOption {
-            type = types.str;
+          configDir = lib.mkOption {
+            type = lib.types.str;
             description = "Configuration directory for this profile";
             example = "~/.claude-work";
           };
@@ -35,11 +34,11 @@ in {
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # Create shell aliases for each profile
     # OAuth tokens loaded via sops in environment, not in aliases
     programs.zsh.shellAliases =
-      mapAttrs
+      lib.mapAttrs
       (name: profile: "CLAUDE_CONFIG_DIR=${profile.configDir} command claude")
       cfg.profiles;
 
@@ -66,18 +65,18 @@ in {
 
         # Validate profile exists
         case "$profile" in
-          ${concatStringsSep " | " (attrNames cfg.profiles)})
+          ${lib.concatStringsSep " | " (lib.attrNames cfg.profiles)})
             ;;
           *)
             echo "Error: Unknown profile '$profile'"
-            echo "Available profiles: ${concatStringsSep ", " (attrNames cfg.profiles)}"
+            echo "Available profiles: ${lib.concatStringsSep ", " (lib.attrNames cfg.profiles)}"
             return 1
             ;;
         esac
 
         # Get profile config directory
         case "$profile" in
-          ${concatStringsSep "\n          " (mapAttrsToList (name: profile: "${name}) export CLAUDE_CONFIG_DIR=\"${profile.configDir}\" ;;") cfg.profiles)}
+          ${lib.concatStringsSep "\n          " (lib.mapAttrsToList (name: profile: "${name}) export CLAUDE_CONFIG_DIR=\"${profile.configDir}\" ;;") cfg.profiles)}
         esac
 
         echo "✓ Switched to Claude profile: $profile"
@@ -87,7 +86,7 @@ in {
       # List available profiles
       list-claude-profiles() {
         echo "Available Claude Code profiles:"
-        ${concatStringsSep "\n        " (mapAttrsToList (name: profile: "echo '  - ${name}: ${profile.configDir}'") cfg.profiles)}
+        ${lib.concatStringsSep "\n        " (lib.mapAttrsToList (name: profile: "echo '  - ${name}: ${profile.configDir}'") cfg.profiles)}
       }
 
       # Show current profile
@@ -103,7 +102,7 @@ in {
       claude-profile-status() {
         echo "Checking authentication status for all profiles..."
         echo ""
-        ${concatStringsSep "\n        " (mapAttrsToList (name: profile: ''
+        ${lib.concatStringsSep "\n        " (lib.mapAttrsToList (name: profile: ''
           echo "Profile: ${name} (${profile.configDir})"
           if CLAUDE_CONFIG_DIR="${profile.configDir}" claude /status 2>&1 | grep -q "Authenticated"; then
             echo "  ✓ Authenticated"
@@ -118,7 +117,7 @@ in {
 
     # Ensure config directories exist
     home.activation.createClaudeProfileDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      ${concatStringsSep "\n      " (mapAttrsToList (name: profile: "$DRY_RUN_CMD mkdir -p ${profile.configDir}") cfg.profiles)}
+      ${lib.concatStringsSep "\n      " (lib.mapAttrsToList (name: profile: "$DRY_RUN_CMD mkdir -p ${profile.configDir}") cfg.profiles)}
     '';
   };
 }

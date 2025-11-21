@@ -1,16 +1,16 @@
 {
   config,
-  pkgs,
   lib,
+  pkgs,
   inputs,
   ...
 }: {
   options.dev-config.tmux = {
-    enable =
-      lib.mkEnableOption "dev-config tmux setup"
-      // {
-        default = true;
-      };
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable dev-config tmux setup";
+    };
 
     package = lib.mkOption {
       type = lib.types.package;
