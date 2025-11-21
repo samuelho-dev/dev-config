@@ -1,23 +1,49 @@
 {
   config,
   pkgs,
+  username ? builtins.getEnv "USER",
+  homeDirectory ? builtins.getEnv "HOME",
   ...
-}: let
-  # Import machine-specific user configuration
-  # NOTE: user.nix must be staged in Git (git add -f user.nix) for flake evaluation
-  # but gitignored to prevent accidental commits. This is a Nix flake limitation.
-  user = import ./user.nix;
-in {
+}: {
   # Import dev-config Home Manager module
   imports = [./modules/home-manager];
 
   # Home Manager needs to know your username and home directory
-  # Loaded from user.nix (machine-specific, gitignored)
+  # Passed via extraSpecialArgs from flake.nix
   home = {
-    username = user.username;
-    homeDirectory = user.homeDirectory;
+    username = username;
+    homeDirectory = homeDirectory;
     stateVersion = "24.05"; # Don't change this
   };
+
+  # Configure sops-nix for secrets management
+  sops = {
+    defaultSopsFile = ./secrets/default.yaml;
+    age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+
+    # macOS-compatible paths (Home Manager handles these automatically on macOS)
+    # On macOS, secrets are placed in XDG_RUNTIME_DIR or Nix store
+    defaultSymlinkPath = "${config.home.homeDirectory}/.local/share/sops-nix/secrets";
+    defaultSecretsMountPoint = "${config.home.homeDirectory}/.local/share/sops-nix/secrets.d";
+
+    # Define secrets (create secrets/default.yaml with sops)
+    secrets = {
+      "git/userName" = {};
+      "git/userEmail" = {};
+      "git/signingKey" = {};
+      "claude/oauth-token" = {};
+      "ai/anthropic-key" = {};
+      "ai/openai-key" = {};
+      "ai/google-ai-key" = {};
+      "ai/litellm-master-key" = {};
+    };
+  };
+
+  # Add sops and age packages for secrets management
+  home.packages = with pkgs; [
+    sops
+    age
+  ];
 
   # Enable dev-config modules (all enabled by default)
   dev-config = {

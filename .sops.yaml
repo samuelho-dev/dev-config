@@ -1,0 +1,18 @@
+# SOPS Configuration for dev-config secrets management
+#
+# Setup instructions:
+# 1. Generate age key: age-keygen -o ~/.config/sops/age/keys.txt
+# 2. Get public key: age-keygen -y ~/.config/sops/age/keys.txt
+# 3. Replace YOUR_AGE_PUBLIC_KEY below with the output
+# 4. Create secrets: sops secrets/default.yaml
+# 5. Stage for Nix flakes: git add -f .sops.yaml secrets/default.yaml
+
+keys:
+  # Age public key for samuelho
+  - &personal age1y2zrsu82k5fuglxsd7mkkgph682zxfxmzeuprge6sqe8fq8g8ajqcdg988
+
+creation_rules:
+  - path_regex: secrets/default\.yaml$
+    key_groups:
+      - age:
+          - *personal

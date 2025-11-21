@@ -18,72 +18,51 @@ in {
             description = "Configuration directory for this profile";
             example = "~/.claude-work";
           };
-
-          opReference = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "1Password reference for OAuth token (e.g., op://Personal/Claude Work/oauth-token)";
-            example = "op://Personal/Claude Code Work/oauth-token";
-          };
-
-          apiKey = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Optional API key reference (alternative to OAuth)";
-            example = "op://Personal/Claude API/key";
-          };
         };
       });
       default = {
         claude = {
           configDir = "~/.claude";
-          opReference = "op://Dev/ai/claude-code-oauth-token";
         };
         claude-2 = {
           configDir = "~/.claude-2";
-          opReference = "op://Dev/ai/claude-code-oauth-token-2";
         };
         claude-work = {
           configDir = "~/.claude-work";
-          opReference = "op://Dev/ai/claude-code-oauth-token-work";
         };
       };
-      description = "Claude Code authentication profiles with 1Password integration";
+      description = "Claude Code authentication profiles";
     };
   };
 
   config = mkIf cfg.enable {
-    # Create shell aliases for each profile with OAuth token injection from 1Password
-    # This is required for multi-account support since Claude Code stores tokens globally in Keychain
+    # Create shell aliases for each profile
+    # OAuth tokens loaded via sops in environment, not in aliases
     programs.zsh.shellAliases =
       mapAttrs
-      (
-        name: profile: let
-          # Inject OAuth token from 1Password if configured
-          authEnv =
-            if profile.opReference != null
-            then "CLAUDE_CODE_OAUTH_TOKEN=$(op read '${profile.opReference}' 2>/dev/null || echo '')"
-            else "";
-
-          # Set config directory
-          configEnv = "CLAUDE_CONFIG_DIR=${profile.configDir}";
-
-          # Combine environment variables
-          fullEnv =
-            if authEnv != ""
-            then "${authEnv} ${configEnv}"
-            else configEnv;
-        in "${fullEnv} command claude"
-      )
+      (name: profile: "CLAUDE_CONFIG_DIR=${profile.configDir} command claude")
       cfg.profiles;
 
-    # Add profile management helper functions
-    programs.zsh.initExtra = ''
+    # Load OAuth tokens from sops secrets into environment
+    programs.zsh.initExtra = let
+      # Check if sops secrets are configured for Claude
+      sopsEnabled = config.sops.secrets ? "claude/oauth-token";
+
+      # Load tokens from sops if available
+      tokenLoader =
+        if sopsEnabled
+        then ''
+          # Load Claude OAuth tokens from sops
+          export CLAUDE_CODE_OAUTH_TOKEN="$(cat ${config.sops.secrets."claude/oauth-token".path} 2>/dev/null || echo "")"
+        ''
+        else "# No sops secrets configured for Claude OAuth tokens";
+    in ''
       # Claude Code Profile Management
+      ${tokenLoader}
 
       # Switch profile (persistent in current shell session)
       switch-claude() {
-        local profile="''${1:=default}"
+        local profile="''${1:=claude}"
 
         # Validate profile exists
         case "$profile" in

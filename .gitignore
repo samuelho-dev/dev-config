@@ -23,16 +23,22 @@ zsh/.zsh_history
 
 # Machine-specific configuration (managed locally, not in repo)
 .zshrc.local
+.envrc.local
 
 # Machine-specific secrets (SSH keys, Git config)
-# See secrets.nix.example for template
+# DEPRECATED: Migrated to sops-nix (secrets/default.yaml)
 secrets.nix
 .config/home-manager/secrets.nix
 **/secrets.nix
 
 # Machine-specific user configuration
-# See user.nix.example for template
+# DEPRECATED: Now uses environment variables (USER/HOME)
 user.nix
+
+# sops-nix encrypted secrets (stage specific files with git add -f)
+# Stage these for Nix flakes: .sops.yaml, secrets/default.yaml
+secrets/*.yaml
+!secrets/*.yaml.example
 
 # Backup files created by scripts
 *.backup_*

@@ -3,20 +3,13 @@
   pkgs,
   lib,
   ...
-}: let
-  # Import secrets.nix if it exists (for git user config and SSH signing key)
-  secretsPath = "${config.xdg.configHome}/home-manager/secrets.nix";
-  secrets =
-    if builtins.pathExists secretsPath
-    then import secretsPath
-    else {};
-in {
+}: {
   options.dev-config.git = {
-    enable =
-      lib.mkEnableOption "dev-config git setup"
-      // {
-        default = true;
-      };
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Enable dev-config git setup";
+    };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -27,20 +20,20 @@ in {
     # Core git configuration
     userName = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = secrets.gitUserName or null;
+      default = null;
       description = ''
         Git user name (required for commits).
-        Automatically imported from ~/.config/home-manager/secrets.nix if present.
+        If null and sops secrets enabled, will read from sops.secrets."git/userName".
       '';
       example = "John Doe";
     };
 
     userEmail = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
-      default = secrets.gitUserEmail or null;
+      default = null;
       description = ''
         Git user email (required for commits).
-        Automatically imported from ~/.config/home-manager/secrets.nix if present.
+        If null and sops secrets enabled, will read from sops.secrets."git/userEmail".
       '';
       example = "john@example.com";
     };
@@ -69,10 +62,10 @@ in {
 
       key = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
-        default = secrets.sshSigningKey or null;
+        default = null;
         description = ''
           SSH public key for signing.
-          Automatically imported from ~/.config/home-manager/secrets.nix if present.
+          If null and sops secrets enabled, will read from sops.secrets."git/signingKey".
           Example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... your-email@example.com"
         '';
       };
@@ -104,27 +97,33 @@ in {
     };
   };
 
-  config = lib.mkIf config.dev-config.git.enable {
+  config = lib.mkIf config.dev-config.git.enable (let
+    cfg = config.dev-config.git;
+
+    # Check if sops secrets are configured
+    sopsEnabled = config.sops.secrets ? "git/userName";
+  in {
     programs.git = {
       enable = true;
-      package = config.dev-config.git.package;
+      package = cfg.package;
 
-      userName = lib.mkIf (config.dev-config.git.userName != null) config.dev-config.git.userName;
-      userEmail = lib.mkIf (config.dev-config.git.userEmail != null) config.dev-config.git.userEmail;
+      # Use explicit config if provided, otherwise will be set via includeIf from sops
+      userName = lib.mkIf (cfg.userName != null) cfg.userName;
+      userEmail = lib.mkIf (cfg.userEmail != null) cfg.userEmail;
 
       # SSH commit signing configuration
-      signing = lib.mkIf config.dev-config.git.signing.enable {
-        key = config.dev-config.git.signing.key;
-        signByDefault = config.dev-config.git.signing.signByDefault;
+      signing = lib.mkIf cfg.signing.enable {
+        key = lib.mkIf (cfg.signing.key != null) cfg.signing.key;
+        signByDefault = cfg.signing.signByDefault;
       };
 
       extraConfig =
         {
-          init.defaultBranch = config.dev-config.git.defaultBranch;
-          core.editor = config.dev-config.git.editor;
+          init.defaultBranch = cfg.defaultBranch;
+          core.editor = cfg.editor;
 
           # SSH signing with 1Password
-          gpg = lib.mkIf (config.dev-config.git.signing.enable && config.dev-config.git.signing.format == "ssh") {
+          gpg = lib.mkIf (cfg.signing.enable && cfg.signing.format == "ssh") {
             format = "ssh";
             ssh.program =
               if pkgs.stdenv.isDarwin
@@ -133,11 +132,45 @@ in {
           };
 
           # Prefer SSH URLs for GitHub (auto-rewrite HTTPS to SSH)
-          url = lib.mkIf config.dev-config.git.preferSSH {
+          url = lib.mkIf cfg.preferSSH {
             "ssh://git@github.com/".insteadOf = "https://github.com/";
           };
+
+          # Include git config from sops secrets if enabled
+          # This allows secrets to be read at runtime, not evaluation time
+          include = lib.mkIf sopsEnabled {
+            path = "${config.home.homeDirectory}/.config/git/sops-config";
+          };
         }
-        // config.dev-config.git.extraConfig;
+        // cfg.extraConfig;
     };
-  };
+
+    # Create git config file from sops secrets (read at activation time)
+    # Must run after sops-nix activation creates the secret files
+    home.activation.createGitSopsConfig = lib.mkIf sopsEnabled (
+      lib.hm.dag.entryAfter ["sops-nix" "writeBoundary"] ''
+                mkdir -p ${config.home.homeDirectory}/.config/git
+
+                # Write git config from sops secrets
+                if [ -f ${config.sops.secrets."git/userName".path} ]; then
+                  userName=$(cat ${config.sops.secrets."git/userName".path})
+                  userEmail=$(cat ${config.sops.secrets."git/userEmail".path})
+
+                  cat > ${config.home.homeDirectory}/.config/git/sops-config << EOF
+        [user]
+          name = $userName
+          email = $userEmail
+        EOF
+
+                  # Add signing key if configured
+                  ${lib.optionalString (config.sops.secrets ? "git/signingKey") ''
+          signingKey=$(cat ${config.sops.secrets."git/signingKey".path})
+          echo "  signingkey = $signingKey" >> ${config.home.homeDirectory}/.config/git/sops-config
+        ''}
+                else
+                  echo "Warning: git/userName secret not found at ${config.sops.secrets."git/userName".path}"
+                fi
+      ''
+    );
+  });
 }
