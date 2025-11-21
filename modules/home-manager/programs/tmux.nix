@@ -88,6 +88,14 @@
         yank # tmux-yank (clipboard integration)
         tmux-fzf # sainnhe/tmux-fzf (fuzzy finder)
       ];
+
+      # Extra configuration for yazi image preview support
+      extraConfig = ''
+        # Enable passthrough for yazi image previews
+        set -g allow-passthrough on
+        set -ga update-environment TERM
+        set -ga update-environment TERM_PROGRAM
+      '';
     };
 
     # Symlink tmux configuration if source is provided

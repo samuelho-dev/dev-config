@@ -10,8 +10,11 @@
     ./programs/tmux.nix
     ./programs/zsh.nix
     ./programs/git.nix
+    ./programs/npm.nix
     ./programs/ssh.nix
     ./programs/ghostty.nix
+    ./programs/yazi.nix
+    ./programs/claude-code.nix
     ./services/direnv.nix
     ./services/ai-env.nix
   ];

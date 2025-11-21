@@ -122,6 +122,30 @@ else
   log_warn "SSH passphrase (password field) not found in 1Password item $SSH_SECRETS_ITEM"
 fi
 
+# NPM Publishing Tokens
+NPM_ITEM="2rab3yvvug2zlr6klynxpztsua"  # npm.js item
+GITHUB_ITEM="vtcsjphterploxdgzvsu3rm7le"  # Github item
+
+log_info "Fetching NPM publishing tokens from 1Password..."
+
+# NPM_TOKEN (for registry.npmjs.org)
+if op item get "$NPM_ITEM" --vault "$AI_SECRETS_VAULT" --fields label=ACCESS_TOKEN --reveal >/dev/null 2>&1; then
+  op item get "$NPM_ITEM" --vault "$AI_SECRETS_VAULT" --fields label=ACCESS_TOKEN --reveal > "$SECRETS_DIR/NPM_TOKEN"
+  chmod 600 "$SECRETS_DIR/NPM_TOKEN"
+  log_success "✓ NPM_TOKEN"
+else
+  log_warn "Field 'ACCESS_TOKEN' not found in npm.js item"
+fi
+
+# GITHUB_PACKAGES_TOKEN (for npm.pkg.github.com)
+if op item get "$GITHUB_ITEM" --vault "$AI_SECRETS_VAULT" --fields label=GITHUB_PACKAGES_TOKEN --reveal >/dev/null 2>&1; then
+  op item get "$GITHUB_ITEM" --vault "$AI_SECRETS_VAULT" --fields label=GITHUB_PACKAGES_TOKEN --reveal > "$SECRETS_DIR/GITHUB_PACKAGES_TOKEN"
+  chmod 600 "$SECRETS_DIR/GITHUB_PACKAGES_TOKEN"
+  log_success "✓ GITHUB_PACKAGES_TOKEN"
+else
+  log_warn "Field 'GITHUB_PACKAGES_TOKEN' not found in Github item"
+fi
+
 # Add more secrets as needed:
 # op item get "$AI_SECRETS_ITEM" --vault "$AI_SECRETS_VAULT" --fields label=YOUR_FIELD --reveal > "$SECRETS_DIR/YOUR_ENV_VAR"
 

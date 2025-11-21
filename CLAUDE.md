@@ -10,6 +10,7 @@ This is a **centralized development configuration repository** using **Nix + Hom
 - **Neovim** - Text editor with LSP, completion, git integration
 - **Tmux** - Terminal multiplexer with plugin ecosystem
 - **Ghostty** - GPU-accelerated terminal emulator
+- **Yazi** - Blazing-fast terminal file manager with rich previews
 - **Zsh** - Shell with Oh My Zsh framework + Powerlevel10k theme
 - **Git** - Version control with 1Password SSH signing
 - **Docker** - Container platform (NixOS module only)
@@ -114,6 +115,7 @@ dev-config/
 │   │   ├── programs/
 │   │   │   ├── neovim.nix             # Neovim configuration + symlink
 │   │   │   ├── tmux.nix               # Tmux configuration + symlink
+│   │   │   ├── yazi.nix               # Yazi file manager (declarative)
 │   │   │   ├── zsh.nix                # Zsh configuration + symlink
 │   │   │   ├── git.nix                # Git configuration
 │   │   │   ├── ssh.nix                # SSH + 1Password agent
@@ -128,7 +130,7 @@ dev-config/
 │       └── users.nix                  # User account management
 ├── scripts/
 │   └── install.sh                     # Bootstrap script (installs Nix + Home Manager)
-├── nvim/, tmux/, zsh/, ghostty/       # Actual dotfiles (managed by Home Manager)
+├── nvim/, tmux/, yazi/, zsh/, ghostty/  # Actual dotfiles (managed by Home Manager)
 └── docs/nix/                          # Nix documentation (9 guides)
 ```
 
@@ -273,6 +275,7 @@ dev-config = {
 - **[nvim/lua/plugins/CLAUDE.md](nvim/lua/plugins/CLAUDE.md)** - Plugin specifications and lazy loading
 - **[nvim/lua/plugins/custom/CLAUDE.md](nvim/lua/plugins/custom/CLAUDE.md)** - Custom utility modules
 - **[tmux/CLAUDE.md](tmux/CLAUDE.md)** - Tmux configuration and TPM plugins
+- **[yazi/CLAUDE.md](yazi/CLAUDE.md)** - Yazi file manager configuration
 - **[zsh/CLAUDE.md](zsh/CLAUDE.md)** - Zsh configuration, Oh My Zsh, Powerlevel10k
 - **[ghostty/CLAUDE.md](ghostty/CLAUDE.md)** - Ghostty terminal configuration
 
@@ -467,6 +470,113 @@ export LITELLM_MASTER_KEY="..."      # LiteLLM proxy (optional)
 - [docs/nix/04-opencode-integration.md](docs/nix/04-opencode-integration.md) - OpenCode setup
 - [docs/nix/05-1password-setup.md](docs/nix/05-1password-setup.md) - 1Password configuration
 - [docs/nix/07-litellm-proxy-setup.md](docs/nix/07-litellm-proxy-setup.md) - LiteLLM team mode
+
+## Claude Code Multi-Profile Authentication
+
+This repository includes **declarative multi-profile authentication** for Claude Code CLI, allowing you to manage multiple Claude accounts with different aliases.
+
+### Configured Profiles
+
+Three profiles are configured by default:
+
+- **`claude`** (default) - Primary account using `~/.claude`
+- **`claude-2`** - Secondary account using `~/.claude-2`
+- **`claude-work`** - Work account using `~/.claude-work`
+
+### Usage
+
+**Shell aliases with 1Password OAuth injection:**
+```bash
+# Each alias automatically injects OAuth token from 1Password
+claude /status         # Default profile
+claude-2 /status       # Profile 2
+claude-work /status    # Work profile
+```
+
+**Profile management functions:**
+```bash
+switch-claude work           # Switch to work profile (session-wide)
+list-claude-profiles         # Show all available profiles
+current-claude-profile       # Show active profile
+claude-profile-status        # Check authentication status for all profiles
+```
+
+### Setup Requirements
+
+1. **Generate long-lived OAuth tokens** for each profile:
+   ```bash
+   CLAUDE_CONFIG_DIR=~/.claude claude setup-token
+   CLAUDE_CONFIG_DIR=~/.claude-2 claude setup-token
+   CLAUDE_CONFIG_DIR=~/.claude-work claude setup-token
+   ```
+
+2. **Store tokens in 1Password "ai" item (Dev vault):**
+   - Field: "claude-code-oauth-token" → value: `sk-ant-oat01-...` (may already exist)
+   - Field: "claude-code-oauth-token-2" → value: `sk-ant-oat01-...`
+   - Field: "claude-code-oauth-token-work" → value: `sk-ant-oat01-...`
+
+3. **Authenticate to 1Password CLI:**
+   ```bash
+   op signin
+   ```
+
+### Configuration
+
+**Module location:** `modules/home-manager/programs/claude-code.nix`
+
+**Declarative profile definition:**
+```nix
+dev-config.claude-code = {
+  enable = true;
+  profiles = {
+    default = {
+      configDir = "~/.claude";
+      opReference = "op://Dev/ai/claude-code-oauth-token";
+    };
+    claude-2 = {
+      configDir = "~/.claude-2";
+      opReference = "op://Dev/ai/claude-code-oauth-token-2";
+    };
+    work = {
+      configDir = "~/.claude-work";
+      opReference = "op://Dev/ai/claude-code-oauth-token-work";
+    };
+  };
+};
+```
+
+### How It Works
+
+Each profile alias:
+1. Sets `CLAUDE_CONFIG_DIR` to isolate configuration
+2. Injects `CLAUDE_CODE_OAUTH_TOKEN` via `op read` from 1Password
+3. Launches `claude` CLI with isolated authentication
+
+**Security benefits:**
+- OAuth tokens never stored on disk
+- Tokens retrieved on-demand from 1Password
+- Each profile has independent authentication state
+- Safe for version control (no secrets in config files)
+
+### Adding More Profiles
+
+Edit `modules/home-manager/programs/claude-code.nix` and add to profiles:
+
+```nix
+profiles = {
+  # ... existing profiles ...
+
+  client-xyz = {
+    configDir = "~/.claude-client-xyz";
+    opReference = "op://Personal/Claude Client XYZ/oauth-token";
+  };
+};
+```
+
+Then apply changes:
+```bash
+home-manager switch --flake ~/Projects/dev-config
+```
 
 ## DevPod Integration (Remote Development)
 

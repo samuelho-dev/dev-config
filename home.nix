@@ -39,10 +39,17 @@ in {
     # Disable neovim module temporarily (nixpkgs compatibility)
     neovim.enable = false;
 
+    # Enable yazi terminal file manager (with full preview support)
+    yazi.enable = true;
+
+    # Enable Claude Code multi-profile authentication (default, claude-2, work)
+    claude-code.enable = true;
+
     # Optional: Disable specific programs
     # tmux.enable = false;
     # ssh.enable = false;
     # direnv.enable = false;
+    # yazi.enable = false;
 
     # Optional: Add extra packages
     # packages.extraPackages = with pkgs; [ kubectl k9s ];

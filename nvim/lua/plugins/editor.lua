@@ -50,6 +50,56 @@ return {
     end,
   },
 
+  -- Yazi terminal file manager integration
+  {
+    'mikavilpas/yazi.nvim',
+    event = 'VeryLazy',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+    },
+    keys = {
+      {
+        '<leader>fy',
+        '<cmd>Yazi<cr>',
+        desc = 'Open [Y]azi file manager',
+      },
+      {
+        '<leader>fw',
+        '<cmd>Yazi cwd<cr>',
+        desc = 'Open [Y]azi in [W]orking directory',
+      },
+      {
+        '<leader>fY',
+        '<cmd>Yazi toggle<cr>',
+        desc = 'Resume last [Y]azi session',
+      },
+    },
+    opts = {
+      -- Optional: Configure yazi.nvim behavior
+      open_for_directories = false, -- Use neo-tree for directories by default
+      keymaps = {
+        show_help = '<f1>',
+        open_file_in_vertical_split = '<c-v>',
+        open_file_in_horizontal_split = '<c-x>',
+        open_file_in_tab = '<c-t>',
+        grep_in_directory = '<c-s>', -- Telescope live_grep in yazi cwd
+        replace_in_directory = '<c-g>',
+        cycle_open_buffers = '<tab>',
+        copy_relative_path_to_selected_files = '<c-y>',
+      },
+      integrations = {
+        --- Use telescope for directory search with <c-s>
+        grep_in_directory = function(directory)
+          require('telescope.builtin').live_grep {
+            cwd = directory,
+          }
+        end,
+      },
+      floating_window_scaling_factor = 0.9,
+      yazi_floating_window_border = 'rounded',
+    },
+  },
+
   -- Fuzzy Finder (files, lsp, etc)
   {
     'nvim-telescope/telescope.nvim',
