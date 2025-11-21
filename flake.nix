@@ -52,71 +52,11 @@
           inherit system;
         });
 
-    # Shared package list (DRY - defined once, used everywhere)
-    getDevPackages = pkgs:
-      with pkgs; [
-        # Core development tools
-        git
-        zsh
-        tmux
-        docker
-        neovim
-
-        # CLI utilities
-        fzf
-        ripgrep
-        fd
-        bat
-        lazygit
-        gitmux
-
-        # Runtimes
-        nodejs_20
-        bun
-        python3
-
-        # Build dependencies
-        gnumake
-        pkg-config
-        imagemagick
-
-        # Kubernetes ecosystem
-        kubectl
-        kubernetes-helm
-        helm-docs
-        k9s
-        kind
-        argocd
-
-        # Cloud providers
-        awscli2
-        doctl
-
-        # Infrastructure as Code
-        terraform
-        terraform-docs
-
-        # Security & Compliance
-        gitleaks
-        kubeseal
-        sops
-
-        # Data processing
-        jq
-        yq-go
-
-        # CI/CD & Git
-        gh
-        act
-        pre-commit
-
-        # AI development tools
-        _1password-cli
-
-        # Utilities
-        direnv
-        nix-direnv
-      ];
+    # Import centralized package definitions (DRY - single source of truth)
+    getDevPackages = pkgs: let
+      devPkgs = import ./pkgs {inherit pkgs;};
+    in
+      devPkgs.all devPkgs;
   in {
     # Formatter for pre-commit hooks
     formatter = forAllSystems ({pkgs, ...}: pkgs.alejandra);
@@ -148,7 +88,7 @@
         config = {
           Cmd = ["${pkgs.zsh}/bin/zsh"];
           Env = [
-            "PATH=${nixpkgs.lib.makeBinPath (getDevPackages pkgs)}:/bin:/usr/bin"
+            "PATH=${pkgs.lib.makeBinPath (getDevPackages pkgs)}:/bin:/usr/bin"
             "HOME=/home/vscode"
             "SHELL=${pkgs.zsh}/bin/zsh"
           ];
@@ -177,17 +117,35 @@
 
     # Development shells for quick environment setup
     devShells = forAllSystems ({pkgs, ...}: {
-      default = pkgs.mkShell {
-        buildInputs = [pkgs.home-manager];
+      # Full development environment (40+ tools)
+      default = pkgs.mkShellNoCC {
+        packages = getDevPackages pkgs ++ [pkgs.home-manager];
+
+        env = {
+          EDITOR = "nvim";
+          NIXPKGS_ALLOW_UNFREE = "1";
+        };
+
         shellHook = ''
           echo "📦 Dev-config development environment"
           echo ""
-          echo "Available commands:"
-          echo "  home-manager switch --flake . - Apply configuration"
-          echo "  nix flake update                - Update all inputs"
-          echo "  nix flake check                 - Validate configuration"
+          echo "Tool categories loaded:"
+          echo "  • Core: git, zsh, tmux, neovim, fzf, ripgrep"
+          echo "  • Runtimes: nodejs_20, bun, python3"
+          echo "  • Kubernetes: kubectl, helm, k9s, kind, argocd"
+          echo "  • Cloud: aws, terraform, doctl"
+          echo "  • Security: gitleaks, kubeseal, sops"
           echo ""
+          echo "Commands:"
+          echo "  home-manager switch --flake .   # Apply configuration"
+          echo "  nix flake update                 # Update dependencies"
         '';
+      };
+
+      # Minimal shell for Home Manager operations only
+      minimal = pkgs.mkShellNoCC {
+        packages = [pkgs.home-manager pkgs.git];
+        shellHook = ''echo "📦 Minimal Home Manager environment"'';
       };
     });
 
