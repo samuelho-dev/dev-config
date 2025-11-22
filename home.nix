@@ -86,8 +86,8 @@
     # Enable yazi terminal file manager (with full preview support)
     yazi.enable = true;
 
-    # Claude Code multi-profile authentication with sops-nix OAuth token management
-    claude-code.enable = true;
+    # Claude Code multi-profile authentication disabled (token refresh not supported with sops-nix)
+    claude-code.enable = false;
 
     # NPM authentication (tokens managed via sops-nix)
     # Add npm/token and npm/github-token to secrets/default.yaml
