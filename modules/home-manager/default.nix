@@ -16,7 +16,7 @@
     ./programs/yazi.nix
     ./programs/claude-code.nix
     ./services/direnv.nix
-    ./services/ai-env.nix
+    ./services/sops-env.nix
   ];
 
   # Global dev-config options for Home Manager

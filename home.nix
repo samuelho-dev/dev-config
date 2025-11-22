@@ -57,6 +57,12 @@
     pkgs.age
   ];
 
+  # Set SOPS_AGE_KEY_FILE for manual sops CLI usage
+  # This allows `sops --decrypt` to work without explicit key file parameter
+  home.sessionVariables = {
+    SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+  };
+
   # Enable dev-config modules (all enabled by default)
   dev-config = {
     enable = true;
