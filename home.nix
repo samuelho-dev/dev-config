@@ -33,11 +33,6 @@
       "git/userEmail" = {};
       "git/signingKey" = {};
 
-      # Claude Code OAuth tokens (used by claude-code.nix module)
-      "claude/oauth-token" = {};
-      "claude/oauth-token-2" = {};
-      "claude/oauth-token-work" = {};
-
       # AI service API keys (optional, for manual use)
       "ai/anthropic-key" = {};
       "ai/openai-key" = {};
@@ -86,8 +81,8 @@
     # Enable yazi terminal file manager (with full preview support)
     yazi.enable = true;
 
-    # Claude Code multi-profile authentication disabled (token refresh not supported with sops-nix)
-    claude-code.enable = false;
+    # Claude Code multi-profile authentication (native OAuth token management)
+    claude-code.enable = true;
 
     # NPM authentication (tokens managed via sops-nix)
     # Add npm/token and npm/github-token to secrets/default.yaml

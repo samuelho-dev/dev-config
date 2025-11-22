@@ -36,28 +36,16 @@ in {
 
   config = lib.mkIf cfg.enable {
     # Create shell aliases for each profile
-    # OAuth tokens loaded via sops in environment, not in aliases
+    # Claude Code manages its own OAuth tokens in each profile's .claude.json
     programs.zsh.shellAliases =
       lib.mapAttrs
       (name: profile: "CLAUDE_CONFIG_DIR=${profile.configDir} command claude")
       cfg.profiles;
 
-    # Load OAuth tokens from sops secrets into environment
-    programs.zsh.initContent = let
-      # Check if sops secrets are configured for Claude
-      sopsEnabled = config.sops.secrets ? "claude/oauth-token";
-
-      # Load tokens from sops if available
-      tokenLoader =
-        if sopsEnabled
-        then ''
-          # Load Claude OAuth tokens from sops
-          export CLAUDE_CODE_OAUTH_TOKEN="$(cat ${config.sops.secrets."claude/oauth-token".path} 2>/dev/null || echo "")"
-        ''
-        else "# No sops secrets configured for Claude OAuth tokens";
-    in ''
+    # Profile management functions
+    # No token injection - Claude handles OAuth natively
+    programs.zsh.initContent = ''
       # Claude Code Profile Management
-      ${tokenLoader}
 
       # Switch profile (persistent in current shell session)
       switch-claude() {
@@ -104,10 +92,10 @@ in {
         echo ""
         ${lib.concatStringsSep "\n        " (lib.mapAttrsToList (name: profile: ''
           echo "Profile: ${name} (${profile.configDir})"
-          if CLAUDE_CONFIG_DIR="${profile.configDir}" claude /status 2>&1 | grep -q "Authenticated"; then
+          if [ -f "${profile.configDir}/.claude.json" ] && grep -q "oauthAccount" "${profile.configDir}/.claude.json" 2>/dev/null; then
             echo "  ✓ Authenticated"
           else
-            echo "  ✗ Not authenticated (run: ${name} /login)"
+            echo "  ✗ Not authenticated (run: CLAUDE_CONFIG_DIR=${profile.configDir} claude setup-token)"
           fi
           echo ""
         '')

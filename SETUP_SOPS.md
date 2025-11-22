@@ -55,10 +55,6 @@ git:
   userEmail: "your@example.com"
   signingKey: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... your@example.com"
 
-# Claude Code OAuth tokens
-claude:
-  oauth-token: "sk-ant-oat01-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
 # AI service API keys
 ai:
   anthropic-key: "sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
@@ -120,8 +116,8 @@ ls -la /run/user/1000/secrets/
 # git-signingKey
 # git-userName
 # git-userEmail
-# claude-oauth-token
 # ai-anthropic-key
+# npm-token
 # etc.
 
 # Test git configuration
@@ -193,23 +189,6 @@ New pattern:
 # Add to secrets/default.yaml instead
 sops secrets/default.yaml
 ```
-
-### From 1Password `op read`
-
-Old pattern:
-```nix
-# Shell alias with op read (INSECURE - exposed in process list)
-"CLAUDE_CODE_OAUTH_TOKEN=$(op read 'op://Dev/ai/token')"
-```
-
-New pattern:
-```yaml
-# secrets/default.yaml
-claude:
-  oauth-token: "sk-ant-oat01-xxx..."
-```
-
-Token is loaded via sops into environment automatically.
 
 ## Next Steps
 

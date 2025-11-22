@@ -156,9 +156,7 @@ fi
 # Critical for git worktree workflows with multiple Claude instances
 export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1
 
-# Claude Code work profile alias
-alias claude-work='CLAUDE_CONFIG_DIR=~/.claude_work claude'
-alias claude-2='CLAUDE_CONFIG_DIR=~/.claude_2 claude'
+# Claude Code multi-profile aliases managed by Home Manager (see modules/home-manager/programs/claude-code.nix)
 
 # Source machine-specific configuration (gitignored)
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"

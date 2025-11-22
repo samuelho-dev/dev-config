@@ -513,9 +513,9 @@ Three profiles are configured by default:
 
 ### Usage
 
-**Shell aliases with 1Password OAuth injection:**
+**Shell aliases for profile switching:**
 ```bash
-# Each alias automatically injects OAuth token from 1Password
+# Each alias uses a separate profile directory
 claude /status         # Default profile
 claude-2 /status       # Profile 2
 claude-work /status    # Work profile
@@ -531,22 +531,14 @@ claude-profile-status        # Check authentication status for all profiles
 
 ### Setup Requirements
 
-1. **Generate long-lived OAuth tokens** for each profile:
+1. **Authenticate each profile once** (generates OAuth tokens):
    ```bash
    CLAUDE_CONFIG_DIR=~/.claude claude setup-token
    CLAUDE_CONFIG_DIR=~/.claude-2 claude setup-token
    CLAUDE_CONFIG_DIR=~/.claude-work claude setup-token
    ```
 
-2. **Store tokens in 1Password "ai" item (Dev vault):**
-   - Field: "claude-code-oauth-token" → value: `sk-ant-oat01-...` (may already exist)
-   - Field: "claude-code-oauth-token-2" → value: `sk-ant-oat01-...`
-   - Field: "claude-code-oauth-token-work" → value: `sk-ant-oat01-...`
-
-3. **Authenticate to 1Password CLI:**
-   ```bash
-   op signin
-   ```
+2. **That's it!** Claude Code manages token refresh automatically.
 
 ### Configuration
 
@@ -557,17 +549,14 @@ claude-profile-status        # Check authentication status for all profiles
 dev-config.claude-code = {
   enable = true;
   profiles = {
-    default = {
+    claude = {
       configDir = "~/.claude";
-      opReference = "op://Dev/ai/claude-code-oauth-token";
     };
     claude-2 = {
       configDir = "~/.claude-2";
-      opReference = "op://Dev/ai/claude-code-oauth-token-2";
     };
-    work = {
+    claude-work = {
       configDir = "~/.claude-work";
-      opReference = "op://Dev/ai/claude-code-oauth-token-work";
     };
   };
 };
@@ -577,14 +566,20 @@ dev-config.claude-code = {
 
 Each profile alias:
 1. Sets `CLAUDE_CONFIG_DIR` to isolate configuration
-2. Injects `CLAUDE_CODE_OAUTH_TOKEN` via `op read` from 1Password
-3. Launches `claude` CLI with isolated authentication
+2. Launches `claude` CLI with profile-specific auth
+3. Claude automatically refreshes OAuth tokens as needed
+
+**Storage:**
+- Each profile has its own `.claude.json` file
+- Contains OAuth account info and tokens
+- Claude CLI reads/writes to this file for token refresh
+- Files are gitignored (not checked into version control)
 
 **Security benefits:**
-- OAuth tokens never stored on disk
-- Tokens retrieved on-demand from 1Password
+- Tokens managed by Claude's native OAuth flow
+- Automatic token refresh (no manual intervention)
 - Each profile has independent authentication state
-- Safe for version control (no secrets in config files)
+- Profile directories are user-private (600/700 permissions)
 
 ### Adding More Profiles
 
@@ -596,14 +591,14 @@ profiles = {
 
   client-xyz = {
     configDir = "~/.claude-client-xyz";
-    opReference = "op://Personal/Claude Client XYZ/oauth-token";
   };
 };
 ```
 
-Then apply changes:
+Then apply changes and authenticate the new profile:
 ```bash
 home-manager switch --flake ~/Projects/dev-config
+CLAUDE_CONFIG_DIR=~/.claude-client-xyz claude setup-token
 ```
 
 ## DevPod Integration (Remote Development)
