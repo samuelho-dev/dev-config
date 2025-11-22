@@ -127,18 +127,32 @@
         };
 
         shellHook = ''
-          echo "📦 Dev-config development environment"
-          echo ""
-          echo "Tool categories loaded:"
-          echo "  • Core: git, zsh, tmux, neovim, fzf, ripgrep"
-          echo "  • Runtimes: nodejs_20, bun, python3"
-          echo "  • Kubernetes: kubectl, helm, k9s, kind, argocd"
-          echo "  • Cloud: aws, terraform, doctl"
-          echo "  • Security: gitleaks, kubeseal, sops"
-          echo ""
-          echo "Commands:"
-          echo "  home-manager switch --flake .   # Apply configuration"
-          echo "  nix flake update                 # Update dependencies"
+          SENTINEL="$PWD/.direnv/.dev-config-loaded"
+
+          # Show banner if:
+          # - Not yet loaded (no sentinel file), OR
+          # - DEV_CONFIG_VERBOSE=1 is explicitly set
+          if [ ! -f "$SENTINEL" ] || [ "''${DEV_CONFIG_VERBOSE:-0}" = "1" ]; then
+            # Only suppress if DEV_CONFIG_QUIET=1
+            if [ "''${DEV_CONFIG_QUIET:-0}" != "1" ]; then
+              echo "📦 Dev-config development environment"
+              echo ""
+              echo "Tool categories loaded:"
+              echo "  • Core: git, zsh, tmux, neovim, fzf, ripgrep"
+              echo "  • Runtimes: nodejs_20, bun, python3"
+              echo "  • Kubernetes: kubectl, helm, k9s, kind, argocd"
+              echo "  • Cloud: aws, terraform, doctl"
+              echo "  • Security: gitleaks, kubeseal, sops"
+              echo ""
+              echo "Commands:"
+              echo "  home-manager switch --flake .   # Apply configuration"
+              echo "  nix flake update                 # Update dependencies"
+            fi
+
+            # Create sentinel file (ignore errors if .direnv doesn't exist yet)
+            mkdir -p "$PWD/.direnv" 2>/dev/null || true
+            touch "$SENTINEL" 2>/dev/null || true
+          fi
         '';
       };
 
