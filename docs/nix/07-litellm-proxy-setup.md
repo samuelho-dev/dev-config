@@ -75,40 +75,37 @@ If LiteLLM is not deployed yet, see your ai-dev-env repository for deployment in
 You need the master key from your LiteLLM deployment:
 
 ```bash
-# Get master key from cluster (if not already in 1Password)
+# Get master key from cluster
 kubectl get secret litellm-secrets -n litellm -o jsonpath='{.data.LITELLM_MASTER_KEY}' | base64 -d
 ```
 
-Save this key in 1Password (next section).
+Save this key in your sops-nix secrets (next section).
 
 ## Setup Instructions
 
-### Step 1: Create 1Password Item
+### Step 1: Configure LiteLLM Master Key
 
-1. **Sign in to 1Password:**
+The LITELLM_MASTER_KEY is managed via sops-nix along with other AI credentials:
+
+1. **Edit encrypted secrets:**
    ```bash
-   op signin
+   sops secrets/ai.yaml
    ```
 
-2. **Create "litellm" item in "Dev" vault:**
-   ```bash
-   op item create \
-     --category "API Credential" \
-     --title "litellm" \
-     --vault "Dev" \
-     MASTER_KEY="your-litellm-master-key-here"
+2. **Add or update the LITELLM_MASTER_KEY:**
+   ```yaml
+   ai:
+     LITELLM_MASTER_KEY: "sk-..."  # Your master key from cluster
    ```
 
-   Or via 1Password app:
-   - Open 1Password app
-   - Navigate to "Dev" vault
-   - Click "+" → "API Credential"
-   - Title: `litellm`
-   - Add field: `MASTER_KEY` = `your-litellm-master-key-here`
-
-3. **Verify credential is accessible:**
+3. **Apply configuration:**
    ```bash
-   op read "op://Dev/litellm/MASTER_KEY"
+   home-manager switch --flake ~/Projects/dev-config
+   ```
+
+4. **Verify credential is loaded:**
+   ```bash
+   echo $LITELLM_MASTER_KEY
    # Should output: sk-...
    ```
 
@@ -209,21 +206,17 @@ The LiteLLM master key is automatically loaded when you enter the dev-config dir
 ```bash
 cd ~/Projects/dev-config
 
-# direnv automatically runs:
-# 🔐 Loading AI credentials from 1Password...
-#   ✓ Loaded: ANTHROPIC_API_KEY
-#   ✓ Loaded: OPENAI_API_KEY
-#   ✓ Loaded: GOOGLE_AI_API_KEY
-#   ✓ Loaded: LITELLM_MASTER_KEY
-# ✅ AI credentials loaded from 1Password
-```
-
-**Verify environment variable:**
-
-```bash
+# Environment variables are automatically available via sops-env module
 echo $LITELLM_MASTER_KEY
 # Should output: sk-...
 ```
+
+**All AI credentials loaded automatically:**
+- ANTHROPIC_API_KEY
+- OPENAI_API_KEY
+- GOOGLE_AI_API_KEY
+- LITELLM_MASTER_KEY
+- OPENROUTER_API_KEY
 
 ### Step 5: Test the Integration
 
@@ -380,7 +373,7 @@ All avante.nvim requests go through LiteLLM proxy, so they're automatically trac
 |-------|----------|
 | "Plugin not loading" | Check `LITELLM_MASTER_KEY` is set: `echo $LITELLM_MASTER_KEY` |
 | "Connection timeout" | Verify port-forward: `curl http://localhost:4000/health` |
-| "Invalid API key" | Ensure 1Password item has correct master key |
+| "Invalid API key" | Ensure sops-nix secrets have correct master key |
 | "Model not found" | Check LiteLLM config has `claude-sonnet-4` model configured |
 
 ## Troubleshooting
@@ -401,27 +394,27 @@ kubectl port-forward -n litellm svc/litellm 4000:4000 &
 
 ### "LITELLM_MASTER_KEY not set"
 
-**Cause:** Credentials not loaded from 1Password
+**Cause:** Credentials not loaded from sops-nix
 
 **Solution:**
 
 ```bash
-# Check 1Password authentication
-op account get
+# Check if environment variable is loaded
+echo $LITELLM_MASTER_KEY
 
-# Re-sign in if needed
-op signin
+# If not, verify sops-nix secrets are decrypted
+ls ~/.local/share/sops-nix/secrets.d/*/ai/
 
-# Manually load credentials
-source ~/Projects/dev-config/scripts/load-ai-credentials.sh
+# Reload shell configuration
+source ~/.zshrc
 
-# Verify
+# Verify again
 echo $LITELLM_MASTER_KEY
 ```
 
 ### "Invalid API key" or "Authentication failed"
 
-**Cause:** Wrong master key in 1Password
+**Cause:** Wrong master key in sops-nix secrets
 
 **Solution:**
 
@@ -429,11 +422,16 @@ echo $LITELLM_MASTER_KEY
 # Get correct key from cluster
 kubectl get secret litellm-secrets -n litellm -o jsonpath='{.data.LITELLM_MASTER_KEY}' | base64 -d
 
-# Update 1Password item
-op item edit litellm MASTER_KEY="new-key-here" --vault Dev
+# Update sops-nix secrets
+sops secrets/ai.yaml
+# Update LITELLM_MASTER_KEY value
 
-# Reload credentials
-cd ~/Projects/dev-config  # Triggers direnv reload
+# Apply changes
+home-manager switch --flake ~/Projects/dev-config
+
+# Reload shell and verify
+exec zsh
+echo $LITELLM_MASTER_KEY
 ```
 
 ### "Context deadline exceeded" or "Timeout"
@@ -562,19 +560,19 @@ If LiteLLM proxy is unavailable, switch to direct API temporarily:
 }
 ```
 
-This requires `ANTHROPIC_API_KEY` to be loaded (already configured in load-ai-credentials.sh).
+This requires `ANTHROPIC_API_KEY` to be loaded (already configured via sops-env module).
 
 ## Security Best Practices
 
 1. **Never commit API keys:**
-   - All secrets stored in 1Password
-   - Environment variables loaded dynamically
+   - All secrets encrypted with sops-nix (age encryption)
+   - Environment variables loaded from tmpfs (RAM-only)
    - Config files use `{env:VAR}` syntax
 
 2. **Rotate keys regularly:**
    - Update cluster secret
-   - Update 1Password item
-   - Credentials auto-reload on next `cd ~/Projects/dev-config`
+   - Update sops-nix secrets: `sops secrets/ai.yaml`
+   - Apply changes: `home-manager switch --flake ~/Projects/dev-config`
 
 3. **Use minimal permissions:**
    - LiteLLM master key should have read-only access to models
@@ -594,5 +592,5 @@ This requires `ANTHROPIC_API_KEY` to be loaded (already configured in load-ai-cr
 ## Next Steps
 
 - **OpenCode Documentation:** [OpenCode Integration Guide](04-opencode-integration.md)
-- **1Password Setup:** [1Password Configuration](05-1password-setup.md)
+- **sops-nix Setup:** [sops-nix Configuration](../../SETUP_SOPS.md)
 - **Advanced Nix:** [Advanced Customization](06-advanced.md)

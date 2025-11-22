@@ -22,59 +22,49 @@ OpenCode is automatically installed via Nix when you run `bash scripts/install.s
 opencode --version
 ```
 
-## Authentication with 1Password
+## Authentication with sops-nix
 
-OpenCode requires API credentials for LLM providers (Anthropic, OpenAI, Google, etc.). Instead of storing credentials in config files, we use 1Password CLI for secure secret management.
+OpenCode requires API credentials for LLM providers (Anthropic, OpenAI, Google, etc.). These credentials are securely managed using sops-nix with age encryption.
 
-### Setup Process
+### How it Works
 
-1. **Create 1Password "ai" item** (see [1Password Setup Guide](05-1password-setup.md))
-
-2. **Sign in to 1Password:**
-   ```bash
-   op signin
-   ```
-
-3. **Verify credentials are accessible:**
-   ```bash
-   op read "op://Dev/ai/ANTHROPIC_API_KEY"
-   # Should output: sk-ant-...
-   ```
+1. **API keys stored encrypted** in `secrets/ai.yaml` (age encryption)
+2. **Decrypted at Home Manager activation** to tmpfs (RAM-only)
+3. **Environment variables automatically loaded** via shell initialization
+4. **Zero network latency** - no external queries on shell startup
 
 ### Auto-Loading Credentials
 
-**Method 1: direnv (Recommended)**
+**Automatic in all shells:**
 
-When you `cd` into the dev-config directory, credentials automatically load:
+The `sops-env.nix` module automatically loads AI credentials in all shells:
 
 ```bash
-cd ~/Projects/dev-config
-# 🔐 Loading AI credentials from 1Password...
-#   ✓ Loaded: ANTHROPIC_API_KEY
-#   ✓ Loaded: OPENAI_API_KEY
-#   ✓ Loaded: GOOGLE_AI_API_KEY
-# ✅ AI credentials loaded from 1Password
+# Open a new terminal or source your shell config
+echo $ANTHROPIC_API_KEY  # Already available
+echo $OPENAI_API_KEY     # Already available
 
+# Use OpenCode directly - credentials are already loaded
 opencode ask "What is this codebase?"
-# ← Credentials are already in environment
 ```
 
-**Method 2: Manual source**
+**What gets loaded:**
+- `ANTHROPIC_API_KEY` - Claude API
+- `OPENAI_API_KEY` - OpenAI API
+- `GOOGLE_AI_API_KEY` - Google AI API
+- `LITELLM_MASTER_KEY` - LiteLLM proxy master key
+- `OPENROUTER_API_KEY` - OpenRouter multi-model API
 
-```bash
-source ~/Projects/dev-config/scripts/load-ai-credentials.sh
-```
+### Security Benefits
 
-**Method 3: op run wrapper** (Most secure - credentials never touch disk)
+- ✅ **Encrypted at rest** - Age encryption protects secrets
+- ✅ **Decrypted to tmpfs** - Never written to disk unencrypted
+- ✅ **Instant loading** - No network calls (~0.24s shell startup)
+- ✅ **Automatic** - No manual loading required
 
-```bash
-op run -- opencode ask "Explain this file"
-```
+### Setup Process
 
-Add to your `~/.zshrc.local` for permanent alias:
-```bash
-alias opencode='op run -- opencode'
-```
+See [sops-nix Setup Guide](../../SETUP_SOPS.md) for complete configuration instructions.
 
 ## Common OpenCode Commands
 
@@ -148,9 +138,9 @@ For team environments with centralized LLM management, OpenCode can route all AP
    kubectl port-forward -n litellm svc/litellm 4000:4000 &
    ```
 
-3. **Load credentials:**
+3. **Verify credentials are loaded:**
    ```bash
-   cd ~/Projects/dev-config  # Automatically loads LITELLM_MASTER_KEY
+   echo $LITELLM_MASTER_KEY  # Should show your master key
    ```
 
 4. **Use OpenCode normally:**

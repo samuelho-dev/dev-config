@@ -2,14 +2,22 @@
 
 ## Overview
 
-This guide shows you how to configure 1Password CLI for automatic AI credential management in your development environment.
+This guide shows you how to configure 1Password for SSH authentication and Claude Code OAuth tokens.
+
+**Note:** AI API keys (Anthropic, OpenAI, Google AI, etc.) are now managed via sops-nix. See [sops-nix Setup Guide](../../SETUP_SOPS.md) for AI credential management.
+
+## Current 1Password Usage
+
+1Password is still used for:
+- ✅ **SSH Keys** - GitHub authentication and commit signing
+- ✅ **Claude Code OAuth tokens** - Multi-profile authentication
+- ✅ **Service account tokens** (optional) - DevPod/container environments
 
 **Benefits:**
-- ✅ Secrets never touch disk
-- ✅ Credentials auto-load when entering dev-config directory
-- ✅ Team-wide secret sharing via 1Password vaults
-- ✅ Audit trail of secret access
-- ✅ Easy credential rotation
+- ✅ SSH private keys never touch disk
+- ✅ Biometric unlock for SSH operations
+- ✅ Cross-device key sync via 1Password cloud
+- ✅ Audit trail of SSH key usage
 
 ## Prerequisites
 
@@ -17,75 +25,39 @@ This guide shows you how to configure 1Password CLI for automatic AI credential 
 - 1Password desktop app installed
 - 1Password CLI (`op`) installed via Nix (already done!)
 
-## Step 1: Create "Dev" Vault
+## Step 1: SSH Key Setup
 
-1. Open 1Password desktop app
-2. Click "New Vault" (or use existing vault)
-3. Name: `Dev`
-4. Type: Personal or Shared (for team access)
-5. Click "Create"
+See [1Password SSH Setup Guide](09-1password-ssh.md) for complete SSH authentication configuration.
 
-## Step 2: Create "ai" Item
+## Step 2: Claude Code OAuth Tokens (Optional)
 
-1. In "Dev" vault, click "New Item"
-2. Select "Login" or "Password" as template
-3. Title: `ai`
-4. Add custom fields for each AI provider:
+If using Claude Code CLI with multiple profiles:
 
-### Required Fields
+1. **Create "Dev" vault** in 1Password desktop app
+2. **Create "ai" item** with OAuth tokens:
+   - Field: `claude-code-oauth-token` → Primary account token
+   - Field: `claude-code-oauth-token-2` → Secondary account token
+   - Field: `claude-code-oauth-token-work` → Work account token
 
-**Anthropic (Claude):**
-- Field Label: `ANTHROPIC_API_KEY`
-- Field Type: Password (concealed)
-- Value: Your Anthropic API key (starts with `sk-ant-`)
+3. **Generate tokens:**
+   ```bash
+   CLAUDE_CONFIG_DIR=~/.claude claude setup-token
+   CLAUDE_CONFIG_DIR=~/.claude-2 claude setup-token
+   CLAUDE_CONFIG_DIR=~/.claude-work claude setup-token
+   ```
 
-**OpenAI (GPT models):**
-- Field Label: `OPENAI_API_KEY`
-- Field Type: Password (concealed)
-- Value: Your OpenAI API key (starts with `sk-proj-` or `sk-`)
+4. **Store tokens in 1Password** using the field names above
 
-**Google AI (Gemini):**
-- Field Label: `GOOGLE_AI_API_KEY`
-- Field Type: Password (concealed)
-- Value: Your Google AI API key
+## AI API Keys (Migrated to sops-nix)
 
-### Optional Fields (Add as needed)
+**Important:** AI API keys are now managed via sops-nix for better performance and reliability.
 
-**Cohere:**
-- Field Label: `COHERE_API_KEY`
-- Field Type: Password
-- Value: Your Cohere API key
+- ❌ **No longer stored in 1Password:** ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.
+- ✅ **Now managed by sops-nix:** Encrypted in `secrets/ai.yaml`
+- ✅ **Automatic loading:** Via `sops-env.nix` module
 
-**Hugging Face:**
-- Field Label: `HUGGINGFACE_TOKEN`
-- Field Type: Password
-- Value: Your HF token
-
-**LangSmith (for tracing):**
-- Field Label: `LANGCHAIN_API_KEY`
-- Field Type: Password
-- Value: Your LangSmith API key
-
-## Step 2b: Create "litellm" Item (For Team/Cluster Integration)
-
-If you're using LiteLLM proxy for team-based AI usage tracking and centralized credential management, create a separate item:
-
-1. In "Dev" vault, click "New Item"
-2. Select "API Credential" as template
-3. Title: `litellm`
-4. Add custom field:
-
-**LiteLLM Master Key:**
-- Field Label: `MASTER_KEY`
-- Field Type: Password (concealed)
-- Value: Your LiteLLM proxy master key (get from cluster: `kubectl get secret litellm-secrets -n litellm -o jsonpath='{.data.LITELLM_MASTER_KEY}' | base64 -d`)
-
-**Why separate item?**
-- Different use case: Proxy authentication vs direct API access
-- Different rotation schedule: Cluster key vs provider keys
-- Clearer organization: `ai` for direct API, `litellm` for proxy
-
-**For complete LiteLLM setup:** See [LiteLLM Proxy Setup Guide](07-litellm-proxy-setup.md)
+**To manage AI credentials:**
+See [sops-nix Setup Guide](../../SETUP_SOPS.md)
 
 ## Step 3: Authenticate 1Password CLI
 
@@ -118,7 +90,9 @@ op vault list
 
 Should show "Dev" vault.
 
-### Test Credential Retrieval
+### Test Credential Retrieval (Optional)
+
+If you've stored Claude Code OAuth tokens:
 
 ```bash
 op item get "ai" --vault "Dev"
@@ -126,56 +100,43 @@ op item get "ai" --vault "Dev"
 
 Should display the "ai" item (credentials concealed).
 
-### Test Field Access
+### Test Field Access (Optional)
 
 ```bash
-op read "op://Dev/ai/ANTHROPIC_API_KEY"
+op read "op://Dev/ai/claude-code-oauth-token"
 ```
 
-Should output your actual API key (starts with `sk-ant-`).
+Should output your OAuth token (starts with `sk-ant-oat01-`).
 
-## Step 4: Configure Auto-Loading
+## Step 4: Usage with Claude Code
 
-Credentials auto-load when you enter the dev-config directory via direnv:
+Claude Code CLI integrates with 1Password for multi-profile authentication:
 
 ```bash
-cd ~/Projects/dev-config
-# 🔐 Loading AI credentials from 1Password...
-#   ✓ Loaded: ANTHROPIC_API_KEY
-#   ✓ Loaded: OPENAI_API_KEY
-#   ✓ Loaded: GOOGLE_AI_API_KEY
-#   ✓ Loaded: LITELLM_MASTER_KEY
-# ✅ AI credentials loaded from 1Password
+# Each alias automatically injects OAuth token from 1Password
+claude /status         # Default profile
+claude-2 /status       # Profile 2
+claude-work /status    # Work profile
 ```
 
 **How it works:**
-1. `.envrc` detects directory entry
-2. Checks if `op` is authenticated
-3. Sources `scripts/load-ai-credentials.sh`
-4. Exports API keys as environment variables
-5. OpenCode and other tools use credentials from environment
+1. Shell alias sets `CLAUDE_CONFIG_DIR` for profile isolation
+2. Injects `CLAUDE_CODE_OAUTH_TOKEN` via `op read`
+3. Launches `claude` CLI with isolated authentication
 
-## Step 5: Usage Patterns
+## Step 5: SSH Authentication
 
-### Pattern 1: Auto-Injected Environment Variables
+For GitHub operations, 1Password SSH Agent handles authentication:
 
 ```bash
-cd ~/Projects/dev-config  # Credentials load automatically
-opencode ask "What is this project?"  # Uses $ANTHROPIC_API_KEY
-```
+# Clone repositories (auto-converts to SSH)
+git clone https://github.com/username/repo.git
 
-### Pattern 2: Explicit op run (Most Secure)
+# Commits are automatically signed
+git commit -m "Your message"
 
-```bash
-op run -- opencode ask "Explain this codebase"
-# Credentials injected only for duration of command
-```
-
-### Pattern 3: Manual Loading
-
-```bash
-source ~/Projects/dev-config/scripts/load-ai-credentials.sh
-# Credentials now in environment for current shell session
+# Push with biometric authentication
+git push origin main
 ```
 
 ## Security Best Practices
@@ -193,14 +154,14 @@ grep -E "\.env|\.op" ~/Projects/dev-config/.gitignore
 
 ### 2. Rotate Keys Regularly
 
-**Update API key in 1Password:**
-1. Open 1Password desktop app
-2. Find "Dev" vault → "ai" item
-3. Edit field (e.g., `ANTHROPIC_API_KEY`)
-4. Paste new key
-5. Save
+**For SSH keys:**
+1. Generate new SSH key in 1Password
+2. Update GitHub with new public key
+3. Update `~/.config/home-manager/secrets.nix`
+4. Run `home-manager switch --flake ~/Projects/dev-config`
 
-**Next credential load will use new key** (no code changes needed!)
+**For AI API keys:**
+See [sops-nix Setup Guide](../../SETUP_SOPS.md) for rotating encrypted API keys
 
 ### 3. Use Service Accounts for CI/CD
 

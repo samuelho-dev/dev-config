@@ -47,7 +47,7 @@ The `devShells.default` output provides a **comprehensive DevOps environment** w
 - gh (GitHub CLI), act (local Actions), pre-commit
 
 **AI Development:**
-- 1Password CLI (credential management)
+- sops (secure secrets management with age encryption)
 - OpenCode (installed separately, not in nixpkgs)
 
 **Utilities:**
@@ -121,7 +121,8 @@ dev-config/
 │   │   │   ├── ssh.nix                # SSH + 1Password agent
 │   │   │   └── ghostty.nix            # Ghostty configuration + symlink
 │   │   └── services/
-│   │       └── direnv.nix             # Direnv auto-activation
+│   │       ├── direnv.nix             # Direnv auto-activation
+│   │       └── sops-env.nix           # AI API keys from sops-nix secrets
 │   └── nixos/                         # NixOS modules (for servers)
 │       ├── default.nix                # Main module exporter
 │       ├── base-packages.nix          # Core system packages
@@ -456,23 +457,26 @@ git log --show-signature                  # Verify commit signing
 
 **Documentation:** See [docs/nix/09-1password-ssh.md](docs/nix/09-1password-ssh.md)
 
-## AI Integration (OpenCode + 1Password)
+## AI Integration (OpenCode + sops-nix)
 
 **OpenCode** (AI coding assistant) and **Neovim (avante.nvim)** both integrate with:
-1. **Direct API access** - Use API keys from 1Password
+1. **Direct API access** - Use API keys from sops-nix encrypted secrets
 2. **LiteLLM proxy** - Team mode with cost tracking (requires `LITELLM_MASTER_KEY`)
 
-### Credential Loading
+### Credential Loading with sops-env Module
 
-**Automatic via direnv:**
-```bash
-cd ~/Projects/dev-config  # Activates direnv
-# AI credentials auto-loaded from 1Password
-```
+The `sops-env.nix` module provides secure, zero-latency AI API key management:
 
-**Manual:**
+**How it works:**
+1. API keys stored encrypted in `secrets/ai.yaml` (age encryption)
+2. Decrypted once at Home Manager activation to tmpfs (`~/.local/share/sops-nix/`)
+3. Environment variables loaded via shell initialization (`~/.config/sops-nix/load-env.sh`)
+4. Zero network calls, instant shell startup (~0.24s)
+
+**Automatic loading:**
 ```bash
-source scripts/load-ai-credentials.sh
+# Environment variables automatically available in all shells
+echo $ANTHROPIC_API_KEY  # Already loaded from sops-nix
 ```
 
 **What gets loaded:**
@@ -481,12 +485,19 @@ export ANTHROPIC_API_KEY="..."       # Claude API
 export OPENAI_API_KEY="..."          # OpenAI API
 export GOOGLE_AI_API_KEY="..."       # Google AI API
 export LITELLM_MASTER_KEY="..."      # LiteLLM proxy (optional)
+export OPENROUTER_API_KEY="..."      # OpenRouter multi-model API
 ```
+
+**Security benefits:**
+- Secrets never stored unencrypted on disk
+- Decrypted to tmpfs (RAM-only, cleared on reboot)
+- No 1Password CLI queries on shell startup
+- No network latency
 
 **Documentation:**
 - [docs/nix/04-opencode-integration.md](docs/nix/04-opencode-integration.md) - OpenCode setup
-- [docs/nix/05-1password-setup.md](docs/nix/05-1password-setup.md) - 1Password configuration
 - [docs/nix/07-litellm-proxy-setup.md](docs/nix/07-litellm-proxy-setup.md) - LiteLLM team mode
+- [SETUP_SOPS.md](SETUP_SOPS.md) - sops-nix configuration guide
 
 ## Claude Code Multi-Profile Authentication
 
@@ -612,7 +623,6 @@ devpod up . --ide vscode
 
 **Configuration:**
 - `.devcontainer/devcontainer.json` - Container definition
-- `.devcontainer/load-ai-credentials.sh` - 1Password loader (service accounts)
 
 **Documentation:** [docs/README_DEVPOD.md](docs/README_DEVPOD.md)
 
@@ -666,11 +676,28 @@ devpod up . --ide vscode
 - **Decision:** No secrets during Nix evaluation, runtime decryption only
 - **Rationale:** Prevent secret exposure to `/nix/store`, ensure zero secrets on disk
 - **Implementation:**
-  - sops-nix for encrypted secrets with age encryption
-  - 1Password CLI for just-in-time credential injection (.envrc)
+  - sops-nix for encrypted secrets with age encryption (AI API keys, npm tokens)
+  - sops-env.nix module for automatic environment variable loading
+  - Secrets decrypted to tmpfs (RAM-only) at Home Manager activation
+  - 1Password CLI for SSH keys and Claude Code OAuth tokens
   - `dotenv_if_exists` instead of `source_env` (direnv security model)
   - Never use `builtins.pathExists` or `builtins.readFile` for secrets during evaluation
-- **Security Fixes:** npm token exposure, .envrc bypass, builtins.getEnv non-functionality
+- **Security Fixes:** npm token exposure, .envrc bypass, builtins.getEnv non-functionality, AI API key loading latency
+
+### 9. sops-env Module for AI Credentials
+- **Decision:** Replace 1Password CLI with sops-nix for AI API key management
+- **Rationale:** Eliminate network latency on shell startup, improve reliability, maintain security
+- **Implementation:**
+  - `modules/home-manager/services/sops-env.nix` generates shell environment script
+  - Uses `home.activation.generateLoadEnv` (runs after sops-nix decryption)
+  - Creates `~/.config/sops-nix/load-env.sh` sourced by shell initialization
+  - Reads from tmpfs: `~/.local/share/sops-nix/secrets.d/*/ai/`
+- **Benefits:**
+  - Zero network calls on shell startup (was ~1-2s, now ~0.24s)
+  - No 1Password CLI queries every directory change
+  - Secrets still encrypted at rest (age encryption)
+  - Automatic loading in all shells (zsh, bash)
+- **Migration:** Removed broken ai-env.nix LaunchAgent and sync-secrets.sh references
 
 ## NixOS Modules (For Servers)
 

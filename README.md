@@ -323,7 +323,7 @@ bash scripts/install.sh
 **What this does:**
 1. Installs Nix package manager via Determinate Systems installer
 2. Enables flakes and configures direnv
-3. Installs all development tools (Neovim, tmux, zsh, Docker, OpenCode, 1Password CLI)
+3. Installs all development tools (Neovim, tmux, zsh, Docker, OpenCode, sops)
 4. Creates symlinks using battle-tested logic from shared libraries
 5. Sets up Oh My Zsh, Powerlevel10k, and TPM
 6. Auto-installs all Neovim and tmux plugins
@@ -335,14 +335,15 @@ bash scripts/install.sh
 - ✅ **Isolated**: Per-project environments with zero conflicts
 - ✅ **Cross-platform**: Works on macOS (Intel/ARM) and Linux
 - ✅ **Binary cache**: 20x faster builds with Cachix (10 minutes → 30 seconds)
-- ✅ **AI integration**: OpenCode + Neovim (avante.nvim) + 1Password CLI with LiteLLM proxy support for team AI management
+- ✅ **AI integration**: OpenCode + Neovim (avante.nvim) with sops-nix encrypted API keys and LiteLLM proxy support for team AI management
 
 **After installation:**
 ```bash
-cd ~/Projects/dev-config  # direnv auto-activates Nix environment + AI credentials
-opencode ask "What should I work on today?"  # Terminal: Uses credentials from 1Password
+cd ~/Projects/dev-config  # direnv auto-activates Nix environment
+opencode ask "What should I work on today?"  # Terminal: Uses API keys from sops-nix
 nvim  # Editor: `:AvanteAsk` for Cursor-like AI coding assistant
 # All tools support both direct API access and LiteLLM proxy (team mode)
+# AI credentials automatically available via sops-env module (zero latency)
 ```
 
 **Documentation:**
@@ -351,7 +352,7 @@ nvim  # Editor: `:AvanteAsk` for Cursor-like AI coding assistant
 - [Daily Usage](docs/nix/02-daily-usage.md) - Common workflows
 - [Troubleshooting](docs/nix/03-troubleshooting.md) - Fix issues
 - [OpenCode Integration](docs/nix/04-opencode-integration.md) - AI assistant setup
-- [1Password Setup](docs/nix/05-1password-setup.md) - Credential management
+- [sops-nix Setup](SETUP_SOPS.md) - Encrypted secrets management
 - [Advanced Guide](docs/nix/06-advanced.md) - Customization
 - [LiteLLM Proxy Setup](docs/nix/07-litellm-proxy-setup.md) - Team AI management with cost tracking
 
@@ -372,20 +373,11 @@ brew install devpod
 devpod up . --ide vscode
 ```
 
-**With 1Password (for AI credentials):**
-```bash
-# Set service account token
-export OP_SERVICE_ACCOUNT_TOKEN="your-token-here"
-
-# Create workspace
-devpod up . --ide vscode
-```
-
 **What happens:**
 1. Container starts with Nix environment
 2. Dotfiles installed automatically via DevPod dotfiles feature
 3. All configs (Neovim, tmux, zsh) available immediately
-4. AI credentials loaded from 1Password
+4. AI credentials available via sops-nix encrypted secrets
 
 **First run:** 30-60 minutes (Nix evaluation + packages)
 **Cached runs:** 2-5 minutes (Nix cache hit)
