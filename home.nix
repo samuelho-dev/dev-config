@@ -52,6 +52,12 @@
     pkgs.age
   ];
 
+  # Add user-local directories to PATH (prepended, so they take precedence)
+  home.sessionPath = [
+    "$HOME/.local/bin" # Claude CLI, user scripts
+    "$HOME/.bun/bin" # Bun package manager (if installed)
+  ];
+
   # Global session variables (exported to all shells)
   home.sessionVariables = {
     # SOPS key file for manual sops CLI usage
