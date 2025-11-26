@@ -79,9 +79,21 @@
       autosuggestion.enable = config.dev-config.zsh.enableAutosuggestions;
       syntaxHighlighting.enable = config.dev-config.zsh.enableSyntaxHighlighting;
 
-      # Initialization content (runs before compinit with mkOrder 550)
-      # Suppress oh-my-zsh warnings and direnv verbose output
+      # Initialization content with proper ordering for optimal shell startup
       initContent = lib.mkMerge [
+        # Powerlevel10k instant prompt - MUST be first (mkOrder 100)
+        # This enables near-instant shell startup while loading continues in background
+        (lib.mkOrder 100 ''
+          # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+          # Initialization code that may require console input (password prompts, [y/n]
+          # confirmations, etc.) must go above this block; everything else may go below.
+          if [[ -r "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh" ]]; then
+            source "''${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-''${(%):-%n}.zsh"
+          fi
+        '')
+
+        # Early init before compinit (mkOrder 550)
+        # Suppress oh-my-zsh warnings and direnv verbose output
         (lib.mkOrder 550 ''
           # Silence oh-my-zsh warnings during initialization
           # Theme loads correctly via Nix symlinks after init completes
@@ -95,7 +107,7 @@
           export DIRENV_LOG_FORMAT=""
         '')
 
-        # Additional initialization (runs after compinit - default order)
+        # Additional initialization (runs after compinit - default order ~1000)
         ''
           # Source Powerlevel10k configuration
           [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -103,6 +115,14 @@
           # Credentials loaded by LaunchAgent (macOS) or systemd (Linux) at login
           # No need for per-shell loading - eliminates 50ms overhead
         ''
+
+        # Late init - source machine-specific config (mkOrder 1500)
+        # This runs after everything else, allowing local overrides
+        (lib.mkOrder 1500 ''
+          # Source machine-specific configuration (gitignored)
+          # Put custom aliases, PATH additions, or local settings in ~/.zshrc.local
+          [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
+        '')
       ];
 
       # Enable Oh My Zsh via Home Manager

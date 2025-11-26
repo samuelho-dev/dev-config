@@ -52,10 +52,17 @@
     pkgs.age
   ];
 
-  # Set SOPS_AGE_KEY_FILE for manual sops CLI usage
-  # This allows `sops --decrypt` to work without explicit key file parameter
+  # Global session variables (exported to all shells)
   home.sessionVariables = {
+    # SOPS key file for manual sops CLI usage
     SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
+
+    # Default editors (neovim)
+    EDITOR = "nvim";
+    VISUAL = "nvim";
+
+    # Claude Code: maintain project working directory across bash sessions
+    CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
   };
 
   # Enable dev-config modules (all enabled by default)
