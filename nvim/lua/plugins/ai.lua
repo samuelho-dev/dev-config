@@ -64,11 +64,11 @@ return {
       return vim.env.OPENROUTER_API_KEY ~= nil or vim.env.ZHIPUAI_API_KEY ~= nil or vim.env.OPENAI_API_KEY ~= nil or vim.env.ANTHROPIC_API_KEY ~= nil
     end,
     opts = function()
-      local adapters = {}
+      local http_adapters = {}
 
       -- OpenRouter adapter (supports multiple models via one API)
       if vim.env.OPENROUTER_API_KEY then
-        adapters.openrouter = function()
+        http_adapters.openrouter = function()
           return require('codecompanion.adapters').extend('openai', {
             name = 'openrouter',
             url = 'https://openrouter.ai/api/v1/chat/completions',
@@ -90,7 +90,7 @@ return {
 
       -- ZhipuAI GLM adapter
       if vim.env.ZHIPUAI_API_KEY then
-        adapters.zhipuai = function()
+        http_adapters.zhipuai = function()
           return require('codecompanion.adapters').extend('openai', {
             name = 'zhipuai',
             url = 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
@@ -104,7 +104,7 @@ return {
                 default = 'glm-4.5-chat',
               },
             },
-            opts = {
+            http = {
               tools = false,
             },
           })
@@ -126,7 +126,9 @@ return {
       end
 
       return {
-        adapters = adapters,
+        adapters = {
+          http = http_adapters,
+        },
         strategies = {
           chat = {
             adapter = default_adapter,

@@ -54,6 +54,7 @@ require('lazy').setup({
   { import = 'plugins.ui' }, -- UI enhancements
   { import = 'plugins.treesitter' }, -- Syntax highlighting
   { import = 'plugins.tools' }, -- Utility tools (CSV viewer)
+  { import = 'plugins.training' }, -- Vim training games
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
