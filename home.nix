@@ -56,6 +56,7 @@
   home.sessionPath = [
     "$HOME/.local/bin" # Claude CLI, user scripts
     "$HOME/.bun/bin" # Bun package manager (if installed)
+    "$HOME/Library/pnpm" # pnpm package manager (if installed)
   ];
 
   # Global session variables (exported to all shells)
@@ -69,6 +70,10 @@
 
     # Claude Code: maintain project working directory across bash sessions
     CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
+
+    # Kubernetes: Default kubeconfig for ArgoCD hub cluster (Hetzner)
+    # Required for ArgoCD CLI in core mode (hub-spoke architecture)
+    KUBECONFIG = "${config.home.homeDirectory}/.kube/config-hetzner-prod";
   };
 
   # Enable dev-config modules (all enabled by default)
