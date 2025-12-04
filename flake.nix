@@ -61,42 +61,6 @@
     homeManagerModules.default = import ./modules/home-manager;
 
     packages = forAllSystems ({pkgs, ...}: {
-      devpod-image = pkgs.dockerTools.buildLayeredImage {
-        name = "ghcr.io/samuelho-dev/dev-config-devpod";
-        tag = "latest";
-
-        contents =
-          [
-            pkgs.bashInteractive
-            pkgs.coreutils
-            pkgs.gnugrep
-            pkgs.gnused
-            pkgs.findutils
-            pkgs.which
-          ]
-          ++ (getDevPackages pkgs);
-
-        config = {
-          Cmd = ["${pkgs.zsh}/bin/zsh"];
-          Env = [
-            "PATH=${pkgs.lib.makeBinPath (getDevPackages pkgs)}:/bin:/usr/bin"
-            "HOME=/home/vscode"
-            "SHELL=${pkgs.zsh}/bin/zsh"
-          ];
-          User = "vscode";
-          WorkingDir = "/workspace";
-        };
-
-        extraCommands = ''
-          mkdir -p etc home/vscode workspace tmp
-          echo "vscode:x:1000:1000::/home/vscode:${pkgs.zsh}/bin/zsh" > etc/passwd
-          echo "vscode:x:1000:" > etc/group
-          chmod 1777 tmp
-        '';
-
-        maxLayers = 100;
-      };
-
       default = pkgs.buildEnv {
         name = "dev-config-packages";
         paths = getDevPackages pkgs;
