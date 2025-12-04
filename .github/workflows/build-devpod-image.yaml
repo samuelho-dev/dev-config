@@ -2,7 +2,7 @@
 # Location: dev-config/.github/workflows/build-devpod-image.yaml
 #
 # This workflow builds the DevPod Nix image and pushes it to:
-# 1. Cachix binary cache (for Nix packages)
+# 1. Backblaze B2 binary cache (for Nix packages) - S3-compatible
 # 2. GitHub Container Registry (for Docker image)
 #
 # Triggers:
@@ -30,8 +30,8 @@ on:
 
   workflow_dispatch:
     inputs:
-      skip_cachix:
-        description: 'Skip Cachix push (testing only)'
+      skip_cache_push:
+        description: 'Skip B2 cache push (testing only)'
         required: false
         default: 'false'
         type: choice
@@ -69,12 +69,25 @@ jobs:
             experimental-features = nix-command flakes
             accept-flake-config = true
 
-      - name: Setup Cachix
-        uses: cachix/cachix-action@v15
-        with:
-          name: ${{ secrets.CACHIX_CACHE_NAME }}
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          skipPush: ${{ github.event_name == 'pull_request' || inputs.skip_cachix == 'true' }}
+      - name: Configure Nix for B2 Binary Cache
+        run: |
+          echo "Configuring Nix to use Backblaze B2 binary cache..."
+
+          # Read public key from repository
+          B2_PUBLIC_KEY=$(cat .nix-cache-public-key)
+
+          # Configure Nix with B2 as substituter
+          mkdir -p ~/.config/nix
+          cat >> ~/.config/nix/nix.conf <<EOF
+          # Use B2 binary cache (authenticated, requires AWS credentials)
+          substituters = https://cache.nixos.org https://s3.us-east-005.backblazeb2.com/ai-dev-env/nix/cache
+          trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${B2_PUBLIC_KEY}
+
+          # Allow building for multiple architectures
+          extra-platforms = x86_64-linux aarch64-linux
+          EOF
+
+          echo "✅ Nix configured for B2 cache"
 
       # ─────────────────────────────────────────────────────────────
       # Build
@@ -101,20 +114,30 @@ jobs:
           echo "💾 Image size: $IMAGE_SIZE"
 
       # ─────────────────────────────────────────────────────────────
-      # Push to Cachix (only on main branch push)
+      # Push to B2 Binary Cache (only on main branch push)
       # ─────────────────────────────────────────────────────────────
 
-      - name: Push to Cachix
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.skip_cachix != 'true'
+      - name: Push to B2 Binary Cache
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.skip_cache_push != 'true'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.B2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+          NIX_SIGNING_KEY: ${{ secrets.NIX_SIGNING_KEY }}
         run: |
-          echo "Pushing Nix packages to Cachix..."
+          echo "Pushing Nix packages to B2 binary cache..."
 
-          # Push all store paths to Cachix
+          # Save signing key to temporary file
+          echo "$NIX_SIGNING_KEY" > /tmp/cache-priv-key.pem
+
+          # Push all store paths to B2 with signing
           nix build .#devpod-image --json \
             | jq -r '.[].outputs.out' \
-            | cachix push ${{ secrets.CACHIX_CACHE_NAME }}
+            | xargs -I {} nix copy --to "s3://ai-dev-env/nix/cache?endpoint=s3.us-east-005.backblazeb2.com&region=us-east-005" --sign-with=/tmp/cache-priv-key.pem {}
 
-          echo "✅ Pushed to Cachix: https://${{ secrets.CACHIX_CACHE_NAME }}.cachix.org"
+          # Clean up signing key
+          shred -u /tmp/cache-priv-key.pem
+
+          echo "✅ Pushed to B2: s3://ai-dev-env/nix/cache"
 
       # ─────────────────────────────────────────────────────────────
       # Load Docker image and push to GHCR
@@ -204,7 +227,7 @@ jobs:
 
           if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "**Published to**:" >> $GITHUB_STEP_SUMMARY
-            echo "- Cachix: https://${{ secrets.CACHIX_CACHE_NAME }}.cachix.org" >> $GITHUB_STEP_SUMMARY
+            echo "- B2 Binary Cache: \`s3://ai-dev-env/nix/cache\`" >> $GITHUB_STEP_SUMMARY
             echo "- GHCR: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
             echo "- GHCR (SHA): \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
           else
