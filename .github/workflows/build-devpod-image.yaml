@@ -1,0 +1,212 @@
+# GitHub Actions Workflow for Building DevPod Image
+# Location: dev-config/.github/workflows/build-devpod-image.yaml
+#
+# This workflow builds the DevPod Nix image and pushes it to:
+# 1. Cachix binary cache (for Nix packages)
+# 2. GitHub Container Registry (for Docker image)
+#
+# Triggers:
+# - Push to main branch with changes to pkgs/ or flake.nix
+# - Manual workflow dispatch
+# - Pull requests (build only, no push)
+
+name: Build DevPod Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'pkgs/**'
+      - 'flake.nix'
+      - 'flake.lock'
+      - '.github/workflows/build-devpod-image.yaml'
+
+  pull_request:
+    paths:
+      - 'pkgs/**'
+      - 'flake.nix'
+      - 'flake.lock'
+
+  workflow_dispatch:
+    inputs:
+      skip_cachix:
+        description: 'Skip Cachix push (testing only)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  # Image configuration
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/dev-config-devpod
+
+jobs:
+  build-and-push:
+    name: Build DevPod Nix Image
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write  # For pushing to GHCR
+
+    steps:
+      # ─────────────────────────────────────────────────────────────
+      # Setup
+      # ─────────────────────────────────────────────────────────────
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+
+      - name: Setup Cachix
+        uses: cachix/cachix-action@v15
+        with:
+          name: ${{ secrets.CACHIX_CACHE_NAME }}
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          skipPush: ${{ github.event_name == 'pull_request' || inputs.skip_cachix == 'true' }}
+
+      # ─────────────────────────────────────────────────────────────
+      # Build
+      # ─────────────────────────────────────────────────────────────
+
+      - name: Build DevPod image with Nix
+        id: build
+        run: |
+          echo "Building DevPod image..."
+
+          # Build the image
+          nix build .#devpod-image --print-build-logs
+
+          # Get store path
+          STORE_PATH=$(nix build .#devpod-image --json | jq -r '.[].outputs.out')
+          echo "store_path=$STORE_PATH" >> $GITHUB_OUTPUT
+
+          # Get image info
+          IMAGE_SIZE=$(du -h "$STORE_PATH" | cut -f1)
+          echo "image_size=$IMAGE_SIZE" >> $GITHUB_OUTPUT
+
+          echo "✅ Build completed successfully"
+          echo "📦 Store path: $STORE_PATH"
+          echo "💾 Image size: $IMAGE_SIZE"
+
+      # ─────────────────────────────────────────────────────────────
+      # Push to Cachix (only on main branch push)
+      # ─────────────────────────────────────────────────────────────
+
+      - name: Push to Cachix
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && inputs.skip_cachix != 'true'
+        run: |
+          echo "Pushing Nix packages to Cachix..."
+
+          # Push all store paths to Cachix
+          nix build .#devpod-image --json \
+            | jq -r '.[].outputs.out' \
+            | cachix push ${{ secrets.CACHIX_CACHE_NAME }}
+
+          echo "✅ Pushed to Cachix: https://${{ secrets.CACHIX_CACHE_NAME }}.cachix.org"
+
+      # ─────────────────────────────────────────────────────────────
+      # Load Docker image and push to GHCR
+      # ─────────────────────────────────────────────────────────────
+
+      - name: Load Docker image
+        id: load
+        run: |
+          echo "Loading Nix-built image into Docker..."
+          docker load < result
+
+          # Get image name and tag from loaded image
+          IMAGE_ID=$(docker images --format "{{.Repository}}:{{.Tag}}" | head -1)
+          echo "image_id=$IMAGE_ID" >> $GITHUB_OUTPUT
+
+          echo "✅ Loaded image: $IMAGE_ID"
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag and push Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # Tag with latest
+          docker tag ${{ steps.load.outputs.image_id }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+          # Tag with commit SHA
+          docker tag ${{ steps.load.outputs.image_id }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+          # Tag with short SHA (7 chars)
+          SHORT_SHA=${GITHUB_SHA:0:7}
+          docker tag ${{ steps.load.outputs.image_id }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$SHORT_SHA
+
+          # Push all tags
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$SHORT_SHA
+
+          echo "✅ Pushed to GHCR:"
+          echo "  - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          echo "  - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+          echo "  - ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$SHORT_SHA"
+
+      # ─────────────────────────────────────────────────────────────
+      # Verify and test
+      # ─────────────────────────────────────────────────────────────
+
+      - name: Verify image contents
+        run: |
+          echo "Verifying essential tools are present..."
+
+          # Test git
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest git --version
+
+          # Test Node.js
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest node --version
+
+          # Test kubectl
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest kubectl version --client
+
+          # Test helm
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest helm version
+
+          echo "✅ All essential tools verified"
+
+      # ─────────────────────────────────────────────────────────────
+      # Summary
+      # ─────────────────────────────────────────────────────────────
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "## DevPod Image Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Details**:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Store Path**: \`${{ steps.build.outputs.store_path }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Size**: ${{ steps.build.outputs.image_size }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Loaded as**: \`${{ steps.load.outputs.image_id }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "**Published to**:" >> $GITHUB_STEP_SUMMARY
+            echo "- Cachix: https://${{ secrets.CACHIX_CACHE_NAME }}.cachix.org" >> $GITHUB_STEP_SUMMARY
+            echo "- GHCR: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
+            echo "- GHCR (SHA): \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Note**: Skipped push (PR or manual trigger)" >> $GITHUB_STEP_SUMMARY
+          fi

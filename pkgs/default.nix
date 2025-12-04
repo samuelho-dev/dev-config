@@ -32,6 +32,7 @@
     pkgs.k9s
     pkgs.kind
     pkgs.argocd
+    pkgs.cilium-cli # Cilium CNI CLI for cluster networking status/diagnostics
   ];
 
   # Cloud provider CLIs
