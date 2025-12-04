@@ -1,0 +1,21 @@
+# CODEOWNERS - Workflow Security Protection
+#
+# This file ensures that workflow files containing secrets require
+# explicit review before changes are committed.
+#
+# For a public repository with GitHub Secrets, this provides an
+# additional layer of protection against accidental secret exposure.
+
+# Workflow files (contain secret references)
+/.github/workflows/ @samuelho-dev
+
+# GitHub Actions configuration
+/.github/actions/ @samuelho-dev
+
+# Security-sensitive configuration files
+/.nix-cache-setup.md @samuelho-dev
+/.nix-cache-public-key @samuelho-dev
+
+# Nix flake files (define builds that push to cache)
+/flake.nix @samuelho-dev
+/flake.lock @samuelho-dev
