@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
-#
-# Apply Home Manager configuration with proper Git staging
-#
-# This script ensures user.nix exists and is staged in Git before
-# attempting to apply the Home Manager configuration. Nix flakes
-# require files to be Git-tracked for evaluation, even if gitignored.
-
+# Apply Home Manager configuration (ensures user.nix is Git-staged)
 set -euo pipefail
 
 # Change to repository root

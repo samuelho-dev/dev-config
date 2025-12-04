@@ -20,7 +20,6 @@
     sops-nix,
     ...
   }: let
-    # Validate user.nix exists and load it
     userConfigPath = ./user.nix;
     userConfig =
       if builtins.pathExists userConfigPath
@@ -39,7 +38,6 @@
           See docs/nix/README.md for details.
         '';
 
-    # Support multiple systems (using nixpkgs convention)
     systems = nixpkgs.lib.systems.flakeExposed;
 
     forAllSystems = fn:
@@ -52,30 +50,23 @@
           inherit system;
         });
 
-    # Import centralized package definitions (DRY - single source of truth)
     getDevPackages = pkgs: let
       devPkgs = import ./pkgs {inherit pkgs;};
     in
       devPkgs.all devPkgs;
   in {
-    # Formatter for pre-commit hooks
     formatter = forAllSystems ({pkgs, ...}: pkgs.alejandra);
 
-    # Export reusable modules for ai-dev-env integration
     nixosModules.default = import ./modules/nixos;
     homeManagerModules.default = import ./modules/home-manager;
 
-    # DevPod container image (pre-built for ai-dev-env)
     packages = forAllSystems ({pkgs, ...}: {
-      # Pre-built Docker image with all dev tools
       devpod-image = pkgs.dockerTools.buildLayeredImage {
         name = "ghcr.io/samuelho-dev/dev-config-devpod";
         tag = "latest";
 
-        # All dev-config tools pre-installed
         contents =
           [
-            # Base system utilities (container-specific)
             pkgs.bashInteractive
             pkgs.coreutils
             pkgs.gnugrep
@@ -96,7 +87,6 @@
           WorkingDir = "/workspace";
         };
 
-        # Create vscode user in image
         extraCommands = ''
           mkdir -p etc home/vscode workspace tmp
           echo "vscode:x:1000:1000::/home/vscode:${pkgs.zsh}/bin/zsh" > etc/passwd
@@ -104,20 +94,16 @@
           chmod 1777 tmp
         '';
 
-        # Layer optimization (modern Docker supports 128 layers)
         maxLayers = 100;
       };
 
-      # Convenience: buildEnv for local development
       default = pkgs.buildEnv {
         name = "dev-config-packages";
         paths = getDevPackages pkgs;
       };
     });
 
-    # Development shells for quick environment setup
     devShells = forAllSystems ({pkgs, ...}: {
-      # Full development environment (40+ tools)
       default = pkgs.mkShellNoCC {
         packages = getDevPackages pkgs ++ [pkgs.home-manager];
 
@@ -129,11 +115,7 @@
         shellHook = ''
           SENTINEL="$PWD/.direnv/.dev-config-loaded"
 
-          # Show banner if:
-          # - Not yet loaded (no sentinel file), OR
-          # - DEV_CONFIG_VERBOSE=1 is explicitly set
           if [ ! -f "$SENTINEL" ] || [ "''${DEV_CONFIG_VERBOSE:-0}" = "1" ]; then
-            # Only suppress if DEV_CONFIG_QUIET=1
             if [ "''${DEV_CONFIG_QUIET:-0}" != "1" ]; then
               echo "📦 Dev-config development environment"
               echo ""
@@ -149,47 +131,39 @@
               echo "  nix flake update                 # Update dependencies"
             fi
 
-            # Create sentinel file (ignore errors if .direnv doesn't exist yet)
             mkdir -p "$PWD/.direnv" 2>/dev/null || true
             touch "$SENTINEL" 2>/dev/null || true
           fi
         '';
       };
 
-      # Minimal shell for Home Manager operations only
       minimal = pkgs.mkShellNoCC {
         packages = [pkgs.home-manager pkgs.git];
         shellHook = ''echo "📦 Minimal Home Manager environment"'';
       };
     });
 
-    # Apps for configuration utilities
     apps = forAllSystems ({
       pkgs,
       system,
       ...
     }: {
-      # Set default shell to zsh
       set-shell = {
         type = "app";
         program = toString (pkgs.writeShellScript "set-shell" ''
           ZSH_PATH="${pkgs.zsh}/bin/zsh"
 
-          # Add zsh to /etc/shells if not present
           if ! grep -q "$ZSH_PATH" /etc/shells 2>/dev/null; then
             echo "$ZSH_PATH" | sudo tee -a /etc/shells > /dev/null
           fi
 
-          # Change shell
           sudo chsh -s "$ZSH_PATH" "$USER"
           echo "✅ Default shell set to zsh (restart terminal to apply)"
         '');
       };
     });
 
-    # Home Manager configurations (machine-specific)
     homeConfigurations = {
-      # macOS ARM64 (M1/M2/M3) - uses user.nix for username/homeDirectory
       "samuelho-macbook" = home-manager.lib.homeManagerConfiguration {
         pkgs = import nixpkgs {
           system = "aarch64-darwin";
@@ -201,14 +175,11 @@
         ];
         extraSpecialArgs = {
           inherit self;
-          # Pass inputs with dev-config = self for standalone mode
-          # This allows modules to use "inputs.dev-config" consistently
           inputs = inputs // {dev-config = self;};
           inherit (userConfig) username homeDirectory;
         };
       };
 
-      # Linux x86_64 - uses user.nix for username/homeDirectory
       "samuelho-linux" = home-manager.lib.homeManagerConfiguration {
         pkgs = import nixpkgs {
           system = "x86_64-linux";
@@ -220,8 +191,6 @@
         ];
         extraSpecialArgs = {
           inherit self;
-          # Pass inputs with dev-config = self for standalone mode
-          # This allows modules to use "inputs.dev-config" consistently
           inputs = inputs // {dev-config = self;};
           inherit (userConfig) username homeDirectory;
         };

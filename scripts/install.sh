@@ -1,16 +1,5 @@
 #!/bin/bash
-# Nix + Home Manager bootstrap for dev-config
-# Fully declarative installation using Home Manager modules
-#
-# Usage:
-#   bash scripts/install.sh
-#
-# What this does:
-#   1. Installs Nix (if not present)
-#   2. Enables flakes
-#   3. Installs Home Manager
-#   4. Activates Home Manager configuration (symlinks, plugins, packages)
-
+# Bootstrap Nix + Home Manager configuration
 set -e
 
 # Colors for output
