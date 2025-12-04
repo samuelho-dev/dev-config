@@ -66,6 +66,7 @@
     pkgs.gh
     pkgs.act
     pkgs.pre-commit
+    pkgs.cachix
   ];
 
   # Development utilities

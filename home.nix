@@ -54,6 +54,7 @@
 
   # Add user-local directories to PATH (prepended, so they take precedence)
   home.sessionPath = [
+    "$HOME/.nix-profile/bin" # Home Manager packages (cachix, etc.)
     "$HOME/.local/bin" # Claude CLI, user scripts
     "$HOME/.bun/bin" # Bun package manager (if installed)
     "$HOME/Library/pnpm" # pnpm package manager (if installed)
