@@ -14,8 +14,8 @@
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.neovim;
-      description = "Neovim package to use";
+      default = pkgs.neovim-unwrapped;
+      description = "Neovim package to use (unwrapped, Home Manager will wrap it)";
     };
 
     configSource = lib.mkOption {

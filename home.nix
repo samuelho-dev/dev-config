@@ -94,8 +94,8 @@
     # Disable ghostty on macOS (not available on darwin)
     ghostty.enable = false;
 
-    # Disable neovim module temporarily (nixpkgs compatibility)
-    neovim.enable = false;
+    # Enable neovim module for Home Manager-managed config
+    neovim.enable = true;
 
     # Enable yazi terminal file manager (with full preview support)
     yazi.enable = true;
