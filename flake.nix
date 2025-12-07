@@ -127,38 +127,32 @@
       };
     });
 
-    homeConfigurations = {
-      "samuelho-macbook" = home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs {
-          system = "aarch64-darwin";
-          config.allowUnfree = true;
+    homeConfigurations = let
+      mkHomeConfig = system:
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
+          modules = [
+            ./home.nix
+            inputs.sops-nix.homeManagerModules.sops
+          ];
+          extraSpecialArgs = {
+            inherit self;
+            inputs = inputs // {dev-config = self;};
+            inherit (userConfig) username homeDirectory;
+          };
         };
-        modules = [
-          ./home.nix
-          inputs.sops-nix.homeManagerModules.sops
-        ];
-        extraSpecialArgs = {
-          inherit self;
-          inputs = inputs // {dev-config = self;};
-          inherit (userConfig) username homeDirectory;
-        };
-      };
+    in {
+      # Default configuration (uses username from user.nix)
+      # Usage: home-manager switch --flake .
+      # Defaults to aarch64-darwin (macOS ARM)
+      ${userConfig.username} = mkHomeConfig "aarch64-darwin";
 
-      "samuelho-linux" = home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs {
-          system = "x86_64-linux";
-          config.allowUnfree = true;
-        };
-        modules = [
-          ./home.nix
-          inputs.sops-nix.homeManagerModules.sops
-        ];
-        extraSpecialArgs = {
-          inherit self;
-          inputs = inputs // {dev-config = self;};
-          inherit (userConfig) username homeDirectory;
-        };
-      };
+      # Explicit configurations for specific systems
+      "samuelho-macbook" = mkHomeConfig "aarch64-darwin";
+      "samuelho-linux" = mkHomeConfig "x86_64-linux";
     };
   };
 }
