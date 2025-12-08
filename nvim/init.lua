@@ -45,16 +45,16 @@ require 'config'
 -- Each file returns a table of plugin specifications
 require('lazy').setup({
   -- Import all plugin modules
-  { import = 'plugins.editor' }, -- File explorer, fuzzy finder, search/replace
-  { import = 'plugins.lsp' }, -- LSP configuration and formatting
+  { import = 'plugins.editor' },     -- File explorer, fuzzy finder, search/replace
+  { import = 'plugins.lsp' },        -- LSP configuration and formatting
   { import = 'plugins.completion' }, -- Autocompletion (blink.cmp, LuaSnip)
-  { import = 'plugins.ai' }, -- AI assistance (minuet, codecompanion, yarepl)
-  { import = 'plugins.git' }, -- Git integration
-  { import = 'plugins.markdown' }, -- Markdown and Obsidian
-  { import = 'plugins.ui' }, -- UI enhancements
+  { import = 'plugins.ai' },         -- AI assistance (minuet, codecompanion, yarepl)
+  { import = 'plugins.git' },        -- Git integration
+  { import = 'plugins.markdown' },   -- Markdown and Obsidian
+  { import = 'plugins.ui' },         -- UI enhancements
   { import = 'plugins.treesitter' }, -- Syntax highlighting
-  { import = 'plugins.tools' }, -- Utility tools (CSV viewer)
-  { import = 'plugins.training' }, -- Vim training games
+  { import = 'plugins.tools' },      -- Utility tools (CSV viewer)
+  { import = 'plugins.training' },   -- Vim training games
 }, {
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the

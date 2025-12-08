@@ -50,20 +50,21 @@ return {
     },
   },
 
-  -- Colorscheme: tokyonight
+  -- Colorscheme: kanagawa
   {
-    'folke/tokyonight.nvim',
+    'rebelot/kanagawa.nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     config = function()
       ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
+      require('kanagawa').setup {
+        theme = 'dragon', -- 'wave' (default), 'dragon' (darker), 'lotus' (light)
         styles = {
           comments = { italic = false }, -- Disable italics in comments
         },
       }
 
       -- Load the colorscheme
-      vim.cmd.colorscheme 'tokyonight-night'
+      vim.cmd.colorscheme 'kanagawa-dragon'
     end,
   },
 
@@ -105,7 +106,7 @@ return {
     init = function()
       -- Change <C-n> to <leader>m to avoid blink.cmp conflict
       vim.g.VM_maps = {
-        ['Find Under'] = '<leader>m', -- Start multi-cursor, select word under cursor
+        ['Find Under'] = '<leader>m',         -- Start multi-cursor, select word under cursor
         ['Find Subword Under'] = '<leader>m', -- Same for subwords
       }
 
