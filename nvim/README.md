@@ -137,7 +137,7 @@ Inline previews use `image.nvim` + Mermaid CLI. Install the supporting tools onc
 
 ```bash
 brew install imagemagick          # or your package manager of choice
-npm install -g @mermaid-js/mermaid-cli
+npm add -g @mermaid-js/mermaid-cli
 ```
 
 Ghostty implements the Kitty graphics protocol, so diagrams also render there (keep an eye on upstream Ghostty releases for graphics fixes).

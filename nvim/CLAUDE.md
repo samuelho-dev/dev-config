@@ -1134,7 +1134,7 @@ brew install pkg-config
 **When to fix:**
 
 ```bash
-npm install -g tree-sitter-cli  # Only if developing grammars
+npm add -g tree-sitter-cli  # Only if developing grammars
 ```
 
 ### Fixed Warnings (No Longer Appear)

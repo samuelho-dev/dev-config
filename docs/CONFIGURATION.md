@@ -364,7 +364,7 @@ Neovim uses Mason to manage LSP servers and formatters. These are automatically 
 
 ### External Tools
 **Mermaid CLI (mmdc):**
-- Installed via npm: `npm install -g @mermaid-js/mermaid-cli`
+- Installed via npm: `npm add -g @mermaid-js/mermaid-cli`
 - Enables Mermaid diagram rendering in markdown files
 - Used by render-markdown.nvim plugin
 

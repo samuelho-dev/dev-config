@@ -157,7 +157,7 @@ These provide enhanced features but are not required:
 - **npm** - Node.js package manager
 - **Mermaid CLI** - Diagram rendering
   ```bash
-  npm install -g @mermaid-js/mermaid-cli
+  npm add -g @mermaid-js/mermaid-cli
   ```
   Auto-installed by `install.sh` if npm is available.
 
@@ -929,7 +929,7 @@ sudo apt install imagemagick
 
 Install Mermaid CLI:
 ```bash
-npm install -g @mermaid-js/mermaid-cli
+npm add -g @mermaid-js/mermaid-cli
 
 # Verify
 mmdc --version

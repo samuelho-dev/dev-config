@@ -321,7 +321,7 @@ Both machines share the same `.zshrc` from Git!
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
 
-alias ni="npm install"
+alias ni="npm add"
 alias ns="npm start"
 alias nt="npm test"
 ```
