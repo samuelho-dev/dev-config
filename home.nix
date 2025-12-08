@@ -91,8 +91,11 @@
       p10kSource = null;
     };
 
-    # Disable ghostty on macOS (not available on darwin)
-    ghostty.enable = false;
+    # Enable ghostty (package installed via Homebrew on macOS)
+    ghostty = {
+      enable = true;
+      package = null; # Not available in nixpkgs, installed via Homebrew
+    };
 
     # Enable neovim module for Home Manager-managed config
     neovim.enable = true;

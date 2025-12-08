@@ -13,7 +13,7 @@
     };
 
     package = lib.mkOption {
-      type = lib.types.package;
+      type = lib.types.nullOr lib.types.package;
       default = pkgs.ghostty or null;
       description = ''
         Ghostty package to use.
@@ -41,9 +41,23 @@
     home.packages = lib.optional (config.dev-config.ghostty.package != null) config.dev-config.ghostty.package;
 
     # Symlink Ghostty configuration if source is provided
-    # Ghostty config location: ~/.config/ghostty/config (cross-platform)
-    xdg.configFile."ghostty/config" = lib.mkIf (config.dev-config.ghostty.configSource != null) {
-      source = config.dev-config.ghostty.configSource;
-    };
+    # Platform-specific paths:
+    # - macOS: ~/Library/Application Support/com.mitchellh.ghostty/config
+    # - Linux: ~/.config/ghostty/config (XDG standard)
+    home.file = lib.mkIf (config.dev-config.ghostty.configSource != null) (
+      if pkgs.stdenv.isDarwin
+      then {
+        "Library/Application Support/com.mitchellh.ghostty/config".source = config.dev-config.ghostty.configSource;
+      }
+      else {}
+    );
+
+    xdg.configFile = lib.mkIf (config.dev-config.ghostty.configSource != null) (
+      if pkgs.stdenv.isLinux
+      then {
+        "ghostty/config".source = config.dev-config.ghostty.configSource;
+      }
+      else {}
+    );
   };
 }
