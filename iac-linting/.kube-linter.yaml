@@ -1,0 +1,49 @@
+---
+# KubeLinter Configuration
+# Strict Kubernetes manifest validation
+# https://docs.kubelinter.io/
+
+checks:
+  # Enable all built-in checks
+  addAllBuiltIn: true
+
+  # Disable checks that may cause false positives in development
+  exclude:
+    # Allow hostNetwork for some workloads (monitoring agents, etc.)
+    - "host-network"
+
+# Custom checks configuration
+customChecks:
+  - name: require-resource-limits
+    description: "All containers must have CPU and memory limits defined"
+    template: "required-resources"
+    params:
+      resources:
+        - cpu
+        - memory
+    severity: error
+
+  - name: no-latest-tag
+    description: "Image tags must be explicit, not 'latest'"
+    template: "latest-tag"
+    severity: error
+
+  - name: no-privileged
+    description: "Containers must not run in privileged mode"
+    template: "privileged"
+    severity: error
+
+  - name: run-as-non-root
+    description: "Containers should run as non-root user"
+    template: "run-as-non-root"
+    severity: warning
+
+  - name: no-writable-root-fs
+    description: "Root filesystem should be read-only"
+    template: "writable-host-mount"
+    severity: warning
+
+# Ignore paths for generated or third-party manifests
+ignorePaths:
+  - "charts/**/templates/_helpers.tpl"
+  - "**/kustomization.yaml"

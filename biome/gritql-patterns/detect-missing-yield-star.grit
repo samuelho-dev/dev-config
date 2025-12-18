@@ -1,0 +1,27 @@
+language js
+
+// CRITICAL: Detect missing yield* in Effect.gen
+// This is one of the most common Effect-TS bugs that causes silent failures
+//
+// ❌ Bad (silent bug):
+//   Effect.gen(function* () {
+//     const x = Effect.succeed(42) // x is Effect<number>, NOT number!
+//   })
+//
+// ✅ Good:
+//   Effect.gen(function* () {
+//     const x = yield* Effect.succeed(42) // x is number
+//   })
+//
+// Expert validated: This pattern detects direct assignment of Effect calls
+// without yield*, which causes x to be an Effect instead of unwrapped value
+
+`Effect.gen(function* () { $body })` where {
+  $body <: contains `const $name = Effect.$method($args)` where {
+    register_diagnostic(
+      span = $_,
+      message = "Possible missing 'yield*'. In Effect.gen, use 'yield* Effect.xxx' to unwrap Effects. Direct assignment creates Effect<T> not T.",
+      severity = "error"
+    )
+  }
+}

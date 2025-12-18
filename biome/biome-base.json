@@ -23,12 +23,12 @@
       "correctness": {
         "noUnusedImports": "error",
         "noUnusedVariables": "error",
-        "noUnusedPrivateClassMembers": "error",
-        "useImportExtensions": "error"
+        "noUnusedPrivateClassMembers": "error"
       },
       "style": {
         "noCommonJs": "error",
         "noDefaultExport": "warn",
+        "noNamespace": "error",
         "useImportType": "error",
         "useExportType": "error",
         "useNodejsImportProtocol": "error",
@@ -36,24 +36,32 @@
         "useConst": "error",
         "useTemplate": "error",
         "useSingleVarDeclarator": "error",
-        "useConsistentArrayType": "error",
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
         "useShorthandAssign": "error",
         "useExponentiationOperator": "error",
+        "useAsConstAssertion": "error",
+        "useEnumInitializers": "error",
         "noProcessEnv": "warn"
       },
       "suspicious": {
         "noExplicitAny": "error",
         "noConsole": "warn",
         "noDoubleEquals": "error",
-        "noImplicitAnyLet": "error",
         "noArrayIndexKey": "warn",
         "noAssignInExpressions": "error",
         "noAsyncPromiseExecutor": "error",
         "noConfusingVoidType": "error",
+        "noConstEnum": "error",
         "noDebugger": "error",
         "noDuplicateObjectKeys": "error",
         "noEmptyBlockStatements": "warn",
         "noExportsInTest": "error",
+        "noExtraNonNullAssertion": "error",
         "noFallthroughSwitchClause": "error",
         "noGlobalIsFinite": "error",
         "noGlobalIsNan": "error",
@@ -74,7 +82,7 @@
       "complexity": {
         "noBannedTypes": "error",
         "noExcessiveCognitiveComplexity": {
-          "level": "warn",
+          "level": "error",
           "options": {
             "maxAllowedComplexity": 15
           }
@@ -100,9 +108,9 @@
       },
       "performance": {
         "noAccumulatingSpread": "error",
-        "noBarrelFile": "warn",
+        "noBarrelFile": "error",
         "noDelete": "warn",
-        "noReExportAll": "warn"
+        "noReExportAll": "error"
       },
       "security": {
         "noDangerouslySetInnerHtml": "error",

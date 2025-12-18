@@ -1,0 +1,20 @@
+language js
+
+// Stricter 'any' type detection beyond Biome's noExplicitAny
+// Catches additional patterns that bypass type safety
+//
+// ❌ Bad: const x: any = value
+// ❌ Bad: value as any
+// ✅ Good: const x: unknown = value (then narrow with type guards)
+// ✅ Good: Schema.decodeUnknown(MySchema)(value) (for runtime validation)
+
+or {
+  // Type assertion to any
+  `$expr as any` where {
+    register_diagnostic(
+      span = $_,
+      message = "Type assertion to 'any' defeats type safety. Use Schema.decodeUnknown for runtime validation, type guards are an antipattern, use strict typing with schemas upstream.",
+      severity = "error"
+    )
+  }
+}

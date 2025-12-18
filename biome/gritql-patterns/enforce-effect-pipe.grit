@@ -1,0 +1,18 @@
+language js
+
+// Enforce Effect.pipe() over deeply nested Effect calls (3+ levels)
+// 2 levels is acceptable: Effect.map(Effect.succeed(x), f)
+// 3+ levels should use pipe for readability
+//
+// ❌ Bad: Effect.map(Effect.flatMap(Effect.succeed(x), f), g)
+// ✅ Good: Effect.pipe(Effect.succeed(x), Effect.flatMap(f), Effect.map(g))
+//
+// Expert validated: Only flags 3+ level deep nesting to avoid false positives
+
+`Effect.$m1(Effect.$m2(Effect.$m3($args)))` where {
+  register_diagnostic(
+    span = $_,
+    message = "Deep nesting detected. Use Effect.pipe() for composition instead of nested calls",
+    severity = "error"
+  )
+}

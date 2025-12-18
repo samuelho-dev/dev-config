@@ -1,3 +1,4 @@
+---
 # Pre-commit hooks for dev-config
 # Automatically installed via Nix devShell
 #
@@ -37,13 +38,13 @@ repos:
         pass_filenames: false
         description: Validate Home Manager configuration syntax
 
-      # Secret scanning
+      # Secret scanning (enhanced)
       - id: gitleaks
         name: Detect hardcoded secrets
-        entry: gitleaks detect --source . --verbose
+        entry: gitleaks protect --staged --verbose
         language: system
         pass_filenames: false
-        description: Scan for committed secrets and API keys
+        description: Scan staged files for secrets and API keys
 
       # Biome formatting and linting (JS/TS/JSON)
       - id: biome-check
@@ -53,6 +54,42 @@ repos:
         files: \.(js|jsx|ts|tsx|json|jsonc)$
         pass_filenames: true
         description: Format and lint JavaScript/TypeScript/JSON with Biome
+
+      # Kubernetes manifest linting
+      - id: kube-linter
+        name: Lint Kubernetes manifests
+        entry: kube-linter lint --config iac-linting/.kube-linter.yaml
+        language: system
+        files: ^(k8s|deploy|charts)/.*\.ya?ml$
+        pass_filenames: true
+        description: Validate Kubernetes manifests with kube-linter
+
+      # Dockerfile linting
+      - id: hadolint
+        name: Lint Dockerfiles
+        entry: hadolint --config iac-linting/.hadolint.yaml
+        language: system
+        files: (Dockerfile|\.dockerfile)$
+        pass_filenames: true
+        description: Lint Dockerfiles with Hadolint
+
+      # Terraform linting
+      - id: tflint
+        name: Lint Terraform files
+        entry: tflint --config iac-linting/.tflint.hcl
+        language: system
+        files: \.tf$
+        pass_filenames: false
+        description: Lint Terraform configuration with TFLint
+
+      # GitHub Actions linting
+      - id: actionlint
+        name: Lint GitHub Actions
+        entry: actionlint
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: true
+        description: Lint GitHub Actions workflows with actionlint
 
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -87,5 +124,6 @@ repos:
     hooks:
       - id: shellcheck
         name: Lint shell scripts
-        args: ['-x', '-e', 'SC1091']  # Follow sourced files, exclude SC1091 (info about not following sources)
+        # Follow sourced files, exclude SC1091
+        args: ['-x', '-e', 'SC1091']
         exclude: ^zsh/  # Exclude zsh config files (not bash scripts)

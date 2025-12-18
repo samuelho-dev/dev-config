@@ -182,42 +182,52 @@ in {
         default = {
           recommended = true;
           # Correctness - auto-fixable
+          # NOTE: useImportExtensions removed - not needed for TypeScript-only projects
           correctness = {
             noUnusedImports = "error";
             noUnusedVariables = "error";
             noUnusedPrivateClassMembers = "error";
-            useImportExtensions = "error";
           };
-          # Style - ESM enforcement + auto-fixable
+          # Style - ESM enforcement + auto-fixable (Direct Equality Philosophy)
           style = {
+            # Backstop rules (ban wrong patterns)
             noCommonJs = "error";
             noDefaultExport = "warn";
+            noNamespace = "error";
+            noNonNullAssertion = "error";
+            noProcessEnv = "warn";
+            # Direct equality rules (enforce correct patterns)
             useImportType = "error";
             useExportType = "error";
             useNodejsImportProtocol = "error";
-            noNonNullAssertion = "error";
             useConst = "error";
             useTemplate = "error";
             useSingleVarDeclarator = "error";
-            useConsistentArrayType = "error";
+            useConsistentArrayType = {
+              level = "error";
+              options = {syntax = "shorthand";};
+            };
             useShorthandAssign = "error";
             useExponentiationOperator = "error";
-            noProcessEnv = "warn";
+            useAsConstAssertion = "error";
+            useEnumInitializers = "error";
           };
           # Suspicious - strict type safety
+          # NOTE: noImplicitAnyLet removed - does NOT exist in Biome (expert validation)
           suspicious = {
             noExplicitAny = "error";
             noConsole = "warn";
             noDoubleEquals = "error";
-            noImplicitAnyLet = "error";
             noArrayIndexKey = "warn";
             noAssignInExpressions = "error";
             noAsyncPromiseExecutor = "error";
             noConfusingVoidType = "error";
+            noConstEnum = "error";
             noDebugger = "error";
             noDuplicateObjectKeys = "error";
             noEmptyBlockStatements = "warn";
             noExportsInTest = "error";
+            noExtraNonNullAssertion = "error";
             noFallthroughSwitchClause = "error";
             noGlobalIsFinite = "error";
             noGlobalIsNan = "error";
@@ -229,6 +239,7 @@ in {
             noShadowRestrictedNames = "error";
             noUnsafeDeclarationMerging = "error";
             noUnsafeNegation = "error";
+            # Direct equality rules
             useAwait = "error";
             useDefaultSwitchClauseLast = "error";
             useGetterReturn = "error";
@@ -239,7 +250,7 @@ in {
           complexity = {
             noBannedTypes = "error";
             noExcessiveCognitiveComplexity = {
-              level = "warn";
+              level = "error"; # Changed from warn to error per user decision
               options = {
                 maxAllowedComplexity = 15;
               };
@@ -258,17 +269,18 @@ in {
             noUselessThisAlias = "error";
             noUselessTypeConstraint = "error";
             noVoid = "error";
+            # Direct equality rules
             useFlatMap = "error";
             useLiteralKeys = "error";
             useOptionalChain = "error";
             useSimplifiedLogicExpression = "error";
           };
-          # Performance
+          # Performance - strict enforcement (75% build improvement from barrel file ban)
           performance = {
             noAccumulatingSpread = "error";
-            noBarrelFile = "warn";
+            noBarrelFile = "error"; # Changed from warn to error per user decision
             noDelete = "warn";
-            noReExportAll = "warn";
+            noReExportAll = "error"; # Changed from warn to error per user decision
           };
           # Security
           security = {
@@ -276,7 +288,7 @@ in {
             noGlobalEval = "error";
           };
         };
-        description = "Linter rules configuration with strict ESM enforcement";
+        description = "Linter rules with strict ESM enforcement and Direct Equality Philosophy";
         example = lib.literalExpression ''
           {
             recommended = true;

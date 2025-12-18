@@ -1,0 +1,15 @@
+---
+# Actionlint Configuration
+# GitHub Actions workflow linting
+# https://github.com/rhysd/actionlint
+
+# Self-hosted runner labels (add your custom labels here)
+self-hosted-runner:
+  labels: []
+
+# Config variables used in workflows (add your org-level config vars)
+config-variables: []
+
+# Patterns to ignore (glob patterns)
+# ignore:
+#   - "*.md"

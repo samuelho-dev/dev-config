@@ -90,6 +90,12 @@
   # Linting and formatting tools
   linting = [
     pkgs.biome # Fast formatter and linter for JS/TS/JSON/CSS
+    pkgs.hadolint # Dockerfile linting
+    pkgs.kube-linter # Kubernetes manifest linting
+    pkgs.tflint # Terraform linting
+    pkgs.actionlint # GitHub Actions linting
+    pkgs.yamllint # YAML linting
+    pkgs.shellcheck # Shell script linting
   ];
 
   # Combine all packages into a single list
