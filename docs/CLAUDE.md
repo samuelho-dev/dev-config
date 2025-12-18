@@ -36,7 +36,19 @@ docs/
 ├── CONFIGURATION.md           # Customization and configuration guide
 ├── TROUBLESHOOTING.md         # Common issues and solutions
 ├── KEYBINDINGS_NEOVIM.md      # Complete Neovim keybinding reference
-└── KEYBINDINGS_TMUX.md        # Complete tmux keybinding reference
+├── KEYBINDINGS_TMUX.md        # Complete tmux keybinding reference
+└── nix/                       # Nix-specific documentation (11 guides)
+    ├── 01-install-nix.md                 # Installing Nix package manager
+    ├── 02-flake-overview.md              # Understanding flake.nix
+    ├── 03-home-manager-basics.md         # Home Manager introduction
+    ├── 04-opencode-integration.md        # OpenCode AI setup
+    ├── 05-devpod-setup.md                # DevPod remote development
+    ├── 06-direnv-integration.md          # Direnv auto-activation
+    ├── 07-litellm-proxy-setup.md         # LiteLLM team proxy
+    ├── 08-module-architecture.md         # Module design patterns
+    ├── 09-1password-ssh.md               # SSH + 1Password integration
+    ├── 10-secrets-management.md          # sops-nix secrets guide
+    └── 11-strict-linting-guide.md        # Comprehensive linting guide
 ```
 
 ## When to Update Documentation
@@ -399,3 +411,6 @@ code example
    - New issue/warning → TROUBLESHOOTING.md
    - New plugin → Component README.md + keybinding reference
    - Architecture change → Component CLAUDE.md
+   - New linting rule → biome/CLAUDE.md + docs/nix/11-strict-linting-guide.md
+   - New IaC tool → iac-linting/ config + main CLAUDE.md
+   - New GritQL pattern → biome/gritql-patterns/ + biome/CLAUDE.md

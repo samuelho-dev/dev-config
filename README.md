@@ -631,6 +631,34 @@ See [docs/TMUX.md](docs/TMUX.md) for complete keybinding reference.
 
 Configuration file: `ghostty/config`
 
+### Strict Linting & Type Safety
+
+This repository provides **enterprise-grade linting configurations** for TypeScript monorepos:
+
+**Biome Configuration (80+ rules):**
+- `biome/biome-base.json` - Strict TypeScript/JavaScript linting
+- Enforce `import type`, no barrel files, cognitive complexity limits
+- GritQL custom patterns for Effect-TS and anti-patterns
+
+**TypeScript Strict Configs:**
+- `tsconfig/tsconfig.strict.json` - Maximum strictness
+- `tsconfig/tsconfig.monorepo.json` - Nx/Turborepo support
+- `tsconfig/tsconfig.library.json` - npm publishing
+
+**Infrastructure-as-Code Linting:**
+- `.kube-linter.yaml` - Kubernetes manifests (resource limits, no :latest)
+- `.hadolint.yaml` - Dockerfiles (version pinning, non-root)
+- `.tflint.hcl` - Terraform (snake_case, documented variables)
+- `.actionlint.yaml` - GitHub Actions workflows
+
+**Pre-commit Integration:**
+```bash
+pre-commit install  # Enable hooks
+pre-commit run --all-files  # Run manually
+```
+
+See [docs/nix/11-strict-linting-guide.md](docs/nix/11-strict-linting-guide.md) for comprehensive guide.
+
 ### Shell (Zsh)
 
 **Configuration Highlights:**
@@ -819,6 +847,18 @@ dev-config/
 │   ├── .zshrc                # Main zsh config (Oh My Zsh, plugins, aliases)
 │   ├── .zprofile             # Login shell config (PATH settings)
 │   └── .p10k.zsh             # Powerlevel10k theme configuration
+├── biome/                    # Biome linting configuration
+│   ├── biome-base.json       # Strict rules (80+ enabled)
+│   └── gritql-patterns/      # Custom GritQL lint patterns
+├── tsconfig/                 # TypeScript strict configurations
+│   ├── tsconfig.strict.json      # Maximum strictness
+│   ├── tsconfig.monorepo.json    # Nx/Turborepo
+│   └── tsconfig.library.json     # npm publishing
+├── iac-linting/              # Infrastructure-as-Code linting
+│   ├── .kube-linter.yaml     # Kubernetes validation
+│   ├── .hadolint.yaml        # Dockerfile linting
+│   ├── .tflint.hcl           # Terraform rules
+│   └── .actionlint.yaml      # GitHub Actions validation
 ├── scripts/
 │   ├── install.sh            # Create symlinks
 │   ├── uninstall.sh          # Remove symlinks

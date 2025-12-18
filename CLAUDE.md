@@ -50,6 +50,12 @@ The `devShells.default` output provides a **comprehensive DevOps environment** w
 - sops (secure secrets management with age encryption)
 - OpenCode (installed separately, not in nixpkgs)
 
+**Linting & Formatting:**
+- biome (JS/TS/JSON), hadolint (Dockerfiles), kube-linter (K8s)
+- tflint (Terraform), actionlint (GitHub Actions), yamllint, shellcheck
+
+See [Strict Linting & Type Safety](#strict-linting--type-safety) for comprehensive configuration details.
+
 **Utilities:**
 - direnv, nix-direnv, gnumake, pkg-config, imagemagick
 
@@ -132,7 +138,19 @@ dev-config/
 ├── scripts/
 │   └── install.sh                     # Bootstrap script (installs Nix + Home Manager)
 ├── nvim/, tmux/, yazi/, zsh/, ghostty/  # Actual dotfiles (managed by Home Manager)
-└── docs/nix/                          # Nix documentation (9 guides)
+├── biome/                             # Biome linting configuration
+│   ├── biome-base.json                # Strict rules (80+ enabled)
+│   └── gritql-patterns/               # Custom GritQL lint patterns
+├── tsconfig/                          # TypeScript strict configurations
+│   ├── tsconfig.strict.json           # Maximum strictness template
+│   ├── tsconfig.monorepo.json         # Nx/Turborepo template
+│   └── tsconfig.library.json          # npm publishing template
+├── iac-linting/                       # Infrastructure-as-Code linting configs
+│   ├── .kube-linter.yaml              # Kubernetes manifest validation
+│   ├── .hadolint.yaml                 # Dockerfile linting
+│   ├── .tflint.hcl                    # Terraform rules
+│   └── .actionlint.yaml               # GitHub Actions validation
+└── docs/nix/                          # Nix documentation (11 guides)
 ```
 
 ### Installation Workflow (Current)
@@ -282,6 +300,10 @@ dev-config = {
 
 #### Scripts & Utilities
 - **[scripts/CLAUDE.md](scripts/CLAUDE.md)** - Installation script architecture (legacy reference)
+
+#### Linting & Type Safety
+- **[biome/CLAUDE.md](biome/CLAUDE.md)** - Biome configuration and GritQL patterns
+- **[docs/nix/11-strict-linting-guide.md](docs/nix/11-strict-linting-guide.md)** - Comprehensive linting guide
 
 #### Documentation
 - **[docs/CLAUDE.md](docs/CLAUDE.md)** - Documentation maintenance and standards
@@ -620,6 +642,273 @@ devpod up . --ide vscode
 - `.devcontainer/devcontainer.json` - Container definition
 
 **Documentation:** [docs/README_DEVPOD.md](docs/README_DEVPOD.md)
+
+## Strict Linting & Type Safety
+
+This repository provides **enterprise-grade linting configurations** for TypeScript monorepos with 80+ strict rules, Effect-TS patterns, and Infrastructure-as-Code validation.
+
+### Philosophy: Direct Equality
+
+We follow the **Direct Equality** linting philosophy:
+- Prefer `use*` rules over `no*` rules (tell what TO do, not what NOT to do)
+- Error severity for anti-patterns (fail-fast, not warnings that get ignored)
+- GritQL for custom patterns beyond built-in rules
+
+### Biome Configuration
+
+**Location:** `biome/biome-base.json`
+
+**Home Manager module:** `modules/home-manager/programs/biome.nix`
+
+**Key strict rules enabled:**
+
+```json
+{
+  "linter": {
+    "rules": {
+      "complexity": {
+        "noExcessiveCognitiveComplexity": { "level": "error", "options": { "maxAllowedComplexity": 15 } },
+        "noUselessTypeConstraint": "error"
+      },
+      "correctness": {
+        "noUnusedImports": "error",
+        "noUnusedVariables": "error",
+        "useExhaustiveDependencies": "error"
+      },
+      "performance": {
+        "noBarrelFile": "error",
+        "noReExportAll": "error"
+      },
+      "style": {
+        "noNamespace": "error",
+        "useAsConstAssertion": "error",
+        "useConsistentArrayType": { "level": "error", "options": { "syntax": "shorthand" } },
+        "useEnumInitializers": "error",
+        "useExportType": "error",
+        "useImportType": "error"
+      },
+      "suspicious": {
+        "noConfusingVoidType": "error",
+        "noConstEnum": "error",
+        "noExplicitAny": "error",
+        "noExtraNonNullAssertion": "error",
+        "noUnsafeDeclarationMerging": "error"
+      }
+    }
+  }
+}
+```
+
+**Using Biome in projects:**
+
+```bash
+# Check all files
+biome check .
+
+# Auto-fix issues
+biome check --write .
+
+# Format only
+biome format --write .
+
+# Lint only
+biome lint .
+```
+
+### GritQL Custom Patterns
+
+**Location:** `biome/gritql-patterns/`
+
+Custom lint rules using GritQL for patterns Biome doesn't cover:
+
+| Pattern | Severity | Description |
+|---------|----------|-------------|
+| `ban-any-type-annotation.grit` | error | Catches `as any` type assertions |
+| `ban-satisfies.grit` | error | Bans `satisfies` keyword (anti-pattern) |
+| `enforce-effect-pipe.grit` | error | Detects 3+ level deep Effect nesting |
+| `detect-missing-yield-star.grit` | error | **CRITICAL**: Catches missing `yield*` in Effect.gen |
+
+**Critical: Effect.gen yield* detection:**
+
+```typescript
+// BUG: Missing yield* causes silent failures
+Effect.gen(function* () {
+  const result = Effect.succeed(42)  // ERROR: Should be yield* Effect.succeed(42)
+  return result
+})
+```
+
+The `detect-missing-yield-star.grit` pattern catches this common mistake.
+
+### TypeScript Strict Configurations
+
+**Location:** `tsconfig/`
+
+**Home Manager module:** `modules/home-manager/programs/typescript-strict.nix`
+
+Three configuration templates available:
+
+#### tsconfig.strict.json
+Maximum strictness for application code:
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "verbatimModuleSyntax": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+#### tsconfig.monorepo.json
+For Nx/Turborepo monorepos (extends strict):
+```json
+{
+  "extends": "./tsconfig.strict.json",
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "declaration": true,
+    "declarationMap": true
+  }
+}
+```
+
+#### tsconfig.library.json
+For npm publishing (uses NodeNext):
+```json
+{
+  "extends": "./tsconfig.strict.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "declaration": true,
+    "declarationMap": true
+  }
+}
+```
+
+**Usage in projects:**
+```json
+{
+  "extends": "~/.config/tsconfig/tsconfig.strict.json"
+}
+```
+
+### Infrastructure-as-Code Linting
+
+**Location:** `iac-linting/`
+
+#### KubeLinter (Kubernetes)
+**Config:** `iac-linting/.kube-linter.yaml`
+
+Validates:
+- Resource limits required (CPU, memory)
+- No `:latest` image tags
+- No privileged containers
+- Run as non-root
+- Read-only root filesystem
+
+```bash
+kube-linter lint --config iac-linting/.kube-linter.yaml k8s/
+```
+
+#### Hadolint (Dockerfiles)
+**Config:** `iac-linting/.hadolint.yaml`
+
+Validates:
+- Pinned package versions (apt, pip, npm, apk)
+- Explicit image tags (no :latest)
+- Non-root USER directive
+- No sudo usage
+
+```bash
+hadolint --config iac-linting/.hadolint.yaml Dockerfile
+```
+
+#### TFLint (Terraform)
+**Config:** `iac-linting/.tflint.hcl`
+
+Validates:
+- snake_case naming conventions
+- All variables documented
+- All outputs documented
+- AWS/GCP best practices (optional plugins)
+
+```bash
+tflint --config iac-linting/.tflint.hcl
+```
+
+#### Actionlint (GitHub Actions)
+**Config:** `iac-linting/.actionlint.yaml`
+
+Validates:
+- Action syntax
+- Expression types
+- Shell script safety
+- Deprecated features
+
+```bash
+actionlint .github/workflows/
+```
+
+### Pre-commit Hooks
+
+**Config:** `.pre-commit-config.yaml`
+
+All linting tools integrated as pre-commit hooks:
+
+```yaml
+repos:
+  - repo: local
+    hooks:
+      - id: biome-check
+        name: Biome format and lint
+        entry: biome check --write
+        files: \.(js|jsx|ts|tsx|json|jsonc)$
+
+      - id: kube-linter
+        name: Lint Kubernetes manifests
+        entry: kube-linter lint --config iac-linting/.kube-linter.yaml
+        files: ^(k8s|deploy|charts)/.*\.ya?ml$
+
+      - id: hadolint
+        name: Lint Dockerfiles
+        entry: hadolint --config iac-linting/.hadolint.yaml
+        files: (Dockerfile|\.dockerfile)$
+
+      - id: tflint
+        name: Lint Terraform files
+        entry: tflint --config iac-linting/.tflint.hcl
+        files: \.tf$
+
+      - id: actionlint
+        name: Lint GitHub Actions
+        entry: actionlint
+        files: ^\.github/workflows/.*\.ya?ml$
+```
+
+**Setup:**
+```bash
+pre-commit install
+```
+
+**Run manually:**
+```bash
+pre-commit run --all-files
+```
+
+### Documentation
+
+- **[docs/nix/11-strict-linting-guide.md](docs/nix/11-strict-linting-guide.md)** - Comprehensive guide
+- **[biome/CLAUDE.md](biome/CLAUDE.md)** - Biome configuration details
 
 ## Key Architectural Decisions
 
