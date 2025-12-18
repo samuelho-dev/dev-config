@@ -45,6 +45,15 @@ repos:
         pass_filenames: false
         description: Scan for committed secrets and API keys
 
+      # Biome formatting and linting (JS/TS/JSON)
+      - id: biome-check
+        name: Biome format and lint
+        entry: biome check --write
+        language: system
+        files: \.(js|jsx|ts|tsx|json|jsonc)$
+        pass_filenames: true
+        description: Format and lint JavaScript/TypeScript/JSON with Biome
+
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0

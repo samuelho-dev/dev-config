@@ -13,6 +13,22 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
+# JavaScript/TypeScript (aligned with biome.json)
+[*.{js,jsx,ts,tsx}]
+indent_style = space
+indent_size = 2
+max_line_length = 100
+
+# JSON/JSONC (aligned with biome.json)
+[*.{json,jsonc}]
+indent_style = space
+indent_size = 2
+
+# GritQL patterns
+[*.grit]
+indent_style = space
+indent_size = 2
+
 [*.md]
 trim_trailing_whitespace = false
 max_line_length = off

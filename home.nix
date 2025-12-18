@@ -110,6 +110,13 @@
     # Add npm/token and npm/github-token to secrets/default.yaml
     npm.enable = true;
 
+    # Biome linter/formatter (exports config for monorepo extends)
+    # Generates ~/.config/biome/biome.json and GritQL patterns
+    biome = {
+      enable = true;
+      gritql.enable = true;
+    };
+
     # Optional: Disable specific programs
     # tmux.enable = false;
     # ssh.enable = false;

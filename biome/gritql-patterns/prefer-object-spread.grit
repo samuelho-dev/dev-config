@@ -1,0 +1,11 @@
+language js
+
+// Prefer object spread over Object.assign()
+// Object spread is more readable and has better type inference
+`Object.assign($target, $sources)` where {
+  register_diagnostic(
+    span = $target,
+    message = "Prefer object spread syntax ({ ...$target, ...$sources }) instead of Object.assign() for better readability and type inference.",
+    severity = "warn"
+  )
+}

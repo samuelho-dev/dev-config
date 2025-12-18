@@ -1,0 +1,23 @@
+language js
+
+// Ban type assertions (as and angle-bracket syntax)
+// Use Schema.decodeUnknown or proper type guards instead
+or {
+  // 'as' type assertion
+  `$expr as $type` where {
+    register_diagnostic(
+      span = $expr,
+      message = "Type assertions are not allowed. Use Schema.decodeUnknown or proper type guards for type narrowing.",
+      severity = "error"
+    )
+  },
+
+  // Angle-bracket type assertion (less common, JSX-incompatible)
+  `<$type>$expr` where {
+    register_diagnostic(
+      span = $expr,
+      message = "Type assertions are not allowed. Use Schema.decodeUnknown or proper type guards for type narrowing.",
+      severity = "error"
+    )
+  }
+}

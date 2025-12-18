@@ -1,0 +1,35 @@
+language js
+
+// Ban explicit return types on functions (except type guards)
+// Let TypeScript infer return types for better maintainability
+or {
+  // Arrow functions with explicit return type
+  `($params): $returnType => $body` where {
+    $returnType <: not `is $predicate`,
+    register_diagnostic(
+      span = $returnType,
+      message = "Do not use explicit return types on arrow functions (except type guards). Let TypeScript infer the type.",
+      severity = "error"
+    )
+  },
+
+  // Function declarations with explicit return type
+  `function $name($params): $returnType { $body }` where {
+    $returnType <: not `is $predicate`,
+    register_diagnostic(
+      span = $returnType,
+      message = "Do not use explicit return types on function declarations (except type guards). Let TypeScript infer the type.",
+      severity = "error"
+    )
+  },
+
+  // Method definitions with explicit return type
+  `$name($params): $returnType { $body }` where {
+    $returnType <: not `is $predicate`,
+    register_diagnostic(
+      span = $returnType,
+      message = "Do not use explicit return types on methods (except type guards). Let TypeScript infer the type.",
+      severity = "error"
+    )
+  }
+}

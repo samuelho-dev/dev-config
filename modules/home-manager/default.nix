@@ -15,6 +15,7 @@
     ./programs/ghostty.nix
     ./programs/yazi.nix
     ./programs/claude-code.nix
+    ./programs/biome.nix
     ./services/direnv.nix
     ./services/sops-env.nix
   ];

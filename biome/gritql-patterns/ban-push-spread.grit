@@ -1,0 +1,12 @@
+language js
+
+// Ban Array.push with spread arguments
+// Performance issue: push(...items) creates unnecessary intermediate array
+// Use array concatenation or push items individually instead
+`$array.push(...$args)` where {
+  register_diagnostic(
+    span = $array,
+    message = "Do not use spread arguments in Array.push(). Use array concatenation ($array = [...$array, ...$args]) or push items individually for better performance.",
+    severity = "error"
+  )
+}

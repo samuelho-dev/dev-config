@@ -87,6 +87,11 @@
     pkgs.imagemagick
   ];
 
+  # Linting and formatting tools
+  linting = [
+    pkgs.biome # Fast formatter and linter for JS/TS/JSON/CSS
+  ];
+
   # Combine all packages into a single list
   all = self:
     self.core
@@ -97,5 +102,6 @@
     ++ self.security
     ++ self.data
     ++ self.cicd
-    ++ self.utilities;
+    ++ self.utilities
+    ++ self.linting;
 }

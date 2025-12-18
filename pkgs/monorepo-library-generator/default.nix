@@ -10,7 +10,7 @@
     trap "rm -rf $TMPDIR" EXIT
     echo "@samuelho-dev:registry=https://registry.npmjs.org/" > "$TMPDIR/.npmrc"
     export npm_config_userconfig="$TMPDIR/.npmrc"
-    exec ${nodejs_20}/bin/npx --yes -p @samuelho-dev/monorepo-library-generator@1.5.0 mlg "$@"
+    exec ${nodejs_20}/bin/npx --yes -p @samuelho-dev/monorepo-library-generator@latest mlg "$@"
   '';
 
   mlg-mcp = writeShellScriptBin "mlg-mcp" ''
@@ -19,11 +19,11 @@
     trap "rm -rf $TMPDIR" EXIT
     echo "@samuelho-dev:registry=https://registry.npmjs.org/" > "$TMPDIR/.npmrc"
     export npm_config_userconfig="$TMPDIR/.npmrc"
-    exec ${nodejs_20}/bin/npx --yes -p @samuelho-dev/monorepo-library-generator@1.5.0 mlg-mcp "$@"
+    exec ${nodejs_20}/bin/npx --yes -p @samuelho-dev/monorepo-library-generator@latest mlg-mcp "$@"
   '';
 in
   symlinkJoin {
-    name = "monorepo-library-generator-1.5.0";
+    name = "monorepo-library-generator-1.5.2";
     paths = [mlg mlg-mcp];
 
     meta = with lib; {

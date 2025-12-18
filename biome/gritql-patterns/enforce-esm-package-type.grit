@@ -1,0 +1,20 @@
+language json
+
+// Enforce that package.json has "type": "module" for ESM
+// All packages in monorepo should use ESM by default
+`{ $props }` where {
+  // Only check package.json files (has name property)
+  $props <: contains `"name": $_`,
+
+  // Check if type is not "module"
+  or {
+    not ($props <: contains `"type": $_`),
+    $props <: contains `"type": "commonjs"`
+  },
+
+  register_diagnostic(
+    span = $props,
+    message = "package.json should have '\"type\": \"module\"' for ESM. CommonJS is deprecated.",
+    severity = "error"
+  )
+}
