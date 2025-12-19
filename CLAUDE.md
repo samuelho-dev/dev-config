@@ -58,6 +58,15 @@ See [Strict Linting & Type Safety](#strict-linting--type-safety) for comprehensi
 
 **Utilities:**
 - direnv, nix-direnv, gnumake, pkg-config, imagemagick
+- `init-workspace` - Initialize Nx workspace with Biome + TypeScript configs extending `~/.config/`
+
+### Workspace Initialization
+
+```bash
+init-workspace                       # Create biome.json + tsconfig.base.json extending ~/.config/
+init-workspace --force               # Overwrite existing configs
+init-workspace --help                # Show usage
+```
 
 ### Usage
 
