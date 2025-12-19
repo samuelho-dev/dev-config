@@ -5,29 +5,9 @@
   ...
 }: let
   cfg = config.dev-config.opencode;
-
-  # Config for direct Anthropic API (default/fallback)
-  # Note: provider.anthropic.options is optional - OpenCode uses ANTHROPIC_API_KEY env var by default
-  opencodeConfig = {
-    "$schema" = "https://opencode.ai/config.json";
-    model = cfg.model;
-    small_model = cfg.smallModel;
-  };
 in {
   options.dev-config.opencode = {
     enable = lib.mkEnableOption "OpenCode AI coding agent with LiteLLM fallback";
-
-    model = lib.mkOption {
-      type = lib.types.str;
-      default = "claude-sonnet-4-20250514";
-      description = "Primary model for OpenCode";
-    };
-
-    smallModel = lib.mkOption {
-      type = lib.types.str;
-      default = "claude-3-haiku-20240307";
-      description = "Small model for quick operations";
-    };
 
     litellmUrl = lib.mkOption {
       type = lib.types.str;
@@ -43,14 +23,8 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # Generate config file for direct API (fallback default)
-    # Force overwrite existing config (we're managing it now)
-    xdg.configFile."opencode/opencode.json" = {
-      text = builtins.toJSON opencodeConfig;
-      force = true;
-    };
-
     # Shell function with fallback logic
+    # OpenCode config is managed by user via `opencode auth` or ~/.config/opencode/opencode.json
     programs.zsh.initContent = ''
       # OpenCode with LiteLLM fallback
       opencode() {
