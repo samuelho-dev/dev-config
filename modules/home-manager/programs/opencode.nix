@@ -7,13 +7,9 @@
   cfg = config.dev-config.opencode;
 
   # Config for direct Anthropic API (default/fallback)
+  # Note: provider.anthropic.options is optional - OpenCode uses ANTHROPIC_API_KEY env var by default
   opencodeConfig = {
     "$schema" = "https://opencode.ai/config.json";
-    provider = {
-      anthropic = {
-        enabled = true;
-      };
-    };
     model = cfg.model;
     small_model = cfg.smallModel;
   };
