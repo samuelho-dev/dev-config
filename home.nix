@@ -47,9 +47,10 @@
   };
 
   # Add sops and age packages for secrets management
-  home.packages = [
-    pkgs.sops
-    pkgs.age
+  # Note: Main dev packages come from modules/home-manager/default.nix via dev-config.packages
+  home.packages = with pkgs; [
+    sops
+    age
   ];
 
   # Add user-local directories to PATH (prepended, so they take precedence)

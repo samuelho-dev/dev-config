@@ -81,7 +81,7 @@
       pkgs.gnumake
       pkgs.gcc
       pkgs.pkg-config
-      pkgs.nodejs
+      # Note: nodejs_20 is included via pkgs/default.nix runtimes
       pkgs.imagemagick
 
       # Mermaid CLI (for mermaid diagram rendering)

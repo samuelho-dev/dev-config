@@ -8,7 +8,6 @@
     pkgs.zsh
     pkgs.tmux
     pkgs.docker
-    pkgs.neovim
     pkgs.fzf
     pkgs.ripgrep
     pkgs.fd
@@ -79,13 +78,6 @@
     pkgs._1password-cli
     (pkgs.callPackage ./monorepo-library-generator {})
     (pkgs.callPackage ./init-workspace {})
-  ];
-
-  # Build dependencies
-  build = [
-    pkgs.gnumake
-    pkgs.pkg-config
-    pkgs.imagemagick
   ];
 
   # Linting and formatting tools

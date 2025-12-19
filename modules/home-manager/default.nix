@@ -48,14 +48,12 @@
 
   config = lib.mkIf config.dev-config.enable (let
     # Import centralized package definitions (DRY - single source of truth)
-    devPkgs = import ../../../pkgs {inherit pkgs;};
+    devPkgs = import ../../pkgs {inherit pkgs;};
   in {
-    # Install packages at user level
+    # Install packages at user level (merged with any packages defined in home.nix)
     home.packages = lib.mkIf config.dev-config.packages.enable (
-      lib.mkDefault (
-        (devPkgs.all devPkgs)
-        ++ config.dev-config.packages.extraPackages
-      )
+      (devPkgs.all devPkgs)
+      ++ config.dev-config.packages.extraPackages
     );
 
     # This module automatically enables (all can be individually disabled):
