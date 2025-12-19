@@ -6,17 +6,12 @@
 }: let
   cfg = config.dev-config.npm;
 
-  # Read tokens from sops secrets at activation time (not evaluation time)
+  # Read token from sops secrets at activation time (not evaluation time)
   # This is secure - tokens are decrypted only during home-manager activation
   # and never exposed to the Nix store
   npmToken =
     if config.sops.secrets ? "npm/token"
     then config.sops.secrets."npm/token".path
-    else null;
-
-  githubPackagesToken =
-    if config.sops.secrets ? "npm/github-token"
-    then config.sops.secrets."npm/github-token".path
     else null;
 
   # Generate .npmrc content template (tokens injected at activation time)
@@ -26,12 +21,6 @@
       # Public npm registry authentication (if token available)
       (lib.optionalString (npmToken != null)
         "//registry.npmjs.org/:_authToken=__NPM_TOKEN__")
-
-      # GitHub Packages configuration (if token available)
-      (lib.optionalString (githubPackagesToken != null) ''
-        @${cfg.githubScope}:registry=https://npm.pkg.github.com/
-        //npm.pkg.github.com/:_authToken=__GITHUB_PACKAGES_TOKEN__
-      '')
 
       # Additional registry configuration
       (lib.optionalString (cfg.extraConfig != "") cfg.extraConfig)
@@ -59,13 +48,6 @@
       fi
     ''}
 
-        ${lib.optionalString (githubPackagesToken != null) ''
-      if [ -f "${githubPackagesToken}" ]; then
-        GITHUB_TOKEN=$(cat "${githubPackagesToken}")
-        ${pkgs.gnused}/bin/sed -i.bak "s|__GITHUB_PACKAGES_TOKEN__|$GITHUB_TOKEN|g" "$NPMRC"
-      fi
-    ''}
-
         # Clean up backup file
         rm -f "$NPMRC.bak"
 
@@ -80,30 +62,19 @@ in {
       description = ''
         Whether to enable npm authentication and registry configuration.
 
-        Tokens are automatically loaded from sops secrets:
+        Token is automatically loaded from sops secrets:
         - npm/token: NPM registry authentication (registry.npmjs.org)
-        - npm/github-token: GitHub Packages authentication (npm.pkg.github.com)
 
         Configuration:
-        1. Add tokens to secrets/default.yaml:
+        1. Add token to secrets/default.yaml:
            npm:
              token: npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-             github-token: ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
         2. Encrypt with sops:
            sops secrets/default.yaml
 
-        Security: Tokens are never exposed to Nix store. They are decrypted
+        Security: Token is never exposed to Nix store. It is decrypted
         at Home Manager activation time and injected into ~/.npmrc with 600 permissions.
-      '';
-    };
-
-    githubScope = lib.mkOption {
-      type = lib.types.str;
-      default = "samuelho-dev";
-      description = ''
-        GitHub username or organization for scoped packages.
-        Used for @scope:registry configuration.
       '';
     };
 
@@ -124,7 +95,7 @@ in {
   config = lib.mkIf cfg.enable {
     # Generate .npmrc at activation time with sops-managed tokens
     # Run after sops-nix to ensure secrets are decrypted
-    home.activation.generateNpmrc = lib.mkIf (npmToken != null || githubPackagesToken != null) (
+    home.activation.generateNpmrc = lib.mkIf (npmToken != null) (
       lib.hm.dag.entryAfter ["sops-nix"] generateNpmrcScript
     );
 

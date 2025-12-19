@@ -2,32 +2,25 @@
   lib,
   symlinkJoin,
   writeShellScriptBin,
-  nodejs_20,
+  bun,
 }: let
+  # Simple bunx wrappers - package is public on npm registry
+  # bunx runs the default bin (mlg), use --bun flag for bun runtime
   mlg = writeShellScriptBin "mlg" ''
-    # Create temporary .npmrc to override scope registry
-    TMPDIR=$(mktemp -d)
-    trap "rm -rf $TMPDIR" EXIT
-    echo "@samuelho-dev:registry=https://registry.npmjs.org/" > "$TMPDIR/.npmrc"
-    export npm_config_userconfig="$TMPDIR/.npmrc"
-    exec ${nodejs_20}/bin/npx --yes -p @samuelho-dev/monorepo-library-generator@latest mlg "$@"
+    exec ${bun}/bin/bunx --bun @samuelho-dev/monorepo-library-generator@latest "$@"
   '';
 
+  # For mlg-mcp, we need to specify the bin name explicitly
   mlg-mcp = writeShellScriptBin "mlg-mcp" ''
-    # Create temporary .npmrc to override scope registry
-    TMPDIR=$(mktemp -d)
-    trap "rm -rf $TMPDIR" EXIT
-    echo "@samuelho-dev:registry=https://registry.npmjs.org/" > "$TMPDIR/.npmrc"
-    export npm_config_userconfig="$TMPDIR/.npmrc"
-    exec ${nodejs_20}/bin/npx --yes -p @samuelho-dev/monorepo-library-generator@latest mlg-mcp "$@"
+    exec ${bun}/bin/bunx --bun @samuelho-dev/monorepo-library-generator@latest/mlg-mcp "$@"
   '';
 in
   symlinkJoin {
-    name = "monorepo-library-generator-1.5.2";
+    name = "monorepo-library-generator";
     paths = [mlg mlg-mcp];
 
     meta = with lib; {
-      description = "Effect-based monorepo library generator with Nx integration (npx wrapper)";
+      description = "Effect-based monorepo library generator with Nx integration (bunx wrapper)";
       homepage = "https://github.com/samuelho-dev/monorepo-library-generator";
       license = licenses.mit;
       platforms = platforms.all;

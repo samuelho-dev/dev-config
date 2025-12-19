@@ -48,14 +48,14 @@ writeShellScriptBin "init-workspace" ''
       if [ -z "$MIGRATE_ONLY" ]; then
         log_info "Initializing Nx workspace configs..."
 
-        # Create biome.json
+        # Create biome.json (use $HOME for absolute path - biome doesn't expand ~)
         if [ -f "biome.json" ] && [ -z "$FORCE" ]; then
           log_warn "biome.json exists (use --force to overwrite)"
         else
-          cat > "biome.json" << 'BIOME_EOF'
+          cat > "biome.json" << BIOME_EOF
   {
-    "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
-    "extends": ["~/.config/biome/biome.json"],
+    "\$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
+    "extends": ["$HOME/.config/biome/biome.json"],
     "files": {
       "include": ["./libs/**/*.ts", "./libs/**/*.tsx", "./apps/**/*.ts", "./apps/**/*.tsx"]
     }
@@ -64,13 +64,13 @@ writeShellScriptBin "init-workspace" ''
           log_success "Created biome.json"
         fi
 
-        # Create tsconfig.base.json
+        # Create tsconfig.base.json (use $HOME for absolute path - tsc doesn't expand ~)
         if [ -f "tsconfig.base.json" ] && [ -z "$FORCE" ]; then
           log_warn "tsconfig.base.json exists (use --force to overwrite)"
         else
-          cat > "tsconfig.base.json" << 'TS_EOF'
+          cat > "tsconfig.base.json" << TS_EOF
   {
-    "extends": "~/.config/tsconfig/tsconfig.monorepo.json",
+    "extends": "$HOME/.config/tsconfig/tsconfig.monorepo.json",
     "compilerOptions": {
       "rootDir": ".",
       "baseUrl": ".",

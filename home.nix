@@ -40,9 +40,8 @@
       "ai/litellm-master-key" = {};
       "ai/openrouter-key" = {};
 
-      # NPM authentication tokens (used by npm.nix module)
+      # NPM authentication token (used by npm.nix module)
       "npm/token" = {};
-      "npm/github-token" = {};
     };
   };
 
@@ -107,8 +106,8 @@
     # Claude Code multi-profile authentication (native OAuth token management)
     claude-code.enable = true;
 
-    # NPM authentication (tokens managed via sops-nix)
-    # Add npm/token and npm/github-token to secrets/default.yaml
+    # NPM authentication (token managed via sops-nix)
+    # Add npm/token to secrets/default.yaml
     npm.enable = true;
 
     # Biome linter/formatter (exports config for monorepo extends)
