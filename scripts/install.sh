@@ -35,7 +35,7 @@ fi
 # Step 2: Enable flakes and nix-command (if not already enabled)
 mkdir -p ~/.config/nix
 if ! grep -q "experimental-features" ~/.config/nix/nix.conf 2>/dev/null; then
-  cat >> ~/.config/nix/nix.conf <<EOF
+  cat >>~/.config/nix/nix.conf <<EOF
 experimental-features = nix-command flakes
 EOF
   log_success "Nix flakes enabled"

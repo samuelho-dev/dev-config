@@ -13,17 +13,17 @@ NC='\033[0m' # No Color
 echo -e "${YELLOW}Loading AI credentials from 1Password...${NC}"
 
 # Check 1Password CLI is installed
-if ! command -v op &> /dev/null; then
-    echo -e "${RED}Error: 1Password CLI (op) not installed${NC}"
-    echo "Install: brew install --cask 1password-cli"
-    exit 1
+if ! command -v op &>/dev/null; then
+  echo -e "${RED}Error: 1Password CLI (op) not installed${NC}"
+  echo "Install: brew install --cask 1password-cli"
+  exit 1
 fi
 
 # Check authentication
-if ! op account list &> /dev/null; then
-    echo -e "${RED}Error: Not signed in to 1Password${NC}"
-    echo "Run: op signin"
-    exit 1
+if ! op account list &>/dev/null; then
+  echo -e "${RED}Error: Not signed in to 1Password${NC}"
+  echo "Run: op signin"
+  exit 1
 fi
 
 # Load credentials (suppress errors for missing keys)
@@ -45,6 +45,6 @@ echo -e "${GREEN}✓ AI credentials loaded:${NC}"
 
 # Warn about missing credentials
 if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$OPENAI_API_KEY" ] && [ -z "$GOOGLE_AI_API_KEY" ]; then
-    echo -e "${YELLOW}Warning: No AI API keys loaded from 1Password${NC}"
-    echo "  Check that keys exist in 1Password vault: Dev/ai"
+  echo -e "${YELLOW}Warning: No AI API keys loaded from 1Password${NC}"
+  echo "  Check that keys exist in 1Password vault: Dev/ai"
 fi

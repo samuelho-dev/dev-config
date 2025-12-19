@@ -97,4 +97,4 @@ vim.o.autoread = true
 -- Command-line completion
 -- See `:help 'wildmode'` and `:help 'wildoptions'`
 vim.o.wildmode = 'longest:full,full' -- Complete longest common string, then cycle through full matches
-vim.o.wildoptions = 'pum' -- Use popup menu for completion (Neovim default, but explicit)
+vim.o.wildoptions = 'pum'            -- Use popup menu for completion (Neovim default, but explicit)
