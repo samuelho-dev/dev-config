@@ -36,8 +36,8 @@ writeShellScriptBin "init-workspace" ''
     done
 
     # Verify prerequisites
-    [ -f "$BIOME_BASE" ] || log_error "Missing ~/.config/biome/biome.json. Run: home-manager switch --flake ~/Projects/dev-config"
-    [ -f "$TSCONFIG_MONOREPO" ] || log_error "Missing ~/.config/tsconfig/tsconfig.monorepo.json. Run: home-manager switch --flake ~/Projects/dev-config"
+    [ -f "$BIOME_BASE" ] || log_error "Missing ~/.config/biome/biome.json. Ensure dev-config Home Manager module is activated."
+    [ -f "$TSCONFIG_MONOREPO" ] || log_error "Missing ~/.config/tsconfig/tsconfig.monorepo.json. Ensure dev-config Home Manager module is activated."
 
     log_info "Initializing Nx workspace configs..."
 
