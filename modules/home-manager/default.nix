@@ -15,6 +15,7 @@
     ./programs/ghostty.nix
     ./programs/yazi.nix
     ./programs/claude-code.nix
+    ./programs/opencode.nix
     ./programs/biome.nix
     ./programs/typescript-strict.nix
     ./services/direnv.nix

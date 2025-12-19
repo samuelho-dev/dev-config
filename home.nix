@@ -106,6 +106,9 @@
     # Claude Code multi-profile authentication (native OAuth token management)
     claude-code.enable = true;
 
+    # OpenCode with LiteLLM fallback (prefers proxy when available, falls back to direct API)
+    opencode.enable = true;
+
     # NPM authentication (token managed via sops-nix)
     # Add npm/token to secrets/default.yaml
     npm.enable = true;

@@ -4,17 +4,15 @@
   writeShellScriptBin,
   bun,
 }: let
-  # Package is public on npm registry
-  pkg = "@samuelho-dev/monorepo-library-generator@latest";
-
-  # Use bun x with -p flag when binary name differs from package name
-  # --bun forces bun runtime instead of node
+  # Simple bunx wrappers - package is public on npm registry
+  # bunx runs the default bin (mlg), use --bun flag for bun runtime
   mlg = writeShellScriptBin "mlg" ''
-    exec ${bun}/bin/bun x --bun -p ${pkg} mlg "$@"
+    exec ${bun}/bin/bunx --bun @samuelho-dev/monorepo-library-generator@latest "$@"
   '';
 
+  # For mlg-mcp, we need to specify the bin name explicitly
   mlg-mcp = writeShellScriptBin "mlg-mcp" ''
-    exec ${bun}/bin/bun x --bun -p ${pkg} mlg-mcp "$@"
+    exec ${bun}/bin/bunx --bun @samuelho-dev/monorepo-library-generator@latest/mlg-mcp "$@"
   '';
 in
   symlinkJoin {
