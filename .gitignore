@@ -63,10 +63,6 @@ result-*
 # Nix flake lock (commit this for reproducibility)
 # flake.lock is committed intentionally for version pinning
 
-# OpenCode configuration with credentials
-.opencode/
-**/.opencode/**/.env
-
 # 1Password session files
 .op/
 
