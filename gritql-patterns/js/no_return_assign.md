@@ -1,0 +1,191 @@
+---
+title: Hoist assignment out of `return` statement
+tags: [good, se]
+---
+
+This rule hoists the assignments out of `return`. Because an assignment, `=` is easy to confuse with a comparison, `==`, The best practice is not to use any assignments in return statements.
+
+This does not apply when assignment is wrapped in parentheses.
+
+```grit
+engine marzano(0.1)
+language js
+
+// We replace the `return` with two statements, the assignment and an updated `return`
+`return $something` where {
+	$something <: contains or {
+		assignment_expression($left),
+		augmented_assignment_expression($left)
+	} as $assignment
+} => `$assignment;\n  return $left;`
+```
+
+## Hoist `=` from `return` statement
+
+```javascript
+function doSomething() {
+  var x = getXResult();
+  var y = getYResult();
+  return (a = x + y);
+}
+```
+
+```
+function doSomething() {
+  var x = getXResult();
+  var y = getYResult();
+  a = x + y;
+  return a;
+}
+```
+
+## Hoist `+=` from `return` statement
+
+```javascript
+function doSomething() {
+  return (a += 5);
+}
+```
+
+```
+function doSomething() {
+  a += 5;
+  return a;
+}
+```
+
+## Hoist `-=` from `return` statement
+
+```javascript
+function doSomething(y) {
+  return (y -= 5);
+}
+```
+
+```
+function doSomething(y) {
+  y -= 5;
+  return y;
+}
+```
+
+## Hoist `*=` from `return` statement
+
+```javascript
+function doSomething() {
+  return (a *= 5);
+}
+```
+
+```
+function doSomething() {
+  a *= 5;
+  return a;
+}
+```
+
+## Hoist `/=` from `return` statement
+
+```javascript
+function doSomething() {
+  return (x /= 5);
+}
+```
+
+```
+function doSomething() {
+  x /= 5;
+  return x;
+}
+```
+
+## Hoist `%=` from `return` statement
+
+```javascript
+function doSomething() {
+  return (b %= 2);
+}
+```
+
+```
+function doSomething() {
+  b %= 2;
+  return b;
+}
+```
+
+## Hoist `**=` from `return` statement
+
+```javascript
+function doSomething(x, y) {
+  return (x **= y);
+}
+```
+
+```
+function doSomething(x, y) {
+  x **= y;
+  return x;
+}
+```
+
+## Hoist `&=` from `return` statement
+
+```javascript
+function doSomething() {
+  return (x &= a);
+}
+```
+
+```
+function doSomething() {
+  x &= a;
+  return x;
+}
+```
+
+## Hoist `|=` from `return` statement
+
+```javascript
+function doSomething() {
+  return (x |= b);
+}
+```
+
+```typescript
+function doSomething() {
+  x |= b;
+  return x;
+}
+```
+
+## Hoist `^=` from `return` statement
+
+```javascript
+function doSomething() {
+  return (x ^= z);
+}
+```
+
+```typescript
+function doSomething() {
+  x ^= z;
+  return x;
+}
+```
+
+## Do not hoist `==` from `return` statement
+
+```javascript
+function doSomething() {
+  return a == b * 0.5;
+}
+```
+
+## Do not hoist `===` from `return` statement
+
+```javascript
+function doSomething() {
+  return a === b + 5;
+}
+```

@@ -1,3 +1,29 @@
+---
+description: Security auditor for identifying vulnerabilities and security issues
+mode: subagent
+model: {env:OPENCODE_MODEL}
+temperature: 0.1
+prompt: {file:./prompts/security-auditor.md}
+tools:
+  write: false
+  edit: false
+  bash: true
+  read: true
+  grep: true
+  glob: true
+  list: true
+  webfetch: true
+  todowrite: false
+  todoread: true
+permission:
+  edit: deny
+  bash:
+    "rm -rf": deny
+    "sudo": deny
+    "*": ask
+  webfetch: allow
+---
+
 You are a security expert focused on identifying potential security vulnerabilities and providing remediation guidance.
 
 ## Security Review Focus

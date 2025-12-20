@@ -47,11 +47,17 @@ repos:
         description: Scan staged files for secrets and API keys
 
       # Biome formatting and linting (JS/TS/JSON)
+      # NOTE: Biome is configured to ignore some JSON/TS files in this repo.
+      # Pre-commit passes filenames explicitly; if Biome ignores them it fails with:
+      # "No files were processed in the specified paths."
+      #
+      # We exclude known ignored paths to prevent false failures.
       - id: biome-check
         name: Biome format and lint
         entry: biome check --write
         language: system
         files: \.(js|jsx|ts|tsx|json|jsonc)$
+        exclude: ^(\.opencode/|gritql-patterns/|nvim/lazy-lock\.json$|\.claude/settings\.json$|state/last_sync\.json$|tsconfig/tsconfig\.strict\.json$|tsconfig/tsconfig\.monorepo\.json$)
         pass_filenames: true
         description: Format and lint JavaScript/TypeScript/JSON with Biome
 
@@ -101,10 +107,10 @@ repos:
         name: Fix end of files
       - id: check-yaml
         name: Check YAML syntax
-        args: ['--unsafe']  # Allow custom YAML tags
+        args: ["--unsafe"] # Allow custom YAML tags
       - id: check-added-large-files
         name: Check for large files
-        args: ['--maxkb=1000']
+        args: ["--maxkb=1000"]
       - id: check-merge-conflict
         name: Check for merge conflict markers
       - id: detect-private-key
@@ -116,7 +122,7 @@ repos:
     hooks:
       - id: markdownlint
         name: Lint Markdown files
-        args: ['--fix', '--disable', 'MD013']  # Disable line length rule
+        args: ["--fix", "--disable", "MD013"] # Disable line length rule
 
   # Shell script linting
   - repo: https://github.com/shellcheck-py/shellcheck-py
@@ -125,5 +131,5 @@ repos:
       - id: shellcheck
         name: Lint shell scripts
         # Follow sourced files, exclude SC1091
-        args: ['-x', '-e', 'SC1091']
-        exclude: ^zsh/  # Exclude zsh config files (not bash scripts)
+        args: ["-x", "-e", "SC1091"]
+        exclude: ^zsh/ # Exclude zsh config files (not bash scripts)

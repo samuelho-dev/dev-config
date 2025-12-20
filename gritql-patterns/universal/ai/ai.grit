@@ -1,0 +1,157 @@
+language universal
+
+// Given a question and a list of choices,
+function ai_ask($question, $choices) {
+	$messages = [
+		{ role: "system" , content: `Answer all questions with a single word.` },
+
+		{ role: "user" , content: $question }
+	],
+	$answer = llm_chat($messages, pattern=$choices, model="gpt-3.5-turbo"),
+	return $answer
+}
+
+// Match the given condition, optionally with examples and counter-examples.
+pattern ai_is($condition, $examples, $counter_examples) {
+  $item_to_check where {
+    $messages = [
+      {
+        role: "system",
+        content: `Classify whether the input code should match this condition: $condition. Answer with yes or no.`
+      }
+    ],
+    $examplar_messages = [],
+    if (!$examples <: undefined) {
+      $examples <: some bubble($examplar_messages) $example where {
+        $examplar_messages += {
+          answer: `yes`,
+          content: $example,
+        }
+      },
+    },
+    if (!$counter_examples <: undefined) {
+      $counter_examples <: some bubble($examplar_messages) $counter_example where {
+        $examplar_messages += {
+          answer: `no`,
+          content: $counter_example,
+        }
+      },
+    },
+    // Workaround for https://github.com/getgrit/rewriter/issues/8137
+    $total_examples = length($examplar_messages),
+    if (!$total_examples <: 0) {
+      $shuffled_exemplars = shuffle($examplar_messages),
+      $shuffled_exemplars <: some bubble($messages) $exemplar where {
+        $messages += {
+          role: "user",
+          content: $exemplar.content
+        },
+        $messages += {
+          role: "assistant",
+          content: $exemplar.answer
+        },
+      },
+    },
+    $messages += {
+      role: "user",
+      content: $item_to_check
+    },
+    $answer = llm_chat($messages, pattern=or {`yes`, `no`}),
+    $answer <: `yes`
+  }
+}
+
+// Transform the provided code to match the given instructions
+function ai_transform($match, $instruct, $pattern) {
+	$messages = [
+		{
+			role:
+				"system"
+			,
+			content:
+				raw`You are an expert developer rewriting code by following user instructons.
+Given a <snippet> from a larger file, you need to provide a replacement for the <snippet> text.
+Do NOT include code that wouldn't fit into the file in the specified location.
+Follow this format:
+
+<file>
+const context = // other code can go here. This is the context and should not be changed.
+// You don't need to include the full context in your answer.
+<replaced>
+REPLACEMENT CODE GOES HERE
+</replaced>
+</file>
+`
+		},
+
+		{
+			role:
+				"user"
+			,
+			content:
+				`<instruction>
+$instruct
+</instruction>
+<file>
+// some context here
+<snippet>
+$match
+</snippet>
+</file>`
+		},
+
+		{
+			role:
+				"assistant"
+			,
+			content:
+				`Here is the file, with the snippet replaced as per your instructions.
+<file>
+// some context here
+<replaced>`
+		},
+	],
+	log($messages),
+	$answer = llm_chat($messages, $pattern, model="claude-3-haiku-20240307", stop_sequences=[
+		"</replaced>"
+	]),
+	$answer <: includes r"(?:\s+)([\s\S]+)</replaced>"($final),
+	return `$final`
+}
+
+// Generate new code using the provied instructions.
+function ai_generate($instruct, $pattern) {
+	$messages = [
+		{
+			role:
+				"system"
+			,
+			content:
+				raw`You are an expert developer working on refactoring code.
+
+You will be given an instruction on new code you want to generate. Follow the instruction precisely and put the generated code inside a <code> block.
+
+Your response should follow this format:
+
+<code>
+...
+</code>
+`
+		},
+
+		{
+			role:
+				"user"
+			,
+			content:
+				`<instruction>
+$instruct
+</instruction>`
+		},
+	],
+	$answer = llm_chat($messages, $pattern, model="claude-3-haiku-20240307", stop_sequences=[
+		"</code>"
+	]),
+	$answer <: includes r"<code>(?:\s+)([\s\S]+)(?:\n)</code>"($final),
+	return `$final`
+}

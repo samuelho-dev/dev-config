@@ -78,6 +78,7 @@
     pkgs._1password-cli
     (pkgs.callPackage ./monorepo-library-generator {})
     (pkgs.callPackage ./init-workspace {})
+    (pkgs.callPackage ./grit.nix {})
   ];
 
   # Linting and formatting tools
