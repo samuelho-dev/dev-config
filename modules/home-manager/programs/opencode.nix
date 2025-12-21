@@ -156,7 +156,8 @@ in {
     '';
 
     # Export OpenCode configs to ~/.config/opencode/
-    xdg.configFile =
+    # Use lib.mkMerge to properly combine conditional attribute sets
+    xdg.configFile = lib.mkMerge [
       # Base configs for init-workspace (symlinked from repo)
       (lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
         # Symlink prompts directory (shared, read-only)
@@ -175,7 +176,7 @@ in {
         "opencode/opencode-base.json".source = cfg.configSource + "/opencode.json";
       })
       # oh-my-opencode generated configs
-      // (lib.mkIf cfg.ohMyOpencode.enable {
+      (lib.mkIf cfg.ohMyOpencode.enable {
         # Generate package.json with oh-my-opencode dependency and additional plugins
         "opencode/package.json".text = let
           parsedOhMyOpencode = parsePlugin cfg.ohMyOpencode.package;
@@ -275,6 +276,7 @@ in {
             hooks = true;
           };
         };
-      });
+      })
+    ];
   };
 }
