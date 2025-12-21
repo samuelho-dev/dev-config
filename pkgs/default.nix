@@ -1,7 +1,56 @@
 # Package definitions for dev-config
 # Single source of truth for all development packages
 # Used by both devShells and Home Manager modules
-{pkgs}: {
+{pkgs}: let
+  # GritQL CLI - Structural code search and rewriting
+  # Pre-built binary from biomejs/gritql releases
+  grit = let
+    version = "0.1.0-alpha.1743007075";
+    sources = {
+      "aarch64-darwin" = {
+        url = "https://github.com/biomejs/gritql/releases/download/v${version}/grit-aarch64-apple-darwin.tar.gz";
+        sha256 = "sha256-erjH7qkHma41yG8qm35I5WuRpi5qRZuRDd4aPaoGa/M=";
+      };
+      "x86_64-darwin" = {
+        url = "https://github.com/biomejs/gritql/releases/download/v${version}/grit-x86_64-apple-darwin.tar.gz";
+        sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # TODO: Get actual hash
+      };
+      "x86_64-linux" = {
+        url = "https://github.com/biomejs/gritql/releases/download/v${version}/grit-x86_64-unknown-linux-gnu.tar.gz";
+        sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # TODO: Get actual hash
+      };
+      "aarch64-linux" = {
+        url = "https://github.com/biomejs/gritql/releases/download/v${version}/grit-aarch64-unknown-linux-gnu.tar.gz";
+        sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # TODO: Get actual hash
+      };
+    };
+    platformKey = pkgs.stdenvNoCC.hostPlatform.system;
+    src = sources.${platformKey} or (throw "Unsupported platform: ${platformKey}");
+  in
+    pkgs.stdenvNoCC.mkDerivation {
+      pname = "grit";
+      inherit version;
+      src = pkgs.fetchurl {
+        inherit (src) url sha256;
+      };
+      sourceRoot = ".";
+      nativeBuildInputs = pkgs.lib.optionals pkgs.stdenvNoCC.isLinux [pkgs.autoPatchelfHook];
+      installPhase = ''
+        runHook preInstall
+        mkdir -p $out/bin
+        find . -name 'grit' -type f -exec cp {} $out/bin/grit \;
+        chmod +x $out/bin/grit
+        runHook postInstall
+      '';
+      meta = {
+        description = "GritQL - Structural code search, linting, and rewriting";
+        homepage = "https://docs.grit.io";
+        license = pkgs.lib.licenses.mit;
+        platforms = pkgs.lib.platforms.darwin ++ pkgs.lib.platforms.linux;
+        mainProgram = "grit";
+      };
+    };
+in {
   # Core development tools
   core = [
     pkgs.git
@@ -78,7 +127,7 @@
     pkgs._1password-cli
     (pkgs.callPackage ./monorepo-library-generator {})
     (pkgs.callPackage ./init-workspace {})
-    (pkgs.callPackage ./grit.nix {})
+    grit
   ];
 
   # Linting and formatting tools

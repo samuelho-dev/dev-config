@@ -1,0 +1,192 @@
+# CLAUDE.md Template
+
+This template defines the **strict structure** for CLAUDE.md files. All sections marked `[REQUIRED]` must be present for the file to pass validation.
+
+## Usage
+
+Copy this template and replace placeholders with actual content. Use ASCII characters only for directory trees.
+
+---
+
+## Template
+
+```markdown
+---
+scope: {directory}/
+updated: {YYYY-MM-DD}
+relates_to:
+  - {../CLAUDE.md}
+  - {./related-file.ext}
+validation:
+  max_days_stale: 30
+---
+
+# {Component Name}
+
+Architectural guidance for Claude Code when working with this component.
+
+## Purpose [REQUIRED]
+
+{WHY this component exists - 2-3 sentences explaining the problem it solves and its value}
+
+## Architecture Overview [REQUIRED]
+
+{HOW it works - key design decisions, patterns used, and integration points}
+
+## File Structure [REQUIRED]
+
+{ASCII tree with purpose annotations - use +-- and | characters only}
+
+```
+{directory}/
++-- file1.ext           # Purpose annotation
++-- file2.ext           # Purpose annotation
++-- subdir/             # Purpose annotation
+    +-- nested.ext      # Purpose annotation
+```
+
+## Key Patterns [REQUIRED]
+
+{Table of patterns used in this component with locations and rationale}
+
+| Pattern | Location | Purpose |
+|---------|----------|---------|
+| {pattern name} | {file:line} | {why this pattern is used} |
+
+## Module Reference [REQUIRED]
+
+{Table of modules/files with their purposes and key exports}
+
+| Module/File | Purpose | Key Exports |
+|-------------|---------|-------------|
+| {name} | {what it does} | {main exports/functions} |
+
+## Adding/Modifying [REQUIRED]
+
+{Step-by-step workflow for common changes}
+
+### Adding a New {Item Type}
+
+1. {First step}
+2. {Second step}
+3. {Third step}
+
+### Modifying Existing {Item Type}
+
+1. {First step}
+2. {Second step}
+
+## For Future Claude Code Instances [REQUIRED]
+
+{Checklist of things to verify/consider when working with this component}
+
+- [ ] {Check relevant to this component}
+- [ ] {Another relevant check}
+- [ ] {Third relevant check}
+```
+
+---
+
+## Section Guidelines
+
+### Frontmatter [REQUIRED]
+
+```yaml
+---
+scope: directory/path/        # What directory this doc covers
+updated: YYYY-MM-DD           # Last update date (auto-updated on changes)
+relates_to:                   # Knowledge graph edges
+  - ../CLAUDE.md              # Parent documentation
+  - ./important-file.ext      # Key file this documents
+  - ../sibling/CLAUDE.md      # Related documentation
+validation:
+  max_days_stale: 30          # Freshness threshold in days
+---
+```
+
+### Purpose
+
+- 2-3 sentences maximum
+- Explain WHY, not WHAT
+- Focus on the problem being solved
+- Mention target users/consumers
+
+### Architecture Overview
+
+- Design philosophy
+- Key architectural decisions
+- Integration points
+- Performance considerations (if relevant)
+
+### File Structure
+
+**MUST use ASCII characters only:**
+
+```
+CORRECT:
++-- file.txt
+|   +-- subdir/
++-- other.txt
+
+INCORRECT (Unicode):
+├── file.txt
+│   └── subdir/
+└── other.txt
+```
+
+### Key Patterns
+
+Include patterns specific to this component:
+- Design patterns (Repository, Factory, etc.)
+- Coding conventions
+- Integration patterns
+- Error handling patterns
+
+### Module Reference
+
+Quick reference for all significant files:
+- Entry points
+- Main functionality files
+- Configuration files
+- Test files (if documenting test patterns)
+
+### Adding/Modifying
+
+Concrete steps for common tasks:
+- Adding new features
+- Modifying existing behavior
+- Configuration changes
+- Testing changes
+
+### For Future Claude Code Instances
+
+Checklist specific to this component:
+- Files to read before making changes
+- Patterns to follow
+- Common pitfalls to avoid
+- Validation steps
+
+---
+
+## Validation Rules
+
+A CLAUDE.md file passes validation when:
+
+1. **Frontmatter present** with `scope`, `updated`, `relates_to`
+2. **All REQUIRED sections** present with content
+3. **ASCII trees only** (no Unicode box-drawing)
+4. **Heading hierarchy** correct (H1 → H2 → H3, no skipping)
+5. **Tables properly formatted** with headers
+6. **File references** exist and are valid
+7. **Updated date** within 30 days (or flagged for review)
+
+---
+
+## Anti-Patterns to Avoid
+
+1. **Redundancy**: Don't repeat content from parent CLAUDE.md
+2. **Over-detail**: Link to code instead of duplicating it
+3. **Staleness**: Keep `updated` date current
+4. **Broken links**: Verify all `relates_to` references exist
+5. **Unicode trees**: Always use ASCII characters
+6. **Missing context**: Ensure new developers can understand without external context

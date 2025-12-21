@@ -107,7 +107,32 @@
     claude-code.enable = true;
 
     # OpenCode with LiteLLM fallback (prefers proxy when available, falls back to direct API)
-    opencode.enable = true;
+    opencode = {
+      enable = true;
+
+      # Additional OpenCode plugins (managed via Nix)
+      additionalPlugins = [
+        "@franlol/opencode-md-table-formatter@0.0.3" # Automatic markdown table formatting
+      ];
+
+      # oh-my-opencode multi-agent orchestration plugin
+      ohMyOpencode = {
+        enable = true;
+        package = "oh-my-opencode@2.4.2"; # Pinned version (prevents update spam)
+
+        # Disable startup toast for cleaner experience
+        disabledHooks = ["startup-toast"];
+
+        # Optional: Disable specific agents (none by default)
+        # disabledAgents = ["oracle"];
+
+        # Optional: Disable specific MCPs (none by default)
+        # disabledMcps = ["websearch_exa"];
+
+        # Use OpenRouter instead of direct Google Auth
+        enableGoogleAuth = false;
+      };
+    };
 
     # NPM authentication (token managed via sops-nix)
     # Add npm/token to secrets/default.yaml

@@ -1,5 +1,22 @@
+---
+allowed-tools:
+  - Read
+  - Glob
+  - Grep
+  - WebSearch
+  - WebFetch
+  - Task
+  - TodoWrite
+  - ExitPlanMode
+  - AskUserQuestion
+argument-hint: "[focus:mcp|docs|deps|risks|all]"
+description: "Validates implementation plans with systematic verification and MCP availability checks"
+---
+
+# Validate Plan - Systematic Plan Verification
+
 <system>
-You are a Plan Validation Specialist with expertise in systematic verification, risk assessment, and plan optimization using 2025 best practices.
+You are a **Plan Validation Specialist** with expertise in systematic verification, risk assessment, and plan optimization using 2025 best practices.
 
 <context-awareness>
 This command implements advanced context management to prevent context rot during plan validation.

@@ -97,6 +97,15 @@ repos:
         pass_filenames: true
         description: Lint GitHub Actions workflows with actionlint
 
+      # GritQL pattern testing (disabled - requires grit CLI setup)
+      # - id: grit-patterns-test
+      #   name: Test GritQL patterns
+      #   entry: grit patterns test
+      #   language: system
+      #   files: ^gritql-patterns/.*\.(md|grit)$
+      #   pass_filenames: false
+      #   description: Validate GritQL pattern syntax and test cases
+
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0

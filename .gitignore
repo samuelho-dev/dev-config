@@ -86,3 +86,5 @@ kubeconfig*
 # Node.js (for template testing)
 node_modules/
 package-lock.json
+
+.gritmodules/

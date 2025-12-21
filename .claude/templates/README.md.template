@@ -1,0 +1,189 @@
+# README.md Template
+
+This template defines the **suggested structure** for README.md files. Unlike CLAUDE.md, README.md structure is flexible - include sections that make sense for your component.
+
+## Usage
+
+Copy this template and adapt it to your component. Focus on helping developers get started quickly.
+
+---
+
+## Template
+
+```markdown
+# {Component Name}
+
+{One-paragraph description of what this component does and why it exists}
+
+## Quick Start
+
+{Minimal steps to get started - aim for 5 minutes or less}
+
+```bash
+# Step 1: {description}
+{command}
+
+# Step 2: {description}
+{command}
+
+# Step 3: Verify it works
+{verification command}
+```
+
+## Features
+
+{Table or list of key features}
+
+| Feature | Description |
+|---------|-------------|
+| {feature name} | {what it does} |
+| {feature name} | {what it does} |
+
+## Configuration
+
+{Key configuration options with examples}
+
+### {Configuration Section}
+
+```{language}
+# Example configuration
+{example}
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| {option} | {type} | {default} | {what it does} |
+
+## Usage Examples
+
+### {Use Case 1}
+
+```{language}
+{example code}
+```
+
+### {Use Case 2}
+
+```{language}
+{example code}
+```
+
+## Troubleshooting
+
+### {Common Issue 1}
+
+**Problem**: {description of the problem}
+
+**Solution**: {how to fix it}
+
+```bash
+# Fix command if applicable
+{command}
+```
+
+### {Common Issue 2}
+
+**Problem**: {description}
+
+**Solution**: {fix}
+
+## Related Documentation
+
+- [CLAUDE.md](./CLAUDE.md) - Architecture and design details
+- [Parent Component](../README.md) - Parent component documentation
+- {Other relevant links}
+```
+
+---
+
+## Section Guidelines
+
+### Title & Description
+
+- Clear, descriptive title
+- One paragraph explaining purpose and value
+- Target audience: developers who are new to this component
+
+### Quick Start
+
+- 5 minutes or less to get running
+- Copy-paste-able commands
+- Include verification step
+- Link to detailed setup if more complex
+
+### Features
+
+Table format works well for scanning:
+- Feature name in first column
+- Brief description in second column
+- Keep descriptions concise
+
+### Configuration
+
+- Show example configuration files
+- Document all options with defaults
+- Group related options together
+- Include type information
+
+### Usage Examples
+
+- 2-3 common use cases
+- Working code examples
+- Comments explaining key parts
+- Real-world scenarios
+
+### Troubleshooting
+
+- Top 3-5 most common issues
+- Clear problem description
+- Step-by-step solutions
+- Include commands when applicable
+
+### Related Documentation
+
+- Always link to CLAUDE.md for architecture
+- Link to parent README if nested
+- Include external resources if helpful
+
+---
+
+## Suggested Sections by Component Type
+
+### For Libraries/Packages
+
+- Installation
+- API Reference
+- Examples
+- Contributing
+
+### For Configuration (Nix, dotfiles)
+
+- Prerequisites
+- Installation
+- Customization
+- Common Tweaks
+
+### For Tools/Scripts
+
+- Requirements
+- Installation
+- Usage
+- Options/Flags
+
+### For Directories with Multiple Items
+
+- Overview
+- Contents (table of items)
+- How to Add New Items
+- Conventions
+
+---
+
+## Best Practices
+
+1. **Front-load value**: Quick Start should be near the top
+2. **Scannable**: Use tables, headings, and bullet points
+3. **Copy-paste ready**: Commands should work when copied
+4. **Link, don't repeat**: Reference CLAUDE.md for architecture
+5. **Keep updated**: Note last update date somewhere
+6. **Test examples**: Verify all code examples work

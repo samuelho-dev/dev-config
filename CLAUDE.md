@@ -1,3 +1,16 @@
+---
+scope: ./
+updated: 2025-12-21
+relates_to:
+  - ./home.nix
+  - ./flake.nix
+  - ./modules/home-manager/CLAUDE.md
+  - ./pkgs/CLAUDE.md
+  - ./docs/CLAUDE.md
+validation:
+  max_days_stale: 30
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -138,6 +151,59 @@ modules = [ dev-config.homeManagerModules.default ];
 ```
 
 The `inputs ? dev-config` pattern in modules enables both standalone and composition usage.
+
+## AI Coding Agents (oh-my-opencode)
+
+Multi-agent AI orchestration system for collaborative coding workflows.
+
+### Available Agents
+
+- **@Sisyphus**: Main orchestrator (Claude Opus 4.5, extended thinking 32k budget)
+- **@oracle**: Architecture & debugging (Claude Opus 4.5 via OpenRouter)
+- **@librarian**: Codebase analysis & doc research (Claude Sonnet 4.5)
+- **@explore**: Fast file search & traversal (Grok 3 - free)
+- **@frontend-ui-ux-engineer**: UI/UX design (Gemini 3 Pro)
+- **@document-writer**: Technical writing (Gemini 3 Flash)
+- **@multimodal-looker**: Image/PDF analysis (Gemini 2.5 Flash)
+
+### Usage
+
+```bash
+# Single agent invocation
+opencode
+> Ask @oracle to review this architecture
+
+# Background parallel execution
+> Have @oracle design the API while @librarian researches patterns
+
+# Keyword shortcuts
+> ultrawork: Implement feature X with comprehensive testing
+> ultrathink: Deep analysis of architectural implications
+> search: Find all Effect.gen uses in monorepo
+```
+
+### Features
+
+- **Built-in MCPs**: context7 (docs), websearch_exa (web), grep_app (GitHub search)
+- **LSP Tools**: lsp_rename, lsp_find_references, lsp_code_actions
+- **AST-Grep**: Structural code search and transformation
+- **Markdown Table Formatting**: Automatic formatting of AI-generated tables with alignment support
+- **Claude Code Compatibility**: Hooks, commands, skills fully supported
+- **Intelligent Hooks**: Todo continuation, comment checking, context monitoring
+
+### Configuration
+
+Fully managed via Nix in `home.nix`:
+
+```nix
+dev-config.opencode.ohMyOpencode = {
+  enable = true;
+  disabledHooks = ["startup-toast"];
+  # See docs/nix/12-oh-my-opencode.md for full options
+};
+```
+
+**Documentation**: See `docs/nix/12-oh-my-opencode.md` for comprehensive guide.
 
 ## Key Conventions
 

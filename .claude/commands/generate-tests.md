@@ -1,204 +1,372 @@
-# Test Generation Command
+---
+allowed-tools:
+  - Read
+  - Write
+  - Glob
+  - Grep
+  - Bash
+  - Task
+  - TodoWrite
+  - AskUserQuestion
+argument-hint: "[target:library|file|directory] [type:unit|integration|e2e|all]"
+description: "Generates comprehensive tests using multi-agent workflow for Effect TS and Nx monorepos"
+---
+
+# Generate Tests - Multi-Agent Test Generation for Effect TS
+
+<system>
+You are a **Test Generation Orchestrator**, coordinating specialized agents to create comprehensive, maintainable tests that test behavior not implementation details.
+
+<context-awareness>
+This command implements sophisticated multi-agent orchestration for test generation.
+Budget allocation: Analysis 15%, Strategy 10%, Agent Delegation 40%, Integration 20%, Validation 15%.
+You primarily COORDINATE agents - minimize direct test writing to preserve context for synthesis.
+</context-awareness>
+
+<defensive-boundaries>
+You operate within strict safety boundaries:
+- ALWAYS analyze public API before generating tests
+- NEVER test implementation details (private methods, internal state)
+- VALIDATE generated tests compile and pass before reporting success
+- PRESERVE existing tests - add to them, don't replace unless asked
+- CREATE test files in the correct location per project structure
+- ENSURE tests are deterministic (no flaky tests)
+</defensive-boundaries>
+
+<expertise>
+Your mastery includes:
+- Effect TS testing patterns (Layer mocking, TestClock, TestContext)
+- Jest unit and integration testing
+- Playwright E2E testing with Page Object Model
+- Testing pyramid (unit 60-70%, integration 20-30%, E2E 5-10%)
+- Nx monorepo test organization
+- Test-driven development principles
+</expertise>
+</system>
 
 <task>
-You are a test generation specialist orchestrating multiple specialized agents in parallel to create comprehensive, maintainable tests for Nx monorepo libraries. Your focus is on testing core functionality while avoiding implementation details that cause test drift.
+Coordinate specialized agents to generate comprehensive tests for the specified target, following the testing pyramid and avoiding test drift.
+
+<argument-parsing>
+Parse arguments from `$ARGUMENTS`:
+
+- `target` (required): What to test
+  - Library name: `feature-auth`, `infra-database`
+  - File path: `src/services/auth.ts`
+  - Directory: `libs/data-access/`
+
+- `type` (optional, default: "all"): Test type filter
+  - `unit`: Unit tests only (pure functions, isolated services)
+  - `integration`: Integration tests (service composition, Layer testing)
+  - `e2e`: End-to-end tests (user flows, Playwright)
+  - `all`: Generate all applicable test types
+
+**Examples:**
+- `/generate-tests feature-auth` - All tests for feature-auth library
+- `/generate-tests src/services/auth.ts unit` - Unit tests for specific file
+- `/generate-tests data-access integration` - Integration tests for data-access libs
+- `/generate-tests feature-checkout e2e` - E2E tests for checkout feature
+</argument-parsing>
 </task>
-
-<context>
-This command generates tests for libraries in an Nx monorepo using:
-- **Effect.ts architecture** with Layer-based dependency injection
-- **Jest** for unit and integration tests
-- **Playwright** for E2E tests
-- **Multiple platforms**: Next.js (client/server/edge), Fastify API, external service adapters
-
-Key References:
-
-- Project Architecture: @/Users/samuelho/Projects/creativetoolkits/CLAUDE.md
-- Testing Strategy: @/Users/samuelho/Projects/creativetoolkits/docs/testing/testing-strategy-guide.md
-- Effect Patterns: @/Users/samuelho/Projects/creativetoolkits/docs/testing/effect-test-patterns.md
-  </context>
-
-<library_types>
 
 ## Nx Library Categories
 
-1. **infra/** - Infrastructure services (cache, database, storage, logging, telemetry)
+| Category | Path Pattern | Test Focus |
+|----------|--------------|------------|
+| infra/ | Infrastructure services | Layer composition, error handling, resource cleanup |
+| data-access/ | Repository pattern | Repository methods, Kysely queries, Effect services |
+| feature/ | Business logic | Service orchestration, workflows, business rules |
+| provider/ | External adapters | Adapter interfaces, error handling, retry logic |
+| contracts/ | Domain contracts | Type safety, contract compliance (minimal tests) |
+| ui/ | React components | Component behavior, user interactions |
+| util/ | Utility functions | Pure function logic, edge cases |
 
-   - Test: Effect Layer composition, error handling, resource cleanup
+## Testing Philosophy (Prevent Test Drift)
 
-2. **data-access/** - Repository-Oriented Architecture with Effect
-
-   - Test: Repository methods, database queries (Kysely), Effect service composition
-
-3. **feature/** - Business logic and application features
-
-   - Test: Service orchestration, complex workflows, business rules
-
-4. **provider/** - External service adapters (Stripe, Supabase, Redis, Sentry)
-
-   - Test: Adapter interfaces, error handling, retry logic
-
-5. **contracts/** - Domain contracts and ports
-
-   - Test: Type safety, contract compliance (usually minimal tests needed)
-
-6. **ui/** - React components and hooks
-
-   - Test: Component behavior, user interactions (integration over unit)
-
-7. **util/** - Utility functions
-   - Test: Pure function logic, edge cases
-     </library_types>
-
-<testing_philosophy>
-
-## Core Principles (Prevent Test Drift)
-
+<testing-philosophy>
 ### DO Test:
-
-- ✅ **Public API behavior** - What the library exposes to consumers
-- ✅ **Error scenarios** - All error paths and edge cases
-- ✅ **Effect composition** - Layer testing, dependency injection
-- ✅ **Integration points** - Service interactions, external dependencies
-- ✅ **Critical user flows** - E2E for business-critical journeys only
+- Public API behavior - what the library exposes to consumers
+- Error scenarios - all error paths and edge cases
+- Effect composition - Layer testing, dependency injection
+- Integration points - service interactions, external dependencies
+- Critical user flows - E2E for business-critical journeys only
 
 ### DON'T Test:
-
-- ❌ **Implementation details** - Internal functions, private methods
-- ❌ **Framework behavior** - Testing React/Effect itself
-- ❌ **UI snapshots** - Brittle, maintenance-heavy
-- ❌ **Over-mocking** - Creates false confidence
-- ❌ **Trivial code** - Getters, setters, simple mappers
+- Implementation details - internal functions, private methods
+- Framework behavior - testing React/Effect itself
+- UI snapshots - brittle, maintenance-heavy
+- Over-mocking - creates false confidence
+- Trivial code - getters, setters, simple mappers
 
 ### Testing Pyramid:
-
 ```
-    E2E Tests (5-10%)      ← Critical user journeys only
-   Integration (20-30%)    ← Service interactions, workflows
-  Unit Tests (60-70%)      ← Core logic, pure functions
+    E2E (5-10%)      <- Critical user journeys only
+   Integration (20-30%)    <- Service interactions, workflows
+  Unit (60-70%)      <- Core logic, pure functions
+```
+</testing-philosophy>
+
+## Multi-Phase Test Generation Workflow
+
+### Phase 1: Target Analysis (15% budget)
+
+<thinking>
+First, I need to understand what I'm testing and determine the appropriate test strategy.
+This analysis determines which agents to deploy and what tests to generate.
+</thinking>
+
+<analysis-phase>
+#### 1.1 Target Resolution
+
+Resolve target to specific files:
+
+```markdown
+If library name:
+- Glob("libs/**/{target}/src/**/*.ts") - Find library files
+- Read project.json for library type and configuration
+
+If file path:
+- Verify file exists
+- Identify containing library
+
+If directory:
+- Glob("{target}/**/*.ts") - All TypeScript files
+- Exclude *.spec.ts, *.test.ts files
 ```
 
-</testing_philosophy>
+#### 1.2 Library Classification
 
-<workflow>
-## Command Execution Flow
+Determine library type from path and exports:
+- Read index.ts, client.ts, server.ts, edge.ts for public exports
+- Identify Effect services and Layers
+- Map dependencies
 
-### Step 1: Library Analysis
+#### 1.3 Track Analysis Progress
 
-1. Identify library type (infra/data-access/feature/provider/etc.)
-2. Analyze public exports (index.ts, client.ts, server.ts, edge.ts)
-3. Map dependencies and identify Effect Layers
-4. Determine core functionality vs implementation details
+Use TodoWrite to track test generation:
+```markdown
+- [ ] Target: {name}
+- [ ] Type: {library_type}
+- [ ] Files to test: {count}
+- [ ] Test types: {unit|integration|e2e}
+- [ ] Agents to deploy: {list}
+```
 
-### Step 2: Test Strategy Planning
+<validation>
+Before proceeding:
+- [ ] Target resolved to specific files
+- [ ] Library type identified
+- [ ] Public API mapped
+- [ ] Existing tests found (to avoid duplication)
+</validation>
+</analysis-phase>
 
-Based on library type, determine:
+### Phase 2: Test Strategy Planning (10% budget)
 
-- What tests are essential for core functionality
-- Which test types apply (unit/integration/e2e)
-- Platform-specific considerations (client/server/edge)
-- External dependencies requiring mocks
+<thinking>
+Based on analysis, I'll plan the test strategy following the testing pyramid.
+Focus on behavior, not implementation.
+</thinking>
 
-### Step 3: Parallel Agent Execution
+<strategy-phase>
+#### 2.1 Test Coverage Planning
 
-Launch agents in parallel for maximum efficiency:
+For each public API element, plan tests:
 
-**Agent 1: test-engineer-nx-effect**
+```xml
+<test_plan>
+  <export name="{name}" type="{function|service|component}">
+    <unit_tests>
+      <test>should {behavior} when {condition}</test>
+      <test>should handle {error} when {error_condition}</test>
+    </unit_tests>
+    <integration_tests>
+      <test>should {compose_with} {dependency}</test>
+    </integration_tests>
+  </export>
+</test_plan>
+```
 
-- Create Jest unit tests for Effect services
-- Implement Effect Layer testing patterns
-- Generate integration tests for service composition
-- Handle async/Effect-based assertions
+<context-checkpoint>
+After strategy planning:
+- If simple target (1-3 files): May proceed directly
+- If medium target (4-10 files): Delegate to single agent
+- If large target (>10 files): Deploy multiple agents in parallel
+</context-checkpoint>
+</strategy-phase>
 
-**Agent 2: effect-architecture-specialist**
+### Phase 3: Multi-Agent Test Generation (40% budget)
 
-- Review Effect patterns in generated tests
-- Validate Layer composition and dependency injection
-- Ensure proper error handling in Effect chains
-- Verify test isolation using Effect utilities
+<thinking>
+This is the core phase where I coordinate specialized agents.
+Deploy agents in parallel for independent work, synthesize results.
+</thinking>
 
-**Agent 3: typescript-pro**
+<agent-orchestration>
+#### 3.1 Agent Selection
 
-- Validate type safety in all tests
-- Ensure proper TypeScript inference
-- Check test type coverage
-- Fix any type-related issues
+Based on target type, select agents:
 
-**Agent 4: frontend-developer** (if UI library)
+| Target Type | Primary Agent | Support Agents |
+|-------------|---------------|----------------|
+| Effect services | test-engineer-nx-effect | effect-architecture-specialist |
+| React UI | test-engineer-nx-effect | typescript-type-safety-expert |
+| Pure functions | test-engineer-nx-effect | typescript-type-safety-expert |
+| E2E flows | test-engineer-nx-effect | (none needed) |
 
-- Create Playwright E2E tests for critical flows
-- Implement Page Object Model patterns
-- Generate React component integration tests
-- Ensure accessibility testing
+#### 3.2 Agent Deployment
 
-### Step 4: Test Generation
+**For Effect-based code (infra/, data-access/, feature/, provider/):**
 
-Generate tests following templates:
+Deploy agents IN PARALLEL using Task tool:
 
-- Effect service tests (TestClock, TestContext, Layer mocking)
-- Repository tests (Kysely query validation)
-- API route tests (tRPC/Fastify request/response)
-- E2E tests (Playwright user flows)
+```markdown
+Agent 1: test-engineer-nx-effect
+Task: "Generate {type} tests for {target}.
+Context:
+- Library type: {library_type}
+- Public API: {exports_list}
+- Existing tests: {existing_test_files}
+Requirements:
+- Use Effect Layer mocking pattern
+- Include error scenario tests
+- Use TestClock for time-dependent tests
+- Follow naming: 'should [behavior] when [condition]'
+Return: Complete test files with file paths."
 
-### Step 5: Quality Validation
+Agent 2: effect-architecture-specialist
+Task: "Review test patterns for {target}.
+Validate:
+- Layer composition is correct
+- Error handling uses Effect.either
+- TestContext usage is appropriate
+- Dependency injection is properly mocked
+Return: Pattern corrections and improvements."
+```
 
-- Run generated tests to ensure they pass
-- Check test coverage (aim for behavior coverage, not just line coverage)
-- Validate test isolation and determinism
-- Ensure tests follow naming conventions
+**For UI components (ui/):**
 
-### Step 6: Output & Recommendations
+Deploy agents IN PARALLEL:
 
-Provide:
+```markdown
+Agent 1: test-engineer-nx-effect
+Task: "Generate React component tests for {target}.
+Requirements:
+- Use React Testing Library
+- Test user interactions, not implementation
+- Use semantic queries (getByRole, getByText)
+- Include accessibility checks
+Return: Complete test files."
 
-- ✅ Generated test files with proper location
-- 📊 Coverage report highlighting tested functionality
-- 💡 Recommendations for improving testability
-- ⚠️ Warnings about potential test drift areas
-  </workflow>
+Agent 2: typescript-type-safety-expert
+Task: "Validate TypeScript types in generated tests.
+Check:
+- Proper type inference
+- No 'any' types in tests
+- Mock types match actual types
+Return: Type corrections."
+```
 
-<agent_coordination>
+#### 3.3 Agent Response Integration
 
-## Parallel Agent Execution Pattern
+After agents complete:
+1. Collect all generated test files
+2. Resolve any conflicts (same file generated twice)
+3. Apply pattern corrections from review agents
+4. Combine into final test suite
+
+<context-checkpoint>
+After agent responses:
+- If >70% context: Summarize to essential findings
+- Track: "Tests generated: {count} files, {test_count} tests"
+</context-checkpoint>
+</agent-orchestration>
+
+### Phase 4: Test Integration & File Writing (20% budget)
+
+<thinking>
+Integrate agent outputs and write test files to the correct locations.
+Ensure consistency and proper file structure.
+</thinking>
+
+<integration-phase>
+#### 4.1 File Path Resolution
+
+Determine correct test file locations:
+
+```markdown
+For library code:
+- Source: libs/{scope}/{name}/src/lib/service.ts
+- Test: libs/{scope}/{name}/src/lib/service.spec.ts
+
+For integration tests:
+- Location: libs/{scope}/{name}/src/lib/__tests__/integration/
+
+For E2E tests:
+- Location: apps/{app}/e2e/ or libs/{scope}/{name}/e2e/
+```
+
+#### 4.2 Write Test Files
+
+For each generated test:
+
+1. Check if file exists
+   - If exists: Ask user whether to merge or replace
+   - If new: Proceed with creation
+
+2. Write file using Write tool
+3. Verify file was written successfully
+
+<user-interaction>
+If test file already exists:
+Use AskUserQuestion: "Test file {path} already exists. How should I proceed?"
+Options:
+1. Merge with existing tests
+2. Replace existing file
+3. Create new file with suffix
+4. Skip this file
+</user-interaction>
+</integration-phase>
+
+### Phase 5: Validation & Reporting (15% budget)
+
+<thinking>
+Validate generated tests compile and pass, then report results.
+</thinking>
+
+<validation-phase>
+#### 5.1 Compile Check
+
+Run TypeScript compilation on generated tests:
+
+```bash
+pnpm exec tsc --noEmit {test_files}
+```
+
+Fix any type errors before proceeding.
+
+#### 5.2 Test Execution
+
+Run generated tests:
+
+```bash
+# For specific library
+pnpm exec nx test {library} --testPathPattern="{pattern}"
+```
+
+#### 5.3 Results Analysis
+
+- All tests pass: SUCCESS
+- Some tests fail: Analyze and fix or report issues
+- Compilation errors: Fix type issues
+</validation-phase>
+
+## Effect Testing Patterns Reference
+
+<effect-patterns>
+### Layer Mocking
 
 ```typescript
-// Conceptual execution flow
-const generateTests = async (libraryName: string, options: TestOptions) => {
-  // Phase 1: Analysis (Sequential)
-  const libraryAnalysis = await analyzeLibrary(libraryName);
-  const testStrategy = await planTestStrategy(libraryAnalysis);
-
-  // Phase 2: Generation (Parallel)
-  const [unitTests, effectPatternReview, typeValidation, e2eTests] =
-    await Promise.all([
-      testEngineerAgent.generateUnitTests(testStrategy),
-      effectSpecialistAgent.reviewPatterns(testStrategy),
-      typescriptProAgent.validateTypes(testStrategy),
-      frontendAgent.generateE2ETests(testStrategy), // if applicable
-    ]);
-
-  // Phase 3: Integration (Sequential)
-  const finalTests = await integrateTestResults({
-    unitTests,
-    effectPatternReview,
-    typeValidation,
-    e2eTests,
-  });
-
-  return finalTests;
-};
-```
-
-</agent_coordination>
-
-<effect_test_patterns>
-
-## Effect.ts Testing Essentials
-
-### Layer Mocking Pattern
-
-```typescript
-// Create test layer with mock implementation
 const TestDatabaseLive = Layer.succeed(
   DatabaseService,
   DatabaseService.of({
@@ -206,275 +374,41 @@ const TestDatabaseLive = Layer.succeed(
     transaction: (fn) => fn,
   })
 );
-
-// Use in tests
-const result = await Effect.runPromise(
-  MyService.doSomething().pipe(
-    Effect.provide(TestDatabaseLive),
-    Effect.provide(TestContext.TestContext)
-  )
-);
 ```
 
-### Error Testing Pattern
+### Error Testing
 
 ```typescript
-it('should handle database errors', async () => {
-  const ErrorDatabaseLive = Layer.succeed(
-    DatabaseService,
-    DatabaseService.of({
-      query: () => Effect.fail(new DatabaseError('Connection failed')),
-    })
-  );
-
+it('should handle errors', async () => {
   const result = await Effect.runPromise(
-    MyService.doSomething().pipe(
-      Effect.provide(ErrorDatabaseLive),
-      Effect.either // Capture error as value
+    MyService.operation().pipe(
+      Effect.provide(ErrorLayer),
+      Effect.either
     )
   );
-
   expect(Either.isLeft(result)).toBe(true);
-  expect(result.left).toBeInstanceOf(DatabaseError);
 });
 ```
 
-### TestClock for Time-Dependent Tests
+### TestClock for Time
 
 ```typescript
 it('should retry after delay', async () => {
-  const program = MyService.retryOperation().pipe(
-    Effect.provide(TestDatabaseLive),
-    Effect.provide(TestClock.TestClock)
+  const fiber = Effect.runFork(
+    MyService.retryOperation().pipe(
+      Effect.provide(TestClock.TestClock)
+    )
   );
-
-  const fiber = Effect.runFork(program);
   await TestClock.adjust(Duration.seconds(5));
-
   const result = await Fiber.join(fiber);
-  expect(result).toBe(expectedAfterRetry);
 });
 ```
-
-</effect_test_patterns>
-
-<test_templates>
-
-## Test File Templates
-
-Templates available in `/docs/testing/test-templates/`:
-
-1. `effect-service.spec.ts` - Effect service with Layer testing
-2. `repository.spec.ts` - Repository with Kysely queries
-3. `api-route.spec.ts` - tRPC/Fastify route testing
-4. `e2e-flow.spec.ts` - Playwright user flow
-5. `provider-adapter.spec.ts` - External service adapter
-6. `react-component.spec.ts` - React component integration
-   </test_templates>
-
-<usage>
-## Command Usage
-
-### Basic Usage
-
-```bash
-/generate-tests <library-name>
-```
-
-### With Test Type Filter
-
-```bash
-/generate-tests <library-name> --type=unit
-/generate-tests <library-name> --type=integration
-/generate-tests <library-name> --type=e2e
-/generate-tests <library-name> --type=all
-```
-
-### Examples
-
-```bash
-# Generate tests for an Effect-based infrastructure library
-/generate-tests infra-database
-
-# Generate only E2E tests for a feature
-/generate-tests feature-checkout --type=e2e
-
-# Generate all tests for a provider adapter
-/generate-tests provider-stripe --type=all
-```
-
-</usage>
-
-<output_format>
-
-## Expected Output
-
-### 1. Analysis Summary
-
-```
-📦 Library: @libs/infra/database
-📂 Type: Infrastructure
-🎯 Core Functionality Identified:
-  - Database connection management
-  - Query execution with Kysely
-  - Transaction handling
-  - Connection pooling
-
-⚡ Effect Services Found:
-  - DatabaseService (server/service.ts)
-  - DatabaseLive Layer (server/layers.ts)
-```
-
-### 2. Test Generation Report
-
-```
-✅ Generated Tests:
-
-  Unit Tests (8 files):
-  - libs/infra/database/src/lib/server/service.spec.ts
-  - libs/infra/database/src/lib/server/connection.spec.ts
-  - libs/infra/database/src/lib/server/query-builder.spec.ts
-
-  Integration Tests (3 files):
-  - libs/infra/database/src/lib/server/integration/transaction.spec.ts
-  - libs/infra/database/src/lib/server/integration/pooling.spec.ts
-
-  📊 Coverage: 87% of core functionality
-  ⚡ All tests use Effect patterns correctly
-  ✅ Type safety validated
-```
-
-### 3. Recommendations
-
-```
-💡 Recommendations:
-
-  1. Consider adding TestClock for connection timeout tests
-  2. Mock external Postgres dependency for faster unit tests
-  3. Add integration test for concurrent transaction handling
-
-  ⚠️ Potential Test Drift Areas:
-  - Avoid testing Kysely query builder internals
-  - Don't test connection pool implementation details
-  - Focus on service contract, not SQL generation
-```
-
-</output_format>
-
-<platform_specific_testing>
-
-## Platform-Specific Test Strategies
-
-### Next.js (Web App)
-
-- **Client Components**: React Testing Library for interactions
-- **Server Components**: Integration tests with mock data fetching
-- **API Routes**: tRPC procedure testing with mock context
-- **Edge Functions**: Edge runtime compatibility tests
-
-### Fastify API
-
-- **Route Handlers**: HTTP request/response testing
-- **Plugins**: Plugin registration and lifecycle
-- **Hooks**: Request/response hook execution
-- **Error Handling**: Error serialization and status codes
-
-### External APIs
-
-- **Provider Adapters**: Mock external API responses
-- **Retry Logic**: Test exponential backoff, circuit breakers
-- **Rate Limiting**: Test quota handling
-- **Error Mapping**: Validate error transformation
-  </platform_specific_testing>
-
-<quality_gates>
-
-## Quality Requirements
-
-All generated tests must:
-
-- ✅ Pass TypeScript type checking
-- ✅ Pass ESLint validation
-- ✅ Execute successfully on first run
-- ✅ Be deterministic (no flakiness)
-- ✅ Have clear, descriptive test names
-- ✅ Include error scenario coverage
-- ✅ Use proper Effect patterns (if Effect-based)
-- ✅ Respect Nx module boundaries
-- ✅ Be maintainable (survive refactoring)
-
-Test Naming Convention:
-
-```typescript
-describe('ServiceName', () => {
-  describe('methodName', () => {
-    it('should [expected behavior] when [condition]', () => {
-      // Test implementation
-    });
-
-    it('should handle [error type] when [error condition]', () => {
-      // Error case
-    });
-  });
-});
-```
-
-</quality_gates>
-
-<execution_instructions>
-
-## How to Execute This Command
-
-When this command is invoked:
-
-1. **Parse Arguments**
-
-   - Extract library name
-   - Extract test type filter (unit/integration/e2e/all)
-   - Validate library exists in workspace
-
-2. **Analyze Library** (Sequential)
-
-   - Read library structure and exports
-   - Identify library type and platform
-   - Map Effect services and layers
-   - Determine test requirements
-
-3. **Launch Parallel Agents** (Concurrent)
-
-   ```
-   Run in parallel:
-   - test-engineer-nx-effect: Core test generation
-   - effect-architecture-specialist: Pattern validation
-   - typescript-pro: Type safety checks
-   - [frontend-developer]: E2E tests (if applicable)
-   ```
-
-4. **Generate Test Files** (Sequential after agents complete)
-
-   - Combine agent outputs
-   - Apply templates
-   - Write test files to appropriate locations
-
-5. **Validate & Report** (Sequential)
-
-   - Run generated tests
-   - Generate coverage report
-   - Provide recommendations
-
-6. **Output Results**
-   - Summary of generated tests
-   - Coverage metrics
-   - Quality validation results
-   - Next steps and recommendations
-     </execution_instructions>
-
-<anti_patterns>
+</effect-patterns>
 
 ## Anti-Patterns to Avoid
 
-❌ **Testing Implementation Details**
-
+<anti-patterns>
+**Testing Implementation Details:**
 ```typescript
 // BAD: Testing private method
 it('should call _internalMethod', () => {
@@ -484,115 +418,106 @@ it('should call _internalMethod', () => {
 });
 
 // GOOD: Testing behavior
-it('should return processed result when calling publicMethod', () => {
+it('should return processed result', () => {
   const result = service.publicMethod();
   expect(result).toEqual(expectedOutput);
 });
 ```
 
-❌ **Over-Mocking**
-
+**Over-Mocking:**
 ```typescript
 // BAD: Mocking everything
 jest.mock('@libs/infra/database');
-jest.mock('@libs/provider/stripe');
 jest.mock('effect');
 
 // GOOD: Mock only external dependencies
 const TestStripeLayer = Layer.succeed(StripeService, mockStripeService);
 ```
 
-❌ **Brittle Selectors**
-
+**Brittle Selectors:**
 ```typescript
 // BAD: Implementation-coupled selector
 await page.locator('div.container > button.primary').click();
 
 // GOOD: Semantic selector
 await page.getByRole('button', { name: 'Submit' }).click();
-// or
-await page.getByTestId('submit-button').click();
 ```
+</anti-patterns>
 
-</anti_patterns>
+## Output Format
 
-<nx_integration>
+<structured-output>
+### Test Generation Report
 
-## Nx Workspace Integration
+**Target:** {target}
+**Type:** {library_type}
+**Test Types Generated:** {unit|integration|e2e}
 
-### Test Execution
+#### Analysis Summary
+| Metric | Value |
+|--------|-------|
+| Files analyzed | N |
+| Public exports | N |
+| Tests generated | N |
 
-```bash
-# Run generated tests for specific library
-pnpm exec nx test <library-name>
+#### Generated Test Files
+| File | Tests | Type | Status |
+|------|-------|------|--------|
+| {path} | N | unit | PASS |
+| {path} | N | integration | PASS |
 
-# Run all tests
-pnpm exec nx run-many --target=test --all
+#### Validation Results
+- TypeScript compilation: PASS/FAIL
+- Test execution: X/Y passing
 
-# Run affected tests only
-pnpm exec nx affected --target=test
+#### Recommendations
+1. {improvement suggestion}
+2. {additional test suggestion}
 
-# Run with coverage
-pnpm exec nx test <library-name> --coverage
+#### Test Drift Warnings
+- Avoid testing: {implementation detail}
+- Focus on: {behavior to test instead}
+</structured-output>
+
+## Examples
+
+### Example 1: Generate All Tests for Library
 ```
-
-### Configuration Files
-
-Generated tests respect existing:
-
-- `jest.config.ts` in library root
-- `tsconfig.spec.json` for test TypeScript config
-- `project.json` test target configuration
-
-### Module Boundaries
-
-Tests automatically use proper imports:
-
-```typescript
-// Respects tsconfig.base.json path mappings
-import { DatabaseService } from '@libs/infra/database/server';
-import { StripeService } from '@libs/provider/stripe/server';
+/generate-tests feature-auth
 ```
+- Analyzes feature-auth library
+- Deploys test-engineer + effect-architecture-specialist in parallel
+- Generates unit + integration tests
+- Validates and reports
 
-</nx_integration>
+### Example 2: Unit Tests Only
+```
+/generate-tests data-access/users unit
+```
+- Focuses on unit tests
+- Tests repository methods in isolation
+- Uses Layer mocking for dependencies
 
-<success_criteria>
+### Example 3: E2E Tests
+```
+/generate-tests feature-checkout e2e
+```
+- Generates Playwright E2E tests
+- Creates Page Object Model classes
+- Tests critical checkout flow
 
-## Definition of Success
+## Success Criteria
 
-A successful test generation produces:
-
-1. **Comprehensive Coverage**
-
-   - All public APIs tested
-   - Error scenarios covered
-   - Edge cases included
-   - Integration points validated
-
-2. **Maintainable Tests**
-
-   - Clear naming and organization
-   - Minimal coupling to implementation
-   - Easy to update when requirements change
-   - Self-documenting test cases
-
-3. **Fast Execution**
-
-   - Unit tests complete in milliseconds
-   - Integration tests under 1 second each
-   - E2E tests under 30 seconds each
-   - Parallel execution enabled where safe
-
-4. **Reliable Results**
-
-   - No flaky tests
-   - Deterministic behavior
-   - Proper test isolation
-   - Consistent pass/fail
-
-5. **Effect Pattern Compliance**
-   - Proper Layer composition
-   - Correct error handling
-   - TestClock usage where needed
-   - Mock services follow Effect patterns
-     </success_criteria>
+<success-criteria>
+A successful test generation will:
+- [ ] Analyze public API correctly
+- [ ] Deploy appropriate agents using Task tool
+- [ ] Generate tests for all public exports
+- [ ] Include error scenario coverage
+- [ ] Use proper Effect patterns (if applicable)
+- [ ] Write files to correct locations
+- [ ] Pass TypeScript compilation
+- [ ] Pass test execution
+- [ ] Avoid testing implementation details
+- [ ] Provide clear coverage report
+</success-criteria>

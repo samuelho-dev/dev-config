@@ -1,0 +1,147 @@
+{
+  "$schema": "./rules.schema.json",
+  "version": "1.0.0",
+  "description": "Config-driven dependency rules for Effect TS monorepos",
+
+  "libraryTypes": {
+    "contract": {
+      "description": "Domain boundaries and interfaces with Effect Schema entities",
+      "effectPattern": "Schema.Class entities, Data.TaggedError",
+      "effectLayer": "Domain",
+      "canDependOn": [],
+      "requiredPatterns": [
+        "enforce-taggederror-readonly",
+        "ban-type-assertions"
+      ],
+      "flags": ["--entities", "--includeCQRS", "--includeRPC"]
+    },
+    "data-access": {
+      "description": "Repository pattern implementations with Kysely query builders",
+      "effectPattern": "Context.Tag + Layer.effect",
+      "effectLayer": "Service",
+      "canDependOn": ["contract"],
+      "requiredPatterns": [
+        "detect-missing-yield-star",
+        "enforce-effect-pipe"
+      ],
+      "flags": []
+    },
+    "feature": {
+      "description": "Business logic orchestration with platform-specific exports",
+      "effectPattern": "Effect.gen orchestration",
+      "effectLayer": "Orchestration",
+      "canDependOn": ["contract", "data-access", "infra", "provider"],
+      "requiredPatterns": [
+        "detect-missing-yield-star",
+        "enforce-effect-pipe"
+      ],
+      "flags": ["--includeCQRS", "--includeRPC", "--platform"]
+    },
+    "infra": {
+      "description": "Cross-cutting technical services (caching, logging)",
+      "effectPattern": "Cross-cutting Layer.succeed/effect",
+      "effectLayer": "Infrastructure",
+      "canDependOn": ["contract"],
+      "requiredPatterns": [],
+      "flags": ["--platform"]
+    },
+    "provider": {
+      "description": "External service integrations wrapping SDKs with Effect interfaces",
+      "effectPattern": "External SDK wrapping",
+      "effectLayer": "Integration",
+      "canDependOn": ["contract", "infra"],
+      "requiredPatterns": [
+        "detect-unhandled-effect-promise"
+      ],
+      "flags": ["--platform", "--externalService"]
+    }
+  },
+
+  "dependencyMatrix": {
+    "contract": {
+      "allowedImports": [],
+      "forbiddenImports": ["data-access", "feature", "infra", "provider"],
+      "reason": "Contract libraries define pure domain boundaries - no dependencies allowed"
+    },
+    "data-access": {
+      "allowedImports": ["contract"],
+      "forbiddenImports": ["feature", "infra", "provider"],
+      "reason": "Data-access can only import contract types for repository interfaces"
+    },
+    "feature": {
+      "allowedImports": ["contract", "data-access", "infra", "provider"],
+      "forbiddenImports": [],
+      "reason": "Feature libraries orchestrate all other types"
+    },
+    "infra": {
+      "allowedImports": ["contract"],
+      "forbiddenImports": ["data-access", "feature", "provider"],
+      "reason": "Infrastructure provides cross-cutting concerns, only needs contracts"
+    },
+    "provider": {
+      "allowedImports": ["contract", "infra"],
+      "forbiddenImports": ["data-access", "feature"],
+      "reason": "Provider wraps external SDKs, may use infra for logging/caching"
+    }
+  },
+
+  "effectPatterns": {
+    "schema": {
+      "pattern": "Schema.Class",
+      "allowedIn": ["contract"],
+      "description": "Effect Schema classes for domain entities"
+    },
+    "taggedError": {
+      "pattern": "Data.TaggedError",
+      "allowedIn": ["contract", "data-access", "feature", "infra", "provider"],
+      "description": "Typed error handling with tagged unions"
+    },
+    "contextTag": {
+      "pattern": "Context.Tag",
+      "allowedIn": ["data-access", "infra", "provider"],
+      "description": "Dependency injection via Effect Context"
+    },
+    "layer": {
+      "pattern": "Layer.effect|Layer.succeed",
+      "allowedIn": ["data-access", "infra", "provider"],
+      "description": "Service layer construction"
+    },
+    "effectGen": {
+      "pattern": "Effect.gen",
+      "allowedIn": ["data-access", "feature", "infra", "provider"],
+      "description": "Generator-based Effect composition"
+    }
+  },
+
+  "enforcementPolicy": {
+    "gritqlRequired": true,
+    "mlgWorkflowRequired": true,
+    "patternVersionTracking": true,
+    "mode": "warn"
+  },
+
+  "gritqlPatterns": {
+    "existing": [
+      "detect-missing-yield-star",
+      "ban-any-type-annotation",
+      "ban-type-assertions",
+      "ban-satisfies",
+      "ban-relative-parent-imports",
+      "prefer-object-spread",
+      "ban-default-export-non-index",
+      "ban-push-spread",
+      "ban-return-types",
+      "enforce-effect-pipe",
+      "enforce-esm-package-type",
+      "enforce-nx-project-tags",
+      "enforce-strict-tsconfig"
+    ],
+    "planned": [
+      "detect-unhandled-effect-promise",
+      "enforce-layer-types",
+      "detect-schema-decode-unhandled",
+      "enforce-effect-sync-vs-gen",
+      "enforce-taggederror-readonly"
+    ]
+  }
+}
