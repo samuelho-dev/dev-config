@@ -2,12 +2,38 @@
   config,
   lib,
   pkgs,
+  inputs ? {},
   ...
 }: let
   cfg = config.dev-config.opencode;
+
+  # Path to OpenCode config assets in dev-config repo
+  opencodeAssetsPath =
+    if inputs ? dev-config
+    then "${inputs.dev-config}/.opencode"
+    else ../../../.opencode;
 in {
   options.dev-config.opencode = {
     enable = lib.mkEnableOption "OpenCode AI coding agent with LiteLLM fallback";
+
+    # Configuration export for init-workspace
+    configSource = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default =
+        if builtins.pathExists opencodeAssetsPath
+        then opencodeAssetsPath
+        else null;
+      description = "Path to OpenCode configuration directory (.opencode/)";
+    };
+
+    exportConfig = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Export OpenCode configs to ~/.config/opencode/.
+        Consumer projects can use init-workspace to link to these configs.
+      '';
+    };
 
     litellmUrl = lib.mkOption {
       type = lib.types.str;
@@ -45,5 +71,23 @@ in {
         fi
       }
     '';
+
+    # Export OpenCode configs to ~/.config/opencode/ for init-workspace
+    xdg.configFile = lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
+      # Symlink prompts directory (shared, read-only)
+      "opencode/prompts".source = cfg.configSource + "/prompts";
+
+      # Symlink command directory (shared, read-only)
+      "opencode/command".source = cfg.configSource + "/command";
+
+      # Symlink plugin directory (shared, read-only)
+      "opencode/plugin".source = cfg.configSource + "/plugin";
+
+      # Symlink tool directory (shared, read-only)
+      "opencode/tool".source = cfg.configSource + "/tool";
+
+      # Copy base config (projects copy and extend this)
+      "opencode/opencode-base.json".source = cfg.configSource + "/opencode.json";
+    };
   };
 }

@@ -2,12 +2,47 @@
   config,
   lib,
   pkgs,
+  inputs ? {},
   ...
 }: let
   cfg = config.dev-config.claude-code;
+
+  # Path to Claude Code config assets in dev-config repo
+  claudeAssetsPath =
+    if inputs ? dev-config
+    then "${inputs.dev-config}/.claude"
+    else ../../../.claude;
 in {
   options.dev-config.claude-code = {
     enable = lib.mkEnableOption "Claude Code CLI with multi-profile authentication";
+
+    # Configuration export for init-workspace
+    configSource = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default =
+        if builtins.pathExists claudeAssetsPath
+        then claudeAssetsPath
+        else null;
+      description = "Path to Claude Code configuration directory (.claude/)";
+    };
+
+    exportConfig = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Export Claude Code configs to ~/.config/claude-code/.
+        Consumer projects can use init-workspace to link to these configs.
+      '';
+    };
+
+    # Base settings.json content (projects can extend)
+    baseSettings = lib.mkOption {
+      type = lib.types.attrs;
+      default = {
+        hooks.enabled = false;
+      };
+      description = "Base settings.json configuration for consumer projects";
+    };
 
     profiles = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
@@ -107,5 +142,17 @@ in {
     home.activation.createClaudeProfileDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
       ${lib.concatStringsSep "\n      " (lib.mapAttrsToList (name: profile: "$DRY_RUN_CMD mkdir -p ${profile.configDir}") cfg.profiles)}
     '';
+
+    # Export Claude Code configs to ~/.config/claude-code/ for init-workspace
+    xdg.configFile = lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
+      # Symlink agents directory (shared, read-only)
+      "claude-code/agents".source = cfg.configSource + "/agents";
+
+      # Symlink commands directory (shared, read-only)
+      "claude-code/commands".source = cfg.configSource + "/commands";
+
+      # Generate base settings.json (projects copy and extend this)
+      "claude-code/settings-base.json".text = builtins.toJSON cfg.baseSettings;
+    };
   };
 }
