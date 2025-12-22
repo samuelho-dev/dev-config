@@ -181,6 +181,13 @@ const DEFAULT_RULESET: readonly string[] = [
   "enforce-esm-package-type",
   "enforce-nx-project-tags",
   "enforce-strict-tsconfig",
+
+  // Effect anti-patterns (80/20)
+  "ban-try-catch-in-effect",
+  "ban-raw-promise-in-effect",
+  "ban-throw-in-effect",
+  "detect-unhandled-effect-promise",
+  "ban-effect-do",
 ]
 
 // ============================================================================

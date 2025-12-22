@@ -1,0 +1,31 @@
+language js
+
+// Ban raw Promise usage inside Effect.gen
+// Effect provides Effect.tryPromise() and Effect.all() for async operations
+//
+// ❌ Bad:
+//   Effect.gen(function* () {
+//     const data = await fetch(url)  // breaks Effect's error tracking
+//     const results = Promise.all([...])
+//   })
+//
+// ✅ Good:
+//   Effect.gen(function* () {
+//     const data = yield* Effect.tryPromise(() => fetch(url))
+//     const results = yield* Effect.all([...])
+//   })
+
+`Effect.gen(function* () { $body })` where {
+  $body <: contains or {
+    `await $expr`,
+    `$promise.then($callback)`,
+    `new Promise($executor)`,
+    `Promise.all($_)`
+  } where {
+    register_diagnostic(
+      span = $_,
+      message = "Do not use Promises inside Effect.gen. Use yield* Effect.tryPromise().",
+      severity = "error"
+    )
+  }
+}

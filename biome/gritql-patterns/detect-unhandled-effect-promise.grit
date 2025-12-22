@@ -1,0 +1,32 @@
+language js
+
+// Detect Effect.tryPromise without proper typed error handling
+// Always use { try, catch } form for type-safe error handling
+//
+// ❌ Bad:
+//   Effect.tryPromise(() => fetch(url))  // error is unknown
+//   Effect.tryPromise({ try: () => fetch(url), catch: (e) => e })  // raw error
+//
+// ✅ Good:
+//   Effect.tryPromise({
+//     try: () => fetch(url),
+//     catch: (e) => new FetchError({ cause: e })
+//   })
+
+or {
+  `Effect.tryPromise($fn)` where {
+    not ($fn <: `{ try: $_, catch: $_ }`),
+    register_diagnostic(
+      span = $_,
+      message = "Effect.tryPromise should use { try, catch } form for typed errors.",
+      severity = "error"
+    )
+  },
+  `Effect.tryPromise({ try: $try, catch: ($e) => $e })` where {
+    register_diagnostic(
+      span = $_,
+      message = "tryPromise catch should return typed error, not raw error.",
+      severity = "error"
+    )
+  }
+}
