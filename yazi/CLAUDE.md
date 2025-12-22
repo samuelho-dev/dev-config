@@ -30,7 +30,7 @@ programs.yazi = {
   shellWrapperName = "yy";
 
   settings = {
-    manager = {
+    mgr = {
       ratio = [ 1 4 3 ];
       sort_by = "natural";
       sort_dir_first = true;
@@ -42,7 +42,7 @@ programs.yazi = {
   };
 
   keymap = {
-    manager.prepend_keymap = [
+    mgr.prepend_keymap = [
       { on = [ "<C-s>" ]; run = "search fd"; desc = "Search files with fd"; }
       { on = [ "<C-g>" ]; run = "search rg"; desc = "Search content with ripgrep"; }
     ];
@@ -89,7 +89,7 @@ yazi/
 
 **yazi.toml** - General behavior
 ```toml
-[manager]
+[mgr]
 ratio = [1, 4, 3]
 sort_by = "natural"
 sort_dir_first = true
@@ -102,12 +102,12 @@ max_height = 1000
 
 **keymap.toml** - Keyboard shortcuts
 ```toml
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["<C-s>"]
 run = "search fd"
 desc = "Search with fd"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["<C-g>"]
 run = "search rg"
 desc = "Search with ripgrep"
@@ -115,7 +115,7 @@ desc = "Search with ripgrep"
 
 **theme.toml** - Visual styling
 ```toml
-[manager]
+[mgr]
 cwd = { fg = "cyan" }
 
 [filetype]
@@ -334,7 +334,7 @@ yy
 **Add custom keybindings:**
 ```nix
 keymap = {
-  manager.prepend_keymap = [
+  mgr.prepend_keymap = [
     { on = [ "<C-s>" ]; run = "search fd"; desc = "Search with fd"; }
     { on = [ "<C-g>" ]; run = "search rg"; desc = "Search with ripgrep"; }
 
@@ -347,7 +347,7 @@ keymap = {
 **Add custom settings:**
 ```nix
 settings = {
-  manager = {
+  mgr = {
     ratio = [ 1 4 3 ];
     # Add custom setting
     show_symlink = true;
@@ -363,7 +363,7 @@ settings = {
 **Add custom theme:**
 ```nix
 theme = {
-  manager = {
+  mgr = {
     cwd = { fg = "cyan"; };
   };
   filetype = {
@@ -483,7 +483,7 @@ Yazi automatically works with these tools from `modules/home-manager/default.nix
 ```nix
 # In modules/home-manager/programs/yazi.nix
 keymap = {
-  manager.prepend_keymap = [
+  mgr.prepend_keymap = [
     { on = [ "<C-z>" ]; run = "plugin zoxide"; desc = "Jump with zoxide"; }
   ];
 };
@@ -517,7 +517,7 @@ Yazi handles large directories efficiently:
    - File-based (TOML/Lua) - Edit files in `yazi/` directory
 
 2. **Adding keybindings:**
-   - Declarative: Add to `keymap.manager.prepend_keymap` array
+   - Declarative: Add to `keymap.mgr.prepend_keymap` array
    - File-based: Edit `yazi/keymap.toml`
 
 3. **Changing settings:**

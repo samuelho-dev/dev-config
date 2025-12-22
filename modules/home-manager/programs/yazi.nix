@@ -30,7 +30,7 @@ in {
     settings = lib.mkOption {
       type = lib.types.attrs;
       default = {
-        manager = {
+        mgr = {
           ratio = [1 4 3];
           sort_by = "natural";
           sort_dir_first = true;
@@ -49,7 +49,7 @@ in {
     keymap = lib.mkOption {
       type = lib.types.attrs;
       default = {
-        manager.prepend_keymap = [
+        mgr.prepend_keymap = [
           {
             on = ["<C-s>"];
             run = "search fd";

@@ -73,7 +73,7 @@ programs.yazi = {
   shellWrapperName = "yy";
 
   settings = {
-    manager = {
+    mgr = {
       ratio = [ 1 4 3 ];
       sort_by = "natural";
       sort_dir_first = true;
@@ -81,7 +81,7 @@ programs.yazi = {
   };
 
   keymap = {
-    manager.prepend_keymap = [
+    mgr.prepend_keymap = [
       { on = [ "<C-s>" ]; run = "search fd"; desc = "Search with fd"; }
     ];
   };
