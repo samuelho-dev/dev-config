@@ -58,12 +58,6 @@ in {
         claude = {
           configDir = "~/.claude";
         };
-        claude-2 = {
-          configDir = "~/.claude-2";
-        };
-        claude-work = {
-          configDir = "~/.claude-work";
-        };
       };
       description = "Claude Code authentication profiles";
     };
@@ -151,8 +145,21 @@ in {
       # Symlink commands directory (shared, read-only)
       "claude-code/commands".source = cfg.configSource + "/commands";
 
+      # Symlink templates directory (shared, read-only)
+      "claude-code/templates".source = cfg.configSource + "/templates";
+
       # Generate base settings.json (projects copy and extend this)
       "claude-code/settings-base.json".text = builtins.toJSON cfg.baseSettings;
+    };
+
+    # Sync agents/commands/templates to global ~/.claude/ directory
+    # This ensures commands/agents are available when running `claude` in any directory
+    # without needing per-project setup via init-workspace
+    home.file = lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
+      # Symlink to default profile (~/.claude/)
+      ".claude/agents".source = cfg.configSource + "/agents";
+      ".claude/commands".source = cfg.configSource + "/commands";
+      ".claude/templates".source = cfg.configSource + "/templates";
     };
   };
 }

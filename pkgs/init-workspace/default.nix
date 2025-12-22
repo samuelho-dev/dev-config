@@ -142,6 +142,17 @@ writeShellScriptBin "init-workspace" ''
           fi
         fi
 
+        # Symlink templates directory (shared, read-only from dev-config)
+        if [ -d "$CLAUDE_CONFIG/templates" ]; then
+          if [ -e ".claude/templates" ] && [ ! -L ".claude/templates" ] && [ -z "$FORCE" ]; then
+            log_warn ".claude/templates exists and is not a symlink (use --force to replace)"
+          else
+            rm -rf .claude/templates 2>/dev/null || true
+            ln -sf "$CLAUDE_CONFIG/templates" .claude/templates
+            log_success "Linked .claude/templates -> ~/.config/claude-code/templates"
+          fi
+        fi
+
         # Copy base settings.json (project can extend)
         if [ -f "$CLAUDE_CONFIG/settings-base.json" ]; then
           if [ -f ".claude/settings.json" ] && [ -z "$FORCE" ]; then
@@ -202,6 +213,7 @@ writeShellScriptBin "init-workspace" ''
       if [ -d "$CLAUDE_CONFIG" ]; then
         echo "  - .claude/agents -> ~/.config/claude-code/agents (shared)"
         echo "  - .claude/commands -> ~/.config/claude-code/commands (shared)"
+        echo "  - .claude/templates -> ~/.config/claude-code/templates (shared)"
         echo "  - .claude/settings.json (base config, extend as needed)"
       fi
       if [ -d "$OPENCODE_CONFIG" ]; then
