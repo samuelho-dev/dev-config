@@ -34,44 +34,31 @@ in {
       description = "Path to shared GritQL patterns directory. Set to null to disable pattern symlinking.";
     };
 
-    enableUserConfig = lib.mkOption {
+    exportConfig = lib.mkOption {
       type = lib.types.bool;
       default = true;
       description = ''
-        Generate a user-level grit.yaml config at ~/.config/grit/grit.yaml
-        that references the shared patterns. This enables patterns to be
-        available globally across all repositories.
+        Export GritQL patterns to ~/.config/grit/patterns (for init-workspace)
+        and ~/.grit/patterns (for global access). Consumer projects can use
+        init-workspace to link to these patterns.
       '';
     };
   };
 
   config = lib.mkIf cfg.enable {
-    # Symlink shared patterns to XDG config directory
-    # Patterns become available at ~/.config/grit/patterns/
-    xdg.configFile."grit/patterns" = lib.mkIf (cfg.patternsSource != null) {
+    # Export patterns to ~/.config/grit/patterns for init-workspace to find
+    # (follows same pattern as claude-code.nix exports to ~/.config/claude-code/)
+    xdg.configFile."grit/patterns" = lib.mkIf (cfg.exportConfig && cfg.patternsSource != null) {
       source = cfg.patternsSource;
       recursive = true;
     };
 
-    # Generate user-level grit.yaml with expanded pattern paths
-    # This enables patterns to be discoverable globally without per-repo setup
-    home.activation.gritUserConfig = lib.mkIf cfg.enableUserConfig (
-      lib.hm.dag.entryAfter ["writeBoundary"] ''
-                GRIT_USER_CONFIG="''${XDG_CONFIG_HOME:-$HOME/.config}/grit"
-                mkdir -p "$GRIT_USER_CONFIG"
-
-                # Generate grit.yaml with pattern paths
-                # Uses the actual XDG path for portability
-                cat > "$GRIT_USER_CONFIG/grit.yaml" <<'EOF'
-        version: 0.0.1
-        # Shared patterns from dev-config repository
-        # Symlinked by Home Manager to ~/.config/grit/patterns/
-        patterns:
-          - file: ${config.xdg.configHome}/grit/patterns/**/*.md
-          - file: ${config.xdg.configHome}/grit/patterns/**/*.grit
-        EOF
-                run echo "Generated $GRIT_USER_CONFIG/grit.yaml"
-      ''
-    );
+    # Sync patterns to ~/.grit/patterns for global access
+    # GritQL's default user patterns location - works in any repo without setup
+    # (follows same pattern as claude-code.nix syncs to ~/.claude/)
+    home.file.".grit/patterns" = lib.mkIf (cfg.exportConfig && cfg.patternsSource != null) {
+      source = cfg.patternsSource;
+      recursive = true;
+    };
   };
 }

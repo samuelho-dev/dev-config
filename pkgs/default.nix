@@ -47,16 +47,16 @@
         chmod +x $out/bin/.grit-unwrapped
 
         # Wrap with XDG directory support to prevent Nix store writes
+        # Only sets cache/data directories - user config handled by Home Manager
         # Environment variables:
-        #   GRIT_USER_CONFIG - User-level patterns and config (~/.config/grit)
-        #   GRIT_GLOBAL_DIR  - Global modules and stdlib cache (~/.local/share/grit)
+        #   GRIT_GLOBAL_DIR - Global modules and stdlib cache (~/.local/share/grit)
+        # Note: GRIT_USER_CONFIG intentionally NOT set - grit uses default ~/.grit
+        #       which Home Manager populates with patterns
         makeWrapper $out/bin/.grit-unwrapped $out/bin/grit \
           --run 'export XDG_DATA_HOME="''${XDG_DATA_HOME:-$HOME/.local/share}"' \
-          --run 'export XDG_CONFIG_HOME="''${XDG_CONFIG_HOME:-$HOME/.config}"' \
           --run 'export XDG_CACHE_HOME="''${XDG_CACHE_HOME:-$HOME/.cache}"' \
-          --run 'export GRIT_USER_CONFIG="''${GRIT_USER_CONFIG:-$XDG_CONFIG_HOME/grit}"' \
           --run 'export GRIT_GLOBAL_DIR="''${GRIT_GLOBAL_DIR:-$XDG_DATA_HOME/grit}"' \
-          --run 'mkdir -p "$GRIT_USER_CONFIG" "$GRIT_GLOBAL_DIR"'
+          --run 'mkdir -p "$GRIT_GLOBAL_DIR" "$XDG_CACHE_HOME/grit"'
 
         runHook postInstall
       '';
