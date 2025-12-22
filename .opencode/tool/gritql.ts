@@ -94,6 +94,9 @@ const GritArgsSchema = Schema.Struct({
   includeDiff: Schema.optional(Schema.Boolean).annotations({
     description: "Include unified diff output when available (default true).",
   }),
+  force: Schema.optional(Schema.Boolean).annotations({
+    description: "Bypass git safety checks for uncommitted changes (use with caution). Default false.",
+  }),
 })
 
 // ============================================================================
@@ -379,13 +382,14 @@ const enforcePolicy = (args: {
   return violations
 }
 
-const runGritApply = (params: { patternText: string; target: string; dryRun: boolean }) =>
+const runGritApply = (params: { patternText: string; target: string; dryRun: boolean; force: boolean }) =>
   Effect.try({
     try: () => {
-      const { patternText, target, dryRun } = params
-      const cmd = dryRun
-        ? `grit apply '${patternText.replace(/'/g, "'\\''")}' ${target} --dry-run`
-        : `grit apply '${patternText.replace(/'/g, "'\\''")}' ${target}`
+      const { patternText, target, dryRun, force } = params
+      const escapedPattern = patternText.replace(/'/g, "'\\''")
+      const forceFlag = force ? " --force" : ""
+      const dryRunFlag = dryRun ? " --dry-run" : ""
+      const cmd = `grit apply '${escapedPattern}' ${target}${dryRunFlag}${forceFlag}`
       return execSync(cmd, { encoding: "utf-8", maxBuffer: 10 * 1024 * 1024 })
     },
     catch: (e) =>
@@ -486,6 +490,7 @@ const executeGrit = (args: Schema.Schema.Type<typeof GritArgsSchema>) =>
     const includeDiff = args.includeDiff ?? true
     const confirm = args.confirm ?? false
     const runId = args.runId
+    const force = args.force ?? false
 
     // explainUsage
     if (command === "explainUsage") {
@@ -568,7 +573,7 @@ const executeGrit = (args: Schema.Schema.Type<typeof GritArgsSchema>) =>
     // checkPattern
     if (command === "checkPattern") {
       const thisRunId = makeRunId("gritql_check")
-      const raw = yield* runGritApply({ patternText, target, dryRun: true })
+      const raw = yield* runGritApply({ patternText, target, dryRun: true, force })
       const matches = parseMatchesBestEffort(raw)
       const ctxVersion = makeContextVersion(patternText, patternName?.trim())
 
@@ -600,8 +605,8 @@ const executeGrit = (args: Schema.Schema.Type<typeof GritArgsSchema>) =>
     if (command === "applyPattern") {
       const thisRunId = makeRunId("gritql_apply")
       const ctxVersion = makeContextVersion(patternText, patternName?.trim())
-      const dry = yield* runGritApply({ patternText, target, dryRun: true })
-      const applied = yield* runGritApply({ patternText, target, dryRun: false })
+      const dry = yield* runGritApply({ patternText, target, dryRun: true, force })
+      const applied = yield* runGritApply({ patternText, target, dryRun: false, force })
       const matches = parseMatchesBestEffort(dry)
 
       return new ToolSuccess({
@@ -620,6 +625,7 @@ const executeGrit = (args: Schema.Schema.Type<typeof GritArgsSchema>) =>
         diff: includeDiff ? { available: dry.trim().length > 0, unified: dry } : { available: false },
         output: applied.trim().length ? applied : "Applied. (No additional output.)",
         recommendations: [
+          ...(force ? ["⚠️ Applied with --force flag (git safety checks bypassed). Review changes carefully."] : []),
           "Run `biome check .` to validate formatting/linting.",
           "If this touched Nix files, run `nix flake show` / `home-manager build` as applicable.",
           "Review `git diff` and commit with a clear message.",
@@ -659,7 +665,7 @@ const executeGrit = (args: Schema.Schema.Type<typeof GritArgsSchema>) =>
 
       for (const name of names) {
         const text = yield* readRepoPattern(name)
-        const raw = yield* runGritApply({ patternText: text, target, dryRun: true })
+        const raw = yield* runGritApply({ patternText: text, target, dryRun: true, force })
         const matches = parseMatchesBestEffort(raw)
         allMatches.push(...matches)
         perRule.push({ patternName: name, output: raw, matches: [...matches] })
@@ -752,6 +758,11 @@ export default tool({
       .optional()
       .describe("Include unified diff output when available (default true).")
       .default(true),
+    force: tool.schema
+      .boolean()
+      .optional()
+      .describe("Bypass git safety checks for uncommitted changes (use with caution). Default false.")
+      .default(false),
   },
   async execute(args) {
     const program = pipe(

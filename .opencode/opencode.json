@@ -1,5 +1,10 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "plugins": [
+    "./plugin/gritql-guardrails.ts",
+    "./plugin/mlg-guardrails.ts",
+    "./plugin/nx-guardrails.ts"
+  ],
   "autoupdate": true,
   "permission": {
     "edit": "allow",
