@@ -1,8 +1,17 @@
+---
+scope: docs/
+updated: 2025-12-21
+relates_to:
+  - ../CLAUDE.md
+  - ./INDEX.md
+  - ./README.md
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with documentation in this directory.
 
-## Directory Purpose
+## Purpose
 
 The `docs/` directory contains **user-facing documentation** for the entire dev-config repository. This is the primary reference for users installing, configuring, and troubleshooting the development environment.
 
@@ -30,25 +39,25 @@ The `docs/` directory contains **user-facing documentation** for the entire dev-
 
 ```
 docs/
-├── README.md                  # This directory overview (you are here)
-├── CLAUDE.md                  # AI guidance for documentation maintenance
-├── INSTALLATION.md            # Step-by-step installation guide
-├── CONFIGURATION.md           # Customization and configuration guide
-├── TROUBLESHOOTING.md         # Common issues and solutions
-├── KEYBINDINGS_NEOVIM.md      # Complete Neovim keybinding reference
-├── KEYBINDINGS_TMUX.md        # Complete tmux keybinding reference
-└── nix/                       # Nix-specific documentation (11 guides)
-    ├── 01-install-nix.md                 # Installing Nix package manager
-    ├── 02-flake-overview.md              # Understanding flake.nix
-    ├── 03-home-manager-basics.md         # Home Manager introduction
-    ├── 04-opencode-integration.md        # OpenCode AI setup
-    ├── 05-devpod-setup.md                # DevPod remote development
-    ├── 06-direnv-integration.md          # Direnv auto-activation
-    ├── 07-litellm-proxy-setup.md         # LiteLLM team proxy
-    ├── 08-module-architecture.md         # Module design patterns
-    ├── 09-1password-ssh.md               # SSH + 1Password integration
-    ├── 10-secrets-management.md          # sops-nix secrets guide
-    └── 11-strict-linting-guide.md        # Comprehensive linting guide
++-- README.md                  # This directory overview (you are here)
++-- CLAUDE.md                  # AI guidance for documentation maintenance
++-- INSTALLATION.md            # Step-by-step installation guide
++-- CONFIGURATION.md           # Customization and configuration guide
++-- TROUBLESHOOTING.md         # Common issues and solutions
++-- KEYBINDINGS_NEOVIM.md      # Complete Neovim keybinding reference
++-- KEYBINDINGS_TMUX.md        # Complete tmux keybinding reference
++-- nix/                       # Nix-specific documentation (11 guides)
+    +-- 01-install-nix.md                 # Installing Nix package manager
+    +-- 02-flake-overview.md              # Understanding flake.nix
+    +-- 03-home-manager-basics.md         # Home Manager introduction
+    +-- 04-opencode-integration.md        # OpenCode AI setup
+    +-- 05-devpod-setup.md                # DevPod remote development
+    +-- 06-direnv-integration.md          # Direnv auto-activation
+    +-- 07-litellm-proxy-setup.md         # LiteLLM team proxy
+    +-- 08-module-architecture.md         # Module design patterns
+    +-- 09-1password-ssh.md               # SSH + 1Password integration
+    +-- 10-secrets-management.md          # sops-nix secrets guide
+    +-- 11-strict-linting-guide.md        # Comprehensive linting guide
 ```
 
 ## When to Update Documentation

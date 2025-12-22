@@ -49,16 +49,16 @@ nix develop
 
 ```
 flake.nix                    # Entry point: exports homeManagerModules, nixosModules, devShells
-├── home.nix                 # Home Manager config with sops-nix secrets
-├── user.nix                 # Machine-specific values (username, homeDirectory) - GITIGNORED
-├── modules/
-│   ├── home-manager/        # User-level configuration modules
-│   │   ├── default.nix      # Module aggregator + global options
-│   │   ├── programs/        # Per-program modules (neovim.nix, tmux.nix, etc.)
-│   │   └── services/        # Service modules (direnv.nix, sops-env.nix)
-│   └── nixos/               # System-level modules (for NixOS servers)
-├── pkgs/default.nix         # Centralized package definitions (DRY)
-└── secrets/default.yaml     # sops-nix encrypted secrets
++-- home.nix                 # Home Manager config with sops-nix secrets
++-- user.nix                 # Machine-specific values (username, homeDirectory) - GITIGNORED
++-- modules/
+|   +-- home-manager/        # User-level configuration modules
+|   |   +-- default.nix      # Module aggregator + global options
+|   |   +-- programs/        # Per-program modules (neovim.nix, tmux.nix, etc.)
+|   |   +-- services/        # Service modules (direnv.nix, sops-env.nix)
+|   +-- nixos/               # System-level modules (for NixOS servers)
++-- pkgs/default.nix         # Centralized package definitions (DRY)
++-- secrets/default.yaml     # sops-nix encrypted secrets
 ```
 
 ### Home Manager Module Pattern
@@ -212,3 +212,18 @@ dev-config.opencode.ohMyOpencode = {
 - **Module options:** Use `lib.mkEnableOption` for optional features
 - **Testing:** Always run `nix flake show --json` before committing Nix changes
 - **Symlinks:** Home Manager manages all symlinks - never create manually
+
+## For Future Claude Code Instances
+
+When working with this repository:
+
+- [ ] **Check flake validity** before committing: `nix flake show --json`
+- [ ] **Format Nix files** with: `nix fmt`
+- [ ] **Test configuration** before applying: `home-manager build --flake .`
+- [ ] **Follow module patterns** in `modules/home-manager/programs/` for new programs
+- [ ] **Use explicit `lib.` prefixes** - never use `with lib;`
+- [ ] **Add packages** to `pkgs/default.nix` by category, not scattered in modules
+- [ ] **Stage `user.nix`** before flake evaluation: `git add -f user.nix`
+- [ ] **Update component CLAUDE.md** when modifying that component's architecture
+- [ ] **Reference docs/** for user-facing documentation updates
+- [ ] **Consult `modules/home-manager/CLAUDE.md`** for Home Manager module patterns

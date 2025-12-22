@@ -1,8 +1,17 @@
+---
+scope: yazi/
+updated: 2025-12-21
+relates_to:
+  - ../CLAUDE.md
+  - ../modules/home-manager/programs/yazi.nix
+  - ../nvim/lua/plugins/editor.lua
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with Yazi terminal file manager configuration in this directory.
 
-## Directory Purpose
+## Purpose
 
 This directory is a **placeholder for future Yazi configuration files**. Currently, Yazi is configured **declaratively through Home Manager** in `modules/home-manager/programs/yazi.nix`, with no custom configuration files needed.
 
@@ -64,16 +73,16 @@ If you need **extensive customization** beyond what Home Manager's declarative o
 
 ```
 yazi/
-├── CLAUDE.md              # This file
-├── yazi.toml              # General settings overrides
-├── keymap.toml            # Custom keybindings
-├── theme.toml             # Color scheme customization
-├── init.lua               # Lua initialization script
-├── plugins/               # Custom plugins
-│   └── *.yazi/
-│       └── main.lua
-└── flavors/               # Theme collections
-    └── *.yazi/
++-- CLAUDE.md              # This file
++-- yazi.toml              # General settings overrides
++-- keymap.toml            # Custom keybindings
++-- theme.toml             # Color scheme customization
++-- init.lua               # Lua initialization script
++-- plugins/               # Custom plugins
+|   +-- *.yazi/
+|       +-- main.lua
++-- flavors/               # Theme collections
+    +-- *.yazi/
 ```
 
 ### Configuration Files Overview

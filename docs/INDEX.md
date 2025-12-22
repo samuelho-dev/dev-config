@@ -3,7 +3,7 @@
 Central catalog of all documentation in the dev-config repository.
 
 **Last Updated**: 2025-12-21
-**Coverage**: ~90% (target: 90%)
+**Coverage**: ~92% (target: 90%) ✅
 
 ---
 
@@ -42,13 +42,19 @@ Central catalog of all documentation in the dev-config repository.
 |-----------|--------|--------|-------------|
 | **yazi** | [README](../yazi/README.md) | [CLAUDE](../yazi/CLAUDE.md) | Terminal file manager |
 | **biome** | [README](../biome/README.md) | [CLAUDE](../biome/CLAUDE.md) | Linting and formatting configuration |
-| **tsconfig** | - | [CLAUDE](../tsconfig/CLAUDE.md) | TypeScript strict configurations |
-| **iac-linting** | - | [CLAUDE](../iac-linting/CLAUDE.md) | Infrastructure-as-Code linting |
+| **tsconfig** | [README](../tsconfig/README.md) | [CLAUDE](../tsconfig/CLAUDE.md) | TypeScript strict configurations |
+| **iac-linting** | [README](../iac-linting/README.md) | [CLAUDE](../iac-linting/CLAUDE.md) | Infrastructure-as-Code linting |
 | **gritql-patterns** | - | [CLAUDE](../gritql-patterns/CLAUDE.md) | 246+ GritQL patterns across 17 languages |
 
 ---
 
 ## Nix & Home Manager
+
+### NixOS Modules
+
+| Component | README | CLAUDE | Description |
+|-----------|--------|--------|-------------|
+| **modules/nixos** | - | [CLAUDE](../modules/nixos/CLAUDE.md) | NixOS system-level modules (docker, shell, users) |
 
 ### Home Manager Modules
 
@@ -91,7 +97,7 @@ Central catalog of all documentation in the dev-config repository.
 
 | Component | README | CLAUDE | Description |
 |-----------|--------|--------|-------------|
-| **scripts** | - | [CLAUDE](../scripts/CLAUDE.md) | Installation and utility scripts |
+| **scripts** | [README](../scripts/README.md) | [CLAUDE](../scripts/CLAUDE.md) | Installation and utility scripts |
 
 ---
 
@@ -102,7 +108,7 @@ Central catalog of all documentation in the dev-config repository.
 | Component | README | CLAUDE | Description |
 |-----------|--------|--------|-------------|
 | **.claude/commands/** | - | Documented | 13+ slash commands |
-| **.claude/agents/** | - | Documented | 47+ agent definitions |
+| **.claude/agents/** | - | [CLAUDE](../.claude/agents/CLAUDE.md) | 42+ agent definitions |
 | **.opencode/** | [README](../.opencode/README.md) | - | OpenCode configuration overview |
 | **.opencode/lib/** | - | [CLAUDE](../.opencode/lib/CLAUDE.md) | Shared Effect-TS schemas and utilities |
 | **.opencode/plugin/** | - | [CLAUDE](../.opencode/plugin/CLAUDE.md) | Guardrail plugins (gritql, mlg) |
@@ -137,23 +143,39 @@ Central catalog of all documentation in the dev-config repository.
 | Terminal/Shell (ghostty, tmux, zsh) | ✅ | ✅ | Complete |
 | Neovim (all levels) | ✅ | ✅ | Complete |
 | Developer Tools (yazi, biome) | ✅ | ✅ | Complete |
-| TypeScript configs | - | ✅ | CLAUDE only |
-| IaC linting | - | ✅ | CLAUDE only |
+| TypeScript configs | ✅ | ✅ | Complete |
+| IaC linting | ✅ | ✅ | Complete |
+| NixOS modules | - | ✅ | CLAUDE only |
 | Home Manager modules | ✅ | ✅ | Complete |
 | Home Manager programs | - | ✅ | CLAUDE only |
 | Home Manager services | - | ✅ | CLAUDE only |
 | Packages (pkgs/) | ✅ | ✅ | Complete |
-| Scripts | - | ✅ | CLAUDE only |
+| Scripts | ✅ | ✅ | Complete |
 | GritQL patterns | - | ✅ | CLAUDE only |
-| AI Tools (.opencode/, .claude/) | Partial | Partial | In progress |
+| AI Tools (.opencode/, .claude/) | Partial | ✅ | CLAUDE complete |
 
-**Overall: ~82%** (target: 90%)
+**Overall: ~92%** (target: 90%) ✅
 
 ---
 
 ## Recent Updates (2025-12-21)
 
-### New Documentation Created
+### Documentation Update (Latest)
+
+| File | Action | Description |
+|------|--------|-------------|
+| `tsconfig/README.md` | Created | User guide for TypeScript strict configs |
+| `scripts/README.md` | Created | User guide for installation scripts |
+| `iac-linting/README.md` | Created | User guide for IaC linting configs |
+| `.claude/agents/CLAUDE.md` | Created | Architecture for 42+ agent definitions |
+| `modules/nixos/CLAUDE.md` | Created | Architecture for NixOS system modules |
+| `./CLAUDE.md` | Fixed | Added checklist, converted Unicode→ASCII |
+| `nvim/CLAUDE.md` | Fixed | Converted Unicode→ASCII trees |
+| `biome/CLAUDE.md` | Fixed | Added frontmatter, checklist |
+| `yazi/CLAUDE.md` | Fixed | Added frontmatter |
+| `docs/CLAUDE.md` | Fixed | Added frontmatter |
+
+### Previous Documentation Created
 
 | File | Type | Description |
 |------|------|-------------|

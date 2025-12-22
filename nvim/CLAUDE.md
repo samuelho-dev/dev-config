@@ -23,31 +23,31 @@ This Neovim configuration uses a **modular architecture** - splitting configurat
 
 ```
 nvim/
-├── init.lua                          # Main entry point (81 lines)
-├── lazy-lock.json                    # Plugin version lock (committed)
-├── .stylua.toml                      # Lua formatter config
-├── CLAUDE.md                         # This file (AI assistant guidance)
-├── README.md                         # User documentation
-└── lua/
-    ├── config/                       # Core Neovim configuration
-    │   ├── init.lua                  # Loads all config modules
-    │   ├── options.lua               # Vim options (leader key, clipboard, etc.)
-    │   ├── autocmds.lua              # Autocommands (file detection, auto-reload)
-    │   └── keymaps.lua               # Core keybindings
-    └── plugins/                      # Plugin specifications by category
-        ├── editor.lua                # File explorer, fuzzy finder, search/replace
-        ├── lsp.lua                   # LSP configuration and formatting
-        ├── completion.lua            # Autocompletion (blink.cmp, LuaSnip)
-        ├── ai.lua                    # AI assistance (avante, minuet, codecompanion, yarepl)
-        ├── git.lua                   # Git integration
-        ├── markdown.lua              # Markdown and Obsidian
-        ├── ui.lua                    # UI enhancements
-        ├── treesitter.lua            # Syntax highlighting
-        ├── tools.lua                 # Utility tools (CSV viewer)
-        └── custom/                   # Custom plugin utilities
-            ├── diagnostics-copy.lua  # Claude Code integration
-            ├── controlsave.lua       # Ctrl+S save functionality
-            └── mermaid.lua           # Mermaid diagram rendering
++-- init.lua                          # Main entry point (81 lines)
++-- lazy-lock.json                    # Plugin version lock (committed)
++-- .stylua.toml                      # Lua formatter config
++-- CLAUDE.md                         # This file (AI assistant guidance)
++-- README.md                         # User documentation
++-- lua/
+    +-- config/                       # Core Neovim configuration
+    |   +-- init.lua                  # Loads all config modules
+    |   +-- options.lua               # Vim options (leader key, clipboard, etc.)
+    |   +-- autocmds.lua              # Autocommands (file detection, auto-reload)
+    |   +-- keymaps.lua               # Core keybindings
+    +-- plugins/                      # Plugin specifications by category
+        +-- editor.lua                # File explorer, fuzzy finder, search/replace
+        +-- lsp.lua                   # LSP configuration and formatting
+        +-- completion.lua            # Autocompletion (blink.cmp, LuaSnip)
+        +-- ai.lua                    # AI assistance (avante, minuet, codecompanion, yarepl)
+        +-- git.lua                   # Git integration
+        +-- markdown.lua              # Markdown and Obsidian
+        +-- ui.lua                    # UI enhancements
+        +-- treesitter.lua            # Syntax highlighting
+        +-- tools.lua                 # Utility tools (CSV viewer)
+        +-- custom/                   # Custom plugin utilities
+            +-- diagnostics-copy.lua  # Claude Code integration
+            +-- controlsave.lua       # Ctrl+S save functionality
+            +-- mermaid.lua           # Mermaid diagram rendering
 ```
 
 ## Core Architecture
@@ -279,9 +279,9 @@ opts = {
 
 **Architecture:**
 ```
-Neovim (avante.nvim) → http://localhost:4000/v1 (kubectl port-forward)
-                      → LiteLLM Proxy (k8s cluster)
-                      → Anthropic/OpenAI/Google APIs
+Neovim (avante.nvim) -> http://localhost:4000/v1 (kubectl port-forward)
+                     -> LiteLLM Proxy (k8s cluster)
+                     -> Anthropic/OpenAI/Google APIs
 ```
 
 **Build requirements:**

@@ -1,3 +1,12 @@
+---
+scope: biome/
+updated: 2025-12-21
+relates_to:
+  - ../CLAUDE.md
+  - ../modules/home-manager/programs/biome.nix
+  - ../tsconfig/CLAUDE.md
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with Biome configuration in this directory.
@@ -10,22 +19,22 @@ This directory contains **enterprise-grade Biome linting configuration** with 80
 
 ```
 biome/
-├── biome-base.json           # Core configuration (80+ strict rules)
-├── gritql-patterns/          # Custom lint patterns using GritQL
-│   ├── ban-any-type-annotation.grit     # Catches `as any` assertions
-│   ├── ban-satisfies.grit               # Bans satisfies keyword (anti-pattern)
-│   ├── ban-return-types.grit            # Enforces return type inference
-│   ├── ban-type-assertions.grit         # Catches dangerous type assertions
-│   ├── ban-push-spread.grit             # Performance: avoid push(...spread)
-│   ├── prefer-object-spread.grit        # Prefer spread over Object.assign
-│   ├── ban-relative-parent-imports.grit # Enforce absolute imports
-│   ├── ban-default-export-non-index.grit # Default exports only in index
-│   ├── enforce-effect-pipe.grit         # Prevent deep Effect nesting
-│   ├── detect-missing-yield-star.grit   # CRITICAL: Effect.gen yield* detection
-│   ├── enforce-nx-project-tags.grit     # Require Nx project tags
-│   ├── enforce-esm-package-type.grit    # Require type: module
-│   └── enforce-strict-tsconfig.grit     # Require strict: true
-└── nx-plugin-template/       # Template for Nx plugin scaffolding
++-- biome-base.json           # Core configuration (80+ strict rules)
++-- gritql-patterns/          # Custom lint patterns using GritQL
+|   +-- ban-any-type-annotation.grit     # Catches `as any` assertions
+|   +-- ban-satisfies.grit               # Bans satisfies keyword (anti-pattern)
+|   +-- ban-return-types.grit            # Enforces return type inference
+|   +-- ban-type-assertions.grit         # Catches dangerous type assertions
+|   +-- ban-push-spread.grit             # Performance: avoid push(...spread)
+|   +-- prefer-object-spread.grit        # Prefer spread over Object.assign
+|   +-- ban-relative-parent-imports.grit # Enforce absolute imports
+|   +-- ban-default-export-non-index.grit # Default exports only in index
+|   +-- enforce-effect-pipe.grit         # Prevent deep Effect nesting
+|   +-- detect-missing-yield-star.grit   # CRITICAL: Effect.gen yield* detection
+|   +-- enforce-nx-project-tags.grit     # Require Nx project tags
+|   +-- enforce-esm-package-type.grit    # Require type: module
+|   +-- enforce-strict-tsconfig.grit     # Require strict: true
++-- nx-plugin-template/       # Template for Nx plugin scaffolding
 ```
 
 ## Philosophy: Direct Equality
@@ -388,3 +397,17 @@ GritQL patterns match AST nodes:
 - [Biome Rules Reference](https://biomejs.dev/linter/rules/)
 - [GritQL Language](https://docs.grit.io/language/overview)
 - [Effect-TS Documentation](https://effect.website/)
+
+## For Future Claude Code Instances
+
+When modifying Biome configuration:
+
+- [ ] **Test rule changes** with: `biome check .`
+- [ ] **Verify GritQL patterns** work on sample code before committing
+- [ ] **Update rule tables** in this document when adding rules to biome-base.json
+- [ ] **Add override sections** for files that legitimately need exceptions
+- [ ] **Document pattern rationale** in comments within .grit files
+- [ ] **Check Home Manager module** at `modules/home-manager/programs/biome.nix` for integration
+- [ ] **Validate effect patterns** - detect-missing-yield-star.grit is critical for Effect-TS
+- [ ] **Run biome check --write** to auto-fix before committing
+- [ ] **Keep tsconfig/ aligned** - strict linting works best with strict TypeScript
