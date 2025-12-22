@@ -4,6 +4,7 @@
 {pkgs}: let
   # GritQL CLI - Structural code search and rewriting
   # Pre-built binary from biomejs/gritql releases
+  # Wrapped with XDG directory support to avoid Nix store permission issues
   grit = let
     version = "0.1.0-alpha.1743007075";
     sources = {
@@ -34,12 +35,29 @@
         inherit (src) url sha256;
       };
       sourceRoot = ".";
-      nativeBuildInputs = pkgs.lib.optionals pkgs.stdenvNoCC.isLinux [pkgs.autoPatchelfHook];
+      nativeBuildInputs =
+        [pkgs.makeWrapper]
+        ++ pkgs.lib.optionals pkgs.stdenvNoCC.isLinux [pkgs.autoPatchelfHook];
       installPhase = ''
         runHook preInstall
+
+        # Install unwrapped binary
         mkdir -p $out/bin
-        find . -name 'grit' -type f -exec cp {} $out/bin/grit \;
-        chmod +x $out/bin/grit
+        find . -name 'grit' -type f -exec cp {} $out/bin/.grit-unwrapped \;
+        chmod +x $out/bin/.grit-unwrapped
+
+        # Wrap with XDG directory support to prevent Nix store writes
+        # Environment variables:
+        #   GRIT_USER_CONFIG - User-level patterns and config (~/.config/grit)
+        #   GRIT_GLOBAL_DIR  - Global modules and stdlib cache (~/.local/share/grit)
+        makeWrapper $out/bin/.grit-unwrapped $out/bin/grit \
+          --run 'export XDG_DATA_HOME="''${XDG_DATA_HOME:-$HOME/.local/share}"' \
+          --run 'export XDG_CONFIG_HOME="''${XDG_CONFIG_HOME:-$HOME/.config}"' \
+          --run 'export XDG_CACHE_HOME="''${XDG_CACHE_HOME:-$HOME/.cache}"' \
+          --run 'export GRIT_USER_CONFIG="''${GRIT_USER_CONFIG:-$XDG_CONFIG_HOME/grit}"' \
+          --run 'export GRIT_GLOBAL_DIR="''${GRIT_GLOBAL_DIR:-$XDG_DATA_HOME/grit}"' \
+          --run 'mkdir -p "$GRIT_USER_CONFIG" "$GRIT_GLOBAL_DIR"'
+
         runHook postInstall
       '';
       meta = {
