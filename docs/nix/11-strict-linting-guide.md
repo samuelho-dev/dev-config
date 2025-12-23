@@ -37,30 +37,7 @@ This reduces cognitive load - developers learn what TO do, not what NOT to do.
 
 ## TypeScript Configuration
 
-### Extending Strict Configs
-
-Consumer projects can extend from managed configs:
-
-```json
-{
-  "extends": "~/.config/tsconfig/tsconfig.strict.json",
-  "compilerOptions": {
-    "outDir": "dist"
-  }
-}
-```
-
-### Available Templates
-
-| Template | Use Case | Module Resolution |
-|----------|----------|-------------------|
-| `tsconfig.strict.json` | Maximum strictness base | `bundler` |
-| `tsconfig.monorepo.json` | Nx/Turborepo projects | `bundler` + composite |
-| `tsconfig.library.json` | npm package publishing | `NodeNext` |
-
-### Beyond Strict Options
-
-These options provide additional type safety beyond `strict: true`:
+TypeScript strict settings are inlined in project-level `tsconfig.base.json` by the `init-workspace` command. Key options include:
 
 ```json
 {
@@ -436,7 +413,6 @@ GritQL uses JavaScript AST, not TypeScript. Some TS-specific syntax may not matc
 |------|---------|
 | `biome/biome-base.json` | Biome rule configuration |
 | `biome/gritql-patterns/*.grit` | Custom GritQL rules |
-| `tsconfig/*.json` | TypeScript configurations |
 | `iac-linting/*` | Infrastructure linting configs |
 | `.pre-commit-config.yaml` | Pre-commit hooks |
 | `pkgs/default.nix` | Linting tool packages |

@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Centralized development configuration repository using **Nix + Home Manager** for declarative, reproducible dotfile and package management.
 
-**Managed configurations:** Neovim, Tmux, Ghostty, Yazi, Zsh (Oh My Zsh + Powerlevel10k), Git (1Password SSH signing), Claude Code multi-profile, OpenCode, Biome, TypeScript strict configs.
+**Managed configurations:** Neovim, Tmux, Ghostty, Yazi, Zsh (Oh My Zsh + Powerlevel10k), Git (1Password SSH signing), Claude Code multi-profile, OpenCode, Biome.
 
 ## Essential Commands
 

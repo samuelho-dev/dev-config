@@ -1,0 +1,12 @@
+# Nix
+result
+result-*
+
+# direnv
+.direnv/
+
+# Editor symlinks (managed by dev-config devShellHook)
+.claude
+.opencode
+.zed
+.grit

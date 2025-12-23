@@ -40,12 +40,12 @@ modules/home-manager/
 |   +-- claude-code.nix      # Claude Code AI assistant
 |   +-- ghostty.nix          # Ghostty terminal emulator
 |   +-- git.nix              # Git with 1Password SSH signing
+|   +-- gritql.nix           # GritQL pattern linting
 |   +-- neovim.nix           # Neovim editor setup
 |   +-- npm.nix              # NPM configuration
 |   +-- opencode.nix         # OpenCode AI assistant
 |   +-- ssh.nix              # SSH with 1Password agent
 |   +-- tmux.nix             # Tmux terminal multiplexer
-|   +-- typescript-strict.nix # TypeScript strict configs
 |   +-- yazi.nix             # Yazi file manager
 |   +-- zsh.nix              # Zsh shell configuration
 +-- services/                # Background services
@@ -78,8 +78,8 @@ modules/home-manager/
 | **programs/claude-code.nix** | Claude Code multi-profile | `enable`, `profiles` |
 | **programs/opencode.nix** | OpenCode AI assistant | `enable`, `ohMyOpencode` |
 | **programs/biome.nix** | Biome linting configs | `enable`, `configSource` |
+| **programs/gritql.nix** | GritQL pattern linting | `enable`, `configSource` |
 | **programs/npm.nix** | NPM configuration | `enable` |
-| **programs/typescript-strict.nix** | TS strict configs | `enable`, `configSource` |
 | **services/direnv.nix** | direnv + nix-direnv | `enable` |
 | **services/sops-env.nix** | Secret environment variables | `enable`, `secretsFile` |
 

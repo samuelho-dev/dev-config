@@ -1,0 +1,56 @@
+[
+  {
+    "context": "Editor && (vim_mode == normal || vim_mode == visual) && !menu",
+    "bindings": {
+      "space s f": "file_finder::Toggle",
+      "space s g": "pane::DeploySearch",
+      "space s d": "diagnostics::Deploy",
+      "space space": "tab_switcher::Toggle",
+      "space /": "buffer_search::Deploy",
+      "space e": "project_panel::ToggleFocus",
+      "\\": "project_panel::ToggleFocus",
+      "space f": "editor::Format",
+      "space g g": "git_panel::ToggleFocus",
+      "space t": "terminal_panel::ToggleFocus",
+      "space q": "pane::CloseActiveItem"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == normal && !menu",
+    "bindings": {
+      "g r d": "editor::GoToDefinition",
+      "g r r": "editor::FindAllReferences",
+      "g r i": "editor::GoToImplementation",
+      "g r n": "editor::Rename",
+      "g r a": "editor::ToggleCodeActions",
+      "g shift-o": "outline::Toggle",
+      "] d": "editor::GoToDiagnostic",
+      "[ d": "editor::GoToPrevDiagnostic",
+      "ctrl-h": "workspace::ActivatePaneLeft",
+      "ctrl-j": "workspace::ActivatePaneDown",
+      "ctrl-k": "workspace::ActivatePaneUp",
+      "ctrl-l": "workspace::ActivatePaneRight"
+    }
+  },
+  {
+    "context": "Editor && !menu",
+    "bindings": {
+      "ctrl-s": "workspace::Save"
+    }
+  },
+  {
+    "context": "ProjectPanel && !editing",
+    "bindings": {
+      "h": "project_panel::CollapseSelectedEntry",
+      "j": "menu::SelectNext",
+      "k": "menu::SelectPrev",
+      "l": "project_panel::ExpandSelectedEntry",
+      "enter": "project_panel::Open",
+      "a": "project_panel::NewFile",
+      "shift-a": "project_panel::NewDirectory",
+      "r": "project_panel::Rename",
+      "d": "project_panel::Delete",
+      "q": "workspace::ToggleLeftDock"
+    }
+  }
+]

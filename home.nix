@@ -145,10 +145,6 @@
       gritql.enable = true;
     };
 
-    # TypeScript strict configs (exports templates for monorepo extends)
-    # Generates ~/.config/tsconfig/tsconfig.{strict,monorepo,library}.json
-    typescript.enable = true;
-
     # Optional: Disable specific programs
     # tmux.enable = false;
     # ssh.enable = false;

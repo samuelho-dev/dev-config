@@ -11,7 +11,7 @@ validation:
 
 # Home Manager Program Modules
 
-Architectural guidance for the 12 program modules that configure user-level applications.
+Architectural guidance for the 11 program modules that configure user-level applications.
 
 ## Purpose
 
@@ -35,12 +35,12 @@ programs/
 +-- claude-code.nix       # Claude Code AI assistant profiles
 +-- ghostty.nix           # Ghostty terminal emulator config
 +-- git.nix               # Git with 1Password SSH signing
++-- gritql.nix            # GritQL pattern linting
 +-- neovim.nix            # Neovim editor with LSP servers
 +-- npm.nix               # NPM configuration and packages
 +-- opencode.nix          # OpenCode AI assistant setup
 +-- ssh.nix               # SSH with 1Password agent integration
 +-- tmux.nix              # Tmux terminal multiplexer
-+-- typescript-strict.nix # TypeScript strict configurations
 +-- yazi.nix              # Yazi file manager
 +-- zsh.nix               # Zsh shell with Oh My Zsh + Powerlevel10k
 ```
@@ -70,8 +70,8 @@ programs/
 | **claude-code.nix** | Claude Code assistant | `enable`, `profiles` | Node.js |
 | **opencode.nix** | OpenCode assistant | `enable`, `ohMyOpencode` | Bun |
 | **biome.nix** | Linting/formatting | `enable`, `configSource` | biome binary |
+| **gritql.nix** | GritQL pattern linting | `enable`, `configSource` | grit binary |
 | **npm.nix** | NPM configuration | `enable` | Node.js |
-| **typescript-strict.nix** | TS configurations | `enable`, `configSource` | TypeScript |
 
 ## Adding/Modifying
 

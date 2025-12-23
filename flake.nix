@@ -60,6 +60,58 @@
     nixosModules.default = import ./modules/nixos;
     homeManagerModules.default = import ./modules/home-manager;
 
+    # Project templates
+    # Usage: nix flake init -t github:samuelho-dev/dev-config
+    templates.default = {
+      path = ./templates/default;
+      description = "Basic project with dev-config integration (Claude, OpenCode, Zed, GritQL)";
+    };
+
+    # DevShell hook for project-level editor configs
+    # Usage in consumer flakes:
+    #   shellHook = dev-config.lib.devShellHook;
+    lib.devShellHook = ''
+      # ====== Editor Configs (symlink from dev-config) ======
+
+      # Claude Code
+      if [ ! -L .claude ] && [ ! -d .claude ]; then
+        ln -sfn ${self}/.claude .claude
+        printf "✓ Linked .claude/\n"
+      fi
+
+      # OpenCode
+      if [ ! -L .opencode ] && [ ! -d .opencode ]; then
+        ln -sfn ${self}/.opencode .opencode
+        printf "✓ Linked .opencode/\n"
+      fi
+
+      # Zed
+      if [ ! -L .zed ] && [ ! -d .zed ]; then
+        ln -sfn ${self}/zed .zed
+        printf "✓ Linked .zed/\n"
+      fi
+
+      # GritQL
+      if [ ! -L .grit ] && [ ! -d .grit ]; then
+        ln -sfn ${self}/grit .grit
+        printf "✓ Linked .grit/\n"
+      fi
+
+      # ====== Extend Configs (biome, tsconfig) ======
+
+      # Biome (create extends file if missing)
+      if [ ! -f biome.json ]; then
+        printf '%s\n' '{' '  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",' '  "extends": ["~/.config/biome/biome.json"]' '}' > biome.json
+        printf "✓ Created biome.json (extends ~/.config/biome/)\n"
+      fi
+
+      # TSConfig (create extends file if missing)
+      if [ ! -f tsconfig.base.json ]; then
+        printf '%s\n' '{' '  "extends": "~/.config/tsconfig/tsconfig.monorepo.json",' '  "compilerOptions": {' '    "baseUrl": ".",' '    "paths": {}' '  }' '}' > tsconfig.base.json
+        printf "✓ Created tsconfig.base.json (extends ~/.config/tsconfig/)\n"
+      fi
+    '';
+
     packages = forAllSystems ({pkgs, ...}: {
       default = pkgs.buildEnv {
         name = "dev-config-packages";
