@@ -152,14 +152,8 @@ in {
       "claude-code/settings-base.json".text = builtins.toJSON cfg.baseSettings;
     };
 
-    # Sync agents/commands/templates to global ~/.claude/ directory
-    # This ensures commands/agents are available when running `claude` in any directory
-    # without needing per-project setup via init-workspace
-    home.file = lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
-      # Symlink to default profile (~/.claude/)
-      ".claude/agents".source = cfg.configSource + "/agents";
-      ".claude/commands".source = cfg.configSource + "/commands";
-      ".claude/templates".source = cfg.configSource + "/templates";
-    };
+    # Note: Commands/agents/templates are NOT deployed globally to ~/.claude/
+    # They are only available at the project level (.claude/commands/) to avoid duplicates.
+    # Use init-workspace to link shared configs into projects, or work within dev-config repo.
   };
 }
