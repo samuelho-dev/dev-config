@@ -7,11 +7,11 @@
   cfg = config.dev-config.sops-env;
 
   # Get secret paths directly (secrets are defined in home.nix)
-  anthropicKeyPath = config.sops.secrets."ai/anthropic-key".path;
-  openaiKeyPath = config.sops.secrets."ai/openai-key".path;
-  googleAiKeyPath = config.sops.secrets."ai/google-ai-key".path;
-  litellmKeyPath = config.sops.secrets."ai/litellm-master-key".path;
-  openrouterKeyPath = config.sops.secrets."ai/openrouter-key".path;
+  anthropicKeyPath = config.sops.secrets."ai/anthropic_key".path;
+  openaiKeyPath = config.sops.secrets."ai/openai_key".path;
+  googleAiKeyPath = config.sops.secrets."ai/google_ai_key".path;
+  litellmKeyPath = config.sops.secrets."ai/litellm_master_key".path;
+  openrouterKeyPath = config.sops.secrets."ai/openrouter_key".path;
 
   # Shell script to generate load-env.sh at activation time
   # This runs AFTER sops-nix decrypts secrets at activation time

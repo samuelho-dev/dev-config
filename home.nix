@@ -34,11 +34,11 @@
       "git/signingKey" = {};
 
       # AI service API keys (optional, for manual use)
-      "ai/anthropic-key" = {};
-      "ai/openai-key" = {};
-      "ai/google-ai-key" = {};
-      "ai/litellm-master-key" = {};
-      "ai/openrouter-key" = {};
+      "ai/anthropic_key" = {};
+      "ai/openai_key" = {};
+      "ai/google_ai_key" = {};
+      "ai/litellm_master_key" = {};
+      "ai/openrouter_key" = {};
 
       # NPM authentication token (used by npm.nix module)
       "npm/token" = {};
