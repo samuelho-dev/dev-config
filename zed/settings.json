@@ -33,10 +33,17 @@
       }
     },
     "JavaScript": {
-      "formatter": { "language_server": { "name": "biome" } }
+      "formatter": { "language_server": { "name": "biome" } },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      }
     },
     "JSON": {
-      "formatter": { "language_server": { "name": "biome" } }
+      "formatter": { "language_server": { "name": "biome" } },
+      "code_actions_on_format": {
+        "source.fixAll.biome": true
+      }
     },
     "Lua": {
       "formatter": {

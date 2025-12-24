@@ -167,6 +167,9 @@ return {
         -- TypeScript/JavaScript LSP
         ts_ls = {},
 
+        -- Biome LSP (linting + formatting for JS/TS/JSON)
+        biome = {},
+
         -- Python LSP (pyright is the most popular)
         pyright = {},
 
@@ -188,8 +191,9 @@ return {
         local ensure_installed = vim.tbl_keys(servers or {})
         vim.list_extend(ensure_installed, {
           'stylua', -- Used to format Lua code
-          'prettier', -- JavaScript/TypeScript/JSON/YAML/Markdown formatter
+          'prettier', -- YAML/Markdown formatter (Biome doesn't support these yet)
           'ruff', -- Python formatter and linter
+          'biome', -- JavaScript/TypeScript/JSON linter and formatter
         })
         require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -248,13 +252,21 @@ return {
       formatters_by_ft = {
         lua = { 'stylua' },
         python = { 'ruff_format' },
-        javascript = { 'prettier', stop_after_first = true },
-        typescript = { 'prettier', stop_after_first = true },
-        javascriptreact = { 'prettier', stop_after_first = true },
-        typescriptreact = { 'prettier', stop_after_first = true },
-        json = { 'prettier', stop_after_first = true },
-        yaml = { 'prettier', stop_after_first = true },
-        markdown = { 'prettier', stop_after_first = true },
+        -- Biome-supported languages (with lint auto-fix)
+        javascript = { 'biome' },
+        typescript = { 'biome' },
+        javascriptreact = { 'biome' },
+        typescriptreact = { 'biome' },
+        json = { 'biome' },
+        jsonc = { 'biome' },
+        -- Prettier for unsupported languages (Biome doesn't support YAML/Markdown yet)
+        yaml = { 'prettier' },
+        markdown = { 'prettier' },
+      },
+      formatters = {
+        biome = {
+          prepend_args = { '--config-path', vim.fn.expand '~/.config/biome/biome.json' },
+        },
       },
     },
   },

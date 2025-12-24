@@ -7,7 +7,7 @@
     "defaultBranch": "main"
   },
   "files": {
-    "includes": ["biome/**/*.ts", "biome/**/*.json"],
+    "includes": ["biome/**/*.ts", "biome/**/*.json", "zed/**/*.json"],
     "ignoreUnknown": true
   },
   "formatter": {
