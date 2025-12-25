@@ -1,5 +1,10 @@
 {
   "hooks": {
     "enabled": true
+  },
+  "permissions": {
+    "deny": [
+      "Read(./.opencode/**)"
+    ]
   }
 }
