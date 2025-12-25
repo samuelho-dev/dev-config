@@ -1,3 +1,11 @@
+---
+scope: zsh/
+updated: 2025-12-24
+relates_to:
+  - ../CLAUDE.md
+  - ../modules/home-manager/programs/zsh.nix
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with Zsh configuration in this directory.
@@ -10,9 +18,9 @@ Three-file Zsh configuration using Oh My Zsh framework with Powerlevel10k theme.
 
 ```
 zsh/
-├── .zshrc            # Main shell configuration (132 lines)
-├── .zprofile         # Login shell PATH setup (20 lines)
-└── .p10k.zsh         # Powerlevel10k theme config (1739 lines, generated)
++-- .zshrc            # Main shell configuration (132 lines)
++-- .zprofile         # Login shell PATH setup (20 lines)
++-- .p10k.zsh         # Powerlevel10k theme config (1739 lines, generated)
 ```
 
 **Symlink locations:**
@@ -154,14 +162,14 @@ p10k configure
 **Structure:**
 ```
 ~/.oh-my-zsh/
-├── oh-my-zsh.sh              # Main framework
-├── themes/                   # Built-in themes
-├── plugins/                  # Built-in plugins
-└── custom/
-    ├── themes/
-    │   └── powerlevel10k/    # Custom theme (installed by install.sh)
-    └── plugins/
-        └── zsh-autosuggestions/  # Custom plugin (installed by install.sh)
++-- oh-my-zsh.sh              # Main framework
++-- themes/                   # Built-in themes
++-- plugins/                  # Built-in plugins
++-- custom/
+    +-- themes/
+    |   +-- powerlevel10k/    # Custom theme (installed by install.sh)
+    +-- plugins/
+        +-- zsh-autosuggestions/  # Custom plugin (installed by install.sh)
 ```
 
 ### Plugins

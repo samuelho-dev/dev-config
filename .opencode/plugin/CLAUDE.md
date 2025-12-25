@@ -1,15 +1,15 @@
-# CLAUDE.md - OpenCode Guardrail Plugins
-
-```yaml
+---
 scope: .opencode/plugin/
-updated: 2025-12-21
+updated: 2025-12-24
 relates_to:
-  - .opencode/tool/gritql.ts
-  - .opencode/tool/mlg.ts
-  - .opencode/opencode.json
-  - .opencode/test/plugins.test.ts
-  - AGENTS.md
-```
+  - ../tool/gritql.ts
+  - ../tool/mlg.ts
+  - ../opencode.json
+  - ../test/plugins.test.ts
+  - ../../AGENTS.md
+---
+
+# CLAUDE.md - OpenCode Guardrail Plugins
 
 ## Purpose
 

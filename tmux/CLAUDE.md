@@ -1,3 +1,12 @@
+---
+scope: tmux/
+updated: 2025-12-24
+relates_to:
+  - ../CLAUDE.md
+  - ../modules/home-manager/programs/tmux.nix
+  - ../docs/KEYBINDINGS_TMUX.md
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with tmux configuration in this directory.
@@ -10,8 +19,8 @@ Single-file tmux configuration (~200 lines) with extensive plugin ecosystem mana
 
 ```
 tmux/
-├── tmux.conf          # Complete tmux configuration
-└── gitmux.conf        # Git status formatting configuration
++-- tmux.conf          # Complete tmux configuration
++-- gitmux.conf        # Git status formatting configuration
 ```
 
 **Symlink locations:**

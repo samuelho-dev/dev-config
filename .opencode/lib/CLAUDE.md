@@ -1,14 +1,14 @@
-# CLAUDE.md - OpenCode Shared Libraries
-
-```yaml
+---
 scope: .opencode/lib/
-updated: 2025-12-21
+updated: 2025-12-24
 relates_to:
-  - .opencode/tool/gritql.ts
-  - .opencode/tool/mlg.ts
-  - .opencode/test/schemas.test.ts
-  - biome/biome-base.json
-```
+  - ../tool/gritql.ts
+  - ../tool/mlg.ts
+  - ../test/schemas.test.ts
+  - ../../biome/biome-base.json
+---
+
+# CLAUDE.md - OpenCode Shared Libraries
 
 ## Purpose
 

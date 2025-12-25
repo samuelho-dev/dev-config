@@ -1,16 +1,16 @@
-# CLAUDE.md - OpenCode Custom Tools
-
-```yaml
+---
 scope: .opencode/tool/
-updated: 2025-12-21
+updated: 2025-12-24
 relates_to:
-  - .opencode/lib/shared-schemas.ts
-  - .opencode/plugin/gritql-guardrails.ts
-  - .opencode/plugin/mlg-guardrails.ts
-  - .opencode/test/tools.test.ts
-  - biome/gritql-patterns/
-  - AGENTS.md
-```
+  - ../lib/shared-schemas.ts
+  - ../plugin/gritql-guardrails.ts
+  - ../plugin/mlg-guardrails.ts
+  - ../test/tools.test.ts
+  - ../../biome/gritql-patterns/
+  - ../../AGENTS.md
+---
+
+# CLAUDE.md - OpenCode Custom Tools
 
 ## Purpose
 

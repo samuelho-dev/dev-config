@@ -1,3 +1,11 @@
+---
+scope: ghostty/
+updated: 2025-12-24
+relates_to:
+  - ../CLAUDE.md
+  - ../modules/home-manager/programs/ghostty.nix
+---
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with Ghostty configuration in this directory.
@@ -10,7 +18,7 @@ Ghostty is a GPU-accelerated terminal emulator written in Zig. This directory co
 
 ```
 ghostty/
-└── config          # Main Ghostty configuration file
++-- config          # Main Ghostty configuration file
 ```
 
 ## Configuration File Location
