@@ -1,52 +1,19 @@
-# AGENTS.md - Coding Agent Guidelines
+# Repository Guidelines
 
-## Commands
-- `nix flake check` - Validate flake syntax
-- `nix flake show --json` - Verify flake structure
-- `nix fmt` - Format Nix files (alejandra)
-- `home-manager build --flake .` - Test config without applying
-- `home-manager switch --flake .` - Apply configuration
-- `biome check .` - Lint/format TypeScript/JSON in biome/ directory
-- `biome check --write .` - Auto-fix linting issues
-- `bun test` - Run all tests in `.opencode/test/` (from .opencode/ directory)
-- `bun test <file>` - Run single test (e.g., `bun test test/schemas.test.ts`)
-- `bunx tsc --noEmit` - TypeScript type checking (from .opencode/ directory)
+## Project Structure & Module Organization
+`flake.nix` and `home.nix` compose the base Home Manager system; reusable modules live in `modules/`, while `pkgs/` captures custom packages. App-specific configs sit in `nvim/`, `tmux/`, `ghostty/`, and `zsh/`, each mirroring the target dotfiles. Platform docs reside in `docs/`, automation scripts go in `scripts/`, and reusable templates land in `templates/`. Keep TypeScript utilities under `biome/`, with tests in `.opencode/test/`. Secrets belong in `secrets/` or `secrets.nix.example`—never commit real credentials.
 
-## Code Search & Refactoring Policy (STRICT - PROGRAMMATICALLY ENFORCED)
-- **ONLY use GritQL tool** for code search, linting, and refactoring via `gritql` tool
-- **Workflow:** `gritql check` (dry-run) → review diff → `gritql apply confirm=true`
-- **BLOCKED TOOLS** (enforced by plugin): `grep`, `glob`, `find`, `edit`, `write`, `bash`
-- **BLOCKED COMMANDS** (enforced by plugin): rg, grep -r, sed -i, perl -pi, awk gsub, jscodeshift, patch
-- **ALLOWED TOOLS** (read-only/safe): `gritql`, `read`, `list`, `task`, `webfetch`, `todowrite`, `todoread`, `mlg`
-- **Policy Enforcement:** The `gritql-guardrails` plugin will throw errors if you attempt to use blocked tools
-- **Library creation:** Use `@mlg` tool (`@mlg dryRun` → review → `@mlg create confirm=true`)
+## Build, Test, and Development Commands
+Run `nix flake check` after touching the flake to guarantee syntax soundness, and `nix fmt` before commits to apply alejandra formatting. Use `home-manager build --flake .` for dry runs, then `home-manager switch --flake .` to apply the config locally. For TS utilities inside `biome/`, lint via `biome check .` (or `--write` to auto-fix) and type-check with `bunx tsc --noEmit` from `.opencode/`. Execute repository tests using `bun test` or `bun test test/<name>.test.ts` for a focused run.
 
-## Code Style
+## Coding Style & Naming Conventions
+Nix modules must declare parameters alphabetically (`{ config, lib, pkgs, inputs, ... }`), avoid `with lib;`, and express options via `lib.mkEnableOption` plus conditional logic with `lib.mkIf`. Use two spaces per indent and keep derivations reproducible. In TypeScript, prefer single quotes, semicolons, trailing commas, and `import type` for purely typed imports; never rely on `any` outside of `bun:test`. Export named symbols, keep filenames kebab-case, and model directories after their feature (e.g., `biome/src/git-hooks/`).
 
-### Nix (.nix files)
-- ALWAYS use explicit `lib.` prefixes (NEVER `with lib;`)
-- Alphabetical parameters: `{ config, lib, pkgs, inputs, ... }`
-- Use `lib.mkEnableOption` for optional features
-- Use `lib.mkIf` for conditional config
-- Format with `alejandra` (2-space indent)
-- Use `inputs ? dev-config` pattern for flake composition
+## Testing Guidelines
+Test files should mirror the folder under test (`biome/test/templates.test.ts`) and rely on `bun:test` describe/test/expect helpers. New features require at least a smoke test that exercises rendered templates or generated configs. When modifying Nix logic, verify real machines with `home-manager build` output plus targeted module activation tests; document manual validation steps in PRs if automated tests are impractical.
 
-### TypeScript/JavaScript (biome.json)
-- Single quotes, semicolons always, trailing commas
-- 2-space indent, 100 char line width
-- `import type` for type-only imports
-- NO `any` type, NO `as any` assertions, NO `satisfies` keyword
-- Prefer `T[]` over `Array<T>`
-- Use `node:` protocol for Node.js imports (e.g., `node:fs`)
-- Named exports only (except index.ts and *.config.ts)
-- Test files: Use `bun:test` (describe/test/expect) - `any` allowed in tests only
+## Commit & Pull Request Guidelines
+Commits use short, imperative subjects (`nvim: refresh completion defaults`) and describe rationale in the body when touching multiple systems. Squash noisy WIP commits before opening PRs. Every PR must include: a summary of the change, verification steps (`nix flake check`, `bun test`, etc.), screenshots for UI-facing tweaks (e.g., Ghostty themes), and links to any tracking issues. Label PRs with the primary domain (nvim, tmux, nix, tooling) to streamline reviews.
 
-### Effect-TS Patterns
-- CRITICAL: Use `yield*` in `Effect.gen` (missing `yield*` causes silent failures)
-- Deep nesting (3+ levels): Use `pipe()` for composition
-- Example: `pipe(Effect.succeed(1), Effect.map(x => x + 1))`
-
-### Naming & Error Handling
-- camelCase for variables/functions, PascalCase for types/classes
-- Descriptive names: `getUserById` not `getUser`
-- Effect-TS error handling: Use typed errors, avoid throwing exceptions
+## Security & Configuration Tips
+Store machine-specific tokens in `secrets/` and reference them through `age`-encrypted files or environment variables—never inline values in tracked Nix files. Review `user.nix.example` when onboarding new hosts to ensure consistent options, and prefer templated helpers over ad-hoc shell commands to avoid drift between platforms.

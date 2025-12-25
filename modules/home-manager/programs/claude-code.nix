@@ -139,13 +139,11 @@ in {
 
     # Export Claude Code configs to ~/.config/claude-code/ for init-workspace
     xdg.configFile = lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
-      # Symlink agents directory (shared, read-only)
-      "claude-code/agents".source = cfg.configSource + "/agents";
+      # NEW: Pull from centralized ai/ directory
+      "claude-code/agents".source = cfg.configSource + "/../ai/agents";
+      "claude-code/commands".source = cfg.configSource + "/../ai/commands";
 
-      # Symlink commands directory (shared, read-only)
-      "claude-code/commands".source = cfg.configSource + "/commands";
-
-      # Symlink templates directory (shared, read-only)
+      # Templates and settings stay in .claude
       "claude-code/templates".source = cfg.configSource + "/templates";
 
       # Generate base settings.json (projects copy and extend this)

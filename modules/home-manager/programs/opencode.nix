@@ -241,15 +241,22 @@ in {
 
         run ${pkgs.coreutils}/bin/mkdir -p "$OPENCODE_DIR"
 
-        # Copy local assets (plugin, tool, command, prompts) with proper permissions
+        # Copy local assets (plugin, tool, prompts) with proper permissions
         # Using rsync to handle Nix store read-only files properly
-        for dir in plugin tool command prompts; do
+        for dir in plugin tool prompts; do
           if [ -d "$SOURCE_DIR/$dir" ]; then
             run ${pkgs.coreutils}/bin/rm -rf "$OPENCODE_DIR/$dir"
             run ${pkgs.coreutils}/bin/mkdir -p "$OPENCODE_DIR/$dir"
             run ${pkgs.rsync}/bin/rsync -a --chmod=u+rw "$SOURCE_DIR/$dir/" "$OPENCODE_DIR/$dir/"
           fi
         done
+
+        # Add special handling for commands (shared from ai/)
+        if [ -d "$SOURCE_DIR/../ai/commands" ]; then
+          run ${pkgs.coreutils}/bin/rm -rf "$OPENCODE_DIR/command"
+          run ${pkgs.coreutils}/bin/mkdir -p "$OPENCODE_DIR/command"
+          run ${pkgs.rsync}/bin/rsync -a --chmod=u+rw "$SOURCE_DIR/../ai/commands/" "$OPENCODE_DIR/command/"
+        fi
 
         # Create/update package.json with plugin dependencies
         DEPS_JSON=$(${pkgs.jq}/bin/jq -n \

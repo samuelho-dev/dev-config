@@ -26,6 +26,11 @@
     defaultSymlinkPath = "${config.home.homeDirectory}/.local/share/sops-nix/secrets";
     defaultSecretsMountPoint = "${config.home.homeDirectory}/.local/share/sops-nix/secrets.d";
 
+    # Explicitly set key separator for nested YAML keys (e.g., ai/anthropic_key)
+    # Note: This is the default in newer sops-nix, but setting it explicitly helps
+    # some older versions of sops-install-secrets.
+    keySeparator = "/";
+
     # Define secrets (matches structure in secrets/default.yaml)
     secrets = {
       # Git configuration (used by git.nix module)

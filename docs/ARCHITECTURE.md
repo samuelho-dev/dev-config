@@ -1,23 +1,30 @@
-# Dev-Config Architecture
+# Dev-Config Architecture (Portable AI Resources)
 
-## Directory Structure
+## Overview
+The dev-config architecture uses a three-tier system to manage AI resources (commands, agents, templates) across multiple projects:
+
+1. **Source Tier (`dev-config/ai/`)**: The source of truth for all shared AI resources, managed by Git in the `dev-config` repository.
+2. **Global Deployment Tier (`~/.config/`)**: Shared resources are deployed to your home directory via Home Manager. This makes the resources portable and accessible to any project on the machine.
+   - `~/.config/claude-code/`: Managed by `claude-code.nix`
+   - `~/.config/opencode/`: Managed by `opencode.nix`
+3. **Project Linkage Tier (`project-repo/`)**: Individual projects link to the global configuration using the `init-workspace` tool.
+   - `.claude/commands -> ~/.config/claude-code/commands`
+   - `.claude/agents -> ~/.config/claude-code/agents`
+   - `.opencode/command -> ~/.config/opencode/command`
+
+## Directory Structure (Source)
 
 ### `ai/` - Centralized AI Resources (Single Source of Truth)
 - **commands/**: Slash commands (shared by all AI tools)
 - **agents/**: AI agents (shared by all AI tools)
-- **tools/**: Custom tools and utilities
-- **Purpose**: Single source of truth for all AI-related resources
+- **tools/**: Shared utilities
+- **Purpose**: Single source of truth for all AI-related resources, managed by Git.
 
-### `.claude/` - Claude Code Configuration
-- **commands/**: Symlink to `../ai/commands/`
-- **agents/**: Symlink to `../ai/agents/`
-- **settings.json**: Claude Code specific settings
-- **settings.local.json**: Local overrides (not committed)
-- **templates/**: Claude Code templates
+### `.claude/` - Claude Code Templates & Settings
+- **settings-base.json**: Base Claude Code settings (deployed to `~/.config/claude-code/`)
+- **templates/**: Claude Code templates (deployed to `~/.config/claude-code/`)
 
-### `.opencode/` - OpenCode Configuration
-- **command/**: Symlink to `../ai/commands/`
-- **opencode.json**: OpenCode configuration
+### `.opencode/` - OpenCode Specific Assets
 - **plugin/**: TypeScript plugins (guardrails, validation)
 - **tool/**: OpenCode-specific tools (gritql, mlg)
 - **lib/**: Shared TypeScript schemas
@@ -25,127 +32,67 @@
 
 ## Architecture Principles
 
-### 1. Single Source of Truth
-All shared AI resources (commands, agents) are stored in the `ai/` directory. Tool-specific directories (`.claude/`, `.opencode/`) symlink to these resources.
+### 1. Centralized Source, Global Deployment
+All shared AI resources (commands, agents) are stored in the `ai/` directory and deployed globally via Home Manager to `~/.config/`.
 
-### 2. Tool-Specific Extensions
-Each AI tool can have its own specific configuration and extensions:
-- Claude Code: `settings.json`, `settings.local.json`
+### 2. Project-Level Portability
+Individual projects use `init-workspace` to create symlinks to the global configuration. This ensures that the AI resources are available anywhere without duplicating files.
+
+### 3. Tool-Specific Extensions
+Each tool maintains its own specific configuration while sharing the core resources:
+- Claude Code: `settings.json`, `templates/`
 - OpenCode: TypeScript plugins, custom tools, Effect-TS schemas
 
-### 3. No Duplication
-Commands and agents are defined once in `ai/` and accessed via symlinks. This ensures:
-- Single point of maintenance
-- Consistency across tools
-- No version drift
-
-### 4. Clear Separation
+### 4. Deployment Flow
 ```
-ai/                          ← Shared resources
-├── commands/                ← Slash commands (all tools)
-├── agents/                  ← AI agents (all tools)
-└── tools/                   ← Shared utilities
+dev-config/ai/              [Source]
+   ├── commands/
+   ├── agents/
+   └── tools/
 
-.claude/                     ← Claude Code specific
-├── commands -> ../ai/commands/
-├── agents -> ../ai/agents/
-└── settings.json
+      │ (Home Manager switch)
+      ▼
 
-.opencode/                   ← OpenCode specific
-├── command -> ../ai/commands/
-├── plugin/                  ← TypeScript plugins
-└── tool/                    ← OpenCode tools
+~/.config/claude-code/       [Global Deployment]
+   ├── commands/             (source: dev-config/ai/commands)
+   ├── agents/               (source: dev-config/ai/agents)
+   └── templates/
+
+      │ (init-workspace)
+      ▼
+
+my-project/.claude/          [Project Link]
+   ├── commands -> ~/.config/claude-code/commands
+   └── agents -> ~/.config/claude-code/agents
 ```
 
 ## How It Works
 
 ### Claude Code
-1. Reads commands from `.claude/commands/` (symlink to `ai/commands/`)
-2. Reads agents from `.claude/agents/` (symlink to `ai/agents/`)
-3. Ignores `.opencode/` directory via `permissions.deny`
-4. Uses `settings.json` for configuration
+1. `claude-code.nix` (Home Manager) deploys shared resources from `ai/` to `~/.config/claude-code/`.
+2. `init-workspace` links project-level `.claude/` directories to these global paths.
 
 ### OpenCode
-1. Reads commands from `.opencode/command/` (symlink to `ai/commands/`)
-2. Uses `opencode.json` for OpenCode-specific configuration
-3. Has additional tools in `.opencode/tool/`
-4. Has TypeScript plugins in `.opencode/plugin/`
-
-### Adding New Commands
-```bash
-# Add command to centralized location
-echo "Your command prompt" > ai/commands/my-command.md
-
-# Automatically available in both tools via symlinks
-# Claude Code: /my-command
-# OpenCode: /my-command
-```
-
-### Adding New Agents
-```bash
-# Add agent to centralized location
-cp agent-template.md ai/agents/my-agent.md
-
-# Automatically available in both tools via symlinks
-# Claude Code: @my-agent
-# OpenCode: @my-agent
-```
-
-## Configuration Details
-
-### Claude Code Settings (`.claude/settings.json`)
-
-```json
-{
-  "hooks": {
-    "enabled": true
-  },
-  "permissions": {
-    "deny": [
-      "Read(./.opencode/**)"
-    ]
-  }
-}
-```
-
-**Purpose**: Prevents Claude Code from reading OpenCode-specific files while still allowing access to shared `ai/` resources via symlinks.
-
-### OpenCode Configuration (`.opencode/opencode.json`)
-
-OpenCode has its own configuration file that includes:
-- Custom tools (@gritql, @mlg)
-- TypeScript plugins for guardrails
-- Effect-TS integration
-- Multi-agent system configuration
-- Test configurations
+1. `opencode.nix` (Home Manager) deploys shared commands and local assets to `~/.config/opencode/`.
+2. `init-workspace` links project-level `.opencode/` assets to these global paths.
 
 ## Benefits
+1. ✅ **Portability**: AI resources follow the developer across any project on the machine.
+2. ✅ **Single Maintenance**: Update `ai/` resources in one place.
+3. ✅ **No Duplication**: Files are linked, not copied.
+4. ✅ **Consistency**: Every project has the same toolset.
+5. ✅ **Clean Repositories**: Project-level `.gitignore` handles the symlinks.
 
-1. ✅ **No Duplication**: Commands and agents defined once in `ai/`
-2. ✅ **No Conflicts**: Claude Code ignores `.opencode/` directory
-3. ✅ **Clear Separation**: Shared vs tool-specific is obvious
-4. ✅ **Easy Maintenance**: Update in one place, available everywhere
-5. ✅ **Tool-Specific Extensions**: Each tool can have unique features
-6. ✅ **Backward Compatible**: Existing commands continue to work
-7. ✅ **Scalable**: Easy to add new AI tools in the future
+## Maintenance
 
-## Adding New AI Tools
+### Updating Resources
+1. Edit files in `dev-config/ai/`.
+2. Run `home-manager switch --flake .` in the `dev-config` repository.
 
-To add a new AI tool to this architecture:
-
-1. Create tool-specific directory (e.g., `.newtool/`)
-2. Create symlink to shared resources:
-   ```bash
-   ln -s ../ai/commands .newtool/commands
-   ln -s ../ai/agents .newtool/agents
-   ```
-3. Add tool-specific configuration files
-4. Update Claude Code's `permissions.deny` if needed
-
-## Future Enhancements
-
-1. **Command Registry**: Central registry with metadata
-2. **Agent Marketplace**: Share agents between projects
-3. **Tool Plugins**: Package tools as npm modules
-4. **Unified Testing**: Test commands work across all tools
-5. **Version Management**: Track command/agent versions
+### Re-initializing a Project
+If symlinks are broken or you want to refresh configuration:
+```bash
+cd project-directory
+chmod u+w .claude/settings.json  # If read-only
+init-workspace --force
+```
