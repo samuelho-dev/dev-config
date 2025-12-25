@@ -9,7 +9,7 @@
     "typecheck": "bunx tsc --noEmit"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "1.0.181",
+    "@opencode-ai/plugin": "1.0.185",
     "effect": "^3.19.13"
   },
   "devDependencies": {

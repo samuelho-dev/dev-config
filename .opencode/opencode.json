@@ -1,6 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugins": [
+  "plugin": [
     "./plugin/nx-guardrails.ts"
   ],
   "autoupdate": true,
