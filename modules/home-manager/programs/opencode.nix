@@ -28,10 +28,11 @@ in {
 
     exportConfig = lib.mkOption {
       type = lib.types.bool;
-      default = true;
+      default = false;
       description = ''
         Export OpenCode configs to ~/.config/opencode/.
-        Consumer projects can use init-workspace to link to these configs.
+        Set to true only if you need global configuration.
+        Most projects should use project-level .opencode/ symlinks instead.
       '';
     };
 
@@ -141,17 +142,17 @@ in {
       }
     '';
 
-    # Export OpenCode configs to ~/.config/opencode/
-    # NOTE: plugin/tool/command/prompts are copied via activation script (not symlinked)
-    # to allow Bun to resolve dependencies from ~/.config/opencode/node_modules
+    # Export OpenCode configs to ~/.config/opencode/ (only if explicitly enabled)
+    # NOTE: Most projects should use project-level .opencode/ symlinks instead
+    # Global configs are only needed for special cases (e.g., oh-my-opencode plugin installation)
     xdg.configFile = lib.mkMerge [
       # Base config only - directories are copied by activation script
       (lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
         "opencode/opencode-base.json".source = cfg.configSource + "/opencode.json";
       })
-      # oh-my-opencode generated configs
+      # oh-my-opencode generated configs (only for plugin installation, not configuration)
       # NOTE: OpenCode auto-installs plugins listed in opencode.json on startup
-      (lib.mkIf cfg.ohMyOpencode.enable {
+      (lib.mkIf (cfg.exportConfig && cfg.ohMyOpencode.enable) {
         # Generate OpenCode base configuration with all plugins
         "opencode/opencode.json".text = builtins.toJSON {
           "$schema" = "https://opencode.ai/config.json";
@@ -232,7 +233,8 @@ in {
 
     # Activation script to copy local assets and install dependencies
     # This ensures Bun can resolve deps from ~/.config/opencode/node_modules
-    home.activation.setupOpencodePlugins = lib.mkIf (cfg.enable && cfg.ohMyOpencode.enable) (
+    # Only runs when exportConfig is enabled (special cases only)
+    home.activation.setupOpencodePlugins = lib.mkIf (cfg.enable && cfg.exportConfig && cfg.ohMyOpencode.enable) (
       lib.hm.dag.entryAfter ["writeBoundary"] ''
         OPENCODE_DIR="$HOME/.config/opencode"
         SOURCE_DIR="${cfg.configSource}"

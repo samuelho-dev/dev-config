@@ -110,6 +110,9 @@
     opencode = {
       enable = true;
 
+      # Use project-level configs (via .opencode/ symlink), not global
+      exportConfig = false;
+
       # Additional OpenCode plugins (managed via Nix)
       additionalPlugins = [
         "@franlol/opencode-md-table-formatter@0.0.3" # Automatic markdown table formatting
