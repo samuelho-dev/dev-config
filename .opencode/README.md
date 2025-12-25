@@ -104,9 +104,32 @@ Run these commands to verify everything is working:
 - **`@nx-monorepo-architect`**: Nx workspace configuration and build optimization
 - **`@effect-architecture-specialist`**: Effect-TS functional programming and error handling
 
-## Custom Commands
+## Slash Commands
 
-### Development Commands
+OpenCode uses shared slash commands from the centralized `ai/` directory. Commands are:
+- **Source of Truth**: `../ai/commands/` (centralized location)
+- **Accessed via**: `./command/` (symlink to `../ai/commands/`)
+- **Shared with**: Claude Code (via `.claude/commands/` symlink)
+- **OpenCode-specific tools**: See `./tool/` directory
+
+### Available Commands
+- `/create-command` - Create new slash commands
+- `/create-plugin` - Create OpenCode plugins
+- `/create-tool` - Create OpenCode tools
+- `/debug` - Debug issues
+- `/create-documentation` - Create documentation
+- `/create-execution` - Create execution plans
+- `/generate-tests` - Generate test files
+- `/refactor` - Refactor code
+- `/refine-commands` - Refine command definitions
+- `/refineagents` - Refine agent definitions
+- `/security-hardening` - Security hardening analysis
+- `/start-context` - Start new context
+- `/update-documentation` - Update documentation
+- `/validate-library` - Validate library structure
+- `/validate-plan` - Validate execution plans
+
+### Custom Commands (Development)
 - **`/nix-fmt`**: Format all Nix files using `nix fmt`
 - **`/nix-check`**: Validate Nix configuration syntax and build test
 - **`/biome-check`**: Format and lint code with Biome

@@ -344,6 +344,72 @@ claude
 opencode ask "What does this function do?"
 ```
 
+## Slash Commands and Agents
+
+OpenCode shares slash commands and agents with Claude Code through a centralized `ai/` directory to avoid duplication.
+
+### Architecture
+
+```
+ai/                          ← Single source of truth
+├── commands/                ← Shared commands (all AI tools)
+├── agents/                  ← Shared agents (all AI tools)
+└── tools/                   ← Shared utilities
+
+.claude/                     ← Claude Code
+├── commands -> ../ai/commands/
+└── agents -> ../ai/agents/
+
+.opencode/                   ← OpenCode
+└── command -> ../ai/commands/
+```
+
+### Why Centralized?
+
+- **No Duplication**: Commands defined once in `ai/`, used by both tools
+- **Consistency**: Same commands work identically in both tools
+- **Easy Maintenance**: Update commands in one place
+- **Scalable**: Easy to add new AI tools in the future
+
+### OpenCode-Specific Features
+
+OpenCode has additional capabilities not in Claude Code:
+
+- **Custom Tools**: `@gritql`, `@mlg` for structural code changes
+- **Guardrail Plugins**: TypeScript plugins that enforce policies
+- **Effect-TS Integration**: Type-safe schemas and validation
+- **Multi-Agent System**: oh-my-opencode with specialized agents
+
+### Using Commands in OpenCode
+
+```bash
+# Commands work the same as in Claude Code
+opencode
+> /create-command   # Creates new slash command in ai/commands/
+> /debug            # Debug issues
+> @typescript-pro   # Use TypeScript agent from ai/agents/
+```
+
+### Creating OpenCode-Specific Tools
+
+```bash
+# Use the create-tool command
+opencode
+> /create-tool
+# Creates tool in .opencode/tool/ (OpenCode-specific)
+```
+
+### Adding New Shared Commands
+
+```bash
+# Add to centralized location
+echo "Your command prompt" > ai/commands/my-command.md
+
+# Automatically available in both tools
+# Claude Code: /my-command
+# OpenCode: /my-command
+```
+
 ### Git Integration
 
 OpenCode can help with Git workflows:
