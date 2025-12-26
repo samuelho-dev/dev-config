@@ -1,0 +1,6 @@
+# Biome ignore patterns
+node_modules/
+dist/
+build/
+.git/
+.opencode/

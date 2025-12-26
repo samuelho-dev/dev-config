@@ -9,7 +9,7 @@ M.config = {
   enabled = true,
   filetypes = { 'typescript', 'typescriptreact', 'javascript', 'javascriptreact' },
   dry_run = false, -- Set true for testing without modifying buffer
-  notify_on_strip = false, -- Show notification when types are removed
+  notify_on_strip = true, -- Show notification when types are removed
   debug = false, -- Enable debug logging
 }
 

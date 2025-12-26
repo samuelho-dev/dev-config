@@ -45,6 +45,15 @@ vim.keymap.set('n', '<leader>cd', diag_copy.copy_all_diagnostics, { desc = '[C]o
 -- Custom quick save plugin
 local controlsave = require 'plugins.custom.controlsave'
 
+-- Initialize TypeScript return type stripper with notifications
+local stripper = require 'plugins.custom.typescript-return-stripper'
+stripper.setup({
+  enabled = true,
+  debug = false,             -- Set to true for debugging
+  notify_on_strip = true,    -- Show notification when types are removed
+  filetypes = { 'typescript', 'typescriptreact', 'javascript', 'javascriptreact' },
+})
+
 -- Ctrl+S: Save file (works in normal, insert, visual mode)
 vim.keymap.set('n', '<C-s>', controlsave.save, { desc = 'Save file' })
 vim.keymap.set('i', '<C-s>', function()

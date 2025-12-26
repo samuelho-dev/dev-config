@@ -164,6 +164,15 @@ return {
         -- single_file_support: attach to files without requiring biome.json in project root
         biome = {
           single_file_support = true,
+          root_dir = function(fname)
+            local util = require('lspconfig.util')
+            -- Search for biome.json/biome.jsonc from file directory upward
+            return util.root_pattern('biome.json', 'biome.jsonc')(fname)
+              -- Fallback to git root if in a repository
+              or util.find_git_ancestor(fname)
+              -- Last resort: use global config directory
+              or vim.fn.expand('~/.config/biome')
+          end,
         },
 
         -- Python LSP (pyright is the most popular)
@@ -268,7 +277,8 @@ return {
       },
       formatters = {
         biome = {
-          prepend_args = { '--config-path', vim.fn.expand '~/.config/biome/biome.json' },
+          -- Removed config-path - Biome auto-discovers biome.json from cwd upward
+          -- The LSP server handles config resolution automatically
         },
       },
     },

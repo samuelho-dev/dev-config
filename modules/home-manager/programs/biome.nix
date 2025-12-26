@@ -461,6 +461,11 @@ in {
         text = biomeJsonContent;
       };
 
+      # Symlink .biomeignore file
+      "biome/.biomeignore" = lib.mkIf (biomeAssetsPath != null) {
+        source = "${biomeAssetsPath}/.biomeignore";
+      };
+
       # Symlink GritQL patterns if enabled and available
       "biome/gritql-patterns" = lib.mkIf (cfg.gritql.enable && cfg.gritql.patternsSource != null) {
         source = cfg.gritql.patternsSource;
