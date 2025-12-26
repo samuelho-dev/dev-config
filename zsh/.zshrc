@@ -84,11 +84,10 @@ plugins=(git zsh-autosuggestions)
 
 source $ZSH/oh-my-zsh.sh
 
-# direnv integration (auto-load Nix environments)
-# Cache direnv hook to avoid subprocess spawn on every shell (saves 10-20ms)
-if (( ${+commands[direnv]} )); then
-  eval "$(direnv hook zsh)"
-fi
+# direnv integration - MOVED to zsh.nix with TTY checks
+# The hook now only runs in interactive TTY shells to prevent
+# gitmux/status bar subshells from triggering Nix flake evaluations
+# which caused SQLite locking errors in ~/.cache/nix/eval-cache-v6/
 
 # Fallback credential check (non-blocking)
 # LaunchAgent/systemd loads credentials at login, but provide fallback for non-login shells

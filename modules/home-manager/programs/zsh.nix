@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  inputs,
+  inputs ? {},
   ...
 }: {
   options.dev-config.zsh = {
@@ -105,6 +105,21 @@
 
           # Suppress direnv verbose loading messages
           export DIRENV_LOG_FORMAT=""
+        '')
+
+        # Direnv hook with subshell prevention (mkOrder 600)
+        # Must run after early init but before compinit
+        (lib.mkOrder 600 ''
+          # Direnv hook with subshell prevention
+          # Prevents gitmux/status bar subshells from triggering Nix flake evaluations
+          # which cause SQLite locking errors in ~/.cache/nix/eval-cache-v6/
+          #
+          # Checks:
+          # - [[ -o interactive ]]: Only run in interactive shells
+          # - [[ -t 0 ]] && [[ -t 1 ]]: stdin/stdout connected to TTY (not a pipe/subshell)
+          if [[ -o interactive ]] && [[ -t 0 ]] && [[ -t 1 ]] && (( ''${+commands[direnv]} )); then
+            eval "$(direnv hook zsh)"
+          fi
         '')
 
         # Additional initialization (runs after compinit - default order ~1000)
