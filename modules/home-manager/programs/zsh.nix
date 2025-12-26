@@ -107,6 +107,21 @@
           export DIRENV_LOG_FORMAT=""
         '')
 
+        # Lightweight direnv export for non-interactive shells (mkOrder 590)
+        # Provides environment variables without full hook evaluation
+        # This enables Claude Code Bash tool to access .env vars without triggering
+        # expensive Nix flake evaluations that cause SQLite locking
+        (lib.mkOrder 590 ''
+          # Export direnv environment in non-interactive shells (like Bash tool)
+          # Uses 'direnv export' instead of hook to skip Nix flake evaluation
+          if [[ ! -o interactive ]] && [ -f .envrc ] && (( ''${+commands[direnv]} )); then
+            # Allow direnv for current directory (silent, idempotent)
+            direnv allow . 2>/dev/null || true
+            # Export environment without hook (no Nix evaluation)
+            eval "$(direnv export bash 2>/dev/null)" || true
+          fi
+        '')
+
         # Direnv hook with subshell prevention (mkOrder 600)
         # Must run after early init but before compinit
         (lib.mkOrder 600 ''
