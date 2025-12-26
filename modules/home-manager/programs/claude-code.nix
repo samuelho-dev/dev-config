@@ -16,7 +16,7 @@ in {
   options.dev-config.claude-code = {
     enable = lib.mkEnableOption "Claude Code CLI with multi-profile authentication";
 
-    # Configuration export for init-workspace
+    # Configuration export for lib.devShellHook
     configSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default =
@@ -31,7 +31,7 @@ in {
       default = true;
       description = ''
         Export Claude Code configs to ~/.config/claude-code/.
-        Consumer projects can use init-workspace to link to these configs.
+        Consumer projects use lib.devShellHook to link .claude/ on nix develop.
       '';
     };
 
@@ -42,6 +42,17 @@ in {
         hooks.enabled = false;
       };
       description = "Base settings.json configuration for consumer projects";
+    };
+
+    # Enable project-level MCP servers from .mcp.json files
+    enableAllProjectMcpServers = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Automatically trust and enable all MCP servers defined in project-level .mcp.json files.
+        This adds "enableAllProjectMcpServers": true to ~/.claude.json.
+        Security note: Only enable if you trust all projects you work on.
+      '';
     };
 
     profiles = lib.mkOption {
@@ -137,7 +148,23 @@ in {
       ${lib.concatStringsSep "\n      " (lib.mapAttrsToList (name: profile: "$DRY_RUN_CMD mkdir -p ${profile.configDir}") cfg.profiles)}
     '';
 
-    # Export Claude Code configs to ~/.config/claude-code/ for init-workspace
+    # Merge enableAllProjectMcpServers into ~/.claude.json
+    # Uses jq to preserve existing settings while adding/updating our managed keys
+    home.activation.configureClaudeGlobalSettings = lib.mkIf cfg.enableAllProjectMcpServers (
+      lib.hm.dag.entryAfter ["writeBoundary"] ''
+        CLAUDE_JSON="$HOME/.claude.json"
+        if [ -f "$CLAUDE_JSON" ]; then
+          # Merge setting into existing config
+          $DRY_RUN_CMD ${pkgs.jq}/bin/jq '.enableAllProjectMcpServers = true' "$CLAUDE_JSON" > "$CLAUDE_JSON.tmp" && \
+          $DRY_RUN_CMD mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
+        else
+          # Create new config with just this setting
+          $DRY_RUN_CMD echo '{"enableAllProjectMcpServers": true}' > "$CLAUDE_JSON"
+        fi
+      ''
+    );
+
+    # Export Claude Code configs to ~/.config/claude-code/ for lib.devShellHook
     xdg.configFile = lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
       # NEW: Pull from centralized ai/ directory
       "claude-code/agents".source = cfg.configSource + "/../ai/agents";
@@ -152,6 +179,6 @@ in {
 
     # Note: Commands/agents/templates are NOT deployed globally to ~/.claude/
     # They are only available at the project level (.claude/commands/) to avoid duplicates.
-    # Use init-workspace to link shared configs into projects, or work within dev-config repo.
+    # Use lib.devShellHook in project flakes to link .claude/ on nix develop.
   };
 }

@@ -70,16 +70,6 @@ in {
 
 ## Custom Packages
 
-### init-workspace
-
-Initializes Nx workspaces with dev-config configurations:
-
-```bash
-init-workspace           # Create biome.json
-init-workspace --force   # Overwrite existing configs
-init-workspace --migrate # Only run ESLint/Prettier migrations
-```
-
 ### mlg (Monorepo Library Generator)
 
 Effect-based library scaffolding for Nx monorepos:
@@ -95,11 +85,24 @@ mlg-mcp                  # MCP server mode
 ```
 pkgs/
 +-- default.nix                  # Central package definitions
-+-- init-workspace/              # Workspace initialization tool
-|   +-- default.nix
 +-- monorepo-library-generator/  # Library scaffolding tool
     +-- default.nix
 ```
+
+## Project Initialization
+
+For workspace initialization (biome.json, editor configs), use `lib.devShellHook`:
+
+```nix
+# In your project's flake.nix
+inputs.dev-config.url = "github:samuelho-dev/dev-config";
+
+devShells.default = pkgs.mkShell {
+  shellHook = dev-config.lib.devShellHook;
+};
+```
+
+On `nix develop`, this automatically links `.claude/`, `.opencode/`, `.zed/`, `.grit/` and creates `biome.json`.
 
 ## Adding Packages
 

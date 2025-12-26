@@ -491,7 +491,7 @@ nvim/CLAUDE.md                    # Documents all nvim/ contents
 ```
 modules/home-manager/programs/CLAUDE.md     # TOO GRANULAR - avoid
 modules/home-manager/services/CLAUDE.md     # TOO GRANULAR - avoid
-pkgs/init-workspace/CLAUDE.md               # TOO GRANULAR - avoid
+pkgs/monorepo-library-generator/CLAUDE.md   # TOO GRANULAR - avoid
 ```
 
 ### When to Create Nested Docs

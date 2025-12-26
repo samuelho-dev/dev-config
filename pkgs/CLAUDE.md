@@ -24,7 +24,7 @@ The `default.nix` file exports an attribute set with package categories as keys 
 Key design decisions:
 - **Category-based organization**: Packages grouped by purpose (core, kubernetes, linting, etc.)
 - **Self-referential `all` function**: `all = self: self.core ++ self.runtimes ++ ...` enables flexible composition
-- **Custom package support**: Local derivations in subdirectories (init-workspace, monorepo-library-generator)
+- **Custom package support**: Local derivations in subdirectories (monorepo-library-generator)
 - **Platform-aware builds**: Custom packages handle multi-platform binaries
 
 ## File Structure
@@ -32,11 +32,11 @@ Key design decisions:
 ```
 pkgs/
 +-- default.nix                  # Central package definitions with categories
-+-- init-workspace/              # Custom package: workspace initialization tool
-|   +-- default.nix              # Derivation for init-workspace
 +-- monorepo-library-generator/  # Custom package: library scaffolding tool
     +-- default.nix              # Derivation for library generator
 ```
+
+Note: Workspace initialization (biome.json, editor configs) is handled by `lib.devShellHook` in flake.nix, not a separate package.
 
 ## Key Patterns
 

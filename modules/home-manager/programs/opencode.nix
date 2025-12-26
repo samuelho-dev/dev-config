@@ -16,7 +16,7 @@ in {
   options.dev-config.opencode = {
     enable = lib.mkEnableOption "OpenCode AI coding agent with LiteLLM fallback";
 
-    # Configuration export for init-workspace
+    # Configuration export for lib.devShellHook
     configSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
       default =

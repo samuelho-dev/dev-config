@@ -143,6 +143,7 @@ in {
     pkgs.pkg-config
     pkgs.imagemagick
     pkgs._1password-cli
+    (pkgs.callPackage ./init-workspace {})
     (pkgs.callPackage ./monorepo-library-generator {})
     grit
   ];

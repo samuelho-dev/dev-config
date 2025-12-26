@@ -41,10 +41,7 @@ Reference the base config in your project's `biome.json`:
 }
 ```
 
-Or use the `init-workspace` command:
-```bash
-init-workspace  # Creates biome.json with extends
-```
+With `lib.devShellHook` in your flake, `biome.json` is auto-created on `nix develop`.
 
 ### Key Rules
 

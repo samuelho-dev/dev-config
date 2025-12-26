@@ -7,10 +7,11 @@ The dev-config architecture uses a three-tier system to manage AI resources (com
 2. **Global Deployment Tier (`~/.config/`)**: Shared resources are deployed to your home directory via Home Manager. This makes the resources portable and accessible to any project on the machine.
    - `~/.config/claude-code/`: Managed by `claude-code.nix`
    - `~/.config/opencode/`: Managed by `opencode.nix`
-3. **Project Linkage Tier (`project-repo/`)**: Individual projects link to the global configuration using the `init-workspace` tool.
-   - `.claude/commands -> ~/.config/claude-code/commands`
-   - `.claude/agents -> ~/.config/claude-code/agents`
-   - `.opencode/command -> ~/.config/opencode/command`
+3. **Project Linkage Tier (`project-repo/`)**: Individual projects link to dev-config via `lib.devShellHook` (automatic on `nix develop`).
+   - `.claude/ -> dev-config/.claude/`
+   - `.opencode/ -> dev-config/.opencode/`
+   - `.zed/ -> dev-config/zed/`
+   - `.grit/ -> dev-config/grit/`
 
 ## Directory Structure (Source)
 
@@ -36,7 +37,7 @@ The dev-config architecture uses a three-tier system to manage AI resources (com
 All shared AI resources (commands, agents) are stored in the `ai/` directory and deployed globally via Home Manager to `~/.config/`.
 
 ### 2. Project-Level Portability
-Individual projects use `init-workspace` to create symlinks to the global configuration. This ensures that the AI resources are available anywhere without duplicating files.
+Individual projects use `lib.devShellHook` in their flake.nix to automatically create symlinks on `nix develop`. This ensures that the AI resources are available anywhere without duplicating files.
 
 ### 3. Tool-Specific Extensions
 Each tool maintains its own specific configuration while sharing the core resources:
@@ -58,23 +59,25 @@ dev-config/ai/              [Source]
    ├── agents/               (source: dev-config/ai/agents)
    └── templates/
 
-      │ (init-workspace)
+      │ (nix develop with lib.devShellHook)
       ▼
 
-my-project/.claude/          [Project Link]
-   ├── commands -> ~/.config/claude-code/commands
-   └── agents -> ~/.config/claude-code/agents
+my-project/                   [Project Link]
+   ├── .claude/ -> dev-config/.claude/
+   ├── .opencode/ -> dev-config/.opencode/
+   ├── .zed/ -> dev-config/zed/
+   └── .grit/ -> dev-config/grit/
 ```
 
 ## How It Works
 
 ### Claude Code
 1. `claude-code.nix` (Home Manager) deploys shared resources from `ai/` to `~/.config/claude-code/`.
-2. `init-workspace` links project-level `.claude/` directories to these global paths.
+2. `lib.devShellHook` (in project flake.nix) links `.claude/` to dev-config on `nix develop`.
 
 ### OpenCode
 1. `opencode.nix` (Home Manager) deploys shared commands and local assets to `~/.config/opencode/`.
-2. `init-workspace` links project-level `.opencode/` assets to these global paths.
+2. `lib.devShellHook` links `.opencode/` to dev-config on `nix develop`.
 
 ## Benefits
 1. ✅ **Portability**: AI resources follow the developer across any project on the machine.
@@ -93,6 +96,18 @@ my-project/.claude/          [Project Link]
 If symlinks are broken or you want to refresh configuration:
 ```bash
 cd project-directory
-chmod u+w .claude/settings.json  # If read-only
-init-workspace --force
+rm -rf .claude .opencode .zed .grit  # Remove broken symlinks
+nix develop  # Re-creates symlinks via lib.devShellHook
+```
+
+### Setting Up a New Project
+```bash
+# Option 1: Initialize from template
+nix flake init -t github:samuelho-dev/dev-config
+nix develop
+
+# Option 2: Add to existing flake.nix
+inputs.dev-config.url = "github:samuelho-dev/dev-config";
+# In devShell:
+shellHook = dev-config.lib.devShellHook;
 ```

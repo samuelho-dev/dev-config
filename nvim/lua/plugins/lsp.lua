@@ -181,24 +181,29 @@ return {
         },
       }
 
-      -- Setup LSP servers
+      -- Setup LSP servers using Neovim 0.11+ native API
+      -- vim.lsp.config() for configuration, vim.lsp.enable() for activation
       -- On Nix: binaries come from ~/.nix-profile/bin (Home Manager)
       -- On other systems: Mason installs and manages binaries
-      if use_nix then
-        -- On Nix: Setup LSP servers directly, Mason only provides UI for manual installs
-        for server_name, server_config in pairs(servers) do
-          local server = vim.deepcopy(server_config) or {}
-          server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-          require('lspconfig')[server_name].setup(server)
-        end
 
-        -- Mason is still available for manual installs but doesn't auto-install
+      -- Configure all servers with capabilities (Neovim 0.11+ API)
+      for server_name, server_config in pairs(servers) do
+        local config = vim.deepcopy(server_config) or {}
+        config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, config.capabilities or {})
+        vim.lsp.config(server_name, config)
+      end
+
+      if use_nix then
+        -- On Nix: Enable servers directly (binaries managed by Home Manager)
+        vim.lsp.enable(vim.tbl_keys(servers))
+
+        -- Mason available for manual installs but doesn't auto-enable
         require('mason-lspconfig').setup {
           ensure_installed = {},
-          automatic_installation = false,
+          automatic_enable = false,
         }
       else
-        -- On non-Nix: Mason manages everything
+        -- On non-Nix: Mason manages installation, auto-enables servers
         local ensure_installed = vim.tbl_keys(servers or {})
         vim.list_extend(ensure_installed, {
           'stylua', -- Used to format Lua code
@@ -208,16 +213,10 @@ return {
         })
         require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
+        -- mason-lspconfig v2.0+ auto-enables installed servers
         require('mason-lspconfig').setup {
           ensure_installed = {},
-          automatic_installation = false,
-          handlers = {
-            function(server_name)
-              local server = servers[server_name] or {}
-              server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-              require('lspconfig')[server_name].setup(server)
-            end,
-          },
+          automatic_enable = true,
         }
       end
     end,

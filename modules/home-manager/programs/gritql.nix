@@ -38,15 +38,15 @@ in {
       type = lib.types.bool;
       default = true;
       description = ''
-        Export GritQL patterns to ~/.config/grit/patterns (for init-workspace)
-        and ~/.grit/patterns (for global access). Consumer projects can use
-        init-workspace to link to these patterns.
+        Export GritQL patterns to ~/.config/grit/patterns (for lib.devShellHook)
+        and ~/.grit/patterns (for global access). Consumer projects use
+        lib.devShellHook to link .grit/ on nix develop.
       '';
     };
   };
 
   config = lib.mkIf cfg.enable {
-    # Export patterns to ~/.config/grit/patterns for init-workspace to find
+    # Export patterns to ~/.config/grit/patterns for lib.devShellHook to find
     # (follows same pattern as claude-code.nix exports to ~/.config/claude-code/)
     xdg.configFile."grit/patterns" = lib.mkIf (cfg.exportConfig && cfg.patternsSource != null) {
       source = cfg.patternsSource;
