@@ -97,11 +97,21 @@ All packages defined centrally in `pkgs/default.nix` by category:
 
 ### Secrets Management
 
-**sops-nix** with age encryption:
-- Secrets in `secrets/default.yaml` (encrypted)
+**Hybrid approach combining sops-nix + 1Password:**
+
+**sops-nix** (for critical secrets):
+- Git config (userName, userEmail, signingKey) in `secrets/default.yaml` (encrypted with age)
+- 1Password service account token for prompt-free `op` CLI access
 - Decrypted to tmpfs at Home Manager activation
 - Environment variables loaded via `sops-env.nix` module
 - Age key at `~/.config/sops/age/keys.txt`
+
+**1Password** (for AI service keys):
+- All AI service API keys stored in 1Password vault `xsuolbdwx4vmcp3zysjczfatam`
+- Fetched on-demand via `op item get` in `load-env.sh`
+- Benefits: Centralized secret management, easier rotation, better for team sharing
+- Requires `OP_SERVICE_ACCOUNT_TOKEN` (loaded from sops-nix)
+- See `modules/home-manager/services/sops-env.nix` for implementation
 
 **1Password SSH Agent** for authentication:
 - SSH keys stored in 1Password vault (never on disk)
@@ -139,18 +149,65 @@ Component-specific documentation:
    # Add public key to .sops.yaml, re-encrypt secrets
    ```
 
-## Flake Composition
+## Flake Composition & devShellHook
 
-This repo can be imported as a flake input in other projects:
+This repo can be imported as a flake input in consumer projects to provide:
+1. Home Manager modules for User profile configuration
+2. devShellHook for project-level editor/tool configuration auto-setup
+
+### Usage in Consumer Repos
 
 ```nix
-inputs.dev-config.url = "github:samuelho-dev/dev-config";
+inputs = {
+  nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+  dev-config.url = "github:samuelho-dev/dev-config";
+};
 
-# Use modules
-modules = [ dev-config.homeManagerModules.default ];
+outputs = { self, nixpkgs, dev-config, ... }: {
+  devShells.default = { pkgs, ... }: {
+    buildInputs = [ /* project dependencies */ ];
+    shellHook = ''
+      ${dev-config.lib.devShellHook}
+      echo "🚀 Project environment ready"
+    '';
+  };
+};
 ```
 
-The `inputs ? dev-config` pattern in modules enables both standalone and composition usage.
+### What devShellHook Does
+
+Auto-creates project-level editor configurations on `nix develop`:
+
+| Directory | Contents | Purpose | Management |
+|-----------|----------|---------|------------|
+| `.claude/` | commands/, agents/, settings.json | Claude Code integration | Symlinked from Nix store + user customization |
+| `.opencode/` | command/, plugin/, tool/ | OpenCode AI assistant | Symlinked from Nix store + user customization |
+| `.zed/` | Full Zed editor config | Zed editor configuration | Symlinked from Nix store (read-only) |
+| `.grit/` | GritQL patterns | GritQL linting rules | Symlinked from Nix store (read-only) |
+| `biome.json` | Config extends ~/.config/biome/ | Biome formatter/linter | Auto-generated if missing |
+
+### Key Implementation Details
+
+- **Symlink strategy**: Full-directory symlinks for configs without internal relative paths (.zed, .grit), subdirectory symlinks for configs with user customization (.claude, .opencode)
+- **Nix store paths**: Uses `${self}` references in flake.nix to handle symlinks correctly in `/nix/store`
+- **User customization**: Copies default settings.json and opencode.json on first run for user to customize
+- **Idempotent**: Checks `if [ ! -d .claude ]` to avoid overwriting user changes
+
+### The `inputs ? dev-config` Pattern
+
+Enables both standalone and composed usage:
+
+```nix
+# When imported as flake input
+configSource = if inputs ? dev-config then "${inputs.dev-config}/nvim" else null;
+
+# When used standalone
+if inputs ? dev-config then ... else null  # Falls back gracefully
+```
+
+This pattern in modules enables dev-config to work both:
+- **Standalone**: `home-manager switch --flake .` in this repo
+- **Composed**: Imported as `inputs.dev-config` in other projects
 
 ## AI Coding Agents (oh-my-opencode)
 
