@@ -43,7 +43,6 @@ Central catalog of all documentation in the dev-config repository.
 |-----------|--------|--------|-------------|
 | **yazi** | [README](../yazi/README.md) | [CLAUDE](../yazi/CLAUDE.md) | Terminal file manager |
 | **biome** | [README](../biome/README.md) | [CLAUDE](../biome/CLAUDE.md) | Linting and formatting configuration |
-| **tsconfig** | [README](../tsconfig/README.md) | [CLAUDE](../tsconfig/CLAUDE.md) | TypeScript strict configurations |
 | **iac-linting** | [README](../iac-linting/README.md) | [CLAUDE](../iac-linting/CLAUDE.md) | Infrastructure-as-Code linting |
 | **gritql-patterns** | - | [CLAUDE](../gritql-patterns/CLAUDE.md) | 246+ GritQL patterns across 17 languages |
 
@@ -177,7 +176,6 @@ Central catalog of all documentation in the dev-config repository.
 
 | File | Action | Description |
 |------|--------|-------------|
-| `tsconfig/README.md` | Created | User guide for TypeScript strict configs |
 | `scripts/README.md` | Created | User guide for installation scripts |
 | `iac-linting/README.md` | Created | User guide for IaC linting configs |
 | `.claude/agents/CLAUDE.md` | Created | Architecture for 42+ agent definitions |
@@ -199,7 +197,6 @@ Central catalog of all documentation in the dev-config repository.
 | `pkgs/README.md` | README | User guide for package definitions |
 | `yazi/README.md` | README | User guide for Yazi file manager |
 | `scripts/CLAUDE.md` | CLAUDE | Architecture for shell scripts |
-| `tsconfig/CLAUDE.md` | CLAUDE | Architecture for TypeScript configs |
 | `iac-linting/CLAUDE.md` | CLAUDE | Architecture for IaC linting |
 | `gritql-patterns/CLAUDE.md` | CLAUDE | Architecture for 246+ GritQL patterns |
 

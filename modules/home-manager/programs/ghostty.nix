@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  inputs,
+  inputs ? {},
   ...
 }: {
   options.dev-config.ghostty = {

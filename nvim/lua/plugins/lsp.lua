@@ -31,22 +31,15 @@ return {
       'saghen/blink.cmp',
     },
     config = function()
-      -- Setup lazy-nix-helper to detect Nix environment
-      -- This enables hybrid approach: Nix-managed LSP servers on Nix systems, Mason on others
-      local nix_ok, lazy_nix = pcall(require, 'lazy-nix-helper')
-      local use_nix = false
-
-      if nix_ok then
-        lazy_nix.setup {
-          -- Disable Mason installation on Nix systems
-          -- LSP servers, formatters, and linters are managed by Nix instead
-          install_dependencies = false,
-        }
-        use_nix = true
-        vim.notify('lazy-nix-helper: Using Nix-managed LSP servers', vim.log.levels.INFO)
-      else
-        vim.notify('lazy-nix-helper: Not on Nix, using Mason for LSP servers', vim.log.levels.INFO)
+      -- Detect Nix environment by checking for Nix-managed binaries
+      -- Check .nix-profile (Home Manager symlinks to Nix store) rather than exepath
+      -- because Mason may shadow Nix binaries in Neovim's PATH
+      local function is_nix_managed()
+        local nix_profile_bin = vim.fn.expand '~/.nix-profile/bin/typescript-language-server'
+        return vim.fn.executable(nix_profile_bin) == 1
       end
+
+      local use_nix = is_nix_managed()
 
       --  This function gets run when an LSP attaches to a particular buffer.
       vim.api.nvim_create_autocmd('LspAttach', {
@@ -168,7 +161,10 @@ return {
         ts_ls = {},
 
         -- Biome LSP (linting + formatting for JS/TS/JSON)
-        biome = {},
+        -- single_file_support: attach to files without requiring biome.json in project root
+        biome = {
+          single_file_support = true,
+        },
 
         -- Python LSP (pyright is the most popular)
         pyright = {},
@@ -185,9 +181,24 @@ return {
         },
       }
 
-      -- Ensure the servers and tools above are installed
-      -- Only use Mason if NOT on Nix (Nix manages packages directly)
-      if not use_nix then
+      -- Setup LSP servers
+      -- On Nix: binaries come from ~/.nix-profile/bin (Home Manager)
+      -- On other systems: Mason installs and manages binaries
+      if use_nix then
+        -- On Nix: Setup LSP servers directly, Mason only provides UI for manual installs
+        for server_name, server_config in pairs(servers) do
+          local server = vim.deepcopy(server_config) or {}
+          server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
+          require('lspconfig')[server_name].setup(server)
+        end
+
+        -- Mason is still available for manual installs but doesn't auto-install
+        require('mason-lspconfig').setup {
+          ensure_installed = {},
+          automatic_installation = false,
+        }
+      else
+        -- On non-Nix: Mason manages everything
         local ensure_installed = vim.tbl_keys(servers or {})
         vim.list_extend(ensure_installed, {
           'stylua', -- Used to format Lua code
@@ -208,13 +219,6 @@ return {
             end,
           },
         }
-      else
-        -- On Nix: Setup LSP servers directly without Mason
-        for server_name, server_config in pairs(servers) do
-          local server = server_config or {}
-          server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
-          require('lspconfig')[server_name].setup(server)
-        end
       end
     end,
   },

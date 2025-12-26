@@ -97,18 +97,12 @@
         printf "✓ Linked .grit/\n"
       fi
 
-      # ====== Extend Configs (biome, tsconfig) ======
+      # ====== Extend Configs (biome) ======
 
       # Biome (create extends file if missing)
       if [ ! -f biome.json ]; then
         printf '%s\n' '{' '  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",' '  "extends": ["~/.config/biome/biome.json"]' '}' > biome.json
         printf "✓ Created biome.json (extends ~/.config/biome/)\n"
-      fi
-
-      # TSConfig (create extends file if missing)
-      if [ ! -f tsconfig.base.json ]; then
-        printf '%s\n' '{' '  "extends": "~/.config/tsconfig/tsconfig.monorepo.json",' '  "compilerOptions": {' '    "baseUrl": ".",' '    "paths": {}' '  }' '}' > tsconfig.base.json
-        printf "✓ Created tsconfig.base.json (extends ~/.config/tsconfig/)\n"
       fi
     '';
 

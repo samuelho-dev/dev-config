@@ -75,7 +75,7 @@ in {
 Initializes Nx workspaces with dev-config configurations:
 
 ```bash
-init-workspace           # Create biome.json, tsconfig.base.json
+init-workspace           # Create biome.json
 init-workspace --force   # Overwrite existing configs
 init-workspace --migrate # Only run ESLint/Prettier migrations
 ```

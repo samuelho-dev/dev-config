@@ -12,6 +12,7 @@
   googleAiKeyPath = config.sops.secrets."ai/google_ai_key".path;
   litellmKeyPath = config.sops.secrets."ai/litellm_master_key".path;
   openrouterKeyPath = config.sops.secrets."ai/openrouter_key".path;
+  opServiceAccountTokenPath = config.sops.secrets."op/service_account_token".path;
 
   # Shell script to generate load-env.sh at activation time
   # This runs AFTER sops-nix decrypts secrets at activation time
@@ -49,6 +50,11 @@
     # OpenRouter API Key
     if [ -f "${openrouterKeyPath}" ]; then
       export OPENROUTER_API_KEY="\$(cat ${openrouterKeyPath})"
+    fi
+
+    # 1Password Service Account Token (enables prompt-free op CLI)
+    if [ -f "${opServiceAccountTokenPath}" ]; then
+      export OP_SERVICE_ACCOUNT_TOKEN="\$(cat ${opServiceAccountTokenPath})"
     fi
     LOAD_ENV_EOF
 

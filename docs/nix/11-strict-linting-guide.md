@@ -37,7 +37,7 @@ This reduces cognitive load - developers learn what TO do, not what NOT to do.
 
 ## TypeScript Configuration
 
-TypeScript strict settings are inlined in project-level `tsconfig.base.json` by the `init-workspace` command. Key options include:
+TypeScript strict settings should be configured in each project's `tsconfig.base.json`. Recommended strict options:
 
 ```json
 {

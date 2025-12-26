@@ -122,8 +122,8 @@
     "formatter": {
       "quoteStyle": "single",
       "jsxQuoteStyle": "double",
-      "semicolons": "always",
-      "trailingCommas": "all",
+      "semicolons": "asNeeded",
+      "trailingCommas": "none",
       "arrowParentheses": "always",
       "bracketSpacing": true
     },

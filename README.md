@@ -640,11 +640,6 @@ This repository provides **enterprise-grade linting configurations** for TypeScr
 - Enforce `import type`, no barrel files, cognitive complexity limits
 - GritQL custom patterns for Effect-TS and anti-patterns
 
-**TypeScript Strict Configs:**
-- `tsconfig/tsconfig.strict.json` - Maximum strictness
-- `tsconfig/tsconfig.monorepo.json` - Nx/Turborepo support
-- `tsconfig/tsconfig.library.json` - npm publishing
-
 **Infrastructure-as-Code Linting:**
 - `.kube-linter.yaml` - Kubernetes manifests (resource limits, no :latest)
 - `.hadolint.yaml` - Dockerfiles (version pinning, non-root)
@@ -850,10 +845,6 @@ dev-config/
 ├── biome/                    # Biome linting configuration
 │   ├── biome-base.json       # Strict rules (80+ enabled)
 │   └── gritql-patterns/      # Custom GritQL lint patterns
-├── tsconfig/                 # TypeScript strict configurations
-│   ├── tsconfig.strict.json      # Maximum strictness
-│   ├── tsconfig.monorepo.json    # Nx/Turborepo
-│   └── tsconfig.library.json     # npm publishing
 ├── iac-linting/              # Infrastructure-as-Code linting
 │   ├── .kube-linter.yaml     # Kubernetes validation
 │   ├── .hadolint.yaml        # Dockerfile linting

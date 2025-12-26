@@ -317,13 +317,13 @@ in {
 
         semicolons = lib.mkOption {
           type = lib.types.enum ["always" "asNeeded"];
-          default = "always";
+          default = "asNeeded";
           description = "Semicolon insertion style";
         };
 
         trailingCommas = lib.mkOption {
           type = lib.types.enum ["all" "es5" "none"];
-          default = "all";
+          default = "none";
           description = "Trailing comma style";
         };
 

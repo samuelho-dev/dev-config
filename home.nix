@@ -47,6 +47,9 @@
 
       # NPM authentication token (used by npm.nix module)
       "npm/token" = {};
+
+      # 1Password service account token (enables prompt-free `op` CLI)
+      "op/service_account_token" = {};
     };
   };
 

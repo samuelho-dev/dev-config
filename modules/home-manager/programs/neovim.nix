@@ -2,7 +2,7 @@
   config,
   lib,
   pkgs,
-  inputs,
+  inputs ? {},
   ...
 }: {
   options.dev-config.neovim = {
@@ -58,19 +58,19 @@
       vimAlias = config.dev-config.neovim.vimAlias;
       viAlias = config.dev-config.neovim.viAlias;
 
-      # Install lazy-nix-helper for hybrid Nix + lazy.nvim approach
-      plugins = with pkgs.vimPlugins; [
-        # lazy-nix-helper-nvim  # Not available in current nixpkgs
-      ];
+      # Plugins managed by lazy.nvim in nvim/lua/plugins/
+      # Nix only provides LSP servers/formatters as binaries
+      plugins = [];
     };
 
     # Install LSP servers, formatters, and build tools via Nix
-    # This allows lazy-nix-helper to disable Mason on Nix systems
+    # On Nix systems, lsp.lua detects ~/.nix-profile/bin binaries and skips Mason auto-install
     home.packages = [
       # LSP servers
       pkgs.nodePackages.typescript-language-server # TypeScript/JavaScript
       pkgs.pyright # Python
       pkgs.lua-language-server # Lua
+      pkgs.biome # JavaScript/TypeScript/JSON linter + formatter
 
       # Formatters
       pkgs.stylua # Lua formatter
