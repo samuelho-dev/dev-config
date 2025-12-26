@@ -71,27 +71,40 @@
     # Usage in consumer flakes:
     #   shellHook = dev-config.lib.devShellHook;
     lib.devShellHook = ''
-      # ====== Editor Configs (symlink from dev-config) ======
+      # ====== Editor Configs (symlink from dev-config Nix store) ======
 
-      # Claude Code
-      if [ ! -L .claude ] && [ ! -d .claude ]; then
-        ln -sfn ${self}/.claude .claude
-        printf "✓ Linked .claude/\n"
+      # Claude Code (with ai/commands and ai/agents subdirectories)
+      if [ ! -d .claude ]; then
+        mkdir -p .claude
+        ln -sfn ${self}/ai/commands .claude/commands
+        ln -sfn ${self}/ai/agents .claude/agents
+        # Copy settings from template for user customization
+        if [ ! -f .claude/settings.json ] && [ -f ${self}/.claude/settings.json ]; then
+          cp ${self}/.claude/settings.json .claude/settings.json
+        fi
+        printf "✓ Linked .claude/ (commands + agents from Nix store)\n"
       fi
 
-      # OpenCode
-      if [ ! -L .opencode ] && [ ! -d .opencode ]; then
-        ln -sfn ${self}/.opencode .opencode
-        printf "✓ Linked .opencode/\n"
+      # OpenCode (with ai/commands, plugin, tool subdirectories)
+      if [ ! -d .opencode ]; then
+        mkdir -p .opencode
+        ln -sfn ${self}/ai/commands .opencode/command
+        ln -sfn ${self}/.opencode/plugin .opencode/plugin
+        ln -sfn ${self}/.opencode/tool .opencode/tool
+        # Copy base config for user customization
+        if [ ! -f .opencode/opencode.json ] && [ -f ${self}/.opencode/opencode.json ]; then
+          cp ${self}/.opencode/opencode.json .opencode/opencode.json
+        fi
+        printf "✓ Linked .opencode/ (command/plugin/tool from Nix store)\n"
       fi
 
-      # Zed
+      # Zed (full directory symlink - no relative symlinks inside)
       if [ ! -L .zed ] && [ ! -d .zed ]; then
         ln -sfn ${self}/zed .zed
         printf "✓ Linked .zed/\n"
       fi
 
-      # GritQL
+      # GritQL (full directory symlink - no relative symlinks inside)
       if [ ! -L .grit ] && [ ! -d .grit ]; then
         ln -sfn ${self}/grit .grit
         printf "✓ Linked .grit/\n"

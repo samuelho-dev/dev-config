@@ -6,55 +6,58 @@
 }: let
   cfg = config.dev-config.sops-env;
 
-  # Get secret paths directly (secrets are defined in home.nix)
-  anthropicKeyPath = config.sops.secrets."ai/anthropic_key".path;
-  openaiKeyPath = config.sops.secrets."ai/openai_key".path;
-  googleAiKeyPath = config.sops.secrets."ai/google_ai_key".path;
-  litellmKeyPath = config.sops.secrets."ai/litellm_master_key".path;
-  openrouterKeyPath = config.sops.secrets."ai/openrouter_key".path;
+  # 1Password item UUID for AI service keys
+  onePassAiItemId = "xsuolbdwx4vmcp3zysjczfatam";
+
+  # Get 1Password service account token path from sops
   opServiceAccountTokenPath = config.sops.secrets."op/service_account_token".path;
 
   # Shell script to generate load-env.sh at activation time
   # This runs AFTER sops-nix decrypts secrets at activation time
-  # Secrets are read from tmpfs (~/.local/share/sops-nix/secrets.d/)
   generateLoadEnvScript = ''
         # Create load-env.sh file at activation time
         LOAD_ENV_FILE="$HOME/.config/sops-nix/load-env.sh"
         mkdir -p "$(dirname "$LOAD_ENV_FILE")"
 
-        # Generate the load-env.sh script with actual secret paths
-        cat > "$LOAD_ENV_FILE" <<LOAD_ENV_EOF
-    # AI service API keys (loaded from sops-nix decrypted paths)
+        # Generate the load-env.sh script with AI keys from 1Password
+        cat > "$LOAD_ENV_FILE" <<'LOAD_ENV_EOF'
+    # AI service API keys (fetched from 1Password vault)
+    # 1Password item UUID: ${onePassAiItemId}
     # This file is generated at Home Manager activation time
-
-    # Anthropic API Key (Claude)
-    if [ -f "${anthropicKeyPath}" ]; then
-      export ANTHROPIC_API_KEY="\$(cat ${anthropicKeyPath})"
-    fi
-
-    # OpenAI API Key
-    if [ -f "${openaiKeyPath}" ]; then
-      export OPENAI_API_KEY="\$(cat ${openaiKeyPath})"
-    fi
-
-    # Google AI API Key
-    if [ -f "${googleAiKeyPath}" ]; then
-      export GOOGLE_AI_API_KEY="\$(cat ${googleAiKeyPath})"
-    fi
-
-    # LiteLLM Master Key
-    if [ -f "${litellmKeyPath}" ]; then
-      export LITELLM_MASTER_KEY="\$(cat ${litellmKeyPath})"
-    fi
-
-    # OpenRouter API Key
-    if [ -f "${openrouterKeyPath}" ]; then
-      export OPENROUTER_API_KEY="\$(cat ${openrouterKeyPath})"
-    fi
 
     # 1Password Service Account Token (enables prompt-free op CLI)
     if [ -f "${opServiceAccountTokenPath}" ]; then
-      export OP_SERVICE_ACCOUNT_TOKEN="\$(cat ${opServiceAccountTokenPath})"
+      export OP_SERVICE_ACCOUNT_TOKEN="$(cat ${opServiceAccountTokenPath})"
+    fi
+
+    # AI keys from 1Password (requires OP_SERVICE_ACCOUNT_TOKEN to be set)
+    # These are fetched on-demand by scripts/shell hooks that need them
+    # For shell prompt to work, source 1Password agent:
+    # eval "$(op signin)"  # Or use OP_SERVICE_ACCOUNT_TOKEN for non-interactive
+
+    # Anthropic API Key (Claude)
+    if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+      export ANTHROPIC_API_KEY="$(op item get ${onePassAiItemId} --fields label=anthropic_key 2>/dev/null || echo "")"
+    fi
+
+    # OpenAI API Key
+    if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+      export OPENAI_API_KEY="$(op item get ${onePassAiItemId} --fields label=openai_key 2>/dev/null || echo "")"
+    fi
+
+    # Google AI API Key
+    if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+      export GOOGLE_AI_API_KEY="$(op item get ${onePassAiItemId} --fields label=google_ai_key 2>/dev/null || echo "")"
+    fi
+
+    # LiteLLM Master Key
+    if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+      export LITELLM_MASTER_KEY="$(op item get ${onePassAiItemId} --fields label=litellm_master_key 2>/dev/null || echo "")"
+    fi
+
+    # OpenRouter API Key
+    if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
+      export OPENROUTER_API_KEY="$(op item get ${onePassAiItemId} --fields label=openrouter_key 2>/dev/null || echo "")"
     fi
     LOAD_ENV_EOF
 
@@ -66,20 +69,21 @@ in {
       type = lib.types.bool;
       default = true;
       description = ''
-        Load AI service API keys from sops-nix secrets into environment variables.
+        Load 1Password service account token from sops-nix and generate shell script
+        to fetch AI service API keys from 1Password on demand.
 
-        This eliminates the need for 1Password CLI queries on every shell startup.
-        Secrets are decrypted once at Home Manager activation and exported to shell.
+        This hybrid approach combines:
+        - Secure token storage: OP_SERVICE_ACCOUNT_TOKEN via sops-nix (encrypted at rest)
+        - Centralized secrets: AI keys stored in 1Password vault (xsuolbdwx4vmcp3zysjczfatam)
+        - On-demand loading: Keys fetched via `op item get` when needed
 
-        Security: Secrets are read from tmpfs (macOS: ~/.local/share/sops-nix/secrets.d)
-        and never written to disk unencrypted.
-
-        Environment variables loaded:
-        - ANTHROPIC_API_KEY (Claude API)
-        - OPENAI_API_KEY (OpenAI API)
-        - GOOGLE_AI_API_KEY (Google AI API)
-        - LITELLM_MASTER_KEY (LiteLLM proxy master key)
-        - OPENROUTER_API_KEY (OpenRouter multi-model API)
+        Environment variables set:
+        - OP_SERVICE_ACCOUNT_TOKEN (from sops-nix for non-interactive op CLI)
+        - ANTHROPIC_API_KEY (from 1Password vault)
+        - OPENAI_API_KEY (from 1Password vault)
+        - GOOGLE_AI_API_KEY (from 1Password vault)
+        - LITELLM_MASTER_KEY (from 1Password vault)
+        - OPENROUTER_API_KEY (from 1Password vault)
       '';
     };
   };

@@ -35,17 +35,8 @@
       "git/userEmail" = {};
       "git/signingKey" = {};
 
-      # AI service API keys (optional, for manual use)
-      "ai/anthropic_key" = {};
-      "ai/openai_key" = {};
-      "ai/google_ai_key" = {};
-      "ai/litellm_master_key" = {};
-      "ai/openrouter_key" = {};
-
-      # NPM authentication token (used by npm.nix module)
-      "npm/token" = {};
-
       # 1Password service account token (enables prompt-free `op` CLI)
+      # AI service API keys are fetched from 1Password vault (xsuolbdwx4vmcp3zysjczfatam)
       "op/service_account_token" = {};
     };
   };
