@@ -448,7 +448,7 @@ Patterns are organized by concern:
 - `biome/CLAUDE.md` - Updated pattern inventory and organization notes
 
 ### Files Unchanged
-- `biome/biome-base.json` - No Biome config changes needed
+- `biome.json` - No Biome config changes needed
 - Biome auto-discovers `.grit` files by naming convention
 - No hardcoded pattern references in config
 

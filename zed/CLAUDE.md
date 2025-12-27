@@ -3,7 +3,7 @@ scope: zed/
 updated: 2025-12-24
 relates_to:
   - ../CLAUDE.md
-  - ../biome/biome-base.json
+  - ../biome.json
   - ../nvim/CLAUDE.md
 ---
 

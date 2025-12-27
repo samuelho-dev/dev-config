@@ -636,7 +636,7 @@ Configuration file: `ghostty/config`
 This repository provides **enterprise-grade linting configurations** for TypeScript monorepos:
 
 **Biome Configuration (80+ rules):**
-- `biome/biome-base.json` - Strict TypeScript/JavaScript linting
+- `biome.json` - Strict TypeScript/JavaScript linting (source of truth)
 - Enforce `import type`, no barrel files, cognitive complexity limits
 - GritQL custom patterns for Effect-TS and anti-patterns
 
@@ -843,7 +843,7 @@ dev-config/
 │   ├── .zprofile             # Login shell config (PATH settings)
 │   └── .p10k.zsh             # Powerlevel10k theme configuration
 ├── biome/                    # Biome linting configuration
-│   ├── biome-base.json       # Strict rules (80+ enabled)
+│   ├── biome.json            # Strict rules (80+ enabled) - source of truth
 │   └── gritql-patterns/      # Custom GritQL lint patterns
 ├── iac-linting/              # Infrastructure-as-Code linting
 │   ├── .kube-linter.yaml     # Kubernetes validation

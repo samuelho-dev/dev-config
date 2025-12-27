@@ -411,7 +411,7 @@ GritQL uses JavaScript AST, not TypeScript. Some TS-specific syntax may not matc
 
 | File | Purpose |
 |------|---------|
-| `biome/biome-base.json` | Biome rule configuration |
+| `biome.json` | Biome rule configuration (source of truth) |
 | `biome/gritql-patterns/*.grit` | Custom GritQL rules |
 | `iac-linting/*` | Infrastructure linting configs |
 | `.pre-commit-config.yaml` | Pre-commit hooks |

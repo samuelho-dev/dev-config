@@ -19,7 +19,7 @@ This directory contains **enterprise-grade Biome linting configuration** with 80
 
 ```
 biome/
-+-- biome-base.json                                   # Core configuration (80+ strict rules)
++-- ../biome.json                                       # Core configuration (80+ strict rules - source of truth)
 +-- gritql-patterns/                                  # Custom lint patterns using GritQL (14 patterns)
 |   +-- ban-type-assertions.grit                      # Ban as Type, <Type>, satisfies (consolidated 3→1)
 |   +-- ban-imperative-error-handling-in-effect.grit  # Ban Promise/throw/try-catch in Effect (consolidated 3→1)
@@ -46,7 +46,7 @@ This configuration follows the **Direct Equality** linting philosophy:
 2. **Error severity for anti-patterns** - Fail fast, not warnings that get ignored
 3. **GritQL for custom patterns** - Beyond what built-in rules can express
 
-## biome-base.json Configuration
+## biome.json Configuration
 
 ### Key Sections
 
@@ -321,21 +321,20 @@ pipe(
 
 The Home Manager module:
 1. Installs Biome package
-2. Symlinks `biome-base.json` to `~/.config/biome/biome-base.json`
+2. Symlinks `biome.json` to `~/.config/biome/biome.json`
 3. Symlinks `gritql-patterns/` directory
-4. Provides configurable rule overrides
 
 ### Usage in Projects
 
-Reference the base config in your project:
+Copy the full `biome.json` configuration to your project root, then customize as needed:
 
 ```json
 {
   "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
-  "extends": ["~/.config/biome/biome-base.json"],
   "files": {
     "include": ["./src/**/*.ts", "./src/**/*.tsx"]
   }
+  // ... copy all rules from dev-config/biome.json
 }
 ```
 
@@ -371,7 +370,7 @@ biome check --config-path ./biome.json .
 ### Adding Built-in Rule
 
 1. Find rule in [Biome Rules Reference](https://biomejs.dev/linter/rules/)
-2. Add to appropriate category in `biome-base.json`:
+2. Add to appropriate category in `biome.json`:
    ```json
    {
      "linter": {
@@ -693,10 +692,8 @@ When modifying Biome configuration:
 
 - [ ] **Test rule changes** with: `biome check .`
 - [ ] **Verify GritQL patterns** work on sample code before committing
-- [ ] **Update rule tables** in this document when adding rules to biome-base.json
+- [ ] **Update root biome.json** with new rules
 - [ ] **Add override sections** for files that legitimately need exceptions
 - [ ] **Document pattern rationale** in comments within .grit files
-- [ ] **Check Home Manager module** at `modules/home-manager/programs/biome.nix` for integration
-- [ ] **Validate effect patterns** - detect-missing-yield-star.grit is critical for Effect-TS
 - [ ] **Run biome check --write** to auto-fix before committing
 - [ ] **Keep tsconfig/ aligned** - strict linting works best with strict TypeScript

@@ -92,17 +92,30 @@ dev-config = {
 
 **1. Create root `biome.json`:**
 
+Copy the full config from dev-config's `biome.json` (189 lines) as a starting point:
+
 ```json
 {
-  "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
-  "extends": ["~/.config/biome/biome.json"],
-  "plugins": [
-    "~/.config/biome/gritql-patterns/ban-satisfies.grit",
-    "~/.config/biome/gritql-patterns/ban-type-assertions.grit"
-  ],
+  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
   "files": {
-    "include": ["packages/**", "apps/**", "libs/**"]
+    "includes": ["apps/**", "libs/**", "packages/**", "tools/**"],
+    "ignoreUnknown": true
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+      // ... (copy all rules from dev-config/biome.json)
+    }
   }
+  // ... (copy full configuration)
 }
 ```
 
@@ -134,10 +147,9 @@ cp ~/.config/biome/nx-plugin-template/biome-plugin.ts ./tools/biome-plugin.ts
 
 ```json
 {
-  "extends": "//",
   "linter": {
     "rules": {
-      "suspicious": { "noConsoleLog": "off" }
+      "suspicious": { "noConsole": "off" }
     }
   }
 }
@@ -145,11 +157,7 @@ cp ~/.config/biome/nx-plugin-template/biome-plugin.ts ./tools/biome-plugin.ts
 
 ### Simple Project
 
-```json
-{
-  "extends": ["~/.config/biome/biome.json"]
-}
-```
+Copy full config from dev-config's `biome.json` to project root, then customize as needed. No `extends` required - configuration is self-contained.
 
 ## Available GritQL Patterns
 

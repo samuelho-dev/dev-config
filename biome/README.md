@@ -29,19 +29,7 @@ biome format --write .
 
 ### Project Setup
 
-Reference the base config in your project's `biome.json`:
-
-```json
-{
-  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",
-  "extends": ["~/.config/biome/biome.json"],
-  "files": {
-    "include": ["./src/**/*.ts", "./src/**/*.tsx"]
-  }
-}
-```
-
-With `lib.devShellHook` in your flake, `biome.json` is auto-created on `nix develop`.
+Copy the full configuration from dev-config's `biome.json` to your project root. The root `biome.json` is the **source of truth** for all Biome rules and contains 80+ strict rules. No `extends` needed - configuration is self-contained.
 
 ### Key Rules
 
@@ -99,15 +87,15 @@ biome format --write src/
 ## Directory Structure
 
 ```
-biome/
-+-- biome-base.json       # Core configuration (80+ rules)
-+-- gritql-patterns/      # Custom GritQL patterns
+./
++-- biome.json                   # Core configuration (80+ rules - source of truth)
++-- biome/gritql-patterns/        # Custom GritQL patterns
 |   +-- ban-any-type-annotation.grit
 |   +-- ban-satisfies.grit
 |   +-- detect-missing-yield-star.grit
 |   +-- enforce-effect-pipe.grit
-|   +-- ... (12 patterns total)
-+-- nx-plugin-template/   # Template for Nx integration
+|   +-- ... (14 patterns total)
++-- biome/nx-plugin-template/      # Template for Nx integration
 ```
 
 ## Troubleshooting
