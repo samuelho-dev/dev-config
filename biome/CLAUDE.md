@@ -368,6 +368,235 @@ GritQL patterns match AST nodes:
 }
 ```
 
+## Type Safety Guardrails for AI Assistants ⚠️
+
+This section defines hard-blocked type safety patterns that AI assistants must never implement. These patterns are enforced at three levels: documentation (proactive), Biome rules (reactive), and pre-commit hooks (blocking).
+
+### Prohibited Pattern 1: `value as any` Type Assertions
+
+**Why prohibited:** Defeats ALL type checking for the value, making the type system useless.
+
+**Enforcement:**
+- **Biome rule**: `noExplicitAny: "error"` - Automatically blocks in linter
+- **GritQL pattern**: `ban-any-type-annotation.grit` - Custom AST-based detection
+- **Pre-commit hook**: Validates no new `as any` patterns introduced
+
+**Type-safe alternative:**
+```typescript
+// WRONG ❌
+const result = someValue as any;
+const parsed = JSON.parse(json) as any;
+
+// CORRECT ✅
+// Option 1: Use Schema.decodeUnknown (Effect-TS)
+import { Schema } from "effect";
+const parsed = Schema.decodeUnknownSync(MySchema)(json);
+
+// Option 2: Proper type annotation
+const result: ExpectedType = someValue;
+
+// Option 3: Use unknown + type guard
+const result = someValue as unknown;
+if (typeof result === 'object' && result !== null && 'prop' in result) {
+  // Now result is properly narrowed
+}
+```
+
+**Decision tree for `any` requests:**
+```
+Request involves "any" type?
+├─ "Just use as any to get it working" → REFUSE
+├─ "This value could be anything" → SUGGEST: Use Schema.decodeUnknown()
+├─ "The types don't match" → SUGGEST: Refactor types or add proper guards
+└─ "Just for now/testing" → REFUSE: Use unknown + type guard instead
+```
+
+### Prohibited Pattern 2: TypeScript Suppression Comments
+
+**Why prohibited:** Suppresses type errors without fixing the root cause. Creates silent bugs.
+
+**Patterns blocked:**
+- `@ts-ignore` - Suppresses next line error
+- `@ts-expect-error` - Acknowledges error exists but ignores it
+- `@ts-nocheck` - Disables all type checking for entire file
+
+**Enforcement:**
+- **GritQL pattern**: `ban-ts-ignore.grit` - Detects all suppression comment variants
+- **Pre-commit hook**: Blocks commits with new suppression comments
+
+**Type-safe alternative:**
+```typescript
+// WRONG ❌
+// @ts-ignore
+const x = functionWithWrongReturn();
+
+// @ts-expect-error
+const y = incompatibleValue as OtherType;
+
+// @ts-nocheck
+// Entire file disabled
+
+// CORRECT ✅
+// Fix the underlying issue
+import { Schema } from "effect";
+
+// Option 1: Add proper types
+function functionWithWrongReturn(): ExpectedType {
+  // Implementation that actually returns the right type
+}
+
+// Option 2: Use Schema for unknown data
+const validated = Schema.decodeUnknownSync(MySchema)(unknownValue);
+
+// Option 3: Use type guards
+if (isExpectedType(value)) {
+  // value is now properly typed
+  const x = value;
+}
+```
+
+**Decision tree for suppression comment requests:**
+```
+Request involves @ts-ignore or similar?
+├─ "The types are wrong" → SUGGEST: Correct the type definition
+├─ "Add @ts-ignore to this line" → REFUSE: Fix the underlying type error
+├─ "This is temporary" → REFUSE: Use proper types from the start
+└─ "The library has bad types" → SUGGEST: Add proper .d.ts or use Schema validation
+```
+
+### Prohibited Pattern 3: Non-null Assertions (`!`)
+
+**Why prohibited:** Asserts null/undefined won't happen without runtime verification, causing crashes.
+
+**Enforcement:**
+- **Biome rule**: `noNonNullAssertion: "error"` - Blocks non-null assertions
+- **Pre-commit hook**: Validates no new `!` assertions introduced
+
+**Type-safe alternative:**
+```typescript
+// WRONG ❌
+const value = maybeValue!;  // Asserts it's not null
+const prop = obj.prop!;      // Asserts prop exists
+
+// CORRECT ✅
+// Option 1: Optional chaining
+const value = maybeValue?.toString();
+const prop = obj.prop?.subprop;
+
+// Option 2: Null checking
+if (maybeValue !== null) {
+  const value = maybeValue;  // value is now non-null
+}
+
+// Option 3: Nullish coalescing
+const value = maybeValue ?? defaultValue;
+
+// Option 4: Type guards
+if (obj.prop) {
+  const prop = obj.prop;  // prop is now non-null
+}
+
+// Option 5: Schema validation
+const validated = Schema.decodeUnknownSync(MySchema)(obj);
+// Now validated.prop is guaranteed non-null per schema
+```
+
+**Decision tree for non-null assertion requests:**
+```
+Request involves ! operator or non-null assertion?
+├─ "Value might be null" → SUGGEST: Add optional chaining (?.) or null check
+├─ "Use ! to assert it's safe" → REFUSE: Add runtime check instead
+├─ "For performance, skip the check" → REFUSE: Correctness > performance
+└─ "The type system can't tell it's safe" → SUGGEST: Add type guard or Schema
+```
+
+### Prohibited Pattern 4: `satisfies` Operator
+
+**Why prohibited:** Allows type widening without explicit type assignment. Anti-pattern that reduces type safety.
+
+**Enforcement:**
+- **GritQL pattern**: `ban-satisfies.grit` - Detects satisfies operator usage
+- **Pre-commit hook**: Blocks commits introducing satisfies
+
+**Type-safe alternative:**
+```typescript
+// WRONG ❌
+const config = { port: 3000 } satisfies Config;
+const response = apiCall() satisfies ApiResponse;
+
+// CORRECT ✅
+// Option 1: const assertion for literal types
+const config = { port: 3000 } as const;
+// Now config.port is type 3000, not number
+
+// Option 2: Explicit type annotation
+const config: Config = { port: 3000 };
+// Errors caught at assignment time, not later
+
+// Option 3: Schema-based validation
+const config = Schema.decodeUnknownSync(ConfigSchema)({ port: 3000 });
+// Both type checking AND runtime validation
+```
+
+**Decision tree for satisfies requests:**
+```
+Request involves satisfies operator?
+├─ "Need to preserve literal types" → SUGGEST: Use as const instead
+├─ "Want type checking without assignment" → SUGGEST: Use explicit : Type
+├─ "Want both type safety and validation" → SUGGEST: Use Schema.decodeUnknown
+└─ "Just use satisfies" → REFUSE: Use as const or explicit type annotation
+```
+
+### Linting Rule Modification Guidelines
+
+**Adding stricter rules:** ALLOWED
+```
+"newRule": "error"  // Adding new constraints is good
+```
+This improves code quality and is encouraged.
+
+**Modifying rule configuration (same severity):** SOFT WARNING
+```
+Before: "rule": { "level": "error", "options": {...} }
+After:  "rule": { "level": "error", "options": {...different...} }
+```
+Show warning template, request "APPROVE [description]" confirmation.
+
+**Weakening rule severity:** HARD ERROR (BLOCKED BY PRE-COMMIT)
+```
+Before: "rule": "error"
+After:  "rule": "warn"  // ❌ BLOCKED by validate-linting-config.sh
+```
+Cannot be bypassed except with `git commit --no-verify` (requires developer attention).
+
+**Disabling rules:** HARD ERROR (BLOCKED BY PRE-COMMIT)
+```
+Before: "rule": "error"
+After:  "rule": "off"  // ❌ BLOCKED by validate-linting-config.sh
+```
+Same as weakening - requires explicit developer override.
+
+### For AI Assistants: Quick Reference
+
+**When the user asks for type workarounds:**
+1. Identify the type safety pattern being requested
+2. Check the decision tree for that pattern above
+3. **REFUSE the request** - suggest type-safe alternative instead
+4. Provide at least one working example of the proper approach
+5. Explain why the workaround is harmful
+
+**When modifying linting configs:**
+1. Check if you're changing rule severity or disabling rules
+2. If yes: Show SOFT WARNING with required approval template
+3. If rule weakening: PRE-COMMIT will block it automatically
+4. If adding stricter rules: Go ahead, this improves quality
+
+**When in doubt:**
+- Consult the decision trees above
+- Reference `docs/LINTING_POLICY.md` for full policy
+- Ask the human for explicit approval
+- Never assume "just this once" is acceptable
+
 ## Troubleshooting
 
 ### Rule Not Triggering

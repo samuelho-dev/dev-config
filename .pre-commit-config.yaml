@@ -61,6 +61,16 @@ repos:
         pass_filenames: true
         description: Format and lint JavaScript/TypeScript/JSON with Biome
 
+      # AI Guardrails: Linting config validation
+      # Prevents AI (and developers) from weakening linting rules
+      - id: validate-linting-config
+        name: Validate linting config changes
+        entry: bash scripts/validate-linting-config.sh
+        language: system
+        files: ^(biome.*\.json|tsconfig.*\.json|\.pre-commit-config\.yaml)$
+        pass_filenames: false
+        description: Prevent rule weakening and enforce linting policy
+
       # Kubernetes manifest linting
       - id: kube-linter
         name: Lint Kubernetes manifests

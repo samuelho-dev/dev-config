@@ -262,6 +262,103 @@ dev-config.opencode.ohMyOpencode = {
 
 **Documentation**: See `docs/nix/12-oh-my-opencode.md` for comprehensive guide.
 
+## AI GUARDRAILS (CRITICAL) ⚠️
+
+This repository enforces strict guardrails to prevent AI assistants from introducing type safety violations and linting rule weakening. These guardrails apply to all AI agents (Claude Code, OpenCode, ChatGPT, etc.).
+
+### SOFT WARNING: Linting Configuration Modifications
+
+When modifying any linting configuration file (`biome.json`, `tsconfig.json`, `.pre-commit-config.yaml`, or `biome/gritql-patterns/*.grit`), the AI must provide explicit warning and request confirmation before proceeding.
+
+**Required warning template:**
+
+```
+⚠️  WARNING: Linting Configuration Modification Requested
+
+This change affects the linting/type checking rules that apply to the entire codebase.
+Rule modifications can have downstream effects on hundreds of files.
+
+Change Summary:
+[Details of the specific modification]
+
+Rationale:
+[Explanation of why this change is necessary]
+
+Impact Analysis:
+[What files will be affected, what rules are being changed]
+
+Requires human approval. To approve, type: APPROVE [change description]
+```
+
+**Example usage pattern:**
+1. AI identifies need to modify linting rules
+2. AI displays warning with full details of the change
+3. AI waits for explicit human approval with the "APPROVE" keyword
+4. Only after approval does AI proceed with the modification
+5. AI documents the approval in the commit message
+
+See `docs/LINTING_POLICY.md` for complete policy and decision workflows.
+
+### HARD ERROR: Type Safety Workarounds (STRICTLY PROHIBITED)
+
+The following patterns are **strictly prohibited** and must never be used. If a request asks you to implement any of these patterns, you must refuse and suggest the type-safe alternative instead.
+
+| Forbidden Pattern | Why Prohibited | Type-Safe Alternative | Example |
+|------------------|---------------|-----------------------|---------|
+| `value as any` | Defeats all type checking for that value | Use `Schema.decodeUnknown()` from Effect or explicit type guards | `const x: unknown = getValue(); const parsed = Schema.decodeUnknown(MySchema)(x)` |
+| `@ts-ignore` comment | Suppresses type errors without fixing them | Fix the underlying type error properly | Add proper type annotations or use type guards |
+| `@ts-expect-error` comment | Acknowledges error exists but ignores it | Fix the root cause | Refactor code to satisfy type constraints |
+| `@ts-nocheck` comment | Disables all type checking for entire file | Add proper types to individual declarations | Split file, add gradual typing, use `as const` |
+| `value as T` (non-null assertion with `as`) | Asserts type without verification | Use runtime validation with Schema or type guards | `if (value !== null && typeof value === 'T') { ... }` |
+| `value!` (non-null assertion) | Suppresses null/undefined error without checking | Verify existence before use, use optional chaining | `value?.property` or `if (value) { ... }` |
+| `satisfies` operator without type | Type-checking without explicit return type | Use explicit type annotation instead | `const x: MyType = { ... }` |
+
+**Decision tree for type-related requests:**
+
+```
+Request to modify type-related code?
+├─ "Just use 'as any'" → REFUSE: Suggest Schema.decodeUnknown()
+├─ "Add @ts-ignore comment" → REFUSE: Fix the underlying type error
+├─ "Use non-null assertion (!)" → REFUSE: Add proper null checking
+├─ "The types are too strict" → PROPOSE: Discuss type narrowing, guards, or Schema validation
+└─ "Simplify the types" → EVALUATE: Consider if simplification loses runtime safety
+```
+
+Enforcement mechanisms:
+- **Biome rule**: `noExplicitAny: "error"` - Blocks `as any`
+- **GritQL pattern**: `ban-ts-ignore.grit` - Blocks TS suppression comments
+- **GritQL pattern**: `ban-non-null-assertions.grit` - Blocks `!` operator
+- **Pre-commit hook**: `validate-linting-config.sh` - Blocks rule weakening
+
+### HARD ERROR: Rule Weakening (STRICTLY PROHIBITED)
+
+Linting rules establish minimum code quality standards. Weakening these rules (changing severity from `error` → `warn` or `off`) is not permitted without explicit approval from the project maintainer.
+
+**Prohibited modifications:**
+
+- Changing Biome rule level from `error` to `warn` or `off`
+- Disabling TypeScript `strict` mode
+- Adding new `@ts-ignore` or suppression comments
+- Creating GritQL patterns that override existing error-level rules
+- Modifying `.pre-commit-config.yaml` to skip validation hooks
+
+**Decision tree for rule modification requests:**
+
+```
+Request to modify linting rules?
+├─ "Add a new stricter rule" → ALLOW: This improves code quality
+├─ "Change error → warn" → REFUSE: Would weaken the codebase
+├─ "Disable a rule (off)" → REFUSE: Would weaken the codebase
+├─ "Update rule configuration (same level)" → SOFT WARNING: Requires approval
+└─ "Fix a rule that has bugs" → EVALUATE: Propose refinement, not removal
+```
+
+Enforcement mechanisms:
+- **Pre-commit hook**: `validate-linting-config.sh` automatically detects and blocks rule weakening
+- **Git blockers**: Cannot be bypassed without `git commit --no-verify` (which requires developer attention)
+
+See `docs/LINTING_POLICY.md` for complete policy and enforcement details.
+
 ## Key Conventions
 
 - **Formatter:** `alejandra` (run via `nix fmt`)
@@ -274,6 +371,7 @@ dev-config.opencode.ohMyOpencode = {
 
 When working with this repository:
 
+### General Practices
 - [ ] **Check flake validity** before committing: `nix flake show --json`
 - [ ] **Format Nix files** with: `nix fmt`
 - [ ] **Test configuration** before applying: `home-manager build --flake .`
@@ -284,3 +382,13 @@ When working with this repository:
 - [ ] **Update component CLAUDE.md** when modifying that component's architecture
 - [ ] **Reference docs/** for user-facing documentation updates
 - [ ] **Consult `modules/home-manager/CLAUDE.md`** for Home Manager module patterns
+
+### AI Guardrails (CRITICAL) ⚠️
+- [ ] **NEVER use `as any`** - Forbidden pattern. Use `Schema.decodeUnknown()` instead
+- [ ] **NEVER add `@ts-ignore` or `@ts-nocheck` comments** - Forbidden pattern. Fix the type error properly
+- [ ] **NEVER use non-null assertions (`!`)** - Forbidden pattern. Add proper null checking instead
+- [ ] **NEVER weaken linting rules** - Changing severity from `error` → `warn/off` is blocked by pre-commit
+- [ ] **ALWAYS warn before modifying linting configs** - Show warning template, wait for "APPROVE" confirmation
+- [ ] **ALWAYS consult `docs/LINTING_POLICY.md`** when in doubt about type safety or linting rule changes
+- [ ] **ALWAYS follow decision trees** in CLAUDE.md for type-related and rule-modification requests
+- [ ] **NEVER bypass pre-commit hooks** - Use `git commit --no-verify` only with explicit justification and developer attention
