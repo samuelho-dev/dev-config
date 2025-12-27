@@ -1,22 +1,80 @@
 language js
 
-// Ban type assertions (as and angle-bracket syntax)
-// Use Schema.decodeUnknown or proper type guards instead
+// Ban type assertions and type narrowing operators
+// These operators bypass TypeScript's type inference without runtime validation
+// Enforcement: error level (blocks code that uses type assertions)
+//
+// Patterns matched:
+// - as T (type assertion)
+// - <T> (angle-bracket type assertion, JSX-incompatible)
+// - satisfies T (type narrowing operator)
+//
+// Rationale:
+// - Type assertions tell TypeScript "trust me" without runtime checks
+// - They break type safety by allowing incompatible assignments
+// - satisfies allows type widening without explicit type assignment
+// - All bypass proper type validation at runtime
+// - As any completely disables type checking for the value
+// - Even 'as unknown' is safer because it requires type narrowing to use
+//
+// Type-safe alternatives:
+// 1. Use Schema.decodeUnknown() for runtime validation (Effect-TS)
+// 2. Add proper type guards to narrow types
+// 3. Use explicit type annotations with proper validation
+// 4. Refactor code to satisfy type constraints
+// 5. Use 'as const' for literal types (not general type assertions)
+//
+// Example fixes:
+//
+// ❌ WRONG: Using type assertions
+// const x = functionWithWrongReturnType() as string;
+// const y = <SomeType>value;                          // Angle-bracket syntax
+// const z = { port: 3000 } satisfies Config;        // Type narrowing operator
+// const result = apiResponse as any;                // Defeats all type checking
+//
+// ✅ CORRECT: Use Schema for validation
+// import { Schema } from "effect";
+// const MySchema = Schema.Struct({ port: Schema.Number });
+// const x = Schema.decodeUnknownSync(MySchema)(value);
+//
+// ✅ CORRECT: Use type guards
+// function isString(value: unknown): value is string {
+//   return typeof value === 'string';
+// }
+// if (isString(value)) {
+//   const x = value;  // value is now properly typed
+// }
+//
+// ✅ CORRECT: Use const assertion for literals
+// const config = { port: 3000 } as const;  // Type: { readonly port: 3000 }
+//
+// ✅ CORRECT: Explicit type annotation
+// const config: Config = { port: 3000 };  // Validated at assignment
+
 or {
-  // 'as' type assertion
+  // Pattern 1: 'as' type assertion (any type, including as any)
   `$expr as $type` where {
     register_diagnostic(
-      span = $expr,
-      message = "Type assertions are not allowed. Use Schema.decodeUnknown or proper type guards for type narrowing.",
+      span = $_,
+      message = "Type assertions are not allowed. Use Schema.decodeUnknown() for runtime validation or type guards for type narrowing. See docs/LINTING_POLICY.md for type-safe alternatives.",
       severity = "error"
     )
   },
 
-  // Angle-bracket type assertion (less common, JSX-incompatible)
+  // Pattern 2: Angle-bracket type assertion (JSX-incompatible syntax)
   `<$type>$expr` where {
     register_diagnostic(
-      span = $expr,
-      message = "Type assertions are not allowed. Use Schema.decodeUnknown or proper type guards for type narrowing.",
+      span = $_,
+      message = "Angle-bracket type assertions are not allowed. Use Schema.decodeUnknown() for runtime validation or type guards for type narrowing. See docs/LINTING_POLICY.md for alternatives.",
+      severity = "error"
+    )
+  },
+
+  // Pattern 3: satisfies operator (from consolidated ban-satisfies.grit)
+  `$expr satisfies $type` where {
+    register_diagnostic(
+      span = $_,
+      message = "The 'satisfies' operator bypasses proper type assignment. Use 'as const' for literals or explicit type annotation with Schema validation. See docs/LINTING_POLICY.md for guidance.",
       severity = "error"
     )
   }

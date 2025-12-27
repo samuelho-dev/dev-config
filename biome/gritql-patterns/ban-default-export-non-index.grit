@@ -9,6 +9,6 @@ language js
   register_diagnostic(
     span = $_,
     message = "Prefer named exports over default exports for better refactoring and discoverability.",
-    severity = "warning"
+    severity = "warn"
   )
 }

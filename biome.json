@@ -28,10 +28,16 @@
       "style": {
         "useImportType": "error",
         "useExportType": "error",
-        "noNonNullAssertion": "warn"
+        "noNonNullAssertion": "warn",
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": {
+            "syntax": "shorthand"
+          }
+        }
       },
       "suspicious": {
-        "noExplicitAny": "warn",
+        "noExplicitAny": "error",
         "noConsole": "warn"
       }
     }
