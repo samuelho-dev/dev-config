@@ -11,73 +11,46 @@ in {
     enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
-      description = "Enable Python 3 with pip and common development packages";
+      description = "Enable Python 3 runtime with pip";
     };
 
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.python3;
-      description = "Python package to use";
-    };
-
-    enablePip = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Include pip in Python environment";
-    };
-
-    packages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [];
-      description = "Additional Python packages to install globally";
-      example = lib.literalExpression "[pkgs.python3Packages.numpy pkgs.python3Packages.pandas]";
+    version = lib.mkOption {
+      type = lib.types.str;
+      default = "python313";
+      description = "Python version to use (python311, python312, python313, etc.)";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    # Install Python with pip
+    # Install Python with pip using withPackages pattern
+    # This creates a proper environment where 'python' and 'pip' both work
     home.packages = [
-      (cfg.package.withPackages (
-        ps:
-          [
-            # Core development packages
-            ps.pip
-            ps.setuptools
-            ps.wheel
-            ps.virtualenv
-            ps.pipenv
-
-            # Common utilities
-            ps.pytest
-            ps.black
-            ps.ruff
-            ps.mypy
-            ps.isort
-          ]
-          ++ cfg.packages
-      ))
+      (pkgs.${cfg.version}.withPackages (ps: [
+        ps.pip
+        ps.setuptools
+      ]))
     ];
 
-    # Create a shell hook for Python virtual environments
+    # Shell utilities for Python development
     programs.zsh.initContent = lib.mkIf (config.programs.zsh.enable) ''
-      # Python utilities
+      # Python development utilities
 
-      # Create virtual environment quickly
+      # Create and activate virtual environment
       pyvenv() {
         local venv_dir="''${1:-.venv}"
-        ${cfg.package}/bin/python -m venv "$venv_dir"
+        python -m venv "$venv_dir"
         echo "✓ Virtual environment created at: $venv_dir"
         echo "  Activate with: source $venv_dir/bin/activate"
       }
 
-      # Quick pip install in current environment
+      # Quick pip install
       pipinstall() {
-        ${cfg.package}/bin/python -m pip install "$@"
+        python -m pip install "$@"
       }
 
       # List installed packages
       piplist() {
-        ${cfg.package}/bin/python -m pip list
+        python -m pip list
       }
     '';
   };

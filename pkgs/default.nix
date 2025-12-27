@@ -87,7 +87,11 @@ in {
   runtimes = [
     pkgs.nodejs_20
     pkgs.bun
-    pkgs.python3
+    # Python 3 with pip for package management
+    (pkgs.python3.withPackages (ps: [
+      ps.pip
+      ps.setuptools
+    ]))
   ];
 
   # Kubernetes ecosystem tools
