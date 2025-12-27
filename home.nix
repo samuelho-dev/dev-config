@@ -106,8 +106,8 @@
     opencode = {
       enable = true;
 
-      # Use project-level configs (via .opencode/ symlink), not global
-      exportConfig = false;
+      # Export global configs to ~/.config/opencode/ for init-workspace
+      exportConfig = true;
 
       # Additional OpenCode plugins (managed via Nix)
       additionalPlugins = [
