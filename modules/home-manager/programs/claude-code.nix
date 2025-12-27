@@ -166,9 +166,10 @@ in {
 
     # Export Claude Code configs to ~/.config/claude-code/ for lib.devShellHook
     xdg.configFile = lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
-      # NEW: Pull from centralized ai/ directory
+      # Pull from centralized ai/ directory
       "claude-code/agents".source = cfg.configSource + "/../ai/agents";
       "claude-code/commands".source = cfg.configSource + "/../ai/commands";
+      "claude-code/hooks".source = cfg.configSource + "/../ai/hooks";
 
       # Templates and settings stay in .claude
       "claude-code/templates".source = cfg.configSource + "/templates";

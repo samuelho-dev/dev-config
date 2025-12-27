@@ -2,7 +2,7 @@
 
 ## Overview
 
-dev-config provides a shareable Biome configuration that standardizes linting and formatting across all consuming projects. The configuration is managed via a Home Manager module that generates `~/.config/biome/biome.json` at activation time.
+dev-config provides a shareable Biome configuration that standardizes linting and formatting across all consuming projects. The project root `biome.json` is the **source of truth**, and Nix syncs it to `~/.config/biome/biome.json` for editor use.
 
 ## What is Biome?
 
@@ -16,19 +16,21 @@ dev-config provides a shareable Biome configuration that standardizes linting an
 
 ## How It Works
 
-1. **Home Manager Module** (`modules/home-manager/programs/biome.nix`)
-   - Generates `~/.config/biome/biome.json` declaratively from Nix options
-   - Symlinks GritQL patterns to `~/.config/biome/gritql-patterns/`
-   - Installs `biome` package to user environment
+1. **Project Root Config** (`biome.json`)
+    - Source of truth for all Biome rules
+    - Contains complete linting and formatting configuration
+    - Project-based, portable, and editor-agnostic
 
-2. **Consumer Projects** extend from the generated config:
-   ```json
-   {
-     "extends": ["~/.config/biome/biome.json"]
-   }
-   ```
+2. **Nix Sync** (`modules/home-manager/programs/biome.nix`)
+    - Symlinks `biome.json` to `~/.config/biome/biome.json`
+    - Symlinks GritQL patterns to `~/.config/biome/gritql-patterns/`
+    - Installs `biome` package to user environment
 
-3. **Pre-commit Hook** runs Biome on staged JS/TS/JSON files
+3. **Editor Integration**
+    - All editors reference the root `biome.json` file directly
+    - No extends needed - configuration is self-contained
+
+4. **Pre-commit Hook** runs Biome on staged JS/TS/JSON files
 
 ## Installation
 

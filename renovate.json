@@ -8,11 +8,7 @@
     ":separateMajorReleases"
   ],
   "timezone": "America/Los_Angeles",
-  "schedule": [
-    "after 10pm every weekday",
-    "before 5am every weekday",
-    "every weekend"
-  ],
+  "schedule": ["after 10pm every weekday", "before 5am every weekday", "every weekend"],
   "labels": ["dependencies", "renovate"],
   "assignees": ["samuelho-dev"],
   "reviewers": ["samuelho-dev"],
@@ -102,14 +98,7 @@
   "commitBody": "🤖 Generated with [Renovate](https://renovatebot.com)\n\nCo-Authored-By: Renovate Bot <bot@renovateapp.com>",
   "prCreation": "immediate",
   "prBodyTemplate": "{{{header}}}{{{table}}}{{{notes}}}{{{changelogs}}}{{{configDescription}}}{{{controls}}}{{{footer}}}",
-  "prBodyColumns": [
-    "Package",
-    "Change",
-    "Type",
-    "Update",
-    "New value",
-    "References"
-  ],
+  "prBodyColumns": ["Package", "Change", "Type", "Update", "New value", "References"],
   "vulnerabilityAlerts": {
     "enabled": true,
     "labels": ["security", "vulnerability"],
@@ -125,9 +114,5 @@
   "semanticCommits": "enabled",
   "commitMessageExtra": "to {{newVersion}}",
   "gitAuthor": "Renovate Bot <bot@renovateapp.com>",
-  "enabledManagers": [
-    "nix",
-    "pre-commit",
-    "github-actions"
-  ]
+  "enabledManagers": ["nix", "pre-commit", "github-actions"]
 }

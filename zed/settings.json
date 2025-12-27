@@ -13,7 +13,7 @@
   "lsp": {
     "biome": {
       "settings": {
-        "config_path": "~/.config/biome/biome.json"
+        "config_path": "./biome.json"
       }
     }
   },

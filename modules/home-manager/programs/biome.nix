@@ -15,6 +15,12 @@
     then "${inputs.dev-config}/biome"
     else ../../../biome;
 
+  # Path to root biome.json configuration
+  biomeJsonPath =
+    if inputs ? dev-config
+    then "${inputs.dev-config}/biome.json"
+    else ../../../biome.json;
+
   # Build the biome.json configuration from Nix options
   biomeConfig = {
     "$schema" = "https://biomejs.dev/schemas/2.3.8/schema.json";
@@ -457,8 +463,8 @@ in {
 
     # Export biome.json to ~/.config/biome/
     xdg.configFile = lib.mkIf cfg.exportConfig {
-      "biome/biome.json" = {
-        text = biomeJsonContent;
+      "biome/biome.json" = lib.mkIf (biomeJsonPath != null) {
+        source = biomeJsonPath;
       };
 
       # Symlink .biomeignore file

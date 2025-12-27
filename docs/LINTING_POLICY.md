@@ -5,7 +5,7 @@ updated: 2025-12-26
 relates_to:
   - ../CLAUDE.md
   - ../biome/CLAUDE.md
-  - ../biome/biome-base.json
+  - ../biome.json
   - ../.pre-commit-config.yaml
 ---
 
@@ -38,7 +38,7 @@ This policy prevents AI assistants from introducing:
 Applies to:
 - All AI agents (Claude Code, OpenCode, ChatGPT, etc.)
 - All configuration modifications:
-  - `biome.json` and `biome-base.json`
+  - `biome.json` (project root - source of truth)
   - `tsconfig.json` and `tsconfig.*.json`
   - `.pre-commit-config.yaml`
   - `biome/gritql-patterns/*.grit`
@@ -236,7 +236,7 @@ This requires:
 
 ### Biome Linting Rules
 
-**Files:** `biome/biome-base.json` and Biome config
+**Files:** `biome.json` (project root - source of truth)
 
 **Key rules blocking type workarounds:**
 ```json

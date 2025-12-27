@@ -26,24 +26,24 @@
  * }
  */
 
-import { existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import {
   type CreateNodesContextV2,
   type CreateNodesV2,
   createNodesFromFiles,
-  type TargetConfiguration,
-} from '@nx/devkit';
+  type TargetConfiguration
+} from '@nx/devkit'
 
 export interface BiomePluginOptions {
   /** Target name for combined check (lint + format). Default: "biome-check" */
-  checkTargetName?: string;
+  checkTargetName?: string
   /** Target name for lint only. Default: "biome-lint" */
-  lintTargetName?: string;
+  lintTargetName?: string
   /** Target name for format with write. Default: "biome-format" */
-  formatTargetName?: string;
+  formatTargetName?: string
   /** Target name for CI mode. Default: "biome-ci" */
-  ciTargetName?: string;
+  ciTargetName?: string
 }
 
 export const createNodesV2: CreateNodesV2<BiomePluginOptions> = [
@@ -53,35 +53,35 @@ export const createNodesV2: CreateNodesV2<BiomePluginOptions> = [
       (configFile, options, context) => createNodesInternal(configFile, options, context),
       configFiles,
       options,
-      context,
-    );
-  },
-];
+      context
+    )
+  }
+]
 
 function createNodesInternal(
   configFilePath: string,
   options: BiomePluginOptions | undefined,
-  context: CreateNodesContextV2,
+  context: CreateNodesContextV2
 ) {
-  const root = dirname(configFilePath);
+  const root = dirname(configFilePath)
 
   // Skip root biome.json - only process package-level configs
   if (root === '.') {
-    return {};
+    return {}
   }
 
   // Verify this is a valid package directory
-  const hasPackageJson = existsSync(join(context.workspaceRoot, root, 'package.json'));
-  const hasProjectJson = existsSync(join(context.workspaceRoot, root, 'project.json'));
+  const hasPackageJson = existsSync(join(context.workspaceRoot, root, 'package.json'))
+  const hasProjectJson = existsSync(join(context.workspaceRoot, root, 'project.json'))
 
   if (!(hasPackageJson || hasProjectJson)) {
-    return {};
+    return {}
   }
 
-  const checkTargetName = options?.checkTargetName ?? 'biome-check';
-  const lintTargetName = options?.lintTargetName ?? 'biome-lint';
-  const formatTargetName = options?.formatTargetName ?? 'biome-format';
-  const ciTargetName = options?.ciTargetName ?? 'biome-ci';
+  const checkTargetName = options?.checkTargetName ?? 'biome-check'
+  const lintTargetName = options?.lintTargetName ?? 'biome-lint'
+  const formatTargetName = options?.formatTargetName ?? 'biome-format'
+  const ciTargetName = options?.ciTargetName ?? 'biome-ci'
 
   // Input files that affect cache invalidation
   const baseInputs = [
@@ -91,9 +91,9 @@ function createNodesInternal(
     '{projectRoot}/biome.json',
     '{workspaceRoot}/tools/gritql-patterns/**/*.grit',
     {
-      externalDependencies: ['@biomejs/biome'],
-    },
-  ];
+      externalDependencies: ['@biomejs/biome']
+    }
+  ]
 
   const targets: Record<string, TargetConfiguration> = {
     // Combined check: lint + format in one command
@@ -102,7 +102,7 @@ function createNodesInternal(
       cache: true,
       inputs: baseInputs,
       options: {
-        cwd: '{workspaceRoot}',
+        cwd: '{workspaceRoot}'
       },
       metadata: {
         description: 'Run Biome linter and formatter checks (no fixes applied)',
@@ -111,11 +111,11 @@ function createNodesInternal(
           example: {
             options: {
               '--write': 'Apply safe fixes',
-              '--unsafe': 'Apply safe + unsafe fixes',
-            },
-          },
-        },
-      },
+              '--unsafe': 'Apply safe + unsafe fixes'
+            }
+          }
+        }
+      }
     },
 
     // Lint only
@@ -124,7 +124,7 @@ function createNodesInternal(
       cache: true,
       inputs: baseInputs,
       options: {
-        cwd: '{workspaceRoot}',
+        cwd: '{workspaceRoot}'
       },
       metadata: {
         description: 'Run Biome linter only',
@@ -132,11 +132,11 @@ function createNodesInternal(
           command: `nx ${lintTargetName} <project>`,
           example: {
             options: {
-              '--write': 'Apply safe fixes',
-            },
-          },
-        },
-      },
+              '--write': 'Apply safe fixes'
+            }
+          }
+        }
+      }
     },
 
     // Format with write
@@ -145,15 +145,15 @@ function createNodesInternal(
       cache: true,
       inputs: baseInputs,
       options: {
-        cwd: '{workspaceRoot}',
+        cwd: '{workspaceRoot}'
       },
       metadata: {
         description: 'Format code with Biome formatter',
         help: {
           command: `nx ${formatTargetName} <project>`,
-          example: {},
-        },
-      },
+          example: {}
+        }
+      }
     },
 
     // CI mode: check without writing, strict exit codes
@@ -162,24 +162,24 @@ function createNodesInternal(
       cache: true,
       inputs: baseInputs,
       options: {
-        cwd: '{workspaceRoot}',
+        cwd: '{workspaceRoot}'
       },
       metadata: {
         description:
           'Run Biome checks in CI mode (no fixes, strict). Exits with error if any issues found.',
         help: {
           command: `nx ${ciTargetName} <project>`,
-          example: {},
-        },
-      },
-    },
-  };
+          example: {}
+        }
+      }
+    }
+  }
 
   return {
     projects: {
       [root]: {
-        targets,
-      },
-    },
-  };
+        targets
+      }
+    }
+  }
 }
