@@ -72,29 +72,41 @@
     #   shellHook = dev-config.lib.devShellHook;
     lib.devShellHook = ''
       # ====== Editor Configs (symlink from dev-config Nix store) ======
+      # NOTE: Symlinks are ALWAYS updated to handle flake updates (ln -sfn forces replacement).
+      # This prevents crashes when Nix store paths change after `nix flake update`.
 
       # Claude Code (with ai/commands and ai/agents subdirectories)
+      _claude_created=false
       if [ ! -d .claude ]; then
         mkdir -p .claude
-        ln -sfn ${self}/ai/commands .claude/commands
-        ln -sfn ${self}/ai/agents .claude/agents
-        # Copy settings from template for user customization
-        if [ ! -f .claude/settings.json ] && [ -f ${self}/.claude/settings.json ]; then
-          cp ${self}/.claude/settings.json .claude/settings.json
-        fi
+        _claude_created=true
+      fi
+      # Always update symlinks to handle flake updates
+      ln -sfn ${self}/ai/commands .claude/commands
+      ln -sfn ${self}/ai/agents .claude/agents
+      # Copy settings only on first creation (preserve user customizations)
+      if [ ! -f .claude/settings.json ] && [ -f ${self}/.claude/settings.json ]; then
+        cp ${self}/.claude/settings.json .claude/settings.json
+      fi
+      if [ "$_claude_created" = true ]; then
         printf "✓ Linked .claude/ (commands + agents from Nix store)\n"
       fi
 
       # OpenCode (with ai/commands, plugin, tool subdirectories)
+      _opencode_created=false
       if [ ! -d .opencode ]; then
         mkdir -p .opencode
-        ln -sfn ${self}/ai/commands .opencode/command
-        ln -sfn ${self}/.opencode/plugin .opencode/plugin
-        ln -sfn ${self}/.opencode/tool .opencode/tool
-        # Copy base config for user customization
-        if [ ! -f .opencode/opencode.json ] && [ -f ${self}/.opencode/opencode.json ]; then
-          cp ${self}/.opencode/opencode.json .opencode/opencode.json
-        fi
+        _opencode_created=true
+      fi
+      # Always update symlinks to handle flake updates
+      ln -sfn ${self}/ai/commands .opencode/command
+      ln -sfn ${self}/.opencode/plugin .opencode/plugin
+      ln -sfn ${self}/.opencode/tool .opencode/tool
+      # Copy base config only on first creation (preserve user customizations)
+      if [ ! -f .opencode/opencode.json ] && [ -f ${self}/.opencode/opencode.json ]; then
+        cp ${self}/.opencode/opencode.json .opencode/opencode.json
+      fi
+      if [ "$_opencode_created" = true ]; then
         printf "✓ Linked .opencode/ (command/plugin/tool from Nix store)\n"
       fi
 
