@@ -12,6 +12,12 @@ Nix modules must declare parameters alphabetically (`{ config, lib, pkgs, inputs
 ## Testing Guidelines
 Test files should mirror the folder under test (`biome/test/templates.test.ts`) and rely on `bun:test` describe/test/expect helpers. New features require at least a smoke test that exercises rendered templates or generated configs. When modifying Nix logic, verify real machines with `home-manager build` output plus targeted module activation tests; document manual validation steps in PRs if automated tests are impractical.
 
+## Factory Droid Skills Registry
+Specialized capabilities available via the Factory Droid `/skills` menu:
+- **`structural-refactor`**: Codebase-wide structural changes using GritQL patterns (nested Effects, type assertion audits).
+- **`effect-service-architect`**: Standardized scaffolding for Effect v3 services, layers, and tagged errors.
+- **`type-safety-enforcer`**: Proactive elimination of type holes (`as any`, `!`, `@ts-ignore`) with safe remediation paths.
+
 ## Commit & Pull Request Guidelines
 Commits use short, imperative subjects (`nvim: refresh completion defaults`) and describe rationale in the body when touching multiple systems. Squash noisy WIP commits before opening PRs. Every PR must include: a summary of the change, verification steps (`nix flake check`, `bun test`, etc.), screenshots for UI-facing tweaks (e.g., Ghostty themes), and links to any tracking issues. Label PRs with the primary domain (nvim, tmux, nix, tooling) to streamline reviews.
 

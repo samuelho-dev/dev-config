@@ -128,6 +128,7 @@
       ln -sfn ${self}/ai/commands .factory/commands
       ln -sfn ${self}/ai/agents .factory/droids
       ln -sfn ${self}/ai/hooks .factory/hooks
+      ln -sfn ${self}/ai/skills .factory/skills
       # Copy base settings only on first creation (preserve user customizations)
       if [ ! -f .factory/settings.json ] && [ -f ${self}/.factory/settings.json ]; then
         cp ${self}/.factory/settings.json .factory/settings.json
