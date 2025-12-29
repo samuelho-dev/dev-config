@@ -8,5 +8,6 @@ result-*
 # Editor symlinks (managed by dev-config devShellHook)
 .claude
 .opencode
+.factory
 .zed
 .grit

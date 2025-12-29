@@ -1,0 +1,15 @@
+{
+  "model": "opus",
+  "reasoningEffort": "medium",
+  "diffMode": "github",
+  "cloudSessionSync": true,
+  "completionSound": "fx-ok01",
+  "awaitingInputSound": "fx-ack01",
+  "soundFocusMode": "always",
+  "todoDisplayMode": "pinned",
+  "includeCoAuthoredByDroid": true,
+  "enableDroidShield": true,
+  "enableCustomDroids": true,
+  "specSaveEnabled": true,
+  "specSaveDir": ".factory/specs"
+}

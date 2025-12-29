@@ -49,6 +49,13 @@ secrets/*.yaml
 # Editor configs
 .vscode/
 .idea/
+.claude
+.opencode
+.factory/commands
+.factory/droids
+.factory/hooks
+.zed
+.grit
 
 # Nix build outputs
 result

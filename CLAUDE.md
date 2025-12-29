@@ -182,13 +182,14 @@ Auto-creates project-level editor configurations on `nix develop`:
 |-----------|----------|---------|------------|
 | `.claude/` | commands/, agents/, settings.json | Claude Code integration | Symlinked from Nix store + user customization |
 | `.opencode/` | command/, plugin/, tool/ | OpenCode AI assistant | Symlinked from Nix store + user customization |
+| `.factory/` | commands/, droids/, hooks/ | Factory Droid integration | Symlinked from Nix store + user customization |
 | `.zed/` | Full Zed editor config | Zed editor configuration | Symlinked from Nix store (read-only) |
 | `.grit/` | GritQL patterns | GritQL linting rules | Symlinked from Nix store (read-only) |
 | `biome.json` | Config extends ~/.config/biome/ | Biome formatter/linter | Auto-generated if missing |
 
 ### Key Implementation Details
 
-- **Symlink strategy**: Full-directory symlinks for configs without internal relative paths (.zed, .grit), subdirectory symlinks for configs with user customization (.claude, .opencode)
+- **Symlink strategy**: Full-directory symlinks for configs without internal relative paths (.zed, .grit), subdirectory symlinks for configs with user customization (.claude, .opencode, .factory)
 - **Nix store paths**: Uses `${self}` references in flake.nix to handle symlinks correctly in `/nix/store`
 - **User customization**: Copies default settings.json and opencode.json on first run for user to customize
 - **Idempotent**: Checks `if [ ! -d .claude ]` to avoid overwriting user changes

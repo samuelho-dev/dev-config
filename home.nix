@@ -102,6 +102,9 @@
     # Claude Code multi-profile authentication (native OAuth token management)
     claude-code.enable = true;
 
+    # Factory Droid integration
+    factory-droid.enable = true;
+
     # OpenCode with LiteLLM fallback (prefers proxy when available, falls back to direct API)
     opencode = {
       enable = true;

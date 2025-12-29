@@ -98,16 +98,42 @@
         mkdir -p .opencode
         _opencode_created=true
       fi
-      # Always update symlinks to handle flake updates
-      ln -sfn ${self}/ai/commands .opencode/command
-      ln -sfn ${self}/.opencode/plugin .opencode/plugin
-      ln -sfn ${self}/.opencode/tool .opencode/tool
+      # Use copy instead of symlinks to allow writing (e.g. for /export command)
+      rm -rf .opencode/command .opencode/plugin .opencode/tool
+
+      cp -Lr ${self}/ai/commands .opencode/command
+      chmod -R +w .opencode/command
+
+      cp -Lr ${self}/.opencode/plugin .opencode/plugin
+      chmod -R +w .opencode/plugin
+
+      cp -Lr ${self}/.opencode/tool .opencode/tool
+      chmod -R +w .opencode/tool
+
       # Copy base config only on first creation (preserve user customizations)
       if [ ! -f .opencode/opencode.json ] && [ -f ${self}/.opencode/opencode.json ]; then
         cp ${self}/.opencode/opencode.json .opencode/opencode.json
       fi
       if [ "$_opencode_created" = true ]; then
         printf "✓ Linked .opencode/ (command/plugin/tool from Nix store)\n"
+      fi
+
+      # Factory Droid (.factory)
+      _factory_created=false
+      if [ ! -d .factory ]; then
+        mkdir -p .factory
+        _factory_created=true
+      fi
+      # Always update symlinks to handle flake updates
+      ln -sfn ${self}/ai/commands .factory/commands
+      ln -sfn ${self}/ai/agents .factory/droids
+      ln -sfn ${self}/ai/hooks .factory/hooks
+      # Copy base settings only on first creation (preserve user customizations)
+      if [ ! -f .factory/settings.json ] && [ -f ${self}/.factory/settings.json ]; then
+        cp ${self}/.factory/settings.json .factory/settings.json
+      fi
+      if [ "$_factory_created" = true ]; then
+        printf "✓ Linked .factory/ (commands + droids from Nix store)\n"
       fi
 
       # Zed (full directory symlink - no relative symlinks inside)
@@ -148,6 +174,7 @@
         };
 
         shellHook = ''
+          ${self.lib.devShellHook}
           SENTINEL="$PWD/.direnv/.dev-config-loaded"
 
           if [ ! -f "$SENTINEL" ] || [ "''${DEV_CONFIG_VERBOSE:-0}" = "1" ]; then
