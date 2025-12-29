@@ -46,17 +46,6 @@ secrets/*.yaml
 # Tmux plugin data (managed by TPM)
 # Note: TPM itself should be in ~/.tmux/plugins/, not in this repo
 
-# Editor configs
-.vscode/
-.idea/
-.claude
-.opencode
-.factory/commands
-.factory/droids
-.factory/hooks
-.zed
-.grit
-
 # Nix build outputs
 result
 result-*

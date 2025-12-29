@@ -1,14 +1,92 @@
 {
-  "vim_mode": true,
-  "relative_line_numbers": true,
-  "cursor_blink": false,
-  "format_on_save": "on",
-  "buffer_font_family": "JetBrainsMono Nerd Font",
-  "buffer_font_size": 14,
   "auto_install_extensions": {
     "biome": true,
+    "catppuccin": true,
+    "git_firefly": true,
     "lua": true,
+    "nix": true,
     "ruff": true
+  },
+  "buffer_font_family": "JetBrainsMono Nerd Font",
+  "buffer_font_size": 14,
+  "cursor_blink": false,
+  "format_on_save": "on",
+  "languages": {
+    "JSON": {
+      "code_actions_on_format": {
+        "source.fixAll.biome": true
+      },
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      }
+    },
+    "JavaScript": {
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      }
+    },
+    "Lua": {
+      "formatter": {
+        "external": {
+          "arguments": ["--stdin-filepath", "{buffer_path}", "-"],
+          "command": "stylua"
+        }
+      }
+    },
+    "Markdown": {
+      "formatter": {
+        "external": {
+          "arguments": ["--stdin-filepath", "{buffer_path}"],
+          "command": "prettier"
+        }
+      }
+    },
+    "Python": {
+      "formatter": {
+        "external": {
+          "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"],
+          "command": "ruff"
+        }
+      }
+    },
+    "TSX": {
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      }
+    },
+    "TypeScript": {
+      "code_actions_on_format": {
+        "source.fixAll.biome": true,
+        "source.organizeImports.biome": true
+      },
+      "formatter": {
+        "language_server": {
+          "name": "biome"
+        }
+      }
+    },
+    "YAML": {
+      "formatter": {
+        "external": {
+          "arguments": ["--stdin-filepath", "{buffer_path}"],
+          "command": "prettier"
+        }
+      }
+    }
   },
   "lsp": {
     "biome": {
@@ -17,68 +95,13 @@
       }
     }
   },
-  "languages": {
-    "TypeScript": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true
-      }
-    },
-    "TSX": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true
-      }
-    },
-    "JavaScript": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true,
-        "source.organizeImports.biome": true
-      }
-    },
-    "JSON": {
-      "formatter": { "language_server": { "name": "biome" } },
-      "code_actions_on_format": {
-        "source.fixAll.biome": true
-      }
-    },
-    "Lua": {
-      "formatter": {
-        "external": {
-          "command": "stylua",
-          "arguments": ["--stdin-filepath", "{buffer_path}", "-"]
-        }
-      }
-    },
-    "Python": {
-      "formatter": {
-        "external": {
-          "command": "ruff",
-          "arguments": ["format", "--stdin-filename", "{buffer_path}", "-"]
-        }
-      }
-    },
-    "YAML": {
-      "formatter": {
-        "external": {
-          "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
-    },
-    "Markdown": {
-      "formatter": {
-        "external": {
-          "command": "prettier",
-          "arguments": ["--stdin-filepath", "{buffer_path}"]
-        }
-      }
+  "relative_line_numbers": true,
+  "terminal": {
+    "copy_on_selection": true,
+    "shell": {
+      "program": "zsh"
     }
   },
-  "terminal": {
-    "shell": { "program": "zsh" }
-  }
+  "vertical_scroll_margin": 5,
+  "vim_mode": true
 }

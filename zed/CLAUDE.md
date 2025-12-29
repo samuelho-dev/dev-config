@@ -82,19 +82,23 @@ Keybindings designed to match LazyVim/Neovim muscle memory.
 
 #### Space Leader Bindings (Normal/Visual Mode)
 
+Uses `VimControl && !VimWaiting` context for instant triggering.
+
 | Keybinding | Action | Description |
 |------------|--------|-------------|
-| `Space s f` | file_finder::Toggle | Find files (like Telescope) |
-| `Space s g` | pane::DeploySearch | Global search (grep) |
+| `Space Space` | file_finder::Toggle | Find files (LazyVim style) |
+| `Space f f` | file_finder::Toggle | Find files |
+| `Space e` | workspace::ToggleLeftDock | Toggle file explorer |
+| `Space t` | workspace::ToggleBottomDock | Toggle terminal |
+| `Space a a` | assistant::ToggleFocus | Toggle AI Assistant |
+| `Space s g` | workspace::NewSearch | Global search (grep) |
 | `Space s d` | diagnostics::Deploy | Show diagnostics |
-| `Space Space` | tab_switcher::Toggle | Switch buffers |
-| `Space /` | buffer_search::Deploy | Search in buffer |
-| `Space e` | project_panel::ToggleFocus | Toggle file explorer |
-| `\` | project_panel::ToggleFocus | Alt toggle for explorer |
+| `Space /` | workspace::NewSearch | Global search |
 | `Space f` | editor::Format | Format document |
 | `Space g g` | git_panel::ToggleFocus | Toggle git panel |
-| `Space t` | terminal_panel::ToggleFocus | Toggle terminal |
 | `Space q` | pane::CloseActiveItem | Close current tab |
+| `Space b d` | pane::CloseActiveItem | Close current tab |
+| `Space ,` | tab_switcher::Toggle | Switch buffers |
 
 #### Go-to Bindings (Normal Mode)
 
@@ -109,7 +113,9 @@ Keybindings designed to match LazyVim/Neovim muscle memory.
 | `] d` | editor::GoToDiagnostic | Next diagnostic |
 | `[ d` | editor::GoToPrevDiagnostic | Previous diagnostic |
 
-#### Pane Navigation (Normal Mode)
+#### Global Pane Navigation
+
+Works in Editor, Terminal, and Docks.
 
 | Keybinding | Action | Description |
 |------------|--------|-------------|
