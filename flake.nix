@@ -81,9 +81,15 @@
         mkdir -p .claude
         _claude_created=true
       fi
-      # Always update symlinks to handle flake updates
-      ln -sfn ${self}/ai/commands .claude/commands
-      ln -sfn ${self}/ai/agents .claude/agents
+      # Use copy instead of symlinks to allow creating new agents/commands
+      rm -rf .claude/commands .claude/agents
+
+      cp -Lr ${self}/ai/commands .claude/commands
+      chmod -R +w .claude/commands
+
+      cp -Lr ${self}/ai/agents .claude/agents
+      chmod -R +w .claude/agents
+
       # Copy settings only on first creation (preserve user customizations)
       if [ ! -f .claude/settings.json ] && [ -f ${self}/.claude/settings.json ]; then
         cp ${self}/.claude/settings.json .claude/settings.json
@@ -124,11 +130,21 @@
         mkdir -p .factory
         _factory_created=true
       fi
-      # Always update symlinks to handle flake updates
-      ln -sfn ${self}/ai/commands .factory/commands
-      ln -sfn ${self}/ai/agents .factory/droids
-      ln -sfn ${self}/ai/hooks .factory/hooks
-      ln -sfn ${self}/ai/skills .factory/skills
+      # Use copy instead of symlinks to allow creating new agents/commands
+      rm -rf .factory/commands .factory/droids .factory/hooks .factory/skills
+
+      cp -Lr ${self}/ai/commands .factory/commands
+      chmod -R +w .factory/commands
+
+      cp -Lr ${self}/ai/agents .factory/droids
+      chmod -R +w .factory/droids
+
+      cp -Lr ${self}/ai/hooks .factory/hooks
+      chmod -R +w .factory/hooks
+
+      cp -Lr ${self}/ai/skills .factory/skills
+      chmod -R +w .factory/skills
+
       # Copy base settings only on first creation (preserve user customizations)
       if [ ! -f .factory/settings.json ] && [ -f ${self}/.factory/settings.json ]; then
         cp ${self}/.factory/settings.json .factory/settings.json

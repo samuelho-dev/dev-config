@@ -20,12 +20,35 @@ local function log(msg)
   end
 end
 
+-- Normalize filetype to the parser language name we expect
+local function parser_lang_from_filetype(ft)
+  if ft == 'javascript' or ft == 'javascriptreact' then
+    return 'javascript'
+  elseif ft == 'typescriptreact' then
+    return 'tsx'
+  end
+  return ft
+end
+
 --- Check if tree-sitter parser is available for the given language
 --- @param lang string Language name (e.g., 'typescript')
 --- @return boolean available True if parser is installed
 function M.has_parser(lang)
-  local ok, _ = pcall(vim.treesitter.get_parser, 0, lang)
-  return ok
+  -- Prefer the native require helper which just checks availability
+  if pcall(vim.treesitter.language.require_language, lang) then
+    return true
+  end
+
+  -- Fall back to nvim-treesitter's parser registry (if available)
+  local parsers_ok, parsers = pcall(require, 'nvim-treesitter.parsers')
+  if parsers_ok and parsers and parsers.has_parser then
+    local status, result = pcall(parsers.has_parser, lang)
+    if status then
+      return result
+    end
+  end
+
+  return false
 end
 
 --- Find all return type annotations in buffer using tree-sitter
@@ -36,12 +59,7 @@ function M.find_return_types(bufnr)
 
   -- Get filetype and determine parser language
   local ft = vim.bo[bufnr].filetype
-  local lang = 'typescript'
-  if ft == 'javascript' or ft == 'javascriptreact' then
-    lang = 'javascript'
-  elseif ft == 'typescriptreact' then
-    lang = 'tsx'
-  end
+  local lang = parser_lang_from_filetype(ft ~= '' and ft or 'typescript')
 
   log(string.format('Filetype: %s, Parser lang: %s', ft, lang))
 
@@ -242,12 +260,7 @@ function M.test_query(bufnr)
   local ft = vim.bo[bufnr].filetype
   print(string.format('Filetype: %s', ft))
 
-  local lang = 'typescript'
-  if ft == 'javascript' or ft == 'javascriptreact' then
-    lang = 'javascript'
-  elseif ft == 'typescriptreact' then
-    lang = 'tsx'
-  end
+  local lang = parser_lang_from_filetype(ft ~= '' and ft or 'typescript')
 
   print(string.format('Parser language: %s', lang))
 
@@ -275,13 +288,7 @@ function M.setup(opts)
   -- Validate tree-sitter availability for configured filetypes
   local missing_parsers = {}
   for _, ft in ipairs(M.config.filetypes) do
-    local lang = ft
-    if ft == 'typescriptreact' then
-      lang = 'tsx'
-    elseif ft == 'javascriptreact' then
-      lang = 'jsx'
-    end
-
+    local lang = parser_lang_from_filetype(ft)
     if not M.has_parser(lang) then
       table.insert(missing_parsers, lang)
     end
