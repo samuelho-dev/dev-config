@@ -4,26 +4,33 @@
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
-        "type": "command",
-        "command": "bash ai/hooks/biome-validate.sh",
-        "timeout": 120,
-        "description": "Validate Biome linting + GritQL patterns on code generation"
-      },
-      {
-        "matcher": "Write|Edit",
-        "type": "command",
-        "command": "bash ai/hooks/enforce-type-safety.sh",
-        "timeout": 30,
-        "description": "Block type safety violations (as any, @ts-ignore, satisfies, !)"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ai/hooks/biome-validate.sh",
+            "timeout": 120,
+            "description": "Validate Biome linting + GritQL patterns on code generation"
+          },
+          {
+            "type": "command",
+            "command": "bash ai/hooks/enforce-type-safety.sh",
+            "timeout": 30,
+            "description": "Block type safety violations (as any, @ts-ignore, satisfies, !)"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
       {
         "matcher": "*",
-        "type": "command",
-        "command": "bash ai/hooks/check-type-safety-request.sh",
-        "timeout": 10,
-        "description": "Warn if requesting type-safe workarounds"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ai/hooks/check-type-safety-request.sh",
+            "timeout": 10,
+            "description": "Warn if requesting type-safe workarounds"
+          }
+        ]
       }
     ]
   },
