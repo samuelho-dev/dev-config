@@ -29,14 +29,11 @@
     # Note: keySeparator option removed in newer sops-nix (/ is now default)
 
     # Define secrets (matches structure in secrets/default.yaml)
+    # NOTE: Only OP service account token is stored in sops-nix
+    # All other secrets (git config, AI keys) are fetched from 1Password at runtime
     secrets = {
-      # Git configuration (used by git.nix module)
-      "git/userName" = {};
-      "git/userEmail" = {};
-      "git/signingKey" = {};
-
       # 1Password service account token (enables prompt-free `op` CLI)
-      # AI service API keys are fetched from 1Password vault (xsuolbdwx4vmcp3zysjczfatam)
+      # Used by activation scripts to fetch git config and AI keys from 1Password
       "op/service_account_token" = {};
     };
   };
@@ -68,9 +65,9 @@
     # Claude Code: maintain project working directory across bash sessions
     CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
 
-    # Kubernetes: Default kubeconfig for ArgoCD hub cluster (Hetzner)
-    # Required for ArgoCD CLI in core mode (hub-spoke architecture)
-    KUBECONFIG = "${config.home.homeDirectory}/.kube/config-hetzner-prod";
+    # Kubernetes: Combined kubeconfig for all clusters
+    # Includes both hetzner-prod (ArgoCD hub) and homelab contexts
+    KUBECONFIG = "${config.home.homeDirectory}/.kube/config:${config.home.homeDirectory}/.kube/config-hetzner-prod:${config.home.homeDirectory}/.kube/config-homelab";
   };
 
   # Enable dev-config modules (all enabled by default)
@@ -85,6 +82,19 @@
       zshrcSource = null;
       zprofileSource = null;
       p10kSource = null;
+    };
+
+    # Git configuration (public info, not secrets)
+    git = {
+      enable = true;
+      userName = "samuelho-dev";
+      userEmail = "samuelho343@gmail.com";
+      signing = {
+        enable = true;
+        # SSH public key from 1Password (visible in commits, not secret)
+        # Get via: op read "op://Dev/GitHub SSH Key/public key"
+        key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAogjYBaWb3+oWrW1LYqnJVdxjbpRJ/qVSwaGyiznvcX";
+      };
     };
 
     # Enable ghostty (package installed via Homebrew on macOS)
@@ -104,37 +114,6 @@
 
     # Factory Droid integration
     factory-droid.enable = true;
-
-    # OpenCode with LiteLLM fallback (prefers proxy when available, falls back to direct API)
-    opencode = {
-      enable = true;
-
-      # Export global configs to ~/.config/opencode/ for init-workspace
-      exportConfig = true;
-
-      # Additional OpenCode plugins (managed via Nix)
-      additionalPlugins = [
-        "@franlol/opencode-md-table-formatter@0.0.3" # Automatic markdown table formatting
-      ];
-
-      # oh-my-opencode multi-agent orchestration plugin
-      ohMyOpencode = {
-        enable = true;
-        package = "oh-my-opencode@2.4.2"; # Pinned version (prevents update spam)
-
-        # Disable startup toast for cleaner experience
-        disabledHooks = ["startup-toast"];
-
-        # Optional: Disable specific agents (none by default)
-        # disabledAgents = ["oracle"];
-
-        # Optional: Disable specific MCPs (none by default)
-        # disabledMcps = ["websearch_exa"];
-
-        # Use OpenRouter instead of direct Google Auth
-        enableGoogleAuth = false;
-      };
-    };
 
     # NPM authentication (token managed via sops-nix)
     # Add npm/token to secrets/default.yaml

@@ -323,7 +323,7 @@ bash scripts/install.sh
 **What this does:**
 1. Installs Nix package manager via Determinate Systems installer
 2. Enables flakes and configures direnv
-3. Installs all development tools (Neovim, tmux, zsh, Docker, OpenCode, sops)
+3. Installs all development tools (Neovim, tmux, zsh, Docker, sops)
 4. Creates symlinks using battle-tested logic from shared libraries
 5. Sets up Oh My Zsh, Powerlevel10k, and TPM
 6. Auto-installs all Neovim and tmux plugins
@@ -335,15 +335,14 @@ bash scripts/install.sh
 - ✅ **Isolated**: Per-project environments with zero conflicts
 - ✅ **Cross-platform**: Works on macOS (Intel/ARM) and Linux
 - ✅ **Binary cache**: 20x faster builds with Cachix (10 minutes → 30 seconds)
-- ✅ **AI integration**: OpenCode + Neovim (avante.nvim) with sops-nix encrypted API keys and LiteLLM proxy support for team AI management
+- ✅ **AI integration**: Claude Code + Neovim (avante.nvim) with sops-nix encrypted API keys and LiteLLM proxy support for team AI management
 
 **After installation:**
 ```bash
 cd ~/Projects/dev-config  # direnv auto-activates Nix environment
-opencode ask "What should I work on today?"  # Terminal: Uses API keys from sops-nix
+claude ask "What should I work on today?"  # Terminal: Uses LiteLLM proxy + Claude Code
 nvim  # Editor: `:AvanteAsk` for Cursor-like AI coding assistant
-# All tools support both direct API access and LiteLLM proxy (team mode)
-# AI credentials automatically available via sops-env module (zero latency)
+# All tools route through LiteLLM proxy (team mode) with automatic secrets loading
 ```
 
 **Documentation:**
@@ -351,7 +350,6 @@ nvim  # Editor: `:AvanteAsk` for Cursor-like AI coding assistant
 - [Nix Concepts](docs/nix/01-concepts.md) - Understanding Nix
 - [Daily Usage](docs/nix/02-daily-usage.md) - Common workflows
 - [Troubleshooting](docs/nix/03-troubleshooting.md) - Fix issues
-- [OpenCode Integration](docs/nix/04-opencode-integration.md) - AI assistant setup
 - [sops-nix Setup](SETUP_SOPS.md) - Encrypted secrets management
 - [Advanced Guide](docs/nix/06-advanced.md) - Customization
 - [LiteLLM Proxy Setup](docs/nix/07-litellm-proxy-setup.md) - Team AI management with cost tracking

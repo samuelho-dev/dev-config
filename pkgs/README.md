@@ -102,7 +102,7 @@ devShells.default = pkgs.mkShell {
 };
 ```
 
-On `nix develop`, this automatically links `.claude/`, `.opencode/`, `.zed/`, `.grit/` and creates `biome.json`.
+On `nix develop`, this automatically links `.zed/`, `.grit/` and creates `biome.json` (Claude Code + Factory Droid configs live globally under `~/.claude/` and `~/.factory/` via Home Manager).
 
 ## Adding Packages
 

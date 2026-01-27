@@ -25,7 +25,6 @@ dev-config.tmux.enable = false;  # Disable tmux
 | **ghostty** | Ghostty terminal configuration |
 | **yazi** | Terminal file manager |
 | **claude-code** | Claude Code AI assistant |
-| **opencode** | OpenCode AI assistant |
 | **biome** | Linting/formatting configuration |
 | **direnv** | Per-project environments with nix-direnv |
 | **sops-env** | AI secrets from sops-nix |
@@ -89,7 +88,6 @@ modules/home-manager/
 |   +-- ghostty.nix
 |   +-- yazi.nix
 |   +-- claude-code.nix
-|   +-- opencode.nix
 |   +-- biome.nix
 |   +-- npm.nix
 |   +-- typescript-strict.nix

@@ -32,7 +32,7 @@ LiteLLM Proxy is a unified API gateway for multiple LLM providers (Anthropic, Op
 
 ```
 ┌──────────────┐         ┌─────────────────┐         ┌────────────────┐
-│   OpenCode   │────────>│ LiteLLM Proxy   │────────>│ Anthropic API  │
+│ Claude Code  │────────>│ LiteLLM Proxy   │────────>│ Anthropic API  │
 │ (localhost)  │ :4000   │ (k8s cluster)   │         │ (claude models)│
 └──────────────┘         └─────────────────┘         └────────────────┘
                                  │
@@ -48,11 +48,11 @@ LiteLLM Proxy is a unified API gateway for multiple LLM providers (Anthropic, Op
 ```
 
 **Request Flow:**
-1. OpenCode or Neovim sends API request to `http://localhost:4000/v1/chat/completions`
+1. Claude Code or Neovim sends API request to `http://localhost:4000/v1/chat/completions`
 2. kubectl port-forward tunnels request to LiteLLM pod in Kubernetes cluster
 3. LiteLLM authenticates request using `LITELLM_MASTER_KEY`
 4. LiteLLM routes request to appropriate provider (Anthropic, OpenAI, etc.)
-5. Response flows back through proxy to client (OpenCode or Neovim)
+5. Response flows back through proxy to client (Claude Code or Neovim)
 
 ## Prerequisites
 
@@ -166,38 +166,28 @@ If your cluster has Tailscale ingress configured, you can access LiteLLM directl
 
 ```bash
 # No port-forward needed!
-# OpenCode config uses: https://litellm.your-tailnet.ts.net
+# Claude Code env uses: https://litellm.your-tailnet.ts.net
 ```
 
 See ai-dev-env Tailscale documentation for setup.
 
-### Step 3: Verify OpenCode Configuration
+### Step 3: Verify Claude Code Environment
 
-OpenCode should already be configured to use LiteLLM proxy:
+Claude Code picks up LiteLLM settings from environment variables exported by Home Manager. Confirm they exist:
 
 ```bash
-cat ~/.config/opencode/opencode.json
+env | grep ANTHROPIC_
 ```
 
-Expected configuration:
+Expected output:
 
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "provider": {
-    "anthropic": {
-      "options": {
-        "baseURL": "http://localhost:4000",
-        "apiKey": "{env:LITELLM_MASTER_KEY}"
-      }
-    }
-  },
-  "model": "anthropic/claude-3-5-sonnet-20241022",
-  "small_model": "anthropic/claude-3-haiku-20240307"
-}
+```
+ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space
+ANTHROPIC_AUTH_TOKEN=sk-virtual-key...
+ANTHROPIC_CUSTOM_HEADERS=x-litellm-api-key: Bearer sk-virtual-key...
 ```
 
-If this file doesn't exist or is misconfigured, create it with the content above.
+If these variables are missing, re-run `home-manager switch --flake .` and ensure `dev-config.claude-code.litellm` options are enabled.
 
 ### Step 4: Load Credentials
 
@@ -230,10 +220,10 @@ curl http://localhost:4000/health
 # {"status": "healthy"}
 ```
 
-**Test 2: OpenCode Query**
+**Test 2: Claude Code Query**
 
 ```bash
-opencode ask "What is 2+2?"
+claude ask "What is 2+2?"
 
 # Should receive response from Claude via LiteLLM proxy
 ```
@@ -262,8 +252,8 @@ kubectl port-forward -n litellm svc/litellm 4000:4000 &
 # 2. Enter dev-config directory (loads credentials)
 cd ~/Projects/dev-config
 
-# 3. Use OpenCode as normal
-opencode ask "Explain this codebase"
+# 3. Use Claude Code as normal
+claude ask "Explain this codebase"
 ```
 
 **After coding:**
@@ -359,7 +349,7 @@ Neovim (avante.nvim) → http://localhost:4000/v1 (kubectl port-forward)
 
 **Cost Tracking:**
 
-All avante.nvim requests go through LiteLLM proxy, so they're automatically tracked in the dashboard alongside OpenCode usage.
+All avante.nvim requests go through LiteLLM proxy, so they're automatically tracked in the dashboard alongside Claude CLI usage.
 
 **Performance Tips:**
 
@@ -458,12 +448,14 @@ done &
 **Solution:**
 
 ```bash
-# Check available models
+# Check available models exposed by the gateway
 curl http://localhost:4000/v1/models
 
-# Update OpenCode config to use available model
-nvim ~/.config/opencode/opencode.json
+# Use any enabled model directly
+claude --model claude-3-5-haiku-20241022 ask "..."
 ```
+
+If the model is missing from the list, enable it via the LiteLLM dashboard UI (Model Registry → Enable Model).
 
 ### Port-forward keeps disconnecting
 
@@ -474,7 +466,7 @@ nvim ~/.config/opencode/opencode.json
 1. **Use persistent port-forward script** (see Setup Step 2, Option C)
 
 2. **Switch to Tailscale ingress** (recommended for production):
-   - Update OpenCode config to use Tailscale URL
+   - Set `ANTHROPIC_BASE_URL=https://litellm.your-tailnet.ts.net`
    - No port-forward needed
    - More stable connection
 
@@ -484,83 +476,14 @@ nvim ~/.config/opencode/opencode.json
    kubectl describe pod -n litellm <litellm-pod-name>
    ```
 
-## Advanced Configuration
+## Model Management
 
-### Using Different Models
+All model routing, fallbacks, and provider enablement are handled directly inside the LiteLLM dashboard UI. Use the UI to:
+- Add/remove Anthropic, MiniMax, OpenAI, etc. deployments
+- Create virtual keys scoped to specific model groups
+- Set per-user budgets, rate limits, or fallback chains
 
-Update OpenCode config to use different models:
-
-```json
-{
-  "provider": {
-    "anthropic": {
-      "options": {
-        "baseURL": "http://localhost:4000",
-        "apiKey": "{env:LITELLM_MASTER_KEY}"
-      }
-    }
-  },
-  "model": "anthropic/claude-3-opus-20240229",     // Changed to Opus
-  "small_model": "anthropic/claude-3-haiku-20240307"
-}
-```
-
-Available models (check with `curl http://localhost:4000/v1/models`):
-- `anthropic/claude-3-5-sonnet-20241022`
-- `anthropic/claude-3-opus-20240229`
-- `anthropic/claude-3-haiku-20240307`
-- `openai/gpt-4-turbo`
-- `openai/gpt-4`
-- `openai/gpt-3.5-turbo`
-
-### Multiple Environments (dev/staging/prod)
-
-Configure different LiteLLM instances per environment:
-
-```bash
-# Development
-kubectl port-forward -n litellm-dev svc/litellm 4000:4000 &
-
-# Staging
-kubectl port-forward -n litellm-staging svc/litellm 4001:4000 &
-
-# Production
-kubectl port-forward -n litellm-prod svc/litellm 4002:4000 &
-```
-
-Update OpenCode config to use different port:
-
-```json
-{
-  "provider": {
-    "anthropic": {
-      "options": {
-        "baseURL": "http://localhost:4001",  // Staging
-        "apiKey": "{env:LITELLM_MASTER_KEY}"
-      }
-    }
-  }
-}
-```
-
-### Fallback to Direct API
-
-If LiteLLM proxy is unavailable, switch to direct API temporarily:
-
-```json
-{
-  "provider": {
-    "anthropic": {
-      "options": {
-        "baseURL": "https://api.anthropic.com",  // Direct API
-        "apiKey": "{env:ANTHROPIC_API_KEY}"      // Use direct key
-      }
-    }
-  }
-}
-```
-
-This requires `ANTHROPIC_API_KEY` to be loaded (already configured via sops-env module).
+No local config edits are required—dev-config only supplies the base URL and authentication headers so Claude Code always talks to the homelab gateway.
 
 ## Security Best Practices
 
@@ -591,6 +514,6 @@ This requires `ANTHROPIC_API_KEY` to be loaded (already configured via sops-env 
 
 ## Next Steps
 
-- **OpenCode Documentation:** [OpenCode Integration Guide](04-opencode-integration.md)
+- **Claude Code Guidance:** [Repository CLAUDE.md](../../CLAUDE.md)
 - **sops-nix Setup:** [sops-nix Configuration](../../SETUP_SOPS.md)
 - **Advanced Nix:** [Advanced Customization](06-advanced.md)

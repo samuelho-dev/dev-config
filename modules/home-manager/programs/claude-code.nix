@@ -30,8 +30,8 @@ in {
       type = lib.types.bool;
       default = true;
       description = ''
-        Export Claude Code configs to ~/.config/claude-code/.
-        Consumer projects use lib.devShellHook to link .claude/ on nix develop.
+        Export Claude Code configs (agents, commands) directly to ~/.claude/.
+        These are available globally in all projects without project-level sync.
       '';
     };
 
@@ -53,6 +53,33 @@ in {
         This adds "enableAllProjectMcpServers": true to ~/.claude.json.
         Security note: Only enable if you trust all projects you work on.
       '';
+    };
+
+    litellm = {
+      enable =
+        (lib.mkEnableOption "Route Claude Code through LiteLLM gateway")
+        // {default = true;};
+
+      baseUrl = lib.mkOption {
+        type = lib.types.str;
+        default = "https://litellm.infra.samuelho.space";
+        description = "LiteLLM API endpoint (https://host or http://localhost:4000 when port-forwarding).";
+      };
+
+      authTokenEnvVar = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = "LITELLM_MASTER_KEY";
+        description = "Environment variable containing the LiteLLM master/virtual key to forward as ANTHROPIC_AUTH_TOKEN.";
+      };
+
+      customHeaders = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = ["x-litellm-api-key: Bearer $LITELLM_MASTER_KEY"];
+        description = ''
+          Optional headers forwarded with every Claude Code request (newline separated via ANTHROPIC_CUSTOM_HEADERS).
+          Leave empty to disable. Defaults to sending the LiteLLM key header required for Claude Max routing.
+        '';
+      };
     };
 
     profiles = lib.mkOption {
@@ -164,22 +191,52 @@ in {
       ''
     );
 
-    # Export Claude Code configs to ~/.config/claude-code/ for lib.devShellHook
-    xdg.configFile = lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
-      # Pull from centralized ai/ directory
-      "claude-code/agents".source = cfg.configSource + "/../ai/agents";
-      "claude-code/commands".source = cfg.configSource + "/../ai/commands";
-      "claude-code/hooks".source = cfg.configSource + "/../ai/hooks";
+    # Export Claude Code configs directly to ~/.claude/ (global, writable)
+    # These are available in ALL projects automatically via Claude Code's config hierarchy
+    home.activation.exportClaudeConfigs = lib.mkIf (cfg.exportConfig && cfg.configSource != null) (
+      lib.hm.dag.entryAfter ["writeBoundary"] ''
+        # Source paths from dev-config
+        AGENTS_SRC="${cfg.configSource}/../ai/agents"
+        COMMANDS_SRC="${cfg.configSource}/../ai/commands"
 
-      # Templates and settings stay in .claude
-      "claude-code/templates".source = cfg.configSource + "/templates";
+        # Copy agents (writable so user can add new ones)
+        if [ -d "$AGENTS_SRC" ]; then
+          $DRY_RUN_CMD rm -rf "$HOME/.claude/agents"
+          $DRY_RUN_CMD mkdir -p "$HOME/.claude"
+          $DRY_RUN_CMD cp -Lr "$AGENTS_SRC" "$HOME/.claude/agents"
+          $DRY_RUN_CMD chmod -R +w "$HOME/.claude/agents"
+        fi
 
-      # Generate base settings.json (projects copy and extend this)
-      "claude-code/settings-base.json".text = builtins.toJSON cfg.baseSettings;
-    };
+        # Copy commands (writable so user can add new ones)
+        if [ -d "$COMMANDS_SRC" ]; then
+          $DRY_RUN_CMD rm -rf "$HOME/.claude/commands"
+          $DRY_RUN_CMD mkdir -p "$HOME/.claude"
+          $DRY_RUN_CMD cp -Lr "$COMMANDS_SRC" "$HOME/.claude/commands"
+          $DRY_RUN_CMD chmod -R +w "$HOME/.claude/commands"
+        fi
+      ''
+    );
 
-    # Note: Commands/agents/templates are NOT deployed globally to ~/.claude/
-    # They are only available at the project level (.claude/commands/) to avoid duplicates.
-    # Use lib.devShellHook in project flakes to link .claude/ on nix develop.
+    home.sessionVariables = lib.mkIf cfg.litellm.enable (let
+      mkEnvRef = envName: "$" + envName;
+      authToken =
+        if cfg.litellm.authTokenEnvVar == null
+        then null
+        else mkEnvRef cfg.litellm.authTokenEnvVar;
+      customHeadersValue =
+        if cfg.litellm.customHeaders == []
+        then null
+        else lib.concatStringsSep "\n" cfg.litellm.customHeaders;
+    in
+      {
+        ANTHROPIC_BASE_URL = cfg.litellm.baseUrl;
+      }
+      // lib.optionalAttrs (authToken != null) {
+        ANTHROPIC_AUTH_TOKEN = authToken;
+        ANTHROPIC_API_KEY = authToken;
+      }
+      // lib.optionalAttrs (customHeadersValue != null) {
+        ANTHROPIC_CUSTOM_HEADERS = customHeadersValue;
+      });
   };
 }

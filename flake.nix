@@ -64,94 +64,31 @@
     # Usage: nix flake init -t github:samuelho-dev/dev-config
     templates.default = {
       path = ./templates/default;
-      description = "Basic project with dev-config integration (Claude, OpenCode, Zed, GritQL)";
+      description = "Basic project with dev-config integration (Claude, Zed, GritQL)";
     };
 
     # DevShell hook for project-level editor configs
     # Usage in consumer flakes:
     #   shellHook = dev-config.lib.devShellHook;
+    #
+    # NOTE: AI configs (Claude Code, Factory Droid) are now GLOBAL.
+    # They are exported to ~/.claude/ and ~/.factory/ by Home Manager.
+    # No project-level sync is needed - these tools automatically find global configs.
     lib.devShellHook = ''
+      # ====== Setup direnv for zsh integration ======
+      # Creates .envrc so direnv loads the flake into your shell
+      if [ ! -f .envrc ]; then
+        echo "use flake" > .envrc
+        printf "✓ Created .envrc (run 'direnv allow' to enable)\n"
+      fi
+      # Auto-allow if direnv is available and .envrc exists but not allowed
+      if command -v direnv &>/dev/null && [ -f .envrc ]; then
+        if ! direnv status 2>/dev/null | grep -q "Found RC allowed true"; then
+          direnv allow 2>/dev/null || true
+        fi
+      fi
+
       # ====== Editor Configs (symlink from dev-config Nix store) ======
-      # NOTE: Symlinks are ALWAYS updated to handle flake updates (ln -sfn forces replacement).
-      # This prevents crashes when Nix store paths change after `nix flake update`.
-
-      # Claude Code (with ai/commands and ai/agents subdirectories)
-      _claude_created=false
-      if [ ! -d .claude ]; then
-        mkdir -p .claude
-        _claude_created=true
-      fi
-      # Use copy instead of symlinks to allow creating new agents/commands
-      rm -rf .claude/commands .claude/agents
-
-      cp -Lr ${self}/ai/commands .claude/commands
-      chmod -R +w .claude/commands
-
-      cp -Lr ${self}/ai/agents .claude/agents
-      chmod -R +w .claude/agents
-
-      # Copy settings only on first creation (preserve user customizations)
-      if [ ! -f .claude/settings.json ] && [ -f ${self}/.claude/settings.json ]; then
-        cp ${self}/.claude/settings.json .claude/settings.json
-      fi
-      if [ "$_claude_created" = true ]; then
-        printf "✓ Linked .claude/ (commands + agents from Nix store)\n"
-      fi
-
-      # OpenCode (with ai/commands, plugin, tool subdirectories)
-      _opencode_created=false
-      if [ ! -d .opencode ]; then
-        mkdir -p .opencode
-        _opencode_created=true
-      fi
-      # Use copy instead of symlinks to allow writing (e.g. for /export command)
-      rm -rf .opencode/command .opencode/plugin .opencode/tool
-
-      cp -Lr ${self}/ai/commands .opencode/command
-      chmod -R +w .opencode/command
-
-      cp -Lr ${self}/.opencode/plugin .opencode/plugin
-      chmod -R +w .opencode/plugin
-
-      cp -Lr ${self}/.opencode/tool .opencode/tool
-      chmod -R +w .opencode/tool
-
-      # Copy base config only on first creation (preserve user customizations)
-      if [ ! -f .opencode/opencode.json ] && [ -f ${self}/.opencode/opencode.json ]; then
-        cp ${self}/.opencode/opencode.json .opencode/opencode.json
-      fi
-      if [ "$_opencode_created" = true ]; then
-        printf "✓ Linked .opencode/ (command/plugin/tool from Nix store)\n"
-      fi
-
-      # Factory Droid (.factory)
-      _factory_created=false
-      if [ ! -d .factory ]; then
-        mkdir -p .factory
-        _factory_created=true
-      fi
-      # Use copy instead of symlinks to allow creating new agents/commands
-      rm -rf .factory/commands .factory/droids .factory/hooks .factory/skills
-
-      cp -Lr ${self}/ai/commands .factory/commands
-      chmod -R +w .factory/commands
-
-      cp -Lr ${self}/ai/agents .factory/droids
-      chmod -R +w .factory/droids
-
-      cp -Lr ${self}/ai/hooks .factory/hooks
-      chmod -R +w .factory/hooks
-
-      cp -Lr ${self}/ai/skills .factory/skills
-      chmod -R +w .factory/skills
-
-      # Copy base settings only on first creation (preserve user customizations)
-      if [ ! -f .factory/settings.json ] && [ -f ${self}/.factory/settings.json ]; then
-        cp ${self}/.factory/settings.json .factory/settings.json
-      fi
-      if [ "$_factory_created" = true ]; then
-        printf "✓ Linked .factory/ (commands + droids from Nix store)\n"
-      fi
 
       # Zed (full directory symlink - no relative symlinks inside)
       if [ ! -L .zed ] && [ ! -d .zed ]; then

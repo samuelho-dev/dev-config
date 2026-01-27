@@ -19,7 +19,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Centralized development configuration repository using **Nix + Home Manager** for declarative, reproducible dotfile and package management.
 
-**Managed configurations:** Neovim, Tmux, Ghostty, Yazi, Zsh (Oh My Zsh + Powerlevel10k), Git (1Password SSH signing), Claude Code multi-profile, OpenCode, Biome.
+**Managed configurations:** Neovim, Tmux, Ghostty, Yazi, Zsh (Oh My Zsh + Powerlevel10k), Git (1Password SSH signing), Claude Code multi-profile, Biome.
 
 ## Essential Commands
 
@@ -97,25 +97,27 @@ All packages defined centrally in `pkgs/default.nix` by category:
 
 ### Secrets Management
 
-**Hybrid approach combining sops-nix + 1Password:**
+**1Password-first approach with sops-nix bootstrap:**
 
-**sops-nix** (for critical secrets):
-- Git config (userName, userEmail, signingKey) in `secrets/default.yaml` (encrypted with age)
-- 1Password service account token for prompt-free `op` CLI access
+**sops-nix** (bootstrap only):
+- Only stores `op/service_account_token` in `secrets/default.yaml` (encrypted with age)
 - Decrypted to tmpfs at Home Manager activation
-- Environment variables loaded via `sops-env.nix` module
+- Enables non-interactive 1Password CLI access
 - Age key at `~/.config/sops/age/keys.txt`
 
-**1Password** (for AI service keys):
-- All AI service API keys stored in 1Password vault `xsuolbdwx4vmcp3zysjczfatam`
-- Fetched on-demand via `op item get` in `load-env.sh`
-- Benefits: Centralized secret management, easier rotation, better for team sharing
-- Requires `OP_SERVICE_ACCOUNT_TOKEN` (loaded from sops-nix)
-- See `modules/home-manager/services/sops-env.nix` for implementation
+**Git config** (not secrets - set in Nix):
+- `userName`, `userEmail`, `signing.key` set directly in `home.nix`
+- These are public info visible in every commit
+- See `dev-config.git` options in `home.nix`
+
+**1Password** (AI service keys):
+- All secrets stored in 1Password vault item `xsuolbdwx4vmcp3zysjczfatam` (vault: Dev)
+- Fetched at shell startup via `~/.config/sops-nix/load-env.sh`
+- Fields: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_AI_STUDIO_KEY`, `LITELLM_KEY`, `OPENROUTER_API_KEY`
 
 **1Password SSH Agent** for authentication:
 - SSH keys stored in 1Password vault (never on disk)
-- Automatic commit signing
+- Automatic commit signing via `op-ssh-sign`
 - See `modules/home-manager/programs/ssh.nix` and `git.nix`
 
 ## Configuration Files (Dotfiles)
@@ -181,7 +183,6 @@ Auto-creates project-level editor configurations on `nix develop`:
 | Directory | Contents | Purpose | Management |
 |-----------|----------|---------|------------|
 | `.claude/` | commands/, agents/, settings.json | Claude Code integration | Symlinked from Nix store + user customization |
-| `.opencode/` | command/, plugin/, tool/ | OpenCode AI assistant | Symlinked from Nix store + user customization |
 | `.factory/` | commands/, droids/, hooks/ | Factory Droid integration | Symlinked from Nix store + user customization |
 | `.zed/` | Full Zed editor config | Zed editor configuration | Symlinked from Nix store (read-only) |
 | `.grit/` | GritQL patterns | GritQL linting rules | Symlinked from Nix store (read-only) |
@@ -189,9 +190,9 @@ Auto-creates project-level editor configurations on `nix develop`:
 
 ### Key Implementation Details
 
-- **Symlink strategy**: Full-directory symlinks for configs without internal relative paths (.zed, .grit), subdirectory symlinks for configs with user customization (.claude, .opencode, .factory)
+- **Symlink strategy**: Full-directory symlinks for configs without internal relative paths (.zed, .grit), subdirectory symlinks for configs with user customization (.claude, .factory)
 - **Nix store paths**: Uses `${self}` references in flake.nix to handle symlinks correctly in `/nix/store`
-- **User customization**: Copies default settings.json and opencode.json on first run for user to customize
+- **User customization**: Copies default settings.json on first run for user to customize
 - **Idempotent**: Checks `if [ ! -d .claude ]` to avoid overwriting user changes
 
 ### The `inputs ? dev-config` Pattern
@@ -210,62 +211,9 @@ This pattern in modules enables dev-config to work both:
 - **Standalone**: `home-manager switch --flake .` in this repo
 - **Composed**: Imported as `inputs.dev-config` in other projects
 
-## AI Coding Agents (oh-my-opencode)
-
-Multi-agent AI orchestration system for collaborative coding workflows.
-
-### Available Agents
-
-- **@Sisyphus**: Main orchestrator (Claude Opus 4.5, extended thinking 32k budget)
-- **@oracle**: Architecture & debugging (Claude Opus 4.5 via OpenRouter)
-- **@librarian**: Codebase analysis & doc research (Claude Sonnet 4.5)
-- **@explore**: Fast file search & traversal (Grok 3 - free)
-- **@frontend-ui-ux-engineer**: UI/UX design (Gemini 3 Pro)
-- **@document-writer**: Technical writing (Gemini 3 Flash)
-- **@multimodal-looker**: Image/PDF analysis (Gemini 2.5 Flash)
-
-### Usage
-
-```bash
-# Single agent invocation
-opencode
-> Ask @oracle to review this architecture
-
-# Background parallel execution
-> Have @oracle design the API while @librarian researches patterns
-
-# Keyword shortcuts
-> ultrawork: Implement feature X with comprehensive testing
-> ultrathink: Deep analysis of architectural implications
-> search: Find all Effect.gen uses in monorepo
-```
-
-### Features
-
-- **Built-in MCPs**: context7 (docs), websearch_exa (web), grep_app (GitHub search)
-- **LSP Tools**: lsp_rename, lsp_find_references, lsp_code_actions
-- **AST-Grep**: Structural code search and transformation
-- **Markdown Table Formatting**: Automatic formatting of AI-generated tables with alignment support
-- **Claude Code Compatibility**: Hooks, commands, skills fully supported
-- **Intelligent Hooks**: Todo continuation, comment checking, context monitoring
-
-### Configuration
-
-Fully managed via Nix in `home.nix`:
-
-```nix
-dev-config.opencode.ohMyOpencode = {
-  enable = true;
-  disabledHooks = ["startup-toast"];
-  # See docs/nix/12-oh-my-opencode.md for full options
-};
-```
-
-**Documentation**: See `docs/nix/12-oh-my-opencode.md` for comprehensive guide.
-
 ## AI GUARDRAILS (CRITICAL) ⚠️
 
-This repository enforces strict guardrails to prevent AI assistants from introducing type safety violations and linting rule weakening. These guardrails apply to all AI agents (Claude Code, OpenCode, ChatGPT, etc.).
+This repository enforces strict guardrails to prevent AI assistants from introducing type safety violations and linting rule weakening. These guardrails apply to all AI agents (Claude Code, ChatGPT, etc.).
 
 ### SOFT WARNING: Linting Configuration Modifications
 

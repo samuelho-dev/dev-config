@@ -15,7 +15,7 @@ That's it! Restart your terminal and you're done.
 The install script automatically:
 
 1. ✅ **Installed Nix** (if not present) - Declarative package manager
-2. ✅ **Installed all packages** (Neovim, tmux, zsh, Docker, OpenCode, 1Password CLI, etc.)
+2. ✅ **Installed all packages** (Neovim, tmux, zsh, Docker, Claude CLI, 1Password CLI, etc.)
 3. ✅ **Created symlinks** (nvim config → `~/Projects/dev-config/nvim`)
 4. ✅ **Installed plugins** (Neovim: lazy.nvim, tmux: TPM, zsh: Oh My Zsh + Powerlevel10k)
 5. ✅ **Set zsh as default shell**
@@ -52,7 +52,7 @@ nix develop  # Enter temporary shell with all packages
 exit         # Leave temporary shell
 ```
 
-## OpenCode + AI Integration
+## Claude Code + LiteLLM Integration
 
 ### One-Time Setup
 
@@ -62,9 +62,9 @@ exit         # Leave temporary shell
    ```
 
 2. **Create "ai" item in "Dev" vault** (see [1Password Setup Guide](05-1password-setup.md)):
-   - Field: `ANTHROPIC_API_KEY` (your Claude API key)
-   - Field: `OPENAI_API_KEY` (your OpenAI API key)
-   - Field: `GOOGLE_AI_API_KEY` (your Google AI key)
+   - Field: `ANTHROPIC_API_KEY`
+   - Field: `LITELLM_MASTER_KEY` (or virtual key) for the gateway
+   - Any other provider keys you use (OpenAI, Google, etc.)
 
 ### Daily Usage
 
@@ -73,14 +73,14 @@ exit         # Leave temporary shell
 cd ~/Projects/dev-config
 # ✅ AI credentials loaded from 1Password
 
-# Use OpenCode with auto-injected credentials
-opencode ask "What is this repository about?"
-opencode feature "Add a new greeting function"
+# Use Claude Code with LiteLLM routing preconfigured
+claude ask "What is this repository about?"
+claude feature "Add a new greeting function"
 ```
 
 **Alternative:** Use wrapper for explicit credential injection:
 ```bash
-op run -- opencode ask "Explain this codebase"
+op run -- claude ask "Explain this codebase"
 ```
 
 ## Directory Structure
@@ -117,20 +117,6 @@ source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 2. If not signed in: `op signin`
 3. Verify item exists: `op item get "ai" --vault "Dev"`
 
-### "OpenCode command not found"
-
-Enter Nix development shell:
-```bash
-cd ~/Projects/dev-config
-nix develop  # OpenCode is now available
-opencode --version
-```
-
-Or install globally:
-```bash
-nix profile install nixpkgs#nodePackages.opencode-ai
-```
-
 ### Symlinks not created
 
 Run activation manually:
@@ -142,7 +128,7 @@ nix run .#activate
 
 - **Full Documentation:** [Nix Concepts](01-concepts.md)
 - **Daily Workflows:** [Daily Usage](02-daily-usage.md)
-- **OpenCode Setup:** [OpenCode Integration](04-opencode-integration.md)
+- **LiteLLM Setup:** [LiteLLM Proxy](07-litellm-proxy-setup.md)
 - **1Password Setup:** [1Password Configuration](05-1password-setup.md)
 - **Advanced Customization:** [Advanced Guide](06-advanced.md)
 

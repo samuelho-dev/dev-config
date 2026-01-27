@@ -47,17 +47,17 @@ docs/
 +-- KEYBINDINGS_NEOVIM.md      # Complete Neovim keybinding reference
 +-- KEYBINDINGS_TMUX.md        # Complete tmux keybinding reference
 +-- nix/                       # Nix-specific documentation (11 guides)
-    +-- 01-install-nix.md                 # Installing Nix package manager
-    +-- 02-flake-overview.md              # Understanding flake.nix
-    +-- 03-home-manager-basics.md         # Home Manager introduction
-    +-- 04-opencode-integration.md        # OpenCode AI setup
-    +-- 05-devpod-setup.md                # DevPod remote development
-    +-- 06-direnv-integration.md          # Direnv auto-activation
+    +-- 00-quickstart.md                  # 5-minute setup
+    +-- 01-concepts.md                    # Understanding dev-config architecture
+    +-- 02-daily-usage.md                 # Common workflows
+    +-- 03-troubleshooting.md             # Common issues and resolutions
+    +-- 05-1password-setup.md             # 1Password CLI and secrets
+    +-- 06-advanced.md                    # Advanced customization
     +-- 07-litellm-proxy-setup.md         # LiteLLM team proxy
-    +-- 08-module-architecture.md         # Module design patterns
+    +-- 08-home-manager.md                # Home Manager guide
     +-- 09-1password-ssh.md               # SSH + 1Password integration
-    +-- 10-secrets-management.md          # sops-nix secrets guide
-    +-- 11-strict-linting-guide.md        # Comprehensive linting guide
+    +-- 10-biome-integration.md           # Biome linting guide
+    +-- 11-strict-linting-guide.md        # Comprehensive linting policies
 ```
 
 ## When to Update Documentation

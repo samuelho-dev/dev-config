@@ -6,10 +6,8 @@ The dev-config architecture uses a three-tier system to manage AI resources (com
 1. **Source Tier (`dev-config/ai/`)**: The source of truth for all shared AI resources, managed by Git in the `dev-config` repository.
 2. **Global Deployment Tier (`~/.config/`)**: Shared resources are deployed to your home directory via Home Manager. This makes the resources portable and accessible to any project on the machine.
    - `~/.config/claude-code/`: Managed by `claude-code.nix`
-   - `~/.config/opencode/`: Managed by `opencode.nix`
 3. **Project Linkage Tier (`project-repo/`)**: Individual projects link to dev-config via `lib.devShellHook` (automatic on `nix develop`).
    - `.claude/ -> dev-config/.claude/`
-   - `.opencode/ -> dev-config/.opencode/`
    - `.zed/ -> dev-config/zed/`
    - `.grit/ -> dev-config/grit/`
 
@@ -25,12 +23,6 @@ The dev-config architecture uses a three-tier system to manage AI resources (com
 - **settings-base.json**: Base Claude Code settings (deployed to `~/.config/claude-code/`)
 - **templates/**: Claude Code templates (deployed to `~/.config/claude-code/`)
 
-### `.opencode/` - OpenCode Specific Assets
-- **plugin/**: TypeScript plugins (guardrails, validation)
-- **tool/**: OpenCode-specific tools (gritql, mlg)
-- **lib/**: Shared TypeScript schemas
-- **test/**: Tests for plugins and tools
-
 ## Architecture Principles
 
 ### 1. Centralized Source, Global Deployment
@@ -42,7 +34,6 @@ Individual projects use `lib.devShellHook` in their flake.nix to automatically c
 ### 3. Tool-Specific Extensions
 Each tool maintains its own specific configuration while sharing the core resources:
 - Claude Code: `settings.json`, `templates/`
-- OpenCode: TypeScript plugins, custom tools, Effect-TS schemas
 
 ### 4. Deployment Flow
 ```
@@ -64,7 +55,6 @@ dev-config/ai/              [Source]
 
 my-project/                   [Project Link]
    ├── .claude/ -> dev-config/.claude/
-   ├── .opencode/ -> dev-config/.opencode/
    ├── .zed/ -> dev-config/zed/
    └── .grit/ -> dev-config/grit/
 ```
@@ -74,10 +64,6 @@ my-project/                   [Project Link]
 ### Claude Code
 1. `claude-code.nix` (Home Manager) deploys shared resources from `ai/` to `~/.config/claude-code/`.
 2. `lib.devShellHook` (in project flake.nix) links `.claude/` to dev-config on `nix develop`.
-
-### OpenCode
-1. `opencode.nix` (Home Manager) deploys shared commands and local assets to `~/.config/opencode/`.
-2. `lib.devShellHook` links `.opencode/` to dev-config on `nix develop`.
 
 ## Benefits
 1. ✅ **Portability**: AI resources follow the developer across any project on the machine.
@@ -96,7 +82,7 @@ my-project/                   [Project Link]
 If symlinks are broken or you want to refresh configuration:
 ```bash
 cd project-directory
-rm -rf .claude .opencode .zed .grit  # Remove broken symlinks
+rm -rf .claude .zed .grit  # Remove broken symlinks
 nix develop  # Re-creates symlinks via lib.devShellHook
 ```
 

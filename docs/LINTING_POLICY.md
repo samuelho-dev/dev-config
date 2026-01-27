@@ -36,7 +36,7 @@ This policy prevents AI assistants from introducing:
 ### Scope
 
 Applies to:
-- All AI agents (Claude Code, OpenCode, ChatGPT, etc.)
+- All AI agents (Claude Code, ChatGPT, etc.)
 - All configuration modifications:
   - `biome.json` (project root - source of truth)
   - `tsconfig.json` and `tsconfig.*.json`

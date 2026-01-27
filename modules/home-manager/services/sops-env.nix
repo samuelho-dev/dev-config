@@ -37,27 +37,27 @@
 
     # Anthropic API Key (Claude)
     if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
-      export ANTHROPIC_API_KEY="$(op item get ${onePassAiItemId} --fields label=anthropic_key 2>/dev/null || echo "")"
+      export ANTHROPIC_API_KEY="$(op item get ${onePassAiItemId} --fields label=ANTHROPIC_API_KEY --reveal 2>/dev/null || echo "")"
     fi
 
     # OpenAI API Key
     if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
-      export OPENAI_API_KEY="$(op item get ${onePassAiItemId} --fields label=openai_key 2>/dev/null || echo "")"
+      export OPENAI_API_KEY="$(op item get ${onePassAiItemId} --fields label=OPENAI_API_KEY --reveal 2>/dev/null || echo "")"
     fi
 
     # Google AI API Key
     if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
-      export GOOGLE_AI_API_KEY="$(op item get ${onePassAiItemId} --fields label=google_ai_key 2>/dev/null || echo "")"
+      export GOOGLE_AI_API_KEY="$(op item get ${onePassAiItemId} --fields label=GOOGLE_AI_STUDIO_KEY --reveal 2>/dev/null || echo "")"
     fi
 
     # LiteLLM Master Key
     if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
-      export LITELLM_MASTER_KEY="$(op item get ${onePassAiItemId} --fields label=litellm_master_key 2>/dev/null || echo "")"
+      export LITELLM_MASTER_KEY="$(op item get ${onePassAiItemId} --fields label=LITELLM_KEY --reveal 2>/dev/null || echo "")"
     fi
 
     # OpenRouter API Key
     if command -v op &>/dev/null && [ -n "$OP_SERVICE_ACCOUNT_TOKEN" ]; then
-      export OPENROUTER_API_KEY="$(op item get ${onePassAiItemId} --fields label=openrouter_key 2>/dev/null || echo "")"
+      export OPENROUTER_API_KEY="$(op item get ${onePassAiItemId} --fields label=OPENROUTER_API_KEY --reveal 2>/dev/null || echo "")"
     fi
     LOAD_ENV_EOF
 

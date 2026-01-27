@@ -15,7 +15,6 @@
     ./programs/ghostty.nix
     ./programs/yazi.nix
     ./programs/claude-code.nix
-    ./programs/opencode.nix
     ./programs/factory-droid.nix
     ./programs/biome.nix
     ./programs/gritql.nix

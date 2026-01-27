@@ -217,7 +217,7 @@ which op  # Should output: /nix/store/.../bin/op
 
 Or install globally:
 ```bash
-nix profile install nixpkgs#_1password
+nix profile add nixpkgs#_1password
 ```
 
 ### "Session expired"
@@ -371,6 +371,6 @@ A: Yes! Use 1Password service accounts or GitHub Secrets integration:
 
 ## Next Steps
 
-- **OpenCode Integration:** [OpenCode Usage](04-opencode-integration.md)
+- **LiteLLM Integration:** [LiteLLM Proxy Setup](07-litellm-proxy-setup.md)
 - **Quick Start:** [Installation Guide](00-quickstart.md)
 - **Advanced Nix:** [Advanced Guide](06-advanced.md)

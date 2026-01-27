@@ -43,7 +43,6 @@ modules/home-manager/
 |   +-- gritql.nix           # GritQL pattern linting
 |   +-- neovim.nix           # Neovim editor setup
 |   +-- npm.nix              # NPM configuration
-|   +-- opencode.nix         # OpenCode AI assistant
 |   +-- ssh.nix              # SSH with 1Password agent
 |   +-- tmux.nix             # Tmux terminal multiplexer
 |   +-- yazi.nix             # Yazi file manager
@@ -75,8 +74,7 @@ modules/home-manager/
 | **programs/ssh.nix** | SSH with 1Password agent | `enable`, `identityAgent` |
 | **programs/ghostty.nix** | Ghostty terminal config | `enable`, `configSource` |
 | **programs/yazi.nix** | Yazi file manager | `enable`, `configSource` |
-| **programs/claude-code.nix** | Claude Code multi-profile | `enable`, `profiles` |
-| **programs/opencode.nix** | OpenCode AI assistant | `enable`, `ohMyOpencode` |
+| **programs/claude-code.nix** | Claude Code multi-profile + LiteLLM routing | `enable`, `profiles`, `litellm.*` |
 | **programs/biome.nix** | Biome linting configs | `enable`, `configSource` |
 | **programs/gritql.nix** | GritQL pattern linting | `enable`, `configSource` |
 | **programs/npm.nix** | NPM configuration | `enable` |

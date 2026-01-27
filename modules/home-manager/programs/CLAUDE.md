@@ -38,7 +38,6 @@ programs/
 +-- gritql.nix            # GritQL pattern linting
 +-- neovim.nix            # Neovim editor with LSP servers
 +-- npm.nix               # NPM configuration and packages
-+-- opencode.nix          # OpenCode AI assistant setup
 +-- python.nix            # Python 3 with pip and development packages
 +-- ssh.nix               # SSH with 1Password agent integration
 +-- tmux.nix              # Tmux terminal multiplexer
@@ -69,7 +68,6 @@ programs/
 | **ghostty.nix** | Terminal emulator | `enable`, `configSource` | None |
 | **yazi.nix** | File manager | `enable`, `configSource` | fd, ripgrep, bat, ffmpegthumbnailer |
 | **claude-code.nix** | Claude Code assistant | `enable`, `profiles` | Node.js |
-| **opencode.nix** | OpenCode assistant | `enable`, `ohMyOpencode` | Bun |
 | **python.nix** | Python 3 + pip + dev | `enable`, `package`, `enablePip`, `packages` | Python 3, pip, setuptools, pytest, black, ruff, mypy |
 | **biome.nix** | Linting/formatting | `enable`, `configSource` | biome binary |
 | **gritql.nix** | GritQL pattern linting | `enable`, `configSource` | grit binary |

@@ -30,8 +30,8 @@ in {
       type = lib.types.bool;
       default = true;
       description = ''
-        Export Factory Droid configs to ~/.config/factory-droid/.
-        Consumer projects use lib.devShellHook to link .factory/ on nix develop.
+        Export Factory Droid configs directly to ~/.factory/ (global, writable).
+        These are available globally in all projects without project-level sync.
       '';
     };
 
@@ -58,19 +58,53 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # Export Factory Droid configs to ~/.config/factory-droid/ for lib.devShellHook
-    xdg.configFile = lib.mkIf (cfg.exportConfig && cfg.configSource != null) {
-      # Pull from centralized ai/ directory
-      "factory-droid/droids".source = cfg.configSource + "/../ai/agents";
-      "factory-droid/commands".source = cfg.configSource + "/../ai/commands";
-      "factory-droid/hooks".source = cfg.configSource + "/../ai/hooks";
+    # Export Factory Droid configs directly to ~/.factory/ (global, writable)
+    # These are available in ALL projects automatically
+    home.activation.exportFactoryConfigs = lib.mkIf (cfg.exportConfig && cfg.configSource != null) (
+      lib.hm.dag.entryAfter ["writeBoundary"] ''
+        # Source paths from dev-config
+        DROIDS_SRC="${cfg.configSource}/../ai/agents"
+        COMMANDS_SRC="${cfg.configSource}/../ai/commands"
+        HOOKS_SRC="${cfg.configSource}/../ai/hooks"
+        SKILLS_SRC="${cfg.configSource}/../ai/skills"
 
-      # Settings stay in .factory
-      "factory-droid/settings-base.json".text = builtins.toJSON cfg.baseSettings;
-    };
+        # Copy droids (agents) - writable so user can add new ones
+        if [ -d "$DROIDS_SRC" ]; then
+          $DRY_RUN_CMD rm -rf "$HOME/.factory/droids"
+          $DRY_RUN_CMD mkdir -p "$HOME/.factory"
+          $DRY_RUN_CMD cp -Lr "$DROIDS_SRC" "$HOME/.factory/droids"
+          $DRY_RUN_CMD chmod -R +w "$HOME/.factory/droids"
+        fi
 
-    # Note: Commands/droids/hooks are NOT deployed globally to ~/.factory/
-    # They are only available at the project level (.factory/commands/) to avoid duplicates.
-    # Use lib.devShellHook in project flakes to link .factory/ on nix develop.
+        # Copy commands - writable
+        if [ -d "$COMMANDS_SRC" ]; then
+          $DRY_RUN_CMD rm -rf "$HOME/.factory/commands"
+          $DRY_RUN_CMD mkdir -p "$HOME/.factory"
+          $DRY_RUN_CMD cp -Lr "$COMMANDS_SRC" "$HOME/.factory/commands"
+          $DRY_RUN_CMD chmod -R +w "$HOME/.factory/commands"
+        fi
+
+        # Copy hooks - writable
+        if [ -d "$HOOKS_SRC" ]; then
+          $DRY_RUN_CMD rm -rf "$HOME/.factory/hooks"
+          $DRY_RUN_CMD mkdir -p "$HOME/.factory"
+          $DRY_RUN_CMD cp -Lr "$HOOKS_SRC" "$HOME/.factory/hooks"
+          $DRY_RUN_CMD chmod -R +w "$HOME/.factory/hooks"
+        fi
+
+        # Copy skills - writable
+        if [ -d "$SKILLS_SRC" ]; then
+          $DRY_RUN_CMD rm -rf "$HOME/.factory/skills"
+          $DRY_RUN_CMD mkdir -p "$HOME/.factory"
+          $DRY_RUN_CMD cp -Lr "$SKILLS_SRC" "$HOME/.factory/skills"
+          $DRY_RUN_CMD chmod -R +w "$HOME/.factory/skills"
+        fi
+
+        # Create default settings.json if missing
+        if [ ! -f "$HOME/.factory/settings.json" ]; then
+          $DRY_RUN_CMD echo '${builtins.toJSON cfg.baseSettings}' > "$HOME/.factory/settings.json"
+        fi
+      ''
+    );
   };
 }

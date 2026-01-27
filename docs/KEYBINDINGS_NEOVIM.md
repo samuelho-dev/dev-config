@@ -132,7 +132,7 @@ Cursor-like AI coding assistant powered by LiteLLM proxy for team AI management.
 4. Review and accept/reject changes in diff view
 
 **Cost Tracking:**
-All requests go through LiteLLM proxy and are tracked in dashboard alongside OpenCode usage.
+All requests go through LiteLLM proxy and are tracked in the dashboard alongside Claude Code usage.
 
 **Documentation:**
 See [LiteLLM Proxy Setup](nix/07-litellm-proxy-setup.md#neovim-integration-avantenm) for full configuration details.

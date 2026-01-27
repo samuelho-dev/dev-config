@@ -15,8 +15,6 @@ writeShellScriptBin "init-workspace" ''
     # Config paths
     BIOME_BASE="$HOME/.config/biome/biome.json"
     TSCONFIG_MONOREPO="$HOME/.config/tsconfig/tsconfig.monorepo.json"
-    CLAUDE_CONFIG="$HOME/.config/claude-code"
-    OPENCODE_CONFIG="$HOME/.config/opencode"
     BIOME="${biome}/bin/biome"
 
     # Parse arguments
@@ -32,9 +30,11 @@ writeShellScriptBin "init-workspace" ''
           echo "Initializes workspace with dev-config configurations:"
           echo "  - biome.json extending ~/.config/biome/"
           echo "  - tsconfig.base.json extending ~/.config/tsconfig/"
-          echo "  - .claude/ with agents and commands (symlinked)"
-          echo "  - .opencode/ with plugins and tools (symlinked)"
           echo "  - Migrates from eslint/prettier if present"
+          echo ""
+          echo "Note: AI configs (Claude Code, Factory Droid) are now GLOBAL."
+          echo "      They are managed in ~/.claude/ and ~/.factory/"
+          echo "      Use 'sync-ai-config' to refresh them from dev-config."
           echo ""
           echo "Options:"
           echo "  --force    Overwrite existing config files"
@@ -106,93 +106,18 @@ writeShellScriptBin "init-workspace" ''
       fi
     fi
 
-    # ============================================
-    # Claude Code Configuration
-    # ============================================
-    if [ -d "$CLAUDE_CONFIG" ]; then
-      log_info "Setting up Claude Code configuration..."
-
-      mkdir -p .claude
-
-      # Symlink agents directory
-      if [ -d "$CLAUDE_CONFIG/agents" ]; then
-        if [ -e ".claude/agents" ] && [ ! -L ".claude/agents" ] && [ -z "$FORCE" ]; then
-          log_warn ".claude/agents exists and is not a symlink (use --force to replace)"
-        else
-          rm -rf .claude/agents 2>/dev/null || true
-          ln -sf "$CLAUDE_CONFIG/agents" .claude/agents
-          log_success "Linked .claude/agents -> ~/.config/claude-code/agents"
-        fi
-      fi
-
-      # Symlink commands directory
-      if [ -d "$CLAUDE_CONFIG/commands" ]; then
-        if [ -e ".claude/commands" ] && [ ! -L ".claude/commands" ] && [ -z "$FORCE" ]; then
-          log_warn ".claude/commands exists and is not a symlink (use --force to replace)"
-        else
-          rm -rf .claude/commands 2>/dev/null || true
-          ln -sf "$CLAUDE_CONFIG/commands" .claude/commands
-          log_success "Linked .claude/commands -> ~/.config/claude-code/commands"
-        fi
-      fi
-
-      # Copy base settings.json (project can extend)
-      if [ -f "$CLAUDE_CONFIG/settings-base.json" ]; then
-        if [ -f ".claude/settings.json" ] && [ -z "$FORCE" ]; then
-          log_warn ".claude/settings.json exists (use --force to overwrite)"
-        else
-          cp "$CLAUDE_CONFIG/settings-base.json" .claude/settings.json
-          log_success "Created .claude/settings.json (base config)"
-        fi
-      fi
-    else
-      log_warn "Claude Code config not found at $CLAUDE_CONFIG"
-      log_warn "Run 'home-manager switch --flake <dev-config>' first"
-    fi
-
-    # ============================================
-    # OpenCode Configuration
-    # ============================================
-    if [ -d "$OPENCODE_CONFIG" ]; then
-      log_info "Setting up OpenCode configuration..."
-
-      mkdir -p .opencode
-
-      # Symlink shared directories
-      for dir in command plugin tool; do
-        if [ -d "$OPENCODE_CONFIG/$dir" ]; then
-          if [ -e ".opencode/$dir" ] && [ ! -L ".opencode/$dir" ] && [ -z "$FORCE" ]; then
-            log_warn ".opencode/$dir exists and is not a symlink (use --force to replace)"
-          else
-            rm -rf ".opencode/$dir" 2>/dev/null || true
-            ln -sf "$OPENCODE_CONFIG/$dir" ".opencode/$dir"
-            log_success "Linked .opencode/$dir -> ~/.config/opencode/$dir"
-          fi
-        fi
-      done
-
-      # Copy base opencode.json (project can extend)
-      if [ -f "$OPENCODE_CONFIG/opencode-base.json" ]; then
-        if [ -f ".opencode/opencode.json" ] && [ -z "$FORCE" ]; then
-          log_warn ".opencode/opencode.json exists (use --force to overwrite)"
-        else
-          cp "$OPENCODE_CONFIG/opencode-base.json" .opencode/opencode.json
-          log_success "Created .opencode/opencode.json (base config)"
-        fi
-      fi
-    else
-      log_warn "OpenCode config not found at $OPENCODE_CONFIG"
-      log_warn "Run 'home-manager switch --flake <dev-config>' first"
-    fi
-
     echo ""
     log_success "Workspace initialized!"
     echo ""
     echo "Created:"
     [ -f "biome.json" ] && echo "  - biome.json (extends ~/.config/biome/)"
     [ -f "tsconfig.base.json" ] && echo "  - tsconfig.base.json (extends ~/.config/tsconfig/)"
-    [ -d ".claude" ] && echo "  - .claude/ (agents, commands, settings)"
-    [ -d ".opencode" ] && echo "  - .opencode/ (command, plugin, tool)"
+    echo ""
+    echo "Note: AI configs are managed globally via Home Manager:"
+    echo "  - ~/.claude/ (agents, commands)"
+    echo "  - ~/.factory/ (droids, commands, hooks, skills)"
+    echo ""
+    echo "To refresh AI configs: sync-ai-config --force"
     echo ""
     if ls .eslintrc* 1>/dev/null 2>&1 || [ -f "eslint.config.js" ]; then
       echo "You can now remove ESLint configs:"
