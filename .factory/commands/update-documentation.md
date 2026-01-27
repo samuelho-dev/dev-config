@@ -540,8 +540,7 @@ Coverage: 65% (target: 90%)
 WELL DOCUMENTED (21 directories)
   nvim/, docs/, root, tmux/, zsh/, ghostty/...
 
-PARTIALLY DOCUMENTED (3 directories)
-  .opencode/ - Has README, missing CLAUDE.md
+PARTIALLY DOCUMENTED (2 directories)
   yazi/ - Has CLAUDE.md, missing README
   biome/ - Has CLAUDE.md, missing README
 
@@ -616,9 +615,6 @@ README.md COMPLIANCE (warnings only)
 
   nvim/README.md
     - Suggestion: Add Troubleshooting section
-
-  .opencode/README.md
-    - OK: All suggested sections present
 
 RECOMMENDATIONS:
   1. Add frontmatter to biome/CLAUDE.md

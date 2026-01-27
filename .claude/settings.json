@@ -33,10 +33,5 @@
         ]
       }
     ]
-  },
-  "permissions": {
-    "deny": [
-      "Read(./.opencode/**)"
-    ]
   }
 }

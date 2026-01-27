@@ -78,7 +78,6 @@ Central catalog of all documentation in the dev-config repository.
 | [01-concepts](./nix/01-concepts.md) | Core Nix concepts |
 | [02-daily-usage](./nix/02-daily-usage.md) | Daily usage patterns |
 | [03-troubleshooting](./nix/03-troubleshooting.md) | Common issues and solutions |
-| [04-opencode-integration](./nix/04-opencode-integration.md) | OpenCode integration guide |
 | [05-1password-setup](./nix/05-1password-setup.md) | 1Password integration |
 | [06-advanced](./nix/06-advanced.md) | Advanced Nix patterns |
 | [07-litellm-proxy-setup](./nix/07-litellm-proxy-setup.md) | LiteLLM proxy configuration |
@@ -89,7 +88,6 @@ Central catalog of all documentation in the dev-config repository.
 | [10-biome-integration](./nix/10-biome-integration.md) | Biome linting integration |
 | [10-npm-publishing](./nix/10-npm-publishing.md) | NPM publishing with Nix |
 | [11-strict-linting-guide](./nix/11-strict-linting-guide.md) | Strict linting configuration |
-| [12-oh-my-opencode](./nix/12-oh-my-opencode.md) | Oh-My-OpenCode agent system |
 
 ---
 
@@ -103,17 +101,13 @@ Central catalog of all documentation in the dev-config repository.
 
 ## AI & Development Tools
 
-### Claude Code & OpenCode
+### Claude Code & Factory Droid
 
 | Component | README | CLAUDE | Description |
 |-----------|--------|--------|-------------|
 | **.claude/commands/** | - | Documented | 13+ slash commands |
 | **.claude/agents/** | - | [CLAUDE](../.claude/agents/CLAUDE.md) | 42+ agent definitions |
-| **.opencode/** | [README](../.opencode/README.md) | - | OpenCode configuration overview |
-| **.opencode/lib/** | - | [CLAUDE](../.opencode/lib/CLAUDE.md) | Shared Effect-TS schemas and utilities |
-| **.opencode/plugin/** | - | [CLAUDE](../.opencode/plugin/CLAUDE.md) | Guardrail plugins (gritql, mlg) |
-| **.opencode/tool/** | - | [CLAUDE](../.opencode/tool/CLAUDE.md) | Custom tools (gritql, mlg) |
-| **.opencode/command/** | - | Partial | 4 OpenCode commands |
+| **.factory/droids/** | - | [CLAUDE](../.factory/CLAUDE.md) | Factory Droid specialists |
 
 ---
 
@@ -152,7 +146,7 @@ Central catalog of all documentation in the dev-config repository.
 | Packages (pkgs/) | ✅ | ✅ | Complete |
 | Scripts | ✅ | ✅ | Complete |
 | GritQL patterns | - | ✅ | CLAUDE only |
-| AI Tools (.opencode/, .claude/) | Partial | ✅ | CLAUDE complete |
+| AI Tools (.claude/, .factory/) | - | ✅ | CLAUDE complete |
 
 **Overall: ~92%** (target: 90%) ✅
 
@@ -168,9 +162,6 @@ Central catalog of all documentation in the dev-config repository.
 | `ghostty/CLAUDE.md` | Fixed | Added frontmatter |
 | `tmux/CLAUDE.md` | Fixed | Added frontmatter, ASCII trees |
 | `zsh/CLAUDE.md` | Fixed | Added frontmatter, ASCII trees |
-| `.opencode/lib/CLAUDE.md` | Fixed | Converted inline YAML to frontmatter |
-| `.opencode/plugin/CLAUDE.md` | Fixed | Converted inline YAML to frontmatter |
-| `.opencode/tool/CLAUDE.md` | Fixed | Converted inline YAML to frontmatter |
 
 ### Previous Updates (2025-12-21)
 

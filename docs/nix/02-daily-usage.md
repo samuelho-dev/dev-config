@@ -28,7 +28,7 @@ cd ~/Projects/dev-config
 **Verify environment:**
 ```bash
 which nvim     # Should show /nix/store/.../bin/nvim
-which opencode # Should show /nix/store/.../bin/opencode
+which claude   # Should show Claude Code CLI location
 echo $ANTHROPIC_API_KEY  # Should show your API key
 ```
 
@@ -222,7 +222,7 @@ Start your development day:
 cd ~/Projects/dev-config   # Auto-activates Nix + credentials
 tmux new -s dev            # Start tmux session
 nvim                       # Open editor (LSP auto-starts)
-opencode ask "What should I work on today?"  # Get AI suggestions
+claude                     # Start Claude Code session
 ```
 
 ### Pattern 2: Making Config Changes
@@ -288,7 +288,6 @@ git commit -m "chore: weekly flake update"
 nix develop
 nvim --version
 tmux -V
-opencode --version
 
 # Run health checks
 nvim +checkhealth +qall  # Neovim health check
@@ -300,22 +299,22 @@ git push origin main
 
 ### Pattern 5: AI-Assisted Development
 
-**Using OpenCode with 1Password credentials:**
+**Using Claude Code via LiteLLM homelab gateway:**
 
 ```bash
-cd ~/Projects/dev-config  # Credentials auto-load
+cd ~/Projects/dev-config  # direnv loads Claude env vars automatically
 
 # Ask for code review
-opencode ask "Review nvim/init.lua for improvements"
+claude ask "Review nvim/init.lua for improvements"
 
 # Generate new config
-opencode ask "Create a tmux keybinding for splitting panes"
+claude ask "Create a tmux keybinding for splitting panes"
 
 # Debug issues
-opencode ask "Why is my LSP not attaching? Here's my :LspInfo output: ..."
+claude ask "Why is my LSP not attaching? Here's my :LspInfo output: ..."
 ```
 
-**Credentials are automatically injected** via direnv + 1Password integration.
+**LiteLLM credentials and headers auto-load** via direnv + 1Password integration.
 
 ## direnv Integration
 
@@ -374,71 +373,66 @@ cat ~/.zshrc | grep direnv
 # Should show: eval "$(direnv hook zsh)"
 ```
 
-## OpenCode Workflows
+## Claude Code Workflows
 
-### Common OpenCode Commands
+### Common Claude CLI Commands
 
 **Ask a question:**
 ```bash
-opencode ask "How do I configure Neovim LSP for Python?"
+claude ask "How do I configure Neovim LSP for Python?"
 ```
 
 **Review code:**
 ```bash
-opencode ask "Review nvim/init.lua and suggest improvements"
+claude ask "Review nvim/init.lua and suggest improvements"
 ```
 
 **Generate code:**
 ```bash
-opencode ask "Create a shell function to quickly switch tmux sessions"
+claude ask "Create a shell function to quickly switch tmux sessions"
 ```
 
 **Debug:**
 ```bash
-opencode ask "Debug: Neovim LSP not working. :LspInfo shows: ..."
+claude ask "Debug: Neovim LSP not working. :LspInfo shows: ..."
 ```
 
-### OpenCode + 1Password Integration
+### LiteLLM + 1Password Integration
 
 **Automatic credential injection:**
 ```bash
-cd ~/Projects/dev-config  # Credentials auto-load
-opencode ask "..."        # Uses ANTHROPIC_API_KEY from environment
+cd ~/Projects/dev-config  # direnv loads ANTHROPIC_BASE_URL + headers
+claude ask "..."          # Uses LiteLLM proxy + secret headers
 ```
 
-**Explicit op run (most secure):**
+**Explicit op run (optional hardening):**
 ```bash
-op run -- opencode ask "Explain this codebase"
-# Credentials injected only for duration of command
+op run -- claude ask "Explain this codebase"
+# Injects headers just for the duration of this command
 ```
 
-**Verify credentials loaded:**
+**Verify environment variables:**
 ```bash
-echo $ANTHROPIC_API_KEY  # Should show sk-ant-...
+env | grep ANTHROPIC_
+# Should show ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space
+# and ANTHROPIC_CUSTOM_HEADERS with x-litellm-api-key
 ```
 
-### Provider Selection
+### Provider Selection via LiteLLM
 
-**Default provider (Anthropic Claude):**
+**Default model (Anthropic Sonnet via Max subscription):**
 ```bash
-opencode ask "..."  # Uses Claude by default
+claude --model claude-3-5-sonnet-20241022 ask "..."
 ```
 
-**Use different provider:**
+**Use another routed model:**
 ```bash
-opencode ask --provider openai "..."    # Use GPT
-opencode ask --provider google-ai "..." # Use Gemini
+claude --model claude-3-5-haiku-20241022 ask "..."           # Haiku
+claude --model minimax/MiniMax-M2.1 ask "..."                # MiniMax M2
+claude --model gemini-3.0-flash-exp ask "..."                # Gemini via LiteLLM
 ```
 
-**Configure default in ~/.opencode/config.yaml:**
-```yaml
-default_provider: anthropic
-providers:
-  anthropic:
-    model: claude-3-5-sonnet-20241022
-  openai:
-    model: gpt-4o
-```
+The LiteLLM dashboard controls which providers/models are available. Enable new models in the UI, then call them directly via `claude --model <name>`.
 
 ## Team Collaboration
 
@@ -499,7 +493,6 @@ nix develop --command bash -c "
   nvim --version &&
   tmux -V &&
   op account get &&
-  opencode --version &&
   echo '✅ All tools operational'
 "
 ```
@@ -702,9 +695,9 @@ direnv allow                  # Approve .envrc
 direnv reload                 # Reload environment
 op signin                     # Authenticate 1Password
 
-# OpenCode
-opencode ask "..."            # Ask AI assistant
-opencode --provider openai    # Use different provider
+# Claude Code
+claude ask "..."              # Ask AI assistant through LiteLLM
+claude --model minimax/MiniMax-M2.1 ask "..."  # Use alternate model
 
 # Validation
 nix flake check               # Validate flake.nix

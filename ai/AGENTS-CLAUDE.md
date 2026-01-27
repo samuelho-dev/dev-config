@@ -13,7 +13,7 @@ Architectural guidance for Claude Code when working with agent definitions.
 
 ## Purpose
 
-This directory contains **42+ specialized agent definitions** for the oh-my-opencode multi-agent AI orchestration system. Each agent is a markdown file that defines expertise, capabilities, model routing, and example usage patterns.
+This directory contains **42+ specialized agent definitions** for the Factory Droid multi-agent AI orchestration system. Each agent is a markdown file that defines expertise, capabilities, model routing, and example usage patterns.
 
 ## Architecture Overview
 
@@ -158,25 +158,6 @@ Core responsibilities and expertise areas
 | `grok` | Fast searches, simple queries | $ |
 | `gemini` | Creative tasks, UI/UX | $$ |
 
-## Integration with OpenCode
-
-Agents are loaded by the oh-my-opencode orchestration system:
-
-```nix
-# In home.nix
-dev-config.opencode.ohMyOpencode = {
-  enable = true;
-  # Agents loaded from .claude/agents/
-};
-```
-
-**Invocation:**
-```
-@backend-architect Design API for user service
-@frontend-ui-ux-engineer Create responsive navbar
-@debugger Analyze this error trace
-```
-
 ## For Future Claude Code Instances
 
 When modifying agents:
@@ -187,7 +168,6 @@ When modifying agents:
 - [ ] **Define clear triggers** in description for proactive invocation
 - [ ] **Add constraints** to prevent scope creep
 - [ ] **Update this CLAUDE.md** when adding new agent categories
-- [ ] **Coordinate with orchestrator** - check `.opencode/` integration
 - [ ] **Test routing** before committing new agents
 - [ ] **Document proactive triggers** - when should agent auto-fire?
 - [ ] **Keep names descriptive** - kebab-case, domain-focused

@@ -329,9 +329,8 @@ direnv reload
   # Container tools
   pkgs.docker pkgs.kubectl pkgs.kubernetes-helm
 
-  # AI tools
-  pkgs.nodePackages.opencode-ai
-  pkgs._1password
+  # CLI tools
+  pkgs._1password-cli
 ]
 ```
 

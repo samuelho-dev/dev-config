@@ -147,7 +147,7 @@ nix run .#appName
 
 ```bash
 # Install package to profile
-nix profile install nixpkgs#neovim
+nix profile add nixpkgs#neovim
 
 # Remove package
 nix profile remove neovim
@@ -183,10 +183,9 @@ All tools are declared in one place:
 
 ```nix
 packages = [
-  pkgs.git zsh tmux docker neovim
-  pkgs.fzf ripgrep lazygit
-  pkgs.nodePackages.opencode-ai
-  _1password
+  pkgs.git pkgs.zsh pkgs.tmux pkgs.docker pkgs.neovim
+  pkgs.fzf pkgs.ripgrep pkgs.lazygit
+  pkgs._1password-cli
 ];
 ```
 

@@ -367,7 +367,7 @@ When using dev-config as a flake input in other projects:
 
 - [1Password Setup](05-1password-setup.md) - 1Password CLI authentication
 - [SSH Authentication](09-1password-ssh.md) - SSH key management with 1Password
-- [AI Integration](04-opencode-integration.md) - Similar token management pattern for AI APIs
+- [LiteLLM Proxy Setup](07-litellm-proxy-setup.md) - AI API token management
 
 ## Reference
 

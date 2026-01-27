@@ -169,7 +169,7 @@ direnv allow
 **Solution:**
 ```bash
 # Install nix-direnv
-nix profile install nixpkgs#nix-direnv
+nix profile add nixpkgs#nix-direnv
 
 # Configure in ~/.config/direnv/direnvrc
 mkdir -p ~/.config/direnv
@@ -457,14 +457,14 @@ nix-collect-garbage -d
 nix-store --optimise
 ```
 
-## OpenCode Issues
+## Claude Code Issues
 
-### "opencode: command not found"
+### "claude: command not found"
 
 **Symptom:**
 ```bash
-$ opencode --version
-zsh: command not found: opencode
+$ claude --version
+zsh: command not found: claude
 ```
 
 **Cause:** Not in Nix environment.
@@ -473,65 +473,49 @@ zsh: command not found: opencode
 ```bash
 cd ~/Projects/dev-config
 nix develop
-which opencode  # Should show /nix/store/.../bin/opencode
+which claude  # Should show /nix/store/.../bin/claude
 ```
 
-### "Authentication failed"
+### "LiteLLM authentication failed"
 
 **Symptom:**
 ```bash
-$ opencode ask "test"
-[ERROR] Authentication failed: Invalid API key
+[401] Authentication Error, No api key passed in.
 ```
 
-**Cause:** ANTHROPIC_API_KEY not loaded or invalid.
+**Cause:** Missing/invalid LiteLLM master or virtual key.
 
-**Check 1:** Is variable set?
+**Checklist:**
 ```bash
-echo $ANTHROPIC_API_KEY
-# Should show: sk-ant-...
+env | grep LITELLM
+# Ensure LITELLM_MASTER_KEY (or virtual key) is exported
 
-# If empty:
-source scripts/load-ai-credentials.sh
+curl -s https://litellm.infra.samuelho.space/health \
+  -H "x-litellm-api-key: Bearer $LITELLM_MASTER_KEY"
+# Should return {"status":"healthy"}
 ```
 
-**Check 2:** Is key valid?
-```bash
-# Test key manually
-curl https://api.anthropic.com/v1/messages \
-  -H "x-api-key: $ANTHROPIC_API_KEY" \
-  -H "anthropic-version: 2023-06-01" \
-  -H "content-type: application/json" \
-  -d '{"model":"claude-3-5-sonnet-20241022","max_tokens":10,"messages":[{"role":"user","content":"hi"}]}'
+If empty, re-run `home-manager switch --flake .` and sign into 1Password (`op signin`).
 
-# Should return JSON response, not error
+### "Model not found"
+
+**Symptom:**
+```bash
+[404] Model not found
 ```
 
-**Check 3:** Is key in 1Password correct?
+**Cause:** Model disabled in LiteLLM UI.
+
+**Solution:** Enable the model via LiteLLM dashboard → Model Registry, or use an existing one:
 ```bash
-op read "op://Dev/ai/ANTHROPIC_API_KEY"
-# Should show valid key starting with sk-ant-
+claude --model claude-3-5-sonnet-20241022 ask "..."
 ```
 
 ### "Rate limit exceeded"
 
-**Symptom:**
-```bash
-[ERROR] Rate limit exceeded. Please try again later.
-```
+**Cause:** Budget exceeded for the virtual key.
 
-**Cause:** Too many API requests.
-
-**Solution:**
-```bash
-# Wait a few minutes
-sleep 60
-
-# Or use different provider temporarily:
-opencode ask --provider openai "..."
-```
-
-**Long-term fix:** Use separate API keys for dev/prod in different 1Password items.
+**Solution:** Increase budget/reset period in LiteLLM UI or create a new virtual key with higher limits.
 
 ## Package Conflicts
 
@@ -806,7 +790,7 @@ bash scripts/validate.sh
 nix develop --command env | grep -E "(PATH|ANTHROPIC|OPENAI)"
 
 # Check package availability
-nix develop --command which nvim tmux op opencode
+nix develop --command which nvim tmux op
 ```
 
 ### Verbose Logging
@@ -838,9 +822,9 @@ op read "op://Dev/ai/ANTHROPIC_API_KEY" --debug
 - Discourse: https://discourse.nixos.org/
 - Wiki: https://nixos.wiki/
 
-**OpenCode:**
-- Documentation: https://opencode.ai/docs/
-- GitHub: https://github.com/opencodeai/opencode
+**Claude Code / LiteLLM:**
+- LiteLLM Docs: https://docs.litellm.ai/
+- Claude CLI Docs: https://docs.anthropic.com/en/docs/claude-code
 
 **1Password CLI:**
 - Documentation: https://developer.1password.com/docs/cli/
@@ -854,8 +838,8 @@ nix --help
 nix develop --help
 nix flake --help
 
-# OpenCode help
-opencode --help
+# Claude CLI help
+claude --help
 
 # 1Password CLI help
 op --help
@@ -872,7 +856,7 @@ If you encounter a bug:
 uname -a
 nix --version
 op --version
-opencode --version
+claude --version
 
 # Error logs
 nix build .#devShells.x86_64-darwin.default --show-trace &> nix-error.log

@@ -57,7 +57,7 @@ repos:
         entry: biome check --write
         language: system
         files: \.(js|jsx|ts|tsx|json|jsonc)$
-        exclude: ^(\.opencode/|gritql-patterns/|nvim/lazy-lock\.json$|\.claude/settings\.json$|state/last_sync\.json$|tsconfig/tsconfig\.strict\.json$|tsconfig/tsconfig\.monorepo\.json$)
+        exclude: ^(gritql-patterns/|nvim/lazy-lock\.json$|\.claude/settings\.json$|state/last_sync\.json$|tsconfig/tsconfig\.strict\.json$|tsconfig/tsconfig\.monorepo\.json$)
         pass_filenames: true
         description: Format and lint JavaScript/TypeScript/JSON with Biome
 

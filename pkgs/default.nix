@@ -14,15 +14,15 @@
       };
       "x86_64-darwin" = {
         url = "https://github.com/biomejs/gritql/releases/download/v${version}/grit-x86_64-apple-darwin.tar.gz";
-        sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # TODO: Get actual hash
+        sha256 = "03h1aav549n53x17k9xzqw0sqnhsad9sybr8jghmhaz7rwqz00mm";
       };
       "x86_64-linux" = {
         url = "https://github.com/biomejs/gritql/releases/download/v${version}/grit-x86_64-unknown-linux-gnu.tar.gz";
-        sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # TODO: Get actual hash
+        sha256 = "0j9i2r63s7bqdiax15n9cgbcczq7jjng19ram62hxjiqlm0ldcwl";
       };
       "aarch64-linux" = {
         url = "https://github.com/biomejs/gritql/releases/download/v${version}/grit-aarch64-unknown-linux-gnu.tar.gz";
-        sha256 = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="; # TODO: Get actual hash
+        sha256 = "0w28jg8ffz1fccvjqnf7lxhh5y3qk8klv3q1dlw1cmsr8mf42dwf";
       };
     };
     platformKey = pkgs.stdenvNoCC.hostPlatform.system;
@@ -146,6 +146,7 @@ in {
     pkgs._1password-cli
     (pkgs.callPackage ./init-workspace {})
     (pkgs.callPackage ./monorepo-library-generator {})
+    (pkgs.callPackage ./sync-ai-config {})
     grit
   ];
 
