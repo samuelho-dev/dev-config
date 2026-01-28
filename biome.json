@@ -1,5 +1,16 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.3.9/schema.json",
+  "plugins": [
+    "./biome/gritql-patterns/ban-type-assertions.grit",
+    "./biome/gritql-patterns/ban-default-export-non-index.grit",
+    "./biome/gritql-patterns/ban-imperative-error-handling-in-effect.grit",
+    "./biome/gritql-patterns/detect-missing-yield-star.grit",
+    "./biome/gritql-patterns/detect-unhandled-effect-promise.grit",
+    "./biome/gritql-patterns/enforce-effect-pipe.grit",
+    "./biome/gritql-patterns/ban-push-spread.grit",
+    "./biome/gritql-patterns/ban-return-types.grit",
+    "./biome/gritql-patterns/prefer-object-spread.grit"
+  ],
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -12,6 +23,8 @@
       "biome/**/*.json",
       "zed/**/*.json",
       ".factory/**/*.json",
+      "test-patterns/**/*.ts",
+      "test-patterns/**/*.json",
       "*.ts",
       "*.json"
     ],

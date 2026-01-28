@@ -109,8 +109,11 @@
     # Enable yazi terminal file manager (with full preview support)
     yazi.enable = true;
 
-    # Claude Code multi-profile authentication (native OAuth token management)
-    claude-code.enable = true;
+    # Claude Code with native OAuth (use /login to switch accounts)
+    claude-code = {
+      enable = true;
+      litellm.enable = false; # LiteLLM requires server-side config for OAuth pass-through
+    };
 
     # Factory Droid integration
     factory-droid.enable = true;

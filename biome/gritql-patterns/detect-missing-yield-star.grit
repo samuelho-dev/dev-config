@@ -17,9 +17,10 @@ language js
 // without yield*, which causes x to be an Effect instead of unwrapped value
 
 `Effect.gen(function* () { $body })` where {
-  $body <: contains `const $name = Effect.$method($args)` where {
+  $body <: contains $stmt where {
+    $stmt <: `const $name = Effect.$method($args)`,
     register_diagnostic(
-      span = $_,
+      span = $stmt,
       message = "Possible missing 'yield*'. In Effect.gen, use 'yield* Effect.xxx' to unwrap Effects. Direct assignment creates Effect<T> not T.",
       severity = "error"
     )

@@ -14,17 +14,19 @@ language js
 //   })
 
 or {
-  `Effect.tryPromise($fn)` where {
-    not ($fn <: `{ try: $_, catch: $_ }`),
+  $call where {
+    $call <: `Effect.tryPromise($fn)`,
+    not ($fn <: `{ try: $tryFn, catch: $catchFn }`),
     register_diagnostic(
-      span = $_,
+      span = $call,
       message = "Effect.tryPromise should use { try, catch } form for typed errors.",
       severity = "error"
     )
   },
-  `Effect.tryPromise({ try: $try, catch: ($e) => $e })` where {
+  $call where {
+    $call <: `Effect.tryPromise({ try: $tryFn, catch: ($e) => $e })`,
     register_diagnostic(
-      span = $_,
+      span = $call,
       message = "tryPromise catch should return typed error, not raw error.",
       severity = "error"
     )

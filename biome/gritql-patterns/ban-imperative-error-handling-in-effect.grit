@@ -78,17 +78,13 @@ language js
 // )
 
 or {
-  // Pattern 1: Raw Promise primitives in Effect.gen
+  // Pattern 1: await in Effect.gen
   `Effect.gen(function* () { $body })` where {
-    $body <: contains or {
-      `await $expr`,
-      `$promise.then($callback)`,
-      `new Promise($executor)`,
-      `Promise.all($_)`
-    } where {
+    $body <: contains $stmt where {
+      $stmt <: `await $expr`,
       register_diagnostic(
-        span = $_,
-        message = "Do not use Promise primitives inside Effect.gen. Use yield* Effect.tryPromise() for async ops, Effect.all() for composition. See docs/LINTING_POLICY.md for Effect error handling.",
+        span = $stmt,
+        message = "Do not use await inside Effect.gen. Use yield* Effect.tryPromise() for async ops. See docs/LINTING_POLICY.md for Effect error handling.",
         severity = "error"
       )
     }
@@ -96,9 +92,10 @@ or {
 
   // Pattern 2: throw statements in Effect.gen
   `Effect.gen(function* () { $body })` where {
-    $body <: contains `throw $error` where {
+    $body <: contains $stmt where {
+      $stmt <: `throw $error`,
       register_diagnostic(
-        span = $_,
+        span = $stmt,
         message = "Do not throw in Effect.gen. Use yield* Effect.fail() for typed errors or Effect.die() for defects. See docs/LINTING_POLICY.md for alternatives.",
         severity = "error"
       )
@@ -107,9 +104,10 @@ or {
 
   // Pattern 3: throw statements in Effect.sync
   `Effect.sync(() => { $body })` where {
-    $body <: contains `throw $error` where {
+    $body <: contains $stmt where {
+      $stmt <: `throw $error`,
       register_diagnostic(
-        span = $_,
+        span = $stmt,
         message = "Do not throw in Effect.sync. Use Effect.try() for operations that may throw, or yield* Effect.fail() for typed errors. See docs/LINTING_POLICY.md for guidance.",
         severity = "error"
       )
@@ -118,9 +116,10 @@ or {
 
   // Pattern 4: try-catch inside Effect.gen
   `Effect.gen(function* () { $body })` where {
-    $body <: contains `try { $_ } catch ($err) { $_ }` where {
+    $body <: contains $stmt where {
+      $stmt <: `try { $tryBody } catch ($err) { $catchBody }`,
       register_diagnostic(
-        span = $_,
+        span = $stmt,
         message = "Do not use try-catch inside Effect.gen. Use Effect.catchAll(), Effect.catchTag(), or Effect.tapError() for typed error handling. See docs/LINTING_POLICY.md for patterns.",
         severity = "error"
       )
@@ -128,13 +127,13 @@ or {
   },
 
   // Pattern 5: try-catch around Effect runners
-  `try { $body } catch ($err) { $_ }` where {
-    $body <: contains or { `Effect.runPromise`, `Effect.runSync` } where {
-      register_diagnostic(
-        span = $_,
-        message = "Do not wrap Effect runners in try-catch. Use Effect.match() or Effect.either() to handle errors before running. See docs/LINTING_POLICY.md for examples.",
-        severity = "error"
-      )
-    }
+  $stmt where {
+    $stmt <: `try { $body } catch ($err) { $catchBody }`,
+    $body <: contains or { `Effect.runPromise`, `Effect.runSync` },
+    register_diagnostic(
+      span = $stmt,
+      message = "Do not wrap Effect runners in try-catch. Use Effect.match() or Effect.either() to handle errors before running. See docs/LINTING_POLICY.md for examples.",
+      severity = "error"
+    )
   }
 }

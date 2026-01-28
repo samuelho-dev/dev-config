@@ -84,3 +84,4 @@ node_modules/
 package-lock.json
 
 .gritmodules/
+test-patterns/

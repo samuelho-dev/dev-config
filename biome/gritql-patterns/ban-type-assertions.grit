@@ -55,7 +55,7 @@ or {
   // Pattern 1: 'as' type assertion (any type, including as any)
   `$expr as $type` where {
     register_diagnostic(
-      span = $_,
+      span = $expr,
       message = "Type assertions are not allowed. Use Schema.decodeUnknown() for runtime validation or type guards for type narrowing. See docs/LINTING_POLICY.md for type-safe alternatives.",
       severity = "error"
     )
@@ -64,7 +64,7 @@ or {
   // Pattern 2: Angle-bracket type assertion (JSX-incompatible syntax)
   `<$type>$expr` where {
     register_diagnostic(
-      span = $_,
+      span = $expr,
       message = "Angle-bracket type assertions are not allowed. Use Schema.decodeUnknown() for runtime validation or type guards for type narrowing. See docs/LINTING_POLICY.md for alternatives.",
       severity = "error"
     )
@@ -73,7 +73,7 @@ or {
   // Pattern 3: satisfies operator (from consolidated ban-satisfies.grit)
   `$expr satisfies $type` where {
     register_diagnostic(
-      span = $_,
+      span = $expr,
       message = "The 'satisfies' operator bypasses proper type assignment. Use 'as const' for literals or explicit type annotation with Schema validation. See docs/LINTING_POLICY.md for guidance.",
       severity = "error"
     )

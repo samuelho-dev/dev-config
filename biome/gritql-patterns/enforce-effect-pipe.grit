@@ -9,9 +9,10 @@ language js
 //
 // Expert validated: Only flags 3+ level deep nesting to avoid false positives
 
-`Effect.$m1(Effect.$m2(Effect.$m3($args)))` where {
+$expr where {
+  $expr <: `Effect.$m1(Effect.$m2(Effect.$m3($args)))`,
   register_diagnostic(
-    span = $_,
+    span = $expr,
     message = "Deep nesting detected. Use Effect.pipe() for composition instead of nested calls",
     severity = "error"
   )

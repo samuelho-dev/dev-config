@@ -3,11 +3,11 @@ language js
 // Ban default exports in non-index files
 // Default exports make refactoring harder and reduce code discoverability
 // Exception: index.ts files can have default exports for barrel patterns
-`export default $_` where {
+`export default $item` where {
   // This pattern is informational - the actual file filtering
   // is done via biome.json overrides
   register_diagnostic(
-    span = $_,
+    span = $item,
     message = "Prefer named exports over default exports for better refactoring and discoverability.",
     severity = "warn"
   )
