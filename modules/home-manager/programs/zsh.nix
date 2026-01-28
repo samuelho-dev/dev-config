@@ -95,6 +95,10 @@
         # Early init before compinit (mkOrder 550)
         # Suppress oh-my-zsh warnings and direnv verbose output
         (lib.mkOrder 550 ''
+          # Set Oh My Zsh installation directory
+          # Required by Home Manager's programs.zsh.oh-my-zsh integration
+          export ZSH="$HOME/.oh-my-zsh"
+
           # Silence oh-my-zsh warnings during initialization
           # Theme loads correctly via Nix symlinks after init completes
           ZSH_DISABLE_COMPFIX=true
