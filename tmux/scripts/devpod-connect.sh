@@ -60,7 +60,8 @@ fi
 HOSTNAME=$(echo "$SELECTED" | awk '{print $1}')
 # Strip "devpod-" prefix for project name (e.g., devpod-portfolio -> portfolio)
 PROJECT_NAME="${HOSTNAME#devpod-}"
-SESSION_NAME="devpod:${PROJECT_NAME}"
+# tmux converts colons to underscores, so use underscore directly
+SESSION_NAME="devpod_${PROJECT_NAME}"
 SSH_TARGET="coder@${HOSTNAME}"
 
 # --- Start Mutagen sync if project has mutagen.yml ---
@@ -77,9 +78,9 @@ start_mutagen_sync() {
 }
 
 # --- Create or switch to session ---
-if tmux has-session -t "=$SESSION_NAME" 2>/dev/null; then
+if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   # Session exists, switch to it
-  tmux switch-client -t "=$SESSION_NAME"
+  tmux switch-client -t "$SESSION_NAME"
 else
   # Start mutagen sync for this project (runs in background)
   start_mutagen_sync
@@ -87,6 +88,6 @@ else
   # Create new session with default-command set to SSH
   # Every new pane/window in this session will auto-SSH to the DevPod
   tmux new-session -d -s "$SESSION_NAME" -e "DEVPOD_HOST=$HOSTNAME" "ssh $SSH_TARGET"
-  tmux set-option -t "=$SESSION_NAME" default-command "ssh $SSH_TARGET"
-  tmux switch-client -t "=$SESSION_NAME"
+  tmux set-option -t "$SESSION_NAME" default-command "ssh $SSH_TARGET"
+  tmux switch-client -t "$SESSION_NAME"
 fi

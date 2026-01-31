@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # Mutagen auto-sync hook for DevPod sessions
 # Called by tmux session-created hook with session name as argument
-# Starts mutagen project sync if session matches devpod:* pattern
+# Starts mutagen project sync if session matches devpod_* pattern
 
 SESSION_NAME="$1"
 PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
 
-# Only process devpod: sessions
-if [[ ! "$SESSION_NAME" =~ ^devpod: ]]; then
+# Only process devpod_ sessions
+if [[ ! "$SESSION_NAME" =~ ^devpod_ ]]; then
   exit 0
 fi
 
-# Extract project name from session (devpod:portfolio -> portfolio)
-PROJECT_NAME="${SESSION_NAME#devpod:}"
+# Extract project name from session (devpod_portfolio -> portfolio)
+PROJECT_NAME="${SESSION_NAME#devpod_}"
 PROJECT_DIR="$PROJECTS_DIR/$PROJECT_NAME"
 
 # Check if project has mutagen.yml and mutagen is available

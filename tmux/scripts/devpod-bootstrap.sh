@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # DevPod Bootstrap - Auto-create tmux sessions for online DevPods
 # Called from tmux.conf via run-shell on server start.
-# Creates devpod:{project} sessions with session-scoped SSH.
+# Creates devpod_{project} sessions with session-scoped SSH.
 
 # Wait briefly for continuum restore to complete first
 sleep 2
@@ -33,17 +33,18 @@ fi
 
 for HOSTNAME in $ONLINE_PODS; do
   PROJECT_NAME="${HOSTNAME#devpod-}"
-  SESSION_NAME="devpod:${PROJECT_NAME}"
+  # tmux converts colons to underscores, so use underscore directly
+  SESSION_NAME="devpod_${PROJECT_NAME}"
   SSH_TARGET="coder@${HOSTNAME}"
 
   # Skip if session already exists (e.g., restored by continuum)
-  if tmux has-session -t "=${SESSION_NAME}" 2>/dev/null; then
+  if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
     continue
   fi
 
-  # Create session with SSH default command
+  # Create session with SSH as initial command + default for new panes/windows
   tmux new-session -d -s "$SESSION_NAME" -e "DEVPOD_HOST=$HOSTNAME" "ssh $SSH_TARGET"
-  tmux set-option -t "=$SESSION_NAME" default-command "ssh $SSH_TARGET"
+  tmux set-option -t "$SESSION_NAME" default-command "ssh $SSH_TARGET"
 
   # Start Mutagen sync if project has mutagen.yml
   PROJECT_DIR="$PROJECTS_DIR/$PROJECT_NAME"
