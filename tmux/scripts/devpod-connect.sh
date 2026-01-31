@@ -19,21 +19,28 @@ else
   exit 1
 fi
 
-# --- Discover DevPods ---
+# --- Discover DevPods (online only, deduplicated by hostname) ---
 DEVPODS=$("$TAILSCALE" status --json 2>/dev/null | jq -r '
-  .Peer | to_entries[]
+  [.Peer | to_entries[]
   | select(.value.HostName | startswith("devpod-"))
   | {
       hostname: .value.HostName,
       ip: .value.TailscaleIPs[0],
       online: .value.Online,
       os: .value.OS
-    }
-  | "\(.hostname)\t\(if .online then "online" else "offline" end)\t\(.ip)\t\(.os)"
+    }]
+  | group_by(.hostname)
+  | map(
+      # Prefer online entry; if multiple, take first online
+      (map(select(.online)) | first) // first
+    )
+  | map(select(.online))
+  | sort_by(.hostname)[]
+  | "\(.hostname)\t\(.ip)\t\(.os)"
 ')
 
 if [ -z "$DEVPODS" ]; then
-  echo "No DevPods found on Tailnet" >&2
+  echo "No online DevPods found on Tailnet" >&2
   read -r -p "Press Enter to close..."
   exit 1
 fi
