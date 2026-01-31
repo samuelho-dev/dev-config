@@ -7,6 +7,16 @@
   options.dev-config.ssh = {
     enable = lib.mkEnableOption "SSH configuration with 1Password agent";
 
+    devpods = {
+      enable = lib.mkEnableOption "DevPod SSH configuration via Tailscale";
+
+      user = lib.mkOption {
+        type = lib.types.str;
+        default = "coder";
+        description = "Default SSH user for DevPod connections";
+      };
+    };
+
     onePasswordAgent = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -49,6 +59,17 @@
           identityFile = "~/.ssh/personal"; # SSH key synced from 1Password
           identitiesOnly = true; # Only use specified identity file
           forwardAgent = false; # Security best practice: disable agent forwarding
+        };
+
+        # DevPod wildcard: ephemeral workspaces on Tailscale
+        "devpod-*" = lib.mkIf config.dev-config.ssh.devpods.enable {
+          user = config.dev-config.ssh.devpods.user;
+          forwardAgent = true; # Forward 1Password SSH agent for git operations
+          extraOptions = {
+            StrictHostKeyChecking = "no";
+            UserKnownHostsFile = "/dev/null";
+            LogLevel = "ERROR"; # Suppress host key warnings (ephemeral hosts)
+          };
         };
       };
     };

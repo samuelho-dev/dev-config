@@ -129,6 +129,10 @@
       gritql.enable = true;
     };
 
+    # DevPod integration (session-scoped SSH via Tailscale)
+    ssh.devpods.enable = true;
+    tmux.devpodConnect.enable = true;
+
     # Optional: Disable specific programs
     # tmux.enable = false;
     # ssh.enable = false;

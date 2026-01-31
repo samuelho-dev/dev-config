@@ -144,6 +144,7 @@ in {
     pkgs.pkg-config
     pkgs.imagemagick
     pkgs._1password-cli
+    pkgs.mutagen # Bidirectional file sync for remote development
     (pkgs.callPackage ./init-workspace {})
     (pkgs.callPackage ./monorepo-library-generator {})
     (pkgs.callPackage ./sync-ai-config {})

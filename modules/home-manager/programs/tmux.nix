@@ -41,6 +41,37 @@
       example = lib.literalExpression ''"''${inputs.dev-config}/tmux/gitmux.conf"'';
     };
 
+    devpodConnect = {
+      enable = lib.mkEnableOption "DevPod tmux integration (Tailscale-based)";
+
+      connectScriptSource = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default =
+          if inputs ? dev-config
+          then "${inputs.dev-config}/tmux/scripts/devpod-connect.sh"
+          else null;
+        description = "Path to DevPod connect script";
+      };
+
+      statusScriptSource = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default =
+          if inputs ? dev-config
+          then "${inputs.dev-config}/tmux/scripts/devpod-status.sh"
+          else null;
+        description = "Path to DevPod status bar script";
+      };
+
+      mutagenHookScriptSource = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default =
+          if inputs ? dev-config
+          then "${inputs.dev-config}/tmux/scripts/devpod-mutagen-hook.sh"
+          else null;
+        description = "Path to Mutagen auto-sync hook script for DevPod sessions";
+      };
+    };
+
     # Declarative options matching our tmux.conf settings
     prefix = lib.mkOption {
       type = lib.types.str;
@@ -107,5 +138,33 @@
     home.file.".gitmux.conf" = lib.mkIf (config.dev-config.tmux.gitmuxConfigSource != null) {
       source = config.dev-config.tmux.gitmuxConfigSource;
     };
+
+    # DevPod integration scripts (symlinked to ~/.local/bin/)
+    home.file.".local/bin/devpod-connect.sh" =
+      lib.mkIf (
+        config.dev-config.tmux.devpodConnect.enable
+        && config.dev-config.tmux.devpodConnect.connectScriptSource != null
+      ) {
+        source = config.dev-config.tmux.devpodConnect.connectScriptSource;
+        executable = true;
+      };
+
+    home.file.".local/bin/devpod-status.sh" =
+      lib.mkIf (
+        config.dev-config.tmux.devpodConnect.enable
+        && config.dev-config.tmux.devpodConnect.statusScriptSource != null
+      ) {
+        source = config.dev-config.tmux.devpodConnect.statusScriptSource;
+        executable = true;
+      };
+
+    home.file.".local/bin/devpod-mutagen-hook.sh" =
+      lib.mkIf (
+        config.dev-config.tmux.devpodConnect.enable
+        && config.dev-config.tmux.devpodConnect.mutagenHookScriptSource != null
+      ) {
+        source = config.dev-config.tmux.devpodConnect.mutagenHookScriptSource;
+        executable = true;
+      };
   };
 }
