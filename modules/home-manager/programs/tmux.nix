@@ -70,6 +70,15 @@
           else null;
         description = "Path to Mutagen auto-sync hook script for DevPod sessions";
       };
+
+      bootstrapScriptSource = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default =
+          if inputs ? dev-config
+          then "${inputs.dev-config}/tmux/scripts/devpod-bootstrap.sh"
+          else null;
+        description = "Path to DevPod bootstrap script that auto-creates sessions on tmux start";
+      };
     };
 
     # Declarative options matching our tmux.conf settings
@@ -135,8 +144,9 @@
             bind D display-popup -E -w 70% -h 60% "~/.local/bin/devpod-connect.sh"
           }
 
-          # Auto-start Mutagen sync for DevPod sessions (works with resurrect restore too)
-          set-hook -g session-created 'run-shell "~/.local/bin/devpod-mutagen-hook.sh #{session_name}"'
+          # Bootstrap: auto-create devpod sessions for online DevPods on server start
+          # Creates devpod:{project} sessions with SSH + Mutagen sync for each online pod
+          run-shell "bash ~/.local/bin/devpod-bootstrap.sh &"
         '';
     };
 
@@ -175,6 +185,15 @@
         && config.dev-config.tmux.devpodConnect.mutagenHookScriptSource != null
       ) {
         source = config.dev-config.tmux.devpodConnect.mutagenHookScriptSource;
+        executable = true;
+      };
+
+    home.file.".local/bin/devpod-bootstrap.sh" =
+      lib.mkIf (
+        config.dev-config.tmux.devpodConnect.enable
+        && config.dev-config.tmux.devpodConnect.bootstrapScriptSource != null
+      ) {
+        source = config.dev-config.tmux.devpodConnect.bootstrapScriptSource;
         executable = true;
       };
   };
