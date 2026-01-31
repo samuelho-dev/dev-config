@@ -120,13 +120,24 @@
         tmux-fzf # sainnhe/tmux-fzf (fuzzy finder)
       ];
 
-      # Extra configuration for yazi image preview support
-      extraConfig = ''
-        # Enable passthrough for yazi image previews
-        set -g allow-passthrough on
-        set -ga update-environment TERM
-        set -ga update-environment TERM_PROGRAM
-      '';
+      # Extra configuration
+      extraConfig =
+        ''
+          # Enable passthrough for yazi image previews
+          set -g allow-passthrough on
+          set -ga update-environment TERM
+          set -ga update-environment TERM_PROGRAM
+        ''
+        + lib.optionalString config.dev-config.tmux.devpodConnect.enable ''
+
+          # DevPod Integration (Tailscale SSH sessions)
+          if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
+            bind D display-popup -E -w 70% -h 60% "~/.local/bin/devpod-connect.sh"
+          }
+
+          # Auto-start Mutagen sync for DevPod sessions (works with resurrect restore too)
+          set-hook -g session-created 'run-shell "~/.local/bin/devpod-mutagen-hook.sh #{session_name}"'
+        '';
     };
 
     # Symlink tmux configuration if source is provided
