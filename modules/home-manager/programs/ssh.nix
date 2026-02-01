@@ -42,17 +42,22 @@
   config = lib.mkIf config.dev-config.ssh.enable {
     programs.ssh = {
       enable = true;
-
-      # Use 1Password SSH agent for all connections
-      extraConfig = lib.mkIf config.dev-config.ssh.onePasswordAgent.enable ''
-        # 1Password SSH Agent Integration
-        # Keys stored securely in 1Password, accessed via biometric unlock
-        Host *
-          IdentityAgent "${config.dev-config.ssh.onePasswordAgent.socketPath}"
-      '';
+      enableDefaultConfig = false;
 
       # GitHub-specific configuration
       matchBlocks = {
+        # Wildcard block: 1Password SSH agent for all connections
+        "*" = lib.mkMerge [
+          {
+            forwardAgent = false;
+          }
+          (lib.mkIf config.dev-config.ssh.onePasswordAgent.enable {
+            extraOptions = {
+              IdentityAgent = ''"${config.dev-config.ssh.onePasswordAgent.socketPath}"'';
+            };
+          })
+        ];
+
         "github.com" = {
           hostname = "github.com";
           user = "git";
@@ -61,10 +66,12 @@
           forwardAgent = false; # Security best practice: disable agent forwarding
         };
 
-        # DevPod wildcard: ephemeral workspaces on Tailscale
+        # DevPod wildcard: ephemeral workspaces on Tailscale SSH
+        # Uses tailscale nc as proxy since DevPods run Tailscale SSH (no sshd on port 22)
         "devpod-*" = lib.mkIf config.dev-config.ssh.devpods.enable {
           user = config.dev-config.ssh.devpods.user;
           forwardAgent = true; # Forward 1Password SSH agent for git operations
+          proxyCommand = "tailscale nc %h %p";
           extraOptions = {
             StrictHostKeyChecking = "no";
             UserKnownHostsFile = "/dev/null";

@@ -9,8 +9,11 @@
   # 1Password item UUID for AI service keys
   onePassAiItemId = "xsuolbdwx4vmcp3zysjczfatam";
 
-  # Get 1Password service account token path from sops
-  opServiceAccountTokenPath = config.sops.secrets."op/service_account_token".path;
+  # Get 1Password service account token path from sops (guarded for non-sops configs)
+  opServiceAccountTokenPath =
+    if (config ? sops) && (config.sops.secrets ? "op/service_account_token")
+    then config.sops.secrets."op/service_account_token".path
+    else null;
 
   # Shell script to generate load-env.sh at activation time
   # This runs AFTER sops-nix decrypts secrets at activation time

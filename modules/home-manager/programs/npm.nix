@@ -10,7 +10,7 @@
   # This is secure - tokens are decrypted only during home-manager activation
   # and never exposed to the Nix store
   npmToken =
-    if config.sops.secrets ? "npm/token"
+    if (config ? sops) && (config.sops.secrets ? "npm/token")
     then config.sops.secrets."npm/token".path
     else null;
 

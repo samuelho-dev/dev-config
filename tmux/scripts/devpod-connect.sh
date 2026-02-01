@@ -87,7 +87,11 @@ else
 
   # Create new session with default-command set to SSH
   # Every new pane/window in this session will auto-SSH to the DevPod
-  tmux new-session -d -s "$SESSION_NAME" -e "DEVPOD_HOST=$HOSTNAME" "ssh $SSH_TARGET"
-  tmux set-option -t "$SESSION_NAME" default-command "ssh $SSH_TARGET"
+  # -t forces PTY allocation (required for Tailscale SSH interactive sessions)
+  # cd to workspace: /home/devpod (standard) or /home/coder (fallback)
+  # bash -i (not login) avoids tty chown failure in containers (exit code 1)
+  SSH_CMD="ssh -t $SSH_TARGET 'cd /home/devpod 2>/dev/null || cd /home/coder; exec bash -i'"
+  tmux new-session -d -s "$SESSION_NAME" -e "DEVPOD_HOST=$HOSTNAME" "$SSH_CMD"
+  tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
   tmux switch-client -t "$SESSION_NAME"
 fi

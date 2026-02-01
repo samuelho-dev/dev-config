@@ -129,7 +129,8 @@
       gritql.enable = true;
     };
 
-    # DevPod integration (session-scoped SSH via Tailscale)
+    # SSH configuration with 1Password agent + DevPod Tailscale proxy
+    ssh.enable = true;
     ssh.devpods.enable = true;
     tmux.devpodConnect.enable = true;
 

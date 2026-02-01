@@ -115,6 +115,11 @@
       baseIndex = config.dev-config.tmux.baseIndex;
       mouse = config.dev-config.tmux.mouse;
       historyLimit = config.dev-config.tmux.historyLimit;
+      terminal = "tmux-256color";
+      keyMode = "vi";
+      escapeTime = 0;
+      aggressiveResize = true;
+      focusEvents = true;
 
       # Install tmux plugins via Nix (replaces TPM)
       plugins = with pkgs.tmuxPlugins; [
@@ -129,30 +134,130 @@
         tmux-fzf # sainnhe/tmux-fzf (fuzzy finder)
       ];
 
-      # Extra configuration
+      # All configuration ported from raw tmux.conf — single source of truth
       extraConfig =
         ''
-          # Enable passthrough for yazi image previews
+          # Terminal settings
+          set -as terminal-overrides ",*:Tc"
+          set -as terminal-features ",*:hyperlinks"
           set -g allow-passthrough on
           set -ga update-environment TERM
           set -ga update-environment TERM_PROGRAM
+
+          # Use login shell (inherits from environment)
+          set -g default-command "''${SHELL}"
+
+          # Window/pane settings
+          setw -g pane-base-index 1
+          set -g renumber-windows on
+          set -g repeat-time 300
+
+          # -------------------------------------------------------------------
+          # Key Bindings
+          # -------------------------------------------------------------------
+
+          # Quick configuration reload
+          bind r source-file ~/.config/tmux/tmux.conf \; display-message "tmux.conf reloaded!"
+
+          # Split panes using | and - (more intuitive)
+          bind | split-window -h -c "#{pane_current_path}"
+          bind - split-window -v -c "#{pane_current_path}"
+          unbind '"'
+          unbind %
+
+          # Resize panes with Vim keys
+          bind -r H resize-pane -L 5
+          bind -r J resize-pane -D 5
+          bind -r K resize-pane -U 5
+          bind -r L resize-pane -R 5
+
+          # Rename pane title
+          bind t command-prompt -p "Pane title:" "select-pane -T '%%'"
+
+          # Enhanced tree view showing windows with pane counts and titles
+          bind w choose-tree -Zw -F "#{window_name} (#{window_panes} panes)#{?pane_title, - #{pane_title},}"
+
+          # Full tree view with all sessions, windows, and panes
+          bind W choose-tree -Z
+
+          # -------------------------------------------------------------------
+          # Copy Mode (Vi-style)
+          # -------------------------------------------------------------------
+          bind-key -T copy-mode-vi v send -X begin-selection
+          bind-key -T copy-mode-vi V send -X select-line
+          bind-key -T copy-mode-vi C-v send -X rectangle-toggle
+
+          # macOS clipboard integration
+          if-shell "uname | grep -q Darwin" {
+            bind-key -T copy-mode-vi y send -X copy-pipe-and-cancel "pbcopy"
+            bind-key -T copy-mode-vi MouseDragEnd1Pane send -X copy-pipe-and-cancel "pbcopy"
+          }
+
+          # Enter copy mode with Prefix + Enter
+          bind Enter copy-mode
+
+          # -------------------------------------------------------------------
+          # Status Bar
+          # -------------------------------------------------------------------
+          set -g status-position bottom
+          set -g status-interval 15
+          set -g status-style "bg=black,fg=white"
+
+          set -g status-left-length 60
+          set -g status-left "#[fg=green]#S #[fg=yellow]#I #[fg=cyan]#P:#[fg=magenta]#{pane_title}"
+
+          set -g status-right-length 60
+          set -g status-right "#(~/.local/bin/devpod-status.sh)#[fg=cyan]#H #[fg=yellow]%H:%M %d-%b-%y"
+
+          setw -g window-status-format " #I: #W "
+          setw -g window-status-current-format "#[fg=black,bg=cyan,bold] #I: #W "
+
+          # Pane borders
+          set -g pane-border-style "fg=colour238"
+          set -g pane-active-border-style "fg=cyan"
+          set -g pane-border-status top
+          set -g pane-border-format "#[fg=colour238]#P: #{pane_title} #(env -u DIRENV_DIR -u DIRENV_WATCHES gitmux -cfg ~/.gitmux.conf '#{pane_current_path}')"
+
+          # -------------------------------------------------------------------
+          # Popup Windows
+          # -------------------------------------------------------------------
+          bind ! display-popup -E -w 60% -h 75%
+
+          bind m command-prompt -p "New session name:" "new-session -s '%%' -c '#{pane_current_path}'"
+
+          if-shell "command -v fzf" {
+            bind ` display-popup -E -w 60% -h 50% "tmux list-sessions | fzf --reverse --header='Select session:' | cut -d: -f1 | xargs tmux switch-client -t"
+          }
+
+          if-shell "command -v fzf" {
+            bind X display-popup -E "tmux list-sessions -F '#{?session_attached,,#{session_name}}' | fzf --reverse | xargs -I {} tmux kill-session -t {}"
+          }
+
+          if-shell "command -v lazygit" {
+            bind g display-popup -E -w 80% -h 80% "lazygit"
+          }
+
+          # -------------------------------------------------------------------
+          # Plugin Settings
+          # -------------------------------------------------------------------
+          set -g @resurrect-capture-pane-contents 'on'
+          set -g @resurrect-processes 'ssh'
+          set -g @continuum-restore 'on'
+          set -g @continuum-save-interval '60'
+          set -g @catppuccin_flavour 'mocha'
         ''
         + lib.optionalString config.dev-config.tmux.devpodConnect.enable ''
 
+          # -------------------------------------------------------------------
           # DevPod Integration (Tailscale SSH sessions)
+          # -------------------------------------------------------------------
           if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
             bind D display-popup -E -w 70% -h 60% "~/.local/bin/devpod-connect.sh"
           }
 
           # Bootstrap: auto-create devpod sessions for online DevPods on server start
-          # Creates devpod:{project} sessions with SSH + Mutagen sync for each online pod
           run-shell "bash ~/.local/bin/devpod-bootstrap.sh &"
         '';
-    };
-
-    # Symlink tmux configuration if source is provided
-    home.file.".tmux.conf" = lib.mkIf (config.dev-config.tmux.configSource != null) {
-      source = config.dev-config.tmux.configSource;
     };
 
     # Symlink gitmux configuration if source is provided

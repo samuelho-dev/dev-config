@@ -3,8 +3,7 @@
 # Called from tmux.conf via run-shell on server start.
 # Creates devpod_{project} sessions with session-scoped SSH.
 
-# Wait briefly for continuum restore to complete first
-sleep 2
+# No sleep - run-shell blocks tmux until complete, so this runs synchronously
 
 PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
 
@@ -43,8 +42,12 @@ for HOSTNAME in $ONLINE_PODS; do
   fi
 
   # Create session with SSH as initial command + default for new panes/windows
-  tmux new-session -d -s "$SESSION_NAME" -e "DEVPOD_HOST=$HOSTNAME" "ssh $SSH_TARGET"
-  tmux set-option -t "$SESSION_NAME" default-command "ssh $SSH_TARGET"
+  # -t forces PTY allocation (required for Tailscale SSH interactive sessions)
+  # cd to workspace: /home/devpod (standard) or /home/coder (fallback)
+  # bash -i (not login) avoids tty chown failure in containers (exit code 1)
+  SSH_CMD="ssh -t $SSH_TARGET 'cd /home/devpod 2>/dev/null || cd /home/coder; exec bash -i'"
+  tmux new-session -d -s "$SESSION_NAME" -e "DEVPOD_HOST=$HOSTNAME" "$SSH_CMD"
+  tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
 
   # Start Mutagen sync if project has mutagen.yml
   PROJECT_DIR="$PROJECTS_DIR/$PROJECT_NAME"
