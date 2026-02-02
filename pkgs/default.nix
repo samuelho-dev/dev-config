@@ -38,8 +38,10 @@
       nativeBuildInputs =
         [pkgs.makeWrapper]
         ++ pkgs.lib.optionals pkgs.stdenvNoCC.isLinux [pkgs.autoPatchelfHook];
-      buildInputs =
-        pkgs.lib.optionals pkgs.stdenvNoCC.isLinux [pkgs.stdenv.cc.cc.lib];
+      buildInputs = pkgs.lib.optionals pkgs.stdenvNoCC.isLinux [
+        pkgs.stdenv.cc.cc.lib # libstdc++.so.6
+        pkgs.zlib # libz.so.1
+      ];
       installPhase = ''
         runHook preInstall
 
