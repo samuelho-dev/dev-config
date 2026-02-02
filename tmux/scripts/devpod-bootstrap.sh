@@ -45,10 +45,10 @@ for HOSTNAME in $ONLINE_PODS; do
 
   # Create session and SSH with explicit shell to bypass login process
   # Container login shells fail with "mesg: cannot change mode" due to missing
-  # CAP_FOWNER capability. Using 'exec bash' skips the login.defs TTY chown.
+  # CAP_FOWNER capability. Using 'exec zsh' skips the login.defs TTY chown.
   # Start in workspace directory - check for .git to find the actual repo location
   # Priority: /home/devpod > /workspace > ~ (but only if they contain a git repo)
-  SSH_CMD="ssh -t $SSH_TARGET 'if [ -d /home/devpod/.git ]; then cd /home/devpod; elif [ -d /workspace/.git ]; then cd /workspace; elif [ -d ~/.git ] || [ -f ~/CLAUDE.md ]; then cd ~; else cd /home/devpod 2>/dev/null || cd /workspace 2>/dev/null || cd ~; fi; exec bash'"
+  SSH_CMD="ssh -t $SSH_TARGET 'if [ -d /home/devpod/.git ]; then cd /home/devpod; elif [ -d /workspace/.git ]; then cd /workspace; elif [ -d ~/.git ] || [ -f ~/CLAUDE.md ]; then cd ~; else cd /home/devpod 2>/dev/null || cd /workspace 2>/dev/null || cd ~; fi; exec zsh'"
   tmux new-session -d -s "$SESSION_NAME" -e "DEVPOD_HOST=$HOSTNAME"
   tmux set-option -t "$SESSION_NAME" remain-on-exit on
   tmux send-keys -t "$SESSION_NAME" "$SSH_CMD" Enter
