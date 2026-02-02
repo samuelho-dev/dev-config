@@ -41,9 +41,10 @@
     };
     zsh = {
       enable = true;
-      zshrcSource = null;
-      zprofileSource = null;
-      p10kSource = null;
+      # Use module defaults which source from dev-config/zsh/ directory:
+      # - zshrcSource -> ${inputs.dev-config}/zsh/.zshrc
+      # - zprofileSource -> ${inputs.dev-config}/zsh/.zprofile
+      # - p10kSource -> ${inputs.dev-config}/zsh/.p10k.zsh
     };
     claude-code = {
       enable = true;
