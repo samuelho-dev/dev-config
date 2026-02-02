@@ -173,8 +173,17 @@
     # Install Powerlevel10k theme via Nix
     home.packages = [
       pkgs.zsh-powerlevel10k
+      pkgs.oh-my-zsh
       # zsh-autosuggestions already enabled via programs.zsh.autosuggestion
     ];
+
+    # Install oh-my-zsh via Nix symlink
+    # home-manager's programs.zsh.oh-my-zsh module expects oh-my-zsh to exist at ~/.oh-my-zsh
+    # but doesn't install it - it only configures .zshrc to source it
+    home.file.".oh-my-zsh" = {
+      source = "${pkgs.oh-my-zsh}/share/oh-my-zsh";
+      recursive = true; # Allow custom themes/plugins symlinks inside
+    };
 
     # Symlink Powerlevel10k theme to Oh My Zsh custom themes directory
     # This makes it available for the theme = "powerlevel10k/powerlevel10k" setting
