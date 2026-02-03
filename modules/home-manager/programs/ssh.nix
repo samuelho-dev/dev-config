@@ -61,9 +61,8 @@
         "github.com" = {
           hostname = "github.com";
           user = "git";
-          identityFile = "~/.ssh/personal"; # SSH key synced from 1Password
-          identitiesOnly = true; # Only use specified identity file
           forwardAgent = false; # Security best practice: disable agent forwarding
+          # Uses 1Password SSH agent from wildcard block (no identitiesOnly restriction)
         };
 
         # DevPod wildcard: ephemeral workspaces on Tailscale SSH
