@@ -251,12 +251,16 @@
           # -------------------------------------------------------------------
           # DevPod Integration (Tailscale SSH sessions)
           # -------------------------------------------------------------------
+          # CRITICAL: Don't call switch-client inside display-popup!
+          # The popup context + switch-client causes tmux server crashes.
+          # Instead: popup outputs session name, we capture it, then switch AFTER popup exits.
           if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
-            bind D display-popup -E -w 70% -h 60% "~/.local/bin/devpod-connect.sh"
+            bind D display-popup -E -w 70% -h 60% '~/.local/bin/devpod-connect.sh > /tmp/devpod-selected 2>/dev/null && test -s /tmp/devpod-selected' \; run-shell 'SESSION=$(cat /tmp/devpod-selected 2>/dev/null) && [ -n "$SESSION" ] && tmux switch-client -t "$SESSION"'
           }
 
           # Bootstrap: auto-create devpod sessions for online DevPods on server start
-          run-shell "bash ~/.local/bin/devpod-bootstrap.sh &"
+          # Run synchronously so sessions are ready before user interaction
+          run-shell "bash ~/.local/bin/devpod-bootstrap.sh"
         '';
     };
 

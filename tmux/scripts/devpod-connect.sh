@@ -77,21 +77,25 @@ start_mutagen_sync() {
   fi
 }
 
-# --- Create or switch to session ---
-if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-  # Session exists, switch to it
-  tmux switch-client -t "$SESSION_NAME"
-else
-  # Start mutagen sync for this project (runs in background)
+# --- Create session if needed ---
+if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
+  # Session doesn't exist, create it
   start_mutagen_sync
 
-  # Create new session with default-command set to SSH
-  # Every new pane/window in this session will auto-SSH to the DevPod
-  # -t forces PTY allocation (required for Tailscale SSH interactive sessions)
-  # cd to workspace: /home/devpod (standard) or /home/coder (fallback)
-  # bash -i (not login) avoids tty chown failure in containers (exit code 1)
-  SSH_CMD="ssh -t $SSH_TARGET 'cd /home/devpod 2>/dev/null || cd /home/coder; exec bash -i'"
-  tmux new-session -d -s "$SESSION_NAME" -e "DEVPOD_HOST=$HOSTNAME" "$SSH_CMD"
+  # Create session and SSH with explicit shell to bypass login process
+  # Container login shells fail with "mesg: cannot change mode" due to missing
+  # CAP_FOWNER capability. Using 'exec zsh' skips the login.defs TTY chown.
+  # Use send-keys approach (not running SSH as session command) so remain-on-exit works
+  SSH_CMD="ssh -t $SSH_TARGET 'cd ~ && exec zsh'"
+
+  # Start session in $HOME to avoid local direnv activation
+  tmux new-session -d -s "$SESSION_NAME" -c "$HOME" -e "DEVPOD_HOST=$HOSTNAME"
+  tmux set-option -t "$SESSION_NAME" remain-on-exit on
+  tmux send-keys -t "$SESSION_NAME" "$SSH_CMD" Enter
   tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
-  tmux switch-client -t "$SESSION_NAME"
 fi
+
+# CRITICAL: Don't call switch-client directly from popup!
+# Output the session name and let tmux.conf handle the switch.
+# The popup will close (-E flag), then tmux executes the switch externally.
+echo "$SESSION_NAME"

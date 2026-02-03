@@ -46,12 +46,11 @@ for HOSTNAME in $ONLINE_PODS; do
   # Create session and SSH with explicit shell to bypass login process
   # Container login shells fail with "mesg: cannot change mode" due to missing
   # CAP_FOWNER capability. Using 'exec zsh' skips the login.defs TTY chown.
-  # Start in workspace directory - check for .git to find the actual repo location
-  # Different devpods mount workspace at different paths:
-  # - ai-dev-env, creativetoolkits, portfolio: /home/devpod
-  # - audiospacelive: /home/coder (same as ~)
-  SSH_CMD="ssh -t $SSH_TARGET 'if [ -d /home/devpod/.git ]; then cd /home/devpod; elif [ -d /home/coder/.git ]; then cd /home/coder; elif [ -d /workspace/.git ]; then cd /workspace; else cd ~; fi; exec zsh'"
-  tmux new-session -d -s "$SESSION_NAME" -e "DEVPOD_HOST=$HOSTNAME"
+  # Start in home dir (~), NOT workspace, to avoid direnv/nix triggering on connect
+  # User can 'cd workspace' manually when ready to activate the dev environment
+  SSH_CMD="ssh -t $SSH_TARGET 'cd ~ && exec zsh'"
+  # Start in $HOME to avoid local direnv activation from current directory
+  tmux new-session -d -s "$SESSION_NAME" -c "$HOME" -e "DEVPOD_HOST=$HOSTNAME"
   tmux set-option -t "$SESSION_NAME" remain-on-exit on
   tmux send-keys -t "$SESSION_NAME" "$SSH_CMD" Enter
   tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
