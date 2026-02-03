@@ -83,6 +83,17 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    # Install Claude Code CLI via bun (npm package not in nixpkgs)
+    # Requires bun in PATH (provided by dev-config.npm module)
+    home.activation.installClaudeCodeCli = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
+      if command -v bun &>/dev/null; then
+        # Check if claude is already installed and up to date
+        if ! command -v claude &>/dev/null || ! claude --version &>/dev/null 2>&1; then
+          $DRY_RUN_CMD bun add -g @anthropic-ai/claude-code 2>/dev/null || true
+        fi
+      fi
+    '';
+
     # Ensure ~/.claude directory exists
     home.activation.createClaudeConfigDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
       $DRY_RUN_CMD mkdir -p "$HOME/.claude"
