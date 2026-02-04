@@ -253,12 +253,12 @@
           # -------------------------------------------------------------------
           # Uses new-window for fzf picker to avoid display-popup + switch-client crash
           if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
-            bind D new-window -n "devpod" "~/.local/bin/devpod-connect.sh"
+            bind D new-window -n "devpod" "$HOME/Projects/infra/dev-config/tmux/scripts/devpod-connect.sh"
           }
 
           # Bootstrap: auto-create devpod sessions for online DevPods on server start
           # Run synchronously so sessions are ready before user interaction
-          run-shell "bash ~/.local/bin/devpod-bootstrap.sh"
+          run-shell "bash $HOME/Projects/infra/dev-config/tmux/scripts/devpod-bootstrap.sh"
         '';
     };
 
