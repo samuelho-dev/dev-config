@@ -95,7 +95,6 @@ if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
 fi
 
-# CRITICAL: Don't call switch-client directly from popup!
-# Output the session name and let tmux.conf handle the switch.
-# The popup will close (-E flag), then tmux executes the switch externally.
-echo "$SESSION_NAME"
+# Switch to session
+# When called via 'run-shell' (not inside display-popup), switch-client is safe
+tmux switch-client -t "$SESSION_NAME"
