@@ -253,9 +253,9 @@
           # -------------------------------------------------------------------
           # CRITICAL: Don't call switch-client inside display-popup!
           # The popup context + switch-client causes tmux server crashes.
-          # Instead: popup outputs session name, we capture it, then switch AFTER popup exits.
+          # Solution: run-shell provides a shell where we wait for popup to complete, then switch.
           if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
-            bind D display-popup -E -w 70% -h 60% '~/.local/bin/devpod-connect.sh > /tmp/devpod-selected 2>/dev/null && test -s /tmp/devpod-selected' \; run-shell 'SESSION=$(cat /tmp/devpod-selected 2>/dev/null) && [ -n "$SESSION" ] && tmux switch-client -t "$SESSION"'
+            bind D run-shell 'tmux display-popup -E -w 70% -h 60% "$HOME/.local/bin/devpod-connect.sh > /tmp/devpod-selected"; [ -s /tmp/devpod-selected ] && tmux switch-client -t "$(cat /tmp/devpod-selected)"'
           }
 
           # Bootstrap: auto-create devpod sessions for online DevPods on server start
