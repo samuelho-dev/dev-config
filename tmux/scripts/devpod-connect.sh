@@ -89,10 +89,10 @@ if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   # Session doesn't exist, create it
   start_mutagen_sync
 
-  # Create session and SSH with explicit shell to bypass login process
-  # Container login shells fail with "mesg: cannot change mode" due to missing
-  # CAP_FOWNER capability. Using 'exec zsh' skips the login.defs TTY chown.
-  SSH_CMD="ssh -t $SSH_TARGET 'cd ~ && exec zsh'"
+  # Create session and SSH
+  # Use zsh -l to ensure proper shell initialization
+  # Touch .zshrc first to skip zsh-newuser-install prompt
+  SSH_CMD="ssh -t $SSH_TARGET 'touch ~/.zshrc 2>/dev/null; cd ~ && exec zsh -l'"
 
   # Start session in $HOME to avoid local direnv activation
   # Using -d (detached) is safe inside popup per tmux issue #3748
