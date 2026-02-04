@@ -45,9 +45,14 @@ if [ -z "$DEVPODS" ]; then
   exit 1
 fi
 
-# --- fzf picker ---
+# --- fzf picker (use fzf-tmux -p for popup, falls back to fzf) ---
+FZF_CMD="fzf"
+if command -v fzf-tmux &>/dev/null && [ -n "$TMUX" ]; then
+  FZF_CMD="fzf-tmux -p -w 70% -h 60%"
+fi
+
 SELECTED=$(echo "$DEVPODS" | column -t -s$'\t' | \
-  fzf --reverse \
+  $FZF_CMD --reverse \
       --header="Select DevPod (Ctrl-C to cancel):" \
       --preview-window=hidden \
       --ansi)
@@ -97,6 +102,5 @@ if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
 fi
 
-# Switch to session - this works inside display-popup per documented patterns
-# See: https://waylonwalker.com/tmux-fzf-session-jump/
+# Switch to session - works with fzf-tmux -p (fzf's popup, not tmux display-popup)
 tmux switch-client -t "$SESSION_NAME"
