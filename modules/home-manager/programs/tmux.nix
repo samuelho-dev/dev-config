@@ -251,9 +251,9 @@
           # -------------------------------------------------------------------
           # DevPod Integration (Tailscale SSH sessions)
           # -------------------------------------------------------------------
-          # Uses new-window for fzf picker to avoid display-popup + switch-client crash
+          # Pattern from https://waylonwalker.com/tmux-fzf-session-jump/
           if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
-            bind D new-window -n "devpod" "$HOME/Projects/infra/dev-config/tmux/scripts/devpod-connect.sh"
+            bind D display-popup -E "$HOME/Projects/infra/dev-config/tmux/scripts/devpod-connect.sh"
           }
 
           # Bootstrap: auto-create devpod sessions for online DevPods on server start

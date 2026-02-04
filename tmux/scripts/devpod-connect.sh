@@ -78,6 +78,8 @@ start_mutagen_sync() {
 }
 
 # --- Create session if needed ---
+# NOTE: tmux new-session inside display-popup can crash tmux (Issue #3748)
+# The -d flag creates detached session which is safe
 if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   # Session doesn't exist, create it
   start_mutagen_sync
@@ -85,16 +87,16 @@ if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   # Create session and SSH with explicit shell to bypass login process
   # Container login shells fail with "mesg: cannot change mode" due to missing
   # CAP_FOWNER capability. Using 'exec zsh' skips the login.defs TTY chown.
-  # Use send-keys approach (not running SSH as session command) so remain-on-exit works
   SSH_CMD="ssh -t $SSH_TARGET 'cd ~ && exec zsh'"
 
   # Start session in $HOME to avoid local direnv activation
+  # Using -d (detached) is safe inside popup per tmux issue #3748
   tmux new-session -d -s "$SESSION_NAME" -c "$HOME" -e "DEVPOD_HOST=$HOSTNAME"
   tmux set-option -t "$SESSION_NAME" remain-on-exit on
   tmux send-keys -t "$SESSION_NAME" "$SSH_CMD" Enter
   tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
 fi
 
-# Switch to session
-# When called via 'run-shell' (not inside display-popup), switch-client is safe
+# Switch to session - this works inside display-popup per documented patterns
+# See: https://waylonwalker.com/tmux-fzf-session-jump/
 tmux switch-client -t "$SESSION_NAME"
