@@ -113,6 +113,26 @@
     claude-code = {
       enable = true;
       litellm.enable = false; # LiteLLM requires server-side config for OAuth pass-through
+
+      # Global MCP servers (available in all projects)
+      mcpServers = {
+        # Effect documentation MCP server
+        effect-docs = {
+          type = "stdio";
+          command = "bunx";
+          args = ["--bun" "effect-mcp@latest"];
+        };
+
+        # Linear MCP server with 1Password API key
+        linear-server = {
+          type = "http";
+          url = "https://mcp.linear.app/mcp";
+          headers = {
+            # Read from 1Password at activation time
+            Authorization = "Bearer op://Dev/Linear/MCP_API_KEY";
+          };
+        };
+      };
     };
 
     # Factory Droid integration
