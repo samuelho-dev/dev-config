@@ -251,10 +251,10 @@
           # -------------------------------------------------------------------
           # DevPod Integration (Tailscale SSH sessions)
           # -------------------------------------------------------------------
-          # Uses fzf-tmux -p for popup (fzf's native popup, not tmux display-popup)
-          # See: https://github.com/sainnhe/tmux-fzf for pattern
+          # Uses fzf-tmux -p for popup (creates its own tmux popup)
+          # Note: Cannot use run-shell -b because fzf-tmux needs TTY context
           if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
-            bind D run-shell -b "$HOME/Projects/infra/dev-config/tmux/scripts/devpod-connect.sh"
+            bind D run-shell "$HOME/Projects/infra/dev-config/tmux/scripts/devpod-connect.sh"
           }
 
           # Bootstrap: auto-create devpod sessions for online DevPods on server start

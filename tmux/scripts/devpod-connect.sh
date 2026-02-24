@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Debug logging
+exec 2>/tmp/devpod-connect.log
+echo "=== $(date) ===" >&2
+echo "TMUX=${TMUX:-unset}" >&2
+
 # DevPod Connect - Discover and connect to DevPods via Tailscale
 # Creates tmux sessions with session-scoped SSH (all panes auto-SSH)
 # Also starts Mutagen file sync if project has mutagen.yml
@@ -45,17 +50,23 @@ if [ -z "$DEVPODS" ]; then
   exit 1
 fi
 
-# --- fzf picker (use fzf-tmux -p for popup, falls back to fzf) ---
+# --- fzf picker (use fzf-tmux -p for popup) ---
+# fzf-tmux -p creates popup overlay, script continues after popup closes
+echo "DEVPODS found: $(echo "$DEVPODS" | wc -l)" >&2
+echo "fzf-tmux path: $(which fzf-tmux 2>/dev/null || echo 'not found')" >&2
+
 FZF_CMD="fzf"
-if command -v fzf-tmux &>/dev/null && [ -n "$TMUX" ]; then
+if command -v fzf-tmux &>/dev/null && [ -n "${TMUX:-}" ]; then
   FZF_CMD="fzf-tmux -p -w 70% -h 60%"
 fi
+echo "FZF_CMD: $FZF_CMD" >&2
 
 SELECTED=$(echo "$DEVPODS" | column -t -s$'\t' | \
   $FZF_CMD --reverse \
       --header="Select DevPod (Ctrl-C to cancel):" \
       --preview-window=hidden \
       --ansi)
+echo "SELECTED: '$SELECTED'" >&2
 
 if [ -z "$SELECTED" ]; then
   exit 0 # User cancelled
@@ -67,7 +78,9 @@ HOSTNAME=$(echo "$SELECTED" | awk '{print $1}')
 PROJECT_NAME="${HOSTNAME#devpod-}"
 # tmux converts colons to underscores, so use underscore directly
 SESSION_NAME="devpod_${PROJECT_NAME}"
-SSH_TARGET="coder@${HOSTNAME}"
+# Use full Tailscale MagicDNS hostname for reliable SSH
+SSH_HOST="${HOSTNAME}.taile99f5b.ts.net"
+SSH_TARGET="coder@${SSH_HOST}"
 
 # --- Start Mutagen sync if project has mutagen.yml ---
 start_mutagen_sync() {
@@ -89,18 +102,19 @@ if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
   # Session doesn't exist, create it
   start_mutagen_sync
 
-  # Create session and SSH
-  # Use zsh -l to ensure proper shell initialization
-  # Touch .zshrc first to skip zsh-newuser-install prompt
-  SSH_CMD="ssh -t $SSH_TARGET 'touch ~/.zshrc 2>/dev/null; cd ~ && exec zsh -l'"
+  # Create session and SSH into devpod
+  # Simple SSH - let the devpod's shell handle cd and environment
+  SSH_CMD="ssh $SSH_TARGET"
 
   # Start session in $HOME to avoid local direnv activation
   # Using -d (detached) is safe inside popup per tmux issue #3748
   tmux new-session -d -s "$SESSION_NAME" -c "$HOME" -e "DEVPOD_HOST=$HOSTNAME"
-  tmux set-option -t "$SESSION_NAME" remain-on-exit on
   tmux send-keys -t "$SESSION_NAME" "$SSH_CMD" Enter
   tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
 fi
 
-# Switch to session - works with fzf-tmux -p (fzf's popup, not tmux display-popup)
+# Switch to session
+# This runs AFTER fzf-tmux popup closes, so switch-client works correctly
+echo "Switching to session: $SESSION_NAME" >&2
 tmux switch-client -t "$SESSION_NAME"
+echo "Switch exit code: $?" >&2
