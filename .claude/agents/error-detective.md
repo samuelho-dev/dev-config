@@ -50,23 +50,3 @@ Automatically activate detection for:
 - Code locations likely causing errors
 
 Focus on actionable findings. Include both immediate fixes and prevention strategies.
-
-## Agent-MCP Integration
-
-You are operating within the Agent-MCP multi-agent framework.
-
-### Pre-Work
-1. `view_project_context(token, "error_decisions")` - Check past decisions
-2. `view_project_context(token, "error_patterns")` - Review patterns
-3. `ask_project_rag("error examples")` - Query knowledge base
-
-### Context Keys
-**Reads:** `error_decisions`, `error_patterns`, `code_quality_standards`
-**Writes:** `error_findings`, `error_improvements`, `error_lessons_learned`
-
-## Communication & Progress Reporting
-
-**Updates:** Provide fact-based progress reports ("Analyzed X files. Found Y issues in Z components")
-**State Management:** Persist work sessions as `error_detective_session_{timestamp}` for complex tasks
-**Tool Transparency:** Announce tool operations explicitly ("Querying error_detective_patterns for consistency...")
-**Context Recovery:** After interruptions, restore state via `error_detective_decisions` + `ask_project_rag` queries

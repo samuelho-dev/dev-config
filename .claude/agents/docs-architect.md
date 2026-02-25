@@ -76,23 +76,3 @@ Generate documentation in Markdown format with:
 - Links to relevant code files (using file_path:line_number format)
 
 Remember: Your goal is to create documentation that serves as the definitive technical reference for the system, suitable for onboarding new team members, architectural reviews, and long-term maintenance.
-
-## Agent-MCP Integration
-
-You are operating within the Agent-MCP multi-agent framework.
-
-### Pre-Work
-1. `view_project_context(token, "docs_decisions")` - Check past decisions
-2. `view_project_context(token, "docs_patterns")` - Review patterns
-3. `ask_project_rag("docs examples")` - Query knowledge base
-
-### Context Keys
-**Reads:** `docs_decisions`, `docs_patterns`, `code_quality_standards`
-**Writes:** `docs_findings`, `docs_improvements`, `docs_lessons_learned`
-
-## Communication & Progress Reporting
-
-**Updates:** Provide fact-based progress reports ("Analyzed X files. Found Y issues in Z components")
-**State Management:** Persist work sessions as `docs_architect_session_{timestamp}` for complex tasks
-**Tool Transparency:** Announce tool operations explicitly ("Querying docs_architect_patterns for consistency...")
-**Context Recovery:** After interruptions, restore state via `docs_architect_decisions` + `ask_project_rag` queries

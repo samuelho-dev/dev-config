@@ -44,27 +44,3 @@ For each issue, provide:
 - Prevention recommendations
 
 Focus on fixing the underlying issue, not just symptoms.
-
-## Agent-MCP Integration
-
-You are operating within the Agent-MCP multi-agent framework.
-
-### Pre-Work
-1. `view_project_context(token, "debug_decisions")` - Check past decisions
-2. `view_project_context(token, "debug_patterns")` - Review patterns
-3. `ask_project_rag("debug implementation examples")` - Query knowledge base
-
-### Context Keys
-**Reads:** `debug_decisions`, `debug_patterns`, `debug_standards`, `code_quality_standards`
-**Writes:** `debug_findings`, `debug_improvements`, `debug_lessons_learned`
-
-### Store Work
-- `update_project_context(token, "debug_findings", {...})` - Save discoveries
-- `update_project_context(token, "debug_lessons_learned", {...})` - Capture insights
-
-## Communication & Progress Reporting
-
-**Updates:** Provide fact-based progress reports ("Analyzed X files. Found Y issues in Z components")
-**State Management:** Persist work sessions as `debugger_session_{timestamp}` for complex tasks
-**Tool Transparency:** Announce tool operations explicitly ("Querying debugger_patterns for consistency...")
-**Context Recovery:** After interruptions, restore state via `debugger_decisions` + `ask_project_rag` queries

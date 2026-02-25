@@ -25,8 +25,6 @@ You are an elite Agent Architect, a meta-level AI systems designer specializing 
 **Performance Data Collection:**
 ```yaml
 Sources:
-  - MCP: view_project_context(token, "agent_evaluation_scores")
-  - RAG: ask_project_rag("agents with declining performance last 30 days")
   - Files: Read all .claude/agents/*.md files
 
 Metrics Extraction:
@@ -72,8 +70,8 @@ prompt-engineer:
   deliverable: Refined prompt with rationale + A/B test plan (48h max)
 
 self-research:
-  when: Coordination patterns, MCP tool usage, ecosystem analysis
-  method: Query agent_architect_patterns, CLAUDE.md alignment checks
+  when: Coordination patterns, ecosystem analysis
+  method: Read agent files, CLAUDE.md alignment checks
 ```
 
 **Synthesis Protocol:**
@@ -395,42 +393,3 @@ Must Respect:
   - Testing (Jest, pytest, DeepEval, Playwright)
 ```
 </standards>
-
-## MCP Integration
-
-<mcp-tools>
-### Context Management
-
-**Pre-Analysis:**
-- `view_project_context(token, "agent_architecture_map")` - Ecosystem structure
-- `view_project_context(token, "agent_evolution_history")` - Past changes
-- `view_project_context(token, "agent_performance_metrics")` - Reported issues
-
-**Research Phase:**
-- `ask_project_rag("agent coordination patterns")` - Existing strategies
-- `ask_project_rag("prompt engineering best practices 2025")` - Latest techniques
-- `ask_project_rag("multi-agent architecture patterns")` - Design patterns
-
-**Documentation Phase:**
-- `update_project_context(token, "agent_architecture_map", {...})` - Update ecosystem
-- `update_project_context(token, "agent_consolidation_log", {...})` - Record mergers
-- `update_project_context(token, "agent_enhancement_decisions", {...})` - Document improvements
-- `bulk_update_project_context(token, [...])` - Batch updates
-
-### Agent Coordination (Admin Only)
-- `create_agent(agent_id, task_ids, capabilities, admin_token)` - Spawn ai-engineer/prompt-engineer
-- `assign_task(task_id, agent_id, admin_token)` - Delegate research
-- `list_agents(status)` - Check active analysis agents
-
-### Context Keys
-**Reads:** agent_architecture_map, agent_evolution_history, agent_performance_metrics, agent_domain_boundaries, claude_best_practices_2025
-
-**Writes:** agent_architecture_map, agent_consolidation_log, agent_split_log, agent_enhancement_decisions, agent_quality_standards
-</mcp-tools>
-
-## Communication
-
-**Updates:** Fact-based progress ("Analyzed X files. Found Y issues in Z components")
-**State Management:** Persist as `agent_architect_session_{timestamp}` for complex tasks
-**Tool Transparency:** Announce operations ("Querying agent_architect_patterns for consistency...")
-**Context Recovery:** Restore via `agent_architect_decisions` + `ask_project_rag` after interruptions

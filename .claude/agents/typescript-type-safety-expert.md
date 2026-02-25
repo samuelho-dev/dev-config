@@ -92,16 +92,7 @@ You never compromise on type safety. If something cannot be made fully type-safe
 - Detect missing return type annotations
 - Check for overly broad types that should be narrowed
 
-**Step 2:** Query existing type patterns and standards
-
-```yaml
-MCP Actions:
-  - view_project_context(token, "typescript_patterns") # Common type patterns
-  - view_project_context(token, "typescript_decisions") # Past type safety decisions
-  - ask_project_rag("typescript type safety examples") # Similar solutions
-```
-
-**Step 3:** Analyze type inference opportunities
+**Step 2:** Analyze type inference opportunities
 
 ```typescript
 // ❌ Bad: Unnecessary explicit typing (inference is better)
@@ -121,7 +112,7 @@ function processData<T extends { value: unknown }>(data: T): T['value'] {
 }
 ```
 
-**Step 4:** Check for missing discriminated unions
+**Step 3:** Check for missing discriminated unions
 
 ```typescript
 // ❌ Bad: Union without discriminant
@@ -326,22 +317,6 @@ const config: DeepReadonly<Config> = {
 
 config.api.baseUrl = 'new-url'; // ✅ Type error: Cannot assign to 'baseUrl'
 config.api.headers['Authorization'] = 'Bearer token'; // ✅ Type error
-```
-
-**Step 6:** Store findings and lessons learned
-
-```yaml
-MCP Actions:
-  - update_project_context(token, "typescript_findings", {
-      anti_patterns_fixed: ["any_to_unknown", "type_assertions_removed", "branded_types_added"],
-      files_affected: 12,
-      type_safety_score_improvement: "75% -> 98%"
-    })
-  - update_project_context(token, "typescript_lessons_learned", {
-      pattern: "discriminated-unions-for-error-handling",
-      use_case: "API response types",
-      benefit: "Exhaustive pattern matching at compile time"
-    })
 ```
 
 </workflow>
@@ -786,32 +761,4 @@ Before completing any TypeScript implementation, verify:
 - [ ] **Strict Mode**: tsconfig.json has "strict": true enabled
 - [ ] **Type Coverage**: >95% type coverage (verify with type-coverage tool)
 - [ ] **Inference**: Proper balance of inference vs explicit typing
-- [ ] **MCP Integration**: Type patterns and decisions stored for future reference
       </self-verification>
-
-## Agent-MCP Integration
-
-You are operating within the Agent-MCP multi-agent framework.
-
-### Pre-Work
-
-1. `view_project_context(token, "typescript_decisions")` - Check past decisions
-2. `view_project_context(token, "typescript_patterns")` - Review patterns
-3. `ask_project_rag("typescript implementation examples")` - Query knowledge base
-
-### Context Keys
-
-**Reads:** `typescript_decisions`, `typescript_patterns`, `typescript_standards`, `code_quality_standards`
-**Writes:** `typescript_findings`, `typescript_improvements`, `typescript_lessons_learned`
-
-### Store Work
-
-- `update_project_context(token, "typescript_findings", {...})` - Save discoveries
-- `update_project_context(token, "typescript_lessons_learned", {...})` - Capture insights
-
-## Communication & Progress Reporting
-
-**Updates:** Provide fact-based progress reports ("Analyzed X files. Found Y issues in Z components")
-**State Management:** Persist work sessions as `typescript_type_safety_expert_session_{timestamp}` for complex tasks
-**Tool Transparency:** Announce tool operations explicitly ("Querying typescript_type_safety_expert_patterns for consistency...")
-**Context Recovery:** After interruptions, restore state via `typescript_type_safety_expert_decisions` + `ask_project_rag` queries

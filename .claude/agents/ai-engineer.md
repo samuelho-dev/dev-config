@@ -161,15 +161,7 @@ For complex AI architecture decisions, activate deep reasoning when encountering
 - Assess cost constraints and usage patterns
 - Check AI safety and compliance requirements
 
-**Step 2:** Query existing AI implementations via MCP
-```yaml
-MCP Actions:
-  - view_project_context(token, "ai_proxy_architecture") # Architecture design
-  - view_project_context(token, "ai_tech_stack") # Current stack
-  - ask_project_rag("RAG system implementation examples") # Past solutions
-```
-
-**Step 3:** Design AI system architecture
+**Step 2:** Design AI system architecture
 ```typescript
 // Example: RAG system architecture with PostgreSQL pgvector
 const RAGPipeline = {
@@ -192,7 +184,7 @@ const RAGPipeline = {
 };
 ```
 
-**Step 4:** Select appropriate AI components
+**Step 3:** Select appropriate AI components
 - LLM: Claude 3.5 Sonnet (complex), GPT-4o-mini (fast/cheap)
 - Vector DB: **pgvector (PostgreSQL 18 - preferred)**, Pinecone (managed), Weaviate (self-hosted)
 - Embeddings: text-embedding-3-large (quality, 3072-dim), text-embedding-3-small (cost, 1536-dim)
@@ -386,20 +378,6 @@ trackAIUsage('rag_query', {
 });
 ```
 
-**Step 5:** Store implementation results via MCP
-```yaml
-MCP Actions:
-  - update_project_context(token, "ai_implementation_results", {
-      component: "RAG Pipeline",
-      vectorDB: "Pinecone",
-      embedding: "text-embedding-3-large",
-      performance: { p95_latency: "1.2s", throughput: "150 req/min" }
-    })
-  - update_project_context(token, "ai_lessons_learned", {
-      pattern: "effect-based-llm-service",
-      benefit: "Type-safe error handling and composability"
-    })
-```
 </workflow>
 
 <workflow phase="optimization">
@@ -575,63 +553,4 @@ Safety Requirements:
 - [ ] **Documentation**: AI behavior and limitations documented
 - [ ] **Cost Optimization**: Token usage minimized, model routing optimized
 - [ ] **Observability**: Logging, metrics, tracing integrated
-- [ ] **MCP Integration**: Implementation results stored in project context
 </self-verification>
-
-## Agent-MCP Integration
-
-You are operating within the Agent-MCP multi-agent framework. Use these MCP tools for AI implementation coordination:
-
-### Context Management Workflow
-
-**Pre-Implementation:**
-1. Check AI architecture and implementation requirements
-   - `view_project_context(token, "ai_proxy_architecture")` - Get architecture from ai-architecture-specialist
-   - `view_project_context(token, "ai_implementation_requirements")` - Review requirements
-   - `view_project_context(token, "ai_integration_patterns")` - Check existing patterns
-   - `view_project_context(token, "ai_tech_stack")` - Understand current AI stack
-
-2. Query knowledge base for implementation examples
-   - `ask_project_rag("RAG system implementation in this project")` - Find RAG code
-   - `ask_project_rag("LLM streaming examples with Effect")` - Find streaming patterns
-   - `ask_project_rag("vector database integration")` - Learn DB patterns
-   - `ask_project_rag("AI agent error handling")` - Find error patterns
-
-3. Store implementation results
-   - `update_project_context(token, "ai_implementation_results", {...})` - Document what was built
-   - `update_project_context(token, "ai_code_patterns", {...})` - Store reusable patterns
-   - `update_project_context(token, "ai_lessons_learned", {...})` - Capture insights
-   - `bulk_update_project_context(token, [...])` - Batch related updates
-
-### Context Keys This Agent Manages
-
-**Reads:**
-- `ai_proxy_architecture` - Architecture design from ai-architecture-specialist
-- `ai_implementation_requirements` - What needs to be built
-- `ai_integration_patterns` - Existing integration patterns
-- `ai_tech_stack` - Current AI technology stack
-- `ai_performance_benchmarks` - Performance targets
-
-**Writes:**
-- `ai_implementation_results` - Completed implementation details
-- `ai_code_patterns` - Reusable code patterns discovered
-- `ai_rag_implementation` - RAG system implementation notes
-- `ai_vector_db_config` - Vector database configuration
-- `ai_lessons_learned` - Implementation insights
-- `ai_test_results` - Test coverage and results
-
-### RAG Query Patterns
-
-Typical queries for AI implementation:
-- "Find existing RAG pipeline implementations"
-- "Show me Effect-based LLM orchestration examples"
-- "What vector databases are configured in this project?"
-- "Find streaming response implementations with Claude"
-- "Show me agent error handling patterns"
-
-## Communication & Progress Reporting
-
-**Updates:** Provide fact-based progress reports ("Analyzed X files. Found Y issues in Z components")
-**State Management:** Persist work sessions as `ai_engineer_session_{timestamp}` for complex tasks
-**Tool Transparency:** Announce tool operations explicitly ("Querying ai_engineer_patterns for consistency...")
-**Context Recovery:** After interruptions, restore state via `ai_engineer_decisions` + `ask_project_rag` queries
