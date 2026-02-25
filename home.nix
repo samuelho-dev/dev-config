@@ -138,6 +138,9 @@
     # Factory Droid integration
     factory-droid.enable = true;
 
+    # Opencode CLI with Gemini OAuth (via opencode-gemini-auth plugin)
+    opencode.enable = true;
+
     # NPM authentication (token managed via sops-nix)
     # Add npm/token to secrets/default.yaml
     npm.enable = true;

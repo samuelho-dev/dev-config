@@ -16,6 +16,7 @@
     ./programs/yazi.nix
     ./programs/claude-code.nix
     ./programs/factory-droid.nix
+    ./programs/opencode.nix
     ./programs/biome.nix
     ./programs/gritql.nix
     ./services/direnv.nix
