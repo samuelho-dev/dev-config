@@ -93,6 +93,7 @@ in {
     pkgs.bun
     pkgs.python313 # Python 3.13 runtime
     pkgs.python313Packages.pip # pip package manager (provides pip/pip3 commands)
+    pkgs.python313Packages.jupyterlab # JupyterLab interactive notebook environment
   ];
 
   # Kubernetes ecosystem tools
