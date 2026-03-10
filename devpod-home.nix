@@ -61,8 +61,8 @@
     ghostty.enable = false;
     ssh.enable = false; # Tailscale handles SSH, no 1Password agent
     ssh.devpods.enable = false;
-    tmux.enable = false; # No tmux inside DevPods (tmux is on the client)
-    tmux.devpodConnect.enable = false;
+    tmux.enable = true; # Tmux inside DevPods for session management
+    tmux.devpodConnect.enable = false; # Client-side only (Tailscale SSH connect)
     factory-droid.enable = false;
     sops-env.enable = false; # No sops/1Password in containers
   };
