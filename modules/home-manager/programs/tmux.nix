@@ -253,13 +253,14 @@
           # -------------------------------------------------------------------
           # Uses fzf-tmux -p for popup (creates its own tmux popup)
           # Note: Cannot use run-shell -b because fzf-tmux needs TTY context
+          # Scripts are symlinked to ~/.local/bin/ by home-manager
           if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
-            bind D run-shell "$HOME/Projects/infra/dev-config/tmux/scripts/devpod-connect.sh"
+            bind D run-shell "$HOME/.local/bin/devpod-connect.sh"
           }
 
           # Bootstrap: auto-create devpod sessions for online DevPods on server start
           # Run synchronously so sessions are ready before user interaction
-          run-shell "bash $HOME/Projects/infra/dev-config/tmux/scripts/devpod-bootstrap.sh"
+          run-shell "bash $HOME/.local/bin/devpod-bootstrap.sh"
         '';
     };
 

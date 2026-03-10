@@ -16,6 +16,10 @@ elif [ -x "/Applications/Tailscale.app/Contents/MacOS/Tailscale" ]; then
 else
   exit 0 # No tailscale, nothing to do
 fi
+# In-container Tailscale uses a custom socket path
+if [ -n "${TS_SOCKET:-}" ] && [ -S "$TS_SOCKET" ]; then
+  TAILSCALE="$TAILSCALE --socket=$TS_SOCKET"
+fi
 
 # --- Get unique online DevPods ---
 ONLINE_PODS=$("$TAILSCALE" status --json 2>/dev/null | jq -r '
@@ -26,6 +30,14 @@ ONLINE_PODS=$("$TAILSCALE" status --json 2>/dev/null | jq -r '
   | unique[]
 ') 2>/dev/null
 
+if [ -z "$ONLINE_PODS" ]; then
+  exit 0
+fi
+
+# Filter out self when running from inside a devpod
+if [ -n "${TS_HOSTNAME:-}" ]; then
+  ONLINE_PODS=$(echo "$ONLINE_PODS" | grep -v "^${TS_HOSTNAME}$" || true)
+fi
 if [ -z "$ONLINE_PODS" ]; then
   exit 0
 fi
