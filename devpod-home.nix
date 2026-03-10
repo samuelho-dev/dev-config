@@ -41,10 +41,8 @@
     };
     zsh = {
       enable = true;
-      # Use module defaults which source from dev-config/zsh/ directory:
-      # - zshrcSource -> ${inputs.dev-config}/zsh/.zshrc
-      # - zprofileSource -> ${inputs.dev-config}/zsh/.zprofile
-      # - p10kSource -> ${inputs.dev-config}/zsh/.p10k.zsh
+      # ASCII p10k config for terminals without Nerd Font support (iSH, basic SSH)
+      p10kSource = ./zsh/.p10k-ascii.zsh;
     };
     claude-code = {
       enable = true;
