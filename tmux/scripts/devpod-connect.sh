@@ -14,22 +14,22 @@ echo "TMUX=${TMUX:-unset}" >&2
 PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
 
 # --- Tailscale CLI detection (macOS app vs PATH, with socket support) ---
-TAILSCALE=""
+TS_CMD=()
 if command -v tailscale &>/dev/null; then
-  TAILSCALE="tailscale"
+  TS_CMD=(tailscale)
 elif [ -x "/Applications/Tailscale.app/Contents/MacOS/Tailscale" ]; then
-  TAILSCALE="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+  TS_CMD=("/Applications/Tailscale.app/Contents/MacOS/Tailscale")
 else
   echo "Error: tailscale CLI not found" >&2
   exit 1
 fi
 # In-container Tailscale uses a custom socket path
 if [ -n "${TS_SOCKET:-}" ] && [ -S "$TS_SOCKET" ]; then
-  TAILSCALE="$TAILSCALE --socket=$TS_SOCKET"
+  TS_CMD+=("--socket=$TS_SOCKET")
 fi
 
 # --- Discover DevPods (online only, deduplicated by hostname) ---
-DEVPODS=$("$TAILSCALE" status --json 2>/dev/null | jq -r '
+DEVPODS=$("${TS_CMD[@]}" status --json 2>/dev/null | jq -r '
   [.Peer | to_entries[]
   | select(.value.HostName | startswith("devpod-"))
   | {

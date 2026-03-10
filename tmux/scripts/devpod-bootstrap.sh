@@ -8,21 +8,21 @@
 PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
 
 # --- Tailscale CLI detection ---
-TAILSCALE=""
+TS_CMD=()
 if command -v tailscale &>/dev/null; then
-  TAILSCALE="tailscale"
+  TS_CMD=(tailscale)
 elif [ -x "/Applications/Tailscale.app/Contents/MacOS/Tailscale" ]; then
-  TAILSCALE="/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+  TS_CMD=("/Applications/Tailscale.app/Contents/MacOS/Tailscale")
 else
   exit 0 # No tailscale, nothing to do
 fi
 # In-container Tailscale uses a custom socket path
 if [ -n "${TS_SOCKET:-}" ] && [ -S "$TS_SOCKET" ]; then
-  TAILSCALE="$TAILSCALE --socket=$TS_SOCKET"
+  TS_CMD+=("--socket=$TS_SOCKET")
 fi
 
 # --- Get unique online DevPods ---
-ONLINE_PODS=$("$TAILSCALE" status --json 2>/dev/null | jq -r '
+ONLINE_PODS=$("${TS_CMD[@]}" status --json 2>/dev/null | jq -r '
   [.Peer | to_entries[]
   | select(.value.HostName | startswith("devpod-"))
   | select(.value.Online == true)
