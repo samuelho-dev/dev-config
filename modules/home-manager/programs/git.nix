@@ -95,6 +95,11 @@
       enable = true;
       package = cfg.package;
 
+      # Set userName/userEmail via HM's dedicated options (not settings)
+      # HM generates the [user] section from these — settings.user.name gets ignored
+      userName = lib.mkIf (cfg.userName != null) cfg.userName;
+      userEmail = lib.mkIf (cfg.userEmail != null) cfg.userEmail;
+
       # SSH commit signing configuration
       signing = lib.mkIf cfg.signing.enable {
         key = lib.mkIf (cfg.signing.key != null) cfg.signing.key;
@@ -122,8 +127,6 @@
               "ssh://git@github.com/".insteadOf = "https://github.com/";
             };
           }
-          // lib.optionalAttrs (cfg.userName != null) {user.name = cfg.userName;}
-          // lib.optionalAttrs (cfg.userEmail != null) {user.email = cfg.userEmail;}
         )
         // cfg.extraConfig;
     };
