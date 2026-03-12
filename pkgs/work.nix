@@ -93,6 +93,37 @@ in {
     pkgs.bun
   ];
 
+  # Kubernetes ecosystem tools
+  kubernetes = [
+    pkgs.kubectl
+    pkgs.kubernetes-helm
+    pkgs.helm-docs
+    pkgs.k9s
+    pkgs.kind
+    pkgs.argocd
+    pkgs.cilium-cli # Cilium CNI CLI for cluster networking status/diagnostics
+  ];
+
+  # Cloud provider CLIs
+  cloud = [
+    pkgs.awscli2
+    pkgs.doctl
+    pkgs.hcloud
+  ];
+
+  # Infrastructure as Code tools
+  iac = [
+    pkgs.terraform
+    pkgs.terraform-docs
+  ];
+
+  # Security and compliance tools
+  security = [
+    pkgs.gitleaks
+    pkgs.kubeseal
+    pkgs.sops
+  ];
+
   # Data processing tools
   data = [
     pkgs.jq
@@ -114,7 +145,10 @@ in {
     pkgs.gnumake
     pkgs.pkg-config
     pkgs.imagemagick
+    pkgs._1password-cli
+    pkgs.mutagen # Bidirectional file sync for remote development
     (pkgs.callPackage ./init-workspace {})
+    (pkgs.callPackage ./monorepo-library-generator {})
     (pkgs.callPackage ./sync-ai-config {})
     grit
   ];
@@ -122,13 +156,24 @@ in {
   # Linting and formatting tools
   linting = [
     pkgs.biome # Fast formatter and linter for JS/TS/JSON/CSS
+    pkgs.hadolint # Dockerfile linting
+    pkgs.kube-linter # Kubernetes manifest linting
+    pkgs.tflint # Terraform linting
+    pkgs.actionlint # GitHub Actions linting
+    pkgs.yamllint # YAML linting
+    pkgs.shellcheck # Shell script linting
   ];
 
   # Combine all packages into a single list
   all = self:
     self.core
     ++ self.runtimes
+    ++ self.kubernetes
+    ++ self.cloud
+    ++ self.iac
+    ++ self.security
     ++ self.data
+    ++ self.cicd
     ++ self.utilities
     ++ self.linting;
 }

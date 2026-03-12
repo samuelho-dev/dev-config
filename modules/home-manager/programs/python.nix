@@ -27,6 +27,7 @@ in {
       (pkgs.${cfg.version}.withPackages (ps: [
         ps.pip
         ps.setuptools
+        ps.jupyterlab
       ]))
     ];
 
