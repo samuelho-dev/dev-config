@@ -34,8 +34,8 @@ end
 --- @param lang string Language name (e.g., 'typescript')
 --- @return boolean available True if parser is installed
 function M.has_parser(lang)
-  -- Prefer the native require helper which just checks availability
-  if pcall(vim.treesitter.language.require_language, lang) then
+  -- Use vim.treesitter.language.add() (replaces deprecated require_language in Nvim 0.12+)
+  if pcall(vim.treesitter.language.add, lang) then
     return true
   end
 
