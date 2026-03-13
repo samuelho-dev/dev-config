@@ -277,8 +277,8 @@ return {
       },
       formatters = {
         biome = {
-          -- Removed config-path - Biome auto-discovers biome.json from cwd upward
-          -- The LSP server handles config resolution automatically
+          -- Use 'check --fix' instead of 'format' to apply both formatting AND lint auto-fixes
+          args = { 'check', '--fix', '--unsafe', '--stdin-file-path', '$FILENAME' },
         },
       },
     },
