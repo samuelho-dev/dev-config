@@ -32,8 +32,7 @@ Key design decisions:
 ```
 scripts/
 +-- install.sh              # Bootstrap Nix + Home Manager (main entry point)
-+-- apply-home-manager.sh   # Convenience wrapper for home-manager switch
-+-- load-ai-credentials.sh  # Load AI keys from 1Password CLI (legacy)
++-- validate-linting-config.sh  # Pre-commit hook: prevents linting rule weakening
 ```
 
 ## Key Patterns
@@ -51,8 +50,7 @@ scripts/
 | Script | Purpose | When to Use |
 |--------|---------|-------------|
 | **install.sh** | Full bootstrap from scratch | First-time setup on new machine |
-| **apply-home-manager.sh** | Apply config changes | After editing Nix files |
-| **load-ai-credentials.sh** | Load 1Password secrets | Legacy (use sops-env instead) |
+| **validate-linting-config.sh** | Pre-commit linting guard | Automatically on commit |
 
 ### install.sh
 
@@ -70,17 +68,10 @@ bash scripts/install.sh
 
 **Duration:** 10-15 minutes (first run), 1-2 minutes (subsequent)
 
-### apply-home-manager.sh
+### validate-linting-config.sh
 
-Convenience wrapper around `home-manager switch`:
-```bash
-bash scripts/apply-home-manager.sh
-```
-
-Equivalent to:
-```bash
-home-manager switch --flake ~/Projects/dev-config
-```
+Pre-commit hook that prevents weakening of linting rules (e.g. changing `error` to `warn`).
+Runs automatically via `.pre-commit-config.yaml` on biome/tsconfig/pre-commit config changes.
 
 ### load-ai-credentials.sh
 

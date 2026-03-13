@@ -1,0 +1,8 @@
+# Example user configuration for work machine
+# Copy this to work-user.nix and update with your details
+# work-user.nix is gitignored and machine-specific
+
+{
+  username = "your-username";  # e.g., "samuelho"
+  homeDirectory = "/Users/your-username";  # macOS: /Users/username, Linux: /home/username
+}

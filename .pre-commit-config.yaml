@@ -38,14 +38,6 @@ repos:
         pass_filenames: false
         description: Validate Home Manager configuration syntax
 
-      # Secret scanning (enhanced)
-      - id: gitleaks
-        name: Detect hardcoded secrets
-        entry: gitleaks protect --staged --verbose
-        language: system
-        pass_filenames: false
-        description: Scan staged files for secrets and API keys
-
       # Biome formatting and linting (JS/TS/JSON)
       # NOTE: Biome is configured to ignore some JSON/TS files in this repo.
       # Pre-commit passes filenames explicitly; if Biome ignores them it fails with:
@@ -70,42 +62,6 @@ repos:
         files: ^(biome.*\.json|tsconfig.*\.json|\.pre-commit-config\.yaml)$
         pass_filenames: false
         description: Prevent rule weakening and enforce linting policy
-
-      # Kubernetes manifest linting
-      - id: kube-linter
-        name: Lint Kubernetes manifests
-        entry: kube-linter lint --config iac-linting/.kube-linter.yaml
-        language: system
-        files: ^(k8s|deploy|charts)/.*\.ya?ml$
-        pass_filenames: true
-        description: Validate Kubernetes manifests with kube-linter
-
-      # Dockerfile linting
-      - id: hadolint
-        name: Lint Dockerfiles
-        entry: hadolint --config iac-linting/.hadolint.yaml
-        language: system
-        files: (Dockerfile|\.dockerfile)$
-        pass_filenames: true
-        description: Lint Dockerfiles with Hadolint
-
-      # Terraform linting
-      - id: tflint
-        name: Lint Terraform files
-        entry: tflint --config iac-linting/.tflint.hcl
-        language: system
-        files: \.tf$
-        pass_filenames: false
-        description: Lint Terraform configuration with TFLint
-
-      # GitHub Actions linting
-      - id: actionlint
-        name: Lint GitHub Actions
-        entry: actionlint
-        language: system
-        files: ^\.github/workflows/.*\.ya?ml$
-        pass_filenames: true
-        description: Lint GitHub Actions workflows with actionlint
 
       # GritQL pattern testing (disabled - requires grit CLI setup)
       # - id: grit-patterns-test

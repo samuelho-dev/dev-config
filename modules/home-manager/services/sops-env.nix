@@ -6,8 +6,8 @@
 }: let
   cfg = config.dev-config.sops-env;
 
-  # 1Password item UUID for AI service keys
-  onePassAiItemId = "xsuolbdwx4vmcp3zysjczfatam";
+  # 1Password item UUID for AI service keys (from module option)
+  onePassAiItemId = cfg.onePasswordItemId;
 
   # Get 1Password service account token path from sops (guarded for non-sops configs)
   opServiceAccountTokenPath =
@@ -77,7 +77,7 @@ in {
 
         This hybrid approach combines:
         - Secure token storage: OP_SERVICE_ACCOUNT_TOKEN via sops-nix (encrypted at rest)
-        - Centralized secrets: AI keys stored in 1Password vault (xsuolbdwx4vmcp3zysjczfatam)
+        - Centralized secrets: AI keys stored in 1Password vault
         - On-demand loading: Keys fetched via `op item get` when needed
 
         Environment variables set:
@@ -88,6 +88,12 @@ in {
         - LITELLM_MASTER_KEY (from 1Password vault)
         - OPENROUTER_API_KEY (from 1Password vault)
       '';
+    };
+
+    onePasswordItemId = lib.mkOption {
+      type = lib.types.str;
+      default = "xsuolbdwx4vmcp3zysjczfatam";
+      description = "1Password item UUID for AI service keys";
     };
   };
 

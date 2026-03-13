@@ -64,10 +64,6 @@
 
     # Claude Code: maintain project working directory across bash sessions
     CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
-
-    # Kubernetes: Combined kubeconfig for all clusters
-    # Includes both hetzner-prod (ArgoCD hub) and homelab contexts
-    KUBECONFIG = "${config.home.homeDirectory}/.kube/config:${config.home.homeDirectory}/.kube/config-hetzner-prod:${config.home.homeDirectory}/.kube/config-homelab";
   };
 
   # Enable dev-config modules (all enabled by default)
@@ -134,9 +130,6 @@
         };
       };
     };
-
-    # Factory Droid integration
-    factory-droid.enable = true;
 
     # Opencode CLI with Gemini OAuth (via opencode-gemini-auth plugin)
     opencode.enable = true;

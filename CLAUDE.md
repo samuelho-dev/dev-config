@@ -1,6 +1,6 @@
 ---
 scope: ./
-updated: 2025-12-21
+updated: 2026-03-12
 relates_to:
   - ./home.nix
   - ./flake.nix
@@ -39,7 +39,7 @@ nix flake show --json
 # Update all dependencies
 nix flake update
 
-# Enter development shell (40+ DevOps tools)
+# Enter development shell
 nix develop
 ```
 
@@ -49,8 +49,10 @@ nix develop
 
 ```
 flake.nix                    # Entry point: exports homeManagerModules, nixosModules, devShells
-+-- home.nix                 # Home Manager config with sops-nix secrets
++-- home.nix                 # Personal Home Manager config with sops-nix secrets
++-- work-home.nix            # Work machine config (no sops, lean profile)
 +-- user.nix                 # Machine-specific values (username, homeDirectory) - GITIGNORED
++-- work-user.nix            # Work machine-specific values - GITIGNORED
 +-- modules/
 |   +-- home-manager/        # User-level configuration modules
 |   |   +-- default.nix      # Module aggregator + global options
@@ -87,13 +89,10 @@ in {
 ### Package Management
 
 All packages defined centrally in `pkgs/default.nix` by category:
-- `core`: git, zsh, tmux, fzf, ripgrep, fd, bat, lazygit
-- `runtimes`: nodejs_20, bun, python3
-- `kubernetes`: kubectl, helm, k9s, kind, argocd, cilium-cli
-- `cloud`: awscli2, doctl, hcloud
-- `iac`: terraform, terraform-docs
-- `security`: gitleaks, kubeseal, sops
-- `linting`: biome, hadolint, kube-linter, tflint, actionlint, yamllint, shellcheck
+- `core`: git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit
+- `runtimes`: nodejs_20, bun
+- `utilities`: direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, grit
+- `linting`: biome
 
 ### Secrets Management
 

@@ -430,7 +430,6 @@ Configuration Files:
 Public Repository (Safe to commit):
   ✅ SSH configuration modules
   ✅ Git signing configuration
-  ✅ Template files (secrets.nix.example)
   ❌ Private keys (stored in 1Password only)
 ```
 
@@ -843,11 +842,6 @@ dev-config/
 ├── biome/                    # Biome linting configuration
 │   ├── biome.json            # Strict rules (80+ enabled) - source of truth
 │   └── gritql-patterns/      # Custom GritQL lint patterns
-├── iac-linting/              # Infrastructure-as-Code linting
-│   ├── .kube-linter.yaml     # Kubernetes validation
-│   ├── .hadolint.yaml        # Dockerfile linting
-│   ├── .tflint.hcl           # Terraform rules
-│   └── .actionlint.yaml      # GitHub Actions validation
 ├── scripts/
 │   ├── install.sh            # Create symlinks
 │   ├── uninstall.sh          # Remove symlinks

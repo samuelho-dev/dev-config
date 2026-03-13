@@ -38,6 +38,12 @@
           See docs/nix/README.md for details.
         '';
 
+    workUserConfigPath = ./work-user.nix;
+    workUserConfig =
+      if builtins.pathExists workUserConfigPath
+      then import workUserConfigPath
+      else null;
+
     systems = nixpkgs.lib.systems.flakeExposed;
 
     forAllSystems = fn:
@@ -72,7 +78,7 @@
     #   shellHook = dev-config.lib.devShellHook;
     #
     # NOTE: AI configs (Claude Code, Factory Droid) are now GLOBAL.
-    # They are exported to ~/.claude/ and ~/.factory/ by Home Manager.
+    # They are exported to ~/.claude/ by Home Manager.
     # No project-level sync is needed - these tools automatically find global configs.
     lib.devShellHook = ''
       # ====== Setup direnv for zsh integration ======
@@ -136,11 +142,10 @@
               echo "📦 Dev-config development environment"
               echo ""
               echo "Tool categories loaded:"
-              echo "  • Core: git, zsh, tmux, neovim, fzf, ripgrep"
-              echo "  • Runtimes: nodejs_20, bun, python3"
-              echo "  • Kubernetes: kubectl, helm, k9s, kind, argocd"
-              echo "  • Cloud: aws, terraform, doctl"
-              echo "  • Security: gitleaks, kubeseal, sops"
+              echo "  • Core: git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit"
+              echo "  • Runtimes: nodejs_20, bun"
+              echo "  • Linting: biome, grit"
+              echo "  • Utilities: direnv, jq, yq, gnumake"
               echo ""
               echo "Commands:"
               echo "  home-manager switch --flake .   # Apply configuration"
@@ -196,31 +201,54 @@
             inherit (userConfig) username homeDirectory;
           };
         };
-    in {
-      # Default configuration (uses username from user.nix)
-      # Usage: home-manager switch --flake .
-      # Defaults to aarch64-darwin (macOS ARM)
-      ${userConfig.username} = mkHomeConfig "aarch64-darwin";
+    in
+      {
+        # Default configuration (uses username from user.nix)
+        # Usage: home-manager switch --flake .
+        # Defaults to aarch64-darwin (macOS ARM)
+        ${userConfig.username} = mkHomeConfig "aarch64-darwin";
 
-      # Explicit configurations for specific systems
-      "samuelho-macbook" = mkHomeConfig "aarch64-darwin";
-      "samuelho-linux" = mkHomeConfig "x86_64-linux";
+        # Explicit configurations for specific systems
+        "samuelho-macbook" = mkHomeConfig "aarch64-darwin";
+        "samuelho-linux" = mkHomeConfig "x86_64-linux";
 
-      # DevPod configuration (headless Linux container)
-      # Usage: home-manager switch --flake github:samuelho-dev/dev-config#devpod
-      "devpod" = home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs {
-          system = "x86_64-linux";
-          config.allowUnfree = true;
+        # DevPod configuration (headless Linux container)
+        # Usage: home-manager switch --flake github:samuelho-dev/dev-config#devpod
+        "devpod" = home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
+            system = "x86_64-linux";
+            config.allowUnfree = true;
+          };
+          modules = [
+            ./devpod-home.nix
+          ];
+          extraSpecialArgs = {
+            inherit self;
+            inputs = inputs // {dev-config = self;};
+          };
         };
-        modules = [
-          ./devpod-home.nix
-        ];
-        extraSpecialArgs = {
-          inherit self;
-          inputs = inputs // {dev-config = self;};
-        };
-      };
-    };
+      }
+      // (
+        if workUserConfig != null
+        then {
+          # Work machine configuration (separate machine, no sops secrets)
+          # Usage: home-manager switch --flake .#work
+          "work" = home-manager.lib.homeManagerConfiguration {
+            pkgs = import nixpkgs {
+              system = "aarch64-darwin";
+              config.allowUnfree = true;
+            };
+            modules = [
+              ./work-home.nix
+            ];
+            extraSpecialArgs = {
+              inherit self;
+              inputs = inputs // {dev-config = self;};
+              inherit (workUserConfig) username homeDirectory;
+            };
+          };
+        }
+        else {}
+      );
   };
 }

@@ -76,15 +76,14 @@ in {
   # Core development tools
   core = [
     pkgs.git
+    pkgs.gh
     pkgs.zsh
     pkgs.tmux
-    pkgs.docker
     pkgs.fzf
     pkgs.ripgrep
     pkgs.fd
     pkgs.bat
     pkgs.lazygit
-    pkgs.gitmux
   ];
 
   # Programming language runtimes
@@ -93,29 +92,14 @@ in {
     pkgs.bun
   ];
 
-  # Data processing tools
-  data = [
-    pkgs.jq
-    pkgs.yq-go
-  ];
-
-  # CI/CD and Git tools
-  cicd = [
-    pkgs.gh
-    pkgs.act
-    pkgs.pre-commit
-    pkgs.cachix
-  ];
-
   # Development utilities
   utilities = [
     pkgs.direnv
     pkgs.nix-direnv
+    pkgs.jq
+    pkgs.yq-go
     pkgs.gnumake
     pkgs.pkg-config
-    pkgs.imagemagick
-    (pkgs.callPackage ./init-workspace {})
-    (pkgs.callPackage ./sync-ai-config {})
     grit
   ];
 
@@ -128,7 +112,6 @@ in {
   all = self:
     self.core
     ++ self.runtimes
-    ++ self.data
     ++ self.utilities
     ++ self.linting;
 }

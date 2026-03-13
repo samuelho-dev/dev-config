@@ -1,7 +1,5 @@
 # Workflow and security-sensitive files require explicit review
 /.github/workflows/ @samuelho-dev
 /.github/actions/ @samuelho-dev
-/.nix-cache-setup.md @samuelho-dev
-/.nix-cache-public-key @samuelho-dev
 /flake.nix @samuelho-dev
 /flake.lock @samuelho-dev

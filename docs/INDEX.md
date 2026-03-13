@@ -43,7 +43,6 @@ Central catalog of all documentation in the dev-config repository.
 |-----------|--------|--------|-------------|
 | **yazi** | [README](../yazi/README.md) | [CLAUDE](../yazi/CLAUDE.md) | Terminal file manager |
 | **biome** | [README](../biome/README.md) | [CLAUDE](../biome/CLAUDE.md) | Linting and formatting configuration |
-| **iac-linting** | [README](../iac-linting/README.md) | [CLAUDE](../iac-linting/CLAUDE.md) | Infrastructure-as-Code linting |
 | **gritql-patterns** | - | [CLAUDE](../gritql-patterns/CLAUDE.md) | 246+ GritQL patterns across 17 languages |
 
 ---

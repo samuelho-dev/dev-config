@@ -1,8 +1,6 @@
 # macOS
 .DS_Store
 
-.env
-
 # Vim swap files
 *.swp
 *.swo
@@ -25,15 +23,9 @@ zsh/.zsh_history
 .zshrc.local
 .envrc.local
 
-# Machine-specific secrets (SSH keys, Git config)
-# DEPRECATED: Migrated to sops-nix (secrets/default.yaml)
-secrets.nix
-.config/home-manager/secrets.nix
-**/secrets.nix
-
 # Machine-specific user configuration
-# DEPRECATED: Now uses environment variables (USER/HOME)
 user.nix
+work-user.nix
 
 # sops-nix encrypted secrets (stage specific files with git add -f)
 # Stage these for Nix flakes: .sops.yaml, secrets/default.yaml
@@ -43,45 +35,18 @@ secrets/*.yaml
 # Backup files created by scripts
 *.backup_*
 
-# Tmux plugin data (managed by TPM)
-# Note: TPM itself should be in ~/.tmux/plugins/, not in this repo
-
 # Nix build outputs
 result
 result-*
 
-# Pre-commit
-.pre-commit-*
-
 # Direnv cache
 .direnv/
-
-# Nix flake lock (commit this for reproducibility)
-# flake.lock is committed intentionally for version pinning
 
 # 1Password session files
 .op/
 
-# Additional credentials
-.env.*
-
-# DevPod workspace metadata
-.devpod/
-
-# VS Code Remote Containers
-.devcontainer/docker-compose.yml
-.devcontainer/.devcontainer.json.backup
-
-# Terraform/Kubernetes (if testing locally)
-*.tfstate
-*.tfstate.*
-.terraform/
-kubeconfig*
-*.kubeconfig
-
-# Node.js (for template testing)
+# Node.js
 node_modules/
-package-lock.json
 
 .gritmodules/
 test-patterns/

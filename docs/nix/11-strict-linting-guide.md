@@ -179,60 +179,6 @@ Effect.gen(function* () {
 
 > ⚠️ **Expert Validated:** GritQL provides ~60-70% coverage for Effect-TS patterns. It cannot access TypeScript type information, so type-aware rules like "Effect not awaited" are not possible. For production codebases, consider adding `@effect/eslint-plugin`.
 
-## Infrastructure Linting
-
-### Kubernetes (kube-linter)
-
-```bash
-# Run manually
-kube-linter lint --config iac-linting/.kube-linter.yaml deploy/
-
-# What it checks:
-# - Resource limits required
-# - No :latest tags
-# - No privileged containers
-# - Run as non-root (warning)
-```
-
-### Dockerfiles (Hadolint)
-
-```bash
-# Run manually
-hadolint --config iac-linting/.hadolint.yaml Dockerfile
-
-# What it checks:
-# - Image version pinning (DL3006, DL3007)
-# - Package version pinning (DL3008, DL3018)
-# - No :latest tag
-# - COPY instead of ADD
-```
-
-### Terraform (TFLint)
-
-```bash
-# Run manually
-tflint --config iac-linting/.tflint.hcl
-
-# What it checks:
-# - snake_case naming convention
-# - Documented variables and outputs
-# - Module source pinning
-# - Deprecated syntax
-```
-
-### GitHub Actions (actionlint)
-
-```bash
-# Run manually
-actionlint .github/workflows/*.yaml
-
-# What it checks:
-# - Syntax errors
-# - Invalid action references
-# - Shellcheck for run: blocks
-# - Expression validation
-```
-
 ## Pre-commit Hooks
 
 ### Automatic Enforcement
@@ -244,11 +190,9 @@ repos:
   - repo: local
     hooks:
       - id: biome-check        # JS/TS/JSON
-      - id: kube-linter        # Kubernetes
-      - id: hadolint           # Dockerfiles
-      - id: tflint             # Terraform
-      - id: actionlint         # GitHub Actions
-      - id: gitleaks           # Secret detection
+      - id: nix-fmt             # Nix formatting
+      - id: nix-flake-check     # Nix validation
+      - id: validate-linting-config  # AI guardrails
 ```
 
 ### Running Manually
@@ -259,7 +203,6 @@ pre-commit run --all-files
 
 # Specific hook
 pre-commit run biome-check --all-files
-pre-commit run kube-linter --all-files
 ```
 
 ## Migration Guide
@@ -413,7 +356,6 @@ GritQL uses JavaScript AST, not TypeScript. Some TS-specific syntax may not matc
 |------|---------|
 | `biome.json` | Biome rule configuration (source of truth) |
 | `biome/gritql-patterns/*.grit` | Custom GritQL rules |
-| `iac-linting/*` | Infrastructure linting configs |
 | `.pre-commit-config.yaml` | Pre-commit hooks |
 | `pkgs/default.nix` | Linting tool packages |
 
@@ -422,6 +364,5 @@ GritQL uses JavaScript AST, not TypeScript. Some TS-specific syntax may not matc
 - [Biome Documentation](https://biomejs.dev/)
 - [GritQL Playground](https://grit.io/playground)
 - [Effect-TS Guidelines](https://effect.website/)
-- [KubeLinter Checks](https://docs.kubelinter.io/)
 - [Hadolint Rules](https://github.com/hadolint/hadolint#rules)
 - [TFLint Rules](https://github.com/terraform-linters/tflint/tree/master/docs/rules)

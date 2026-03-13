@@ -421,5 +421,4 @@ code example
    - New plugin → Component README.md + keybinding reference
    - Architecture change → Component CLAUDE.md
    - New linting rule → biome/CLAUDE.md + docs/nix/11-strict-linting-guide.md
-   - New IaC tool → iac-linting/ config + main CLAUDE.md
    - New GritQL pattern → biome/gritql-patterns/ + biome/CLAUDE.md

@@ -52,16 +52,10 @@ Note: Workspace initialization (biome.json, editor configs) is handled by `lib.d
 
 | Category | Purpose | Key Packages |
 |----------|---------|--------------|
-| **core** | Essential dev tools | git, zsh, tmux, fzf, ripgrep, fd, bat, lazygit |
-| **runtimes** | Language runtimes | nodejs_20, bun, python3 |
-| **kubernetes** | K8s ecosystem | kubectl, helm, k9s, kind, argocd, cilium-cli |
-| **cloud** | Cloud CLIs | awscli2, doctl, hcloud |
-| **iac** | Infrastructure as Code | terraform, terraform-docs |
-| **security** | Security tools | gitleaks, kubeseal, sops |
-| **data** | Data processing | jq, yq-go |
-| **cicd** | CI/CD tools | gh, act, pre-commit, cachix |
-| **utilities** | Dev utilities | direnv, gnumake, 1password-cli, grit |
-| **linting** | Linters/formatters | biome, hadolint, kube-linter, tflint, shellcheck |
+| **core** | Essential dev tools | git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit |
+| **runtimes** | Language runtimes | nodejs_20, bun |
+| **utilities** | Dev utilities | direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, grit |
+| **linting** | Linters/formatters | biome |
 
 ## Adding/Modifying
 
@@ -70,9 +64,9 @@ Note: Workspace initialization (biome.json, editor configs) is handled by `lib.d
 1. Find the appropriate category in `default.nix`
 2. Add the package to the category list:
    ```nix
-   kubernetes = [
-     pkgs.kubectl
-     pkgs.kubernetes-helm
+   core = [
+     pkgs.git
+     pkgs.gh
      pkgs.newpackage  # Add here
    ];
    ```

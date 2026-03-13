@@ -18,8 +18,6 @@ This installs Nix, Home Manager, and applies all configurations.
 After editing Nix files:
 
 ```bash
-bash scripts/apply-home-manager.sh
-# Or directly:
 home-manager switch --flake .
 ```
 
@@ -28,8 +26,7 @@ home-manager switch --flake .
 | Script | Purpose | Duration |
 |--------|---------|----------|
 | `install.sh` | Full bootstrap from scratch | 10-15 min |
-| `apply-home-manager.sh` | Apply config changes | 1-2 min |
-| `load-ai-credentials.sh` | Load 1Password secrets (legacy) | Instant |
+| `validate-linting-config.sh` | Pre-commit linting guard | Automatic |
 
 ## Script Details
 
@@ -54,44 +51,10 @@ bash scripts/install.sh
 - Internet connection
 - ~2GB disk space
 
-**Container support:**
-The script detects Docker/DevPod environments and adjusts permissions automatically.
+### validate-linting-config.sh
 
-### apply-home-manager.sh
-
-**Convenience wrapper** for applying configuration changes.
-
-**When to use:**
-- After editing any `.nix` file
-- After pulling updates from Git
-- After modifying dotfiles (nvim, tmux, zsh)
-
-**Usage:**
-```bash
-bash scripts/apply-home-manager.sh
-```
-
-**Equivalent to:**
-```bash
-home-manager switch --flake ~/Projects/dev-config
-```
-
-### load-ai-credentials.sh
-
-**Legacy script** for loading AI API keys from 1Password CLI.
-
-**Status:** Superseded by `sops-env` service module.
-
-**Modern alternative:**
-```bash
-# Credentials loaded automatically via sops-nix
-# No script needed - happens at Home Manager activation
-```
-
-**If you still need it:**
-```bash
-source scripts/load-ai-credentials.sh
-```
+Pre-commit hook that prevents weakening of linting rules (e.g. changing `error` to `warn`).
+Runs automatically via `.pre-commit-config.yaml` on biome/tsconfig/pre-commit config changes.
 
 ## Common Workflows
 
@@ -122,7 +85,7 @@ cd ~/Projects/dev-config
 git pull
 
 # 2. Apply configuration
-bash scripts/apply-home-manager.sh
+home-manager switch --flake .
 
 # 3. (Optional) Restart affected applications
 # - Neovim: :qa and reopen
@@ -142,82 +105,12 @@ home-manager build --flake .
 home-manager switch --flake .
 ```
 
-## Troubleshooting
-
-### Nix installation fails
-
-**Symptoms:** curl errors or installer failures
-
-**Fixes:**
-1. Check internet connection
-2. Try manual install: https://determinate.systems/nix-installer
-3. Clear previous Nix installation:
-   ```bash
-   sudo rm -rf /nix
-   ```
-
-### Home Manager switch fails
-
-**Symptoms:** Error during `home-manager switch`
-
-**Fixes:**
-1. Check flake syntax:
-   ```bash
-   nix flake check
-   ```
-
-2. View detailed errors:
-   ```bash
-   home-manager switch --flake . --show-trace
-   ```
-
-3. Clear Nix cache:
-   ```bash
-   nix-collect-garbage
-   ```
-
-### Permission errors in containers
-
-**Symptoms:** Permission denied in DevPod/Docker
-
-**Fixes:**
-The script auto-fixes this, but if issues persist:
-```bash
-sudo chown -R $(whoami) ~/.config ~/.local
-```
-
-### Script not found
-
-**Symptoms:** `bash: scripts/install.sh: No such file or directory`
-
-**Fix:** Ensure you're in the repository root:
-```bash
-cd ~/Projects/dev-config
-ls scripts/  # Should show install.sh
-```
-
 ## File Structure
 
 ```
 scripts/
-+-- install.sh              # Bootstrap Nix + Home Manager
-+-- apply-home-manager.sh   # Apply configuration changes
-+-- load-ai-credentials.sh  # Load 1Password secrets (legacy)
-+-- CLAUDE.md               # Architecture documentation
-+-- README.md               # This file
++-- install.sh                  # Bootstrap Nix + Home Manager
++-- validate-linting-config.sh  # Pre-commit linting guard
++-- CLAUDE.md                   # Architecture documentation
++-- README.md                   # This file
 ```
-
-## Best Practices
-
-1. **Always use `nix flake check`** before applying changes
-2. **Pull updates regularly** to stay current
-3. **Commit changes** before running `home-manager switch`
-4. **Use `--show-trace`** when debugging failures
-5. **Prefer Nix/Home Manager** over shell scripts for configuration
-
-## Related Documentation
-
-- [CLAUDE.md](./CLAUDE.md) - Architecture details
-- [Installation Guide](../docs/INSTALLATION.md) - Comprehensive setup
-- [Troubleshooting](../docs/nix/03-troubleshooting.md) - Common issues
-- [Home Manager Guide](../docs/nix/08-home-manager.md) - Deep dive
