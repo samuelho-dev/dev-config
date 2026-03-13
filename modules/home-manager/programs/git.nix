@@ -95,39 +95,37 @@
       enable = true;
       package = cfg.package;
 
-      # Set userName/userEmail via HM's dedicated options (not settings)
-      # HM generates the [user] section from these — settings.user.name gets ignored
-      userName = lib.mkIf (cfg.userName != null) cfg.userName;
-      userEmail = lib.mkIf (cfg.userEmail != null) cfg.userEmail;
-
       # SSH commit signing configuration
       signing = lib.mkIf cfg.signing.enable {
         key = lib.mkIf (cfg.signing.key != null) cfg.signing.key;
         signByDefault = cfg.signing.signByDefault;
       };
 
-      # Git settings (renamed from extraConfig)
       settings =
-        (
-          {
-            init.defaultBranch = cfg.defaultBranch;
-            core.editor = cfg.editor;
+        {
+          # User identity (moved from top-level userName/userEmail)
+          user = {
+            name = lib.mkIf (cfg.userName != null) cfg.userName;
+            email = lib.mkIf (cfg.userEmail != null) cfg.userEmail;
+          };
 
-            # SSH signing with 1Password
-            gpg = lib.mkIf (cfg.signing.enable && cfg.signing.format == "ssh") {
-              format = "ssh";
-              ssh.program =
-                if pkgs.stdenv.isDarwin
-                then "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
-                else "${pkgs._1password-gui}/bin/op-ssh-sign";
-            };
+          init.defaultBranch = cfg.defaultBranch;
+          core.editor = cfg.editor;
 
-            # Prefer SSH URLs for GitHub (auto-rewrite HTTPS to SSH)
-            url = lib.mkIf cfg.preferSSH {
-              "ssh://git@github.com/".insteadOf = "https://github.com/";
-            };
-          }
-        )
+          # SSH signing with 1Password
+          gpg = lib.mkIf (cfg.signing.enable && cfg.signing.format == "ssh") {
+            format = "ssh";
+            ssh.program =
+              if pkgs.stdenv.isDarwin
+              then "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+              else "${pkgs._1password-gui}/bin/op-ssh-sign";
+          };
+
+          # Prefer SSH URLs for GitHub (auto-rewrite HTTPS to SSH)
+          url = lib.mkIf cfg.preferSSH {
+            "ssh://git@github.com/".insteadOf = "https://github.com/";
+          };
+        }
         // cfg.extraConfig;
     };
   });
