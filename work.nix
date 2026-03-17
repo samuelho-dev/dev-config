@@ -45,10 +45,7 @@
       enable = true;
       userName = "samuelho-dev";
       userEmail = "samuelho343@gmail.com";
-      signing = {
-        enable = true;
-        key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAogjYBaWb3+oWrW1LYqnJVdxjbpRJ/qVSwaGyiznvcX";
-      };
+      signing.enable = false; # No 1Password on work machine
     };
     neovim.enable = true;
     tmux = {
@@ -57,6 +54,7 @@
     };
     ssh = {
       enable = true;
+      onePasswordAgent.enable = false; # No 1Password on work machine
       devpods.enable = false;
     };
 
@@ -71,17 +69,19 @@
     claude-code = {
       enable = true;
       litellm.enable = false;
-      enableAllProjectMcpServers = false;
+      enableAllProjectMcpServers = true;
       mcpServers = {}; # Add work-specific servers here
     };
 
     # Opencode (Gemini assistant)
     opencode.enable = true;
 
-    # Disabled at work
-    ghostty.enable = false;
-    yazi.enable = false;
-    sops-env.enable = false;
+    ghostty = {
+      enable = true;
+      package = null; # Installed via Homebrew on macOS (not in nixpkgs)
+    };
+    yazi.enable = true;
+    sops-env.enable = false; # No sops secrets at work
   };
 
   programs.home-manager.enable = true;

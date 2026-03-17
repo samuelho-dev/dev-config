@@ -239,7 +239,7 @@
               config.allowUnfree = true;
             };
             modules = [
-              ./work-home.nix
+              ./work.nix
             ];
             extraSpecialArgs = {
               inherit self;

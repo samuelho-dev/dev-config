@@ -50,7 +50,7 @@ nix develop
 ```
 flake.nix                    # Entry point: exports homeManagerModules, nixosModules, devShells
 +-- home.nix                 # Personal Home Manager config with sops-nix secrets
-+-- work-home.nix            # Work machine config (no sops, lean profile)
++-- work.nix                 # Work machine config (no sops, lean profile)
 +-- user.nix                 # Machine-specific values (username, homeDirectory) - GITIGNORED
 +-- work-user.nix            # Work machine-specific values - GITIGNORED
 +-- modules/
