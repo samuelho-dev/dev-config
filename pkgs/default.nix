@@ -90,6 +90,7 @@ in {
   runtimes = [
     pkgs.nodejs_20
     pkgs.bun
+    pkgs.uv
   ];
 
   # Development utilities
