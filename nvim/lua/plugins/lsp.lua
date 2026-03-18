@@ -164,8 +164,9 @@ return {
         -- single_file_support: attach to files without requiring biome.json in project root
         biome = {
           single_file_support = true,
-          root_dir = function(fname)
+          root_dir = function(bufnr)
             local util = require('lspconfig.util')
+            local fname = vim.api.nvim_buf_get_name(bufnr)
             -- Search for biome.json/biome.jsonc from file directory upward
             return util.root_pattern('biome.json', 'biome.jsonc')(fname)
               -- Fallback to git root if in a repository
