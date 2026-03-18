@@ -1,12 +1,11 @@
 {
-  config,
-  pkgs,
   username,
   homeDirectory,
   ...
-}: {
+}:
+{
   # Import dev-config Home Manager module
-  imports = [./modules/home-manager];
+  imports = [ ./modules/home-manager ];
 
   home = {
     username = username;
@@ -70,7 +69,7 @@
       enable = true;
       litellm.enable = false;
       enableAllProjectMcpServers = true;
-      mcpServers = {}; # Add work-specific servers here
+      mcpServers = { }; # Add work-specific servers here
     };
 
     # Opencode (Gemini assistant)

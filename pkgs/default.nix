@@ -107,6 +107,8 @@ in {
   # Linting and formatting tools
   linting = [
     pkgs.biome # Fast formatter and linter for JS/TS/JSON/CSS
+    pkgs.nil # Nix LSP — diagnostics, completion, formatting
+    pkgs.nixd # Nix LSP — evaluation-based features
   ];
 
   # Combine all packages into a single list
