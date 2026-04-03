@@ -1,6 +1,6 @@
 ---
 scope: ./
-updated: 2026-03-12
+updated: 2026-04-03
 relates_to:
   - ./home.nix
   - ./flake.nix
@@ -59,6 +59,16 @@ flake.nix                    # Entry point: exports homeManagerModules, nixosMod
 |   |   +-- programs/        # Per-program modules (neovim.nix, tmux.nix, etc.)
 |   |   +-- services/        # Service modules (direnv.nix, sops-env.nix)
 |   +-- nixos/               # System-level modules (for NixOS servers)
++-- ai/                      # Source of truth for Claude Code configs (exported globally by Nix)
+|   +-- commands/            # Slash commands (copied to ~/.claude/commands/ by home-manager)
+|   +-- agents/              # Agent definitions (copied to ~/.claude/agents/ by home-manager)
+|   +-- hooks/               # PostToolUse/UserPromptSubmit hooks
+|   +-- skills/              # Skill definitions
+|   +-- tools/               # Tool definitions
++-- .claude/                 # Project-level Claude Code config (NOT commands/agents)
+|   +-- settings.json        # Project hooks (references ai/hooks/)
+|   +-- templates/           # CLAUDE.md and README.md templates
+|   +-- tools -> ../ai/tools # Symlink to ai/tools
 +-- pkgs/default.nix         # Centralized package definitions (DRY)
 +-- secrets/default.yaml     # sops-nix encrypted secrets
 ```

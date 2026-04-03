@@ -67,14 +67,14 @@
     # On Nix systems, lsp.lua detects ~/.nix-profile/bin binaries and skips Mason auto-install
     home.packages = [
       # LSP servers
-      pkgs.nodePackages.typescript-language-server # TypeScript/JavaScript
+      pkgs.typescript-language-server # TypeScript/JavaScript
       pkgs.pyright # Python
       pkgs.lua-language-server # Lua
       pkgs.biome # JavaScript/TypeScript/JSON linter + formatter
 
       # Formatters
       pkgs.stylua # Lua formatter
-      pkgs.nodePackages.prettier # JS/TS/JSON/YAML/Markdown
+      pkgs.prettier # JS/TS/JSON/YAML/Markdown
       pkgs.ruff # Python formatter + linter
 
       # Build tools for Neovim plugins
@@ -85,7 +85,7 @@
       pkgs.imagemagick
 
       # Mermaid CLI (for mermaid diagram rendering)
-      pkgs.nodePackages."@mermaid-js/mermaid-cli"
+      pkgs.mermaid-cli
     ];
 
     # Symlink Neovim configuration if source is provided
