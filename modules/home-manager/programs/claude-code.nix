@@ -168,6 +168,11 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    # Shell aliases for Claude Code
+    programs.zsh.shellAliases = {
+      cc = "claude --dangerously-skip-permissions";
+    };
+
     # Install Claude Code CLI via bun (npm package not in nixpkgs)
     # Requires bun in PATH (provided by dev-config.npm module)
     home.activation.installClaudeCodeCli = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
