@@ -88,7 +88,7 @@ in {
 
   # Programming language runtimes
   runtimes = [
-    pkgs.nodejs_20
+    pkgs.nodejs_22
     pkgs.bun
     pkgs.uv
   ];

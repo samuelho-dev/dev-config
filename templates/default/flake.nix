@@ -26,7 +26,7 @@
       default = pkgs.mkShell {
         packages = [
           # Add your project dependencies here
-          # pkgs.nodejs_20
+          # pkgs.nodejs_22
           # pkgs.bun
         ];
 

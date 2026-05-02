@@ -143,7 +143,7 @@
               echo ""
               echo "Tool categories loaded:"
               echo "  • Core: git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit"
-              echo "  • Runtimes: nodejs_20, bun"
+              echo "  • Runtimes: nodejs_22, bun"
               echo "  • Linting: biome, grit"
               echo "  • Utilities: direnv, jq, yq, gnumake"
               echo ""

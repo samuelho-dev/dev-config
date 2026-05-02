@@ -101,7 +101,7 @@ in {
 
     # Ensure Node.js tooling is available
     home.packages = [
-      # npm comes bundled with nodejs_20 (installed via modules/home-manager/default.nix)
+      # npm comes bundled with nodejs_22 (installed via modules/home-manager/default.nix)
       # pnpm is a separate package
       pkgs.pnpm
     ];
