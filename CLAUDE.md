@@ -137,7 +137,7 @@ Component-specific documentation:
 - `nvim/CLAUDE.md` - Neovim plugin system, LSP, lazy loading
 - `tmux/CLAUDE.md` - Tmux plugins and TPM
 - `zsh/CLAUDE.md` - Oh My Zsh, Powerlevel10k
-- `biome/CLAUDE.md` - Strict linting rules, GritQL patterns
+- `docs/LINTING_POLICY.md` - Strict linting rules, GritQL patterns, AI guardrails
 
 ## Machine Setup
 
@@ -283,10 +283,10 @@ Request to modify type-related code?
 ```
 
 Enforcement mechanisms:
-- **Biome rule**: `noExplicitAny: "error"` - Blocks `as any`
-- **GritQL pattern**: `ban-ts-ignore.grit` - Blocks TS suppression comments
-- **GritQL pattern**: `ban-non-null-assertions.grit` - Blocks `!` operator
-- **Pre-commit hook**: `validate-linting-config.sh` - Blocks rule weakening
+- **Biome rule**: `noExplicitAny: "error"` — Blocks `as any`
+- **Biome rule**: `noNonNullAssertion: "error"` — Blocks `!` operator
+- **GritQL pattern**: `biome/gritql-patterns/ban-type-assertions.grit` — Blocks `as T`, `<T>expr`, and `satisfies T`
+- **Pre-commit hook**: `scripts/validate-linting-config.sh` — Blocks rule weakening in config files AND scans staged source files for `@ts-ignore`/`@ts-expect-error`/`@ts-nocheck`
 
 ### HARD ERROR: Rule Weakening (STRICTLY PROHIBITED)
 

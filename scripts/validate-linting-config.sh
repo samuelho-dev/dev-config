@@ -119,6 +119,33 @@ validate_typescript_strict() {
   fi
 }
 
+# Scan staged TS/JS source files for newly-introduced TypeScript suppression
+# comments. Biome itself does not ban these, so this hook is the only enforcement.
+validate_source_suppressions() {
+  local file="$1"
+
+  # Only scan staged additions to TS/JS source files
+  case "$file" in
+    *.ts|*.tsx|*.js|*.jsx|*.mts|*.cts|*.mjs|*.cjs) ;;
+    *) return 0 ;;
+  esac
+
+  local added
+  # `--diff-filter=ACM` already applied at file-list time. Inspect added lines only.
+  added=$(git diff --cached --unified=0 -- "$file" | grep -E '^\+[^+]' || true)
+
+  if [ -z "$added" ]; then
+    return 0
+  fi
+
+  if echo "$added" | grep -E '@ts-(ignore|expect-error|nocheck)' >/dev/null 2>&1; then
+    local violation="TypeScript suppression comment introduced (@ts-ignore/@ts-expect-error/@ts-nocheck)"
+    log_error "$violation in $file"
+    VIOLATION_DETAILS="${VIOLATION_DETAILS}${violation} (file: $file)\n"
+    VIOLATIONS=$((VIOLATIONS + 1))
+  fi
+}
+
 # ============================================================================
 # Main Execution
 # ============================================================================
@@ -144,6 +171,9 @@ main() {
           "$file" == ".pre-commit-config.yaml" || "$file" =~ .*biome.*\.json ]]; then
       validate_file "$file"
     fi
+
+    # Source-file scan: TypeScript suppression comments
+    validate_source_suppressions "$file"
   done <<< "$staged_files"
 
   # Report results
@@ -167,6 +197,7 @@ main() {
   echo "  ❌ Changing rule level from error → warn or off"
   echo "  ❌ Disabling TypeScript strict mode"
   echo "  ❌ Weakening any linting rule"
+  echo "  ❌ Adding @ts-ignore / @ts-expect-error / @ts-nocheck comments"
   echo ""
   echo "To override (requires explicit developer approval):"
   echo "  git commit --no-verify -m \"Approved: [explicit justification]\""

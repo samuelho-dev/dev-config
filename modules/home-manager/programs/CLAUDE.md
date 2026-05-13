@@ -1,6 +1,6 @@
 ---
 scope: modules/home-manager/programs/
-updated: 2025-12-21
+updated: 2026-05-12
 relates_to:
   - ../CLAUDE.md
   - ../default.nix
@@ -11,7 +11,7 @@ validation:
 
 # Home Manager Program Modules
 
-Architectural guidance for the 11 program modules that configure user-level applications.
+Architectural guidance for the 12 program modules that configure user-level applications.
 
 ## Purpose
 
@@ -32,14 +32,14 @@ Key design principles:
 ```
 programs/
 +-- biome.nix             # Biome linter/formatter configuration
-+-- claude-code.nix       # Claude Code AI assistant profiles
++-- claude-code.nix       # Claude Code AI assistant + MCP servers
 +-- ghostty.nix           # Ghostty terminal emulator config
 +-- git.nix               # Git with 1Password SSH signing
-+-- gritql.nix            # GritQL pattern linting
 +-- neovim.nix            # Neovim editor with LSP servers
 +-- npm.nix               # NPM configuration and packages
++-- opencode.nix          # Opencode CLI with Gemini OAuth
 +-- python.nix            # Python 3 with pip and development packages
-+-- ssh.nix               # SSH with 1Password agent integration
++-- ssh.nix               # SSH with 1Password agent + DevPod Tailscale proxy
 +-- tmux.nix              # Tmux terminal multiplexer
 +-- yazi.nix              # Yazi file manager
 +-- zsh.nix               # Zsh shell with Oh My Zsh + Powerlevel10k
@@ -61,17 +61,20 @@ programs/
 | Module | Purpose | Key Options | Dependencies |
 |--------|---------|-------------|--------------|
 | **neovim.nix** | Neovim with LazyVim | `enable`, `package`, `configSource`, `defaultEditor`, `vimAlias` | LSP servers, formatters, gcc, make |
-| **tmux.nix** | Terminal multiplexer | `enable`, `configSource` | TPM plugins |
-| **zsh.nix** | Shell configuration | `enable`, `zshrcSource`, `p10kSource` | Oh My Zsh, Powerlevel10k |
-| **git.nix** | Git + 1Password signing | `enable`, `userName`, `userEmail`, `signingKey` | git, gh CLI |
-| **ssh.nix** | SSH + 1Password agent | `enable`, `identityAgent` | 1Password SSH agent |
-| **ghostty.nix** | Terminal emulator | `enable`, `configSource` | None |
+| **tmux.nix** | Terminal multiplexer | `enable`, `configSource`, `devpodConnect.enable` | TPM plugins |
+| **zsh.nix** | Shell configuration | `enable`, `zshrcSource`, `zprofileSource`, `p10kSource` | Oh My Zsh, Powerlevel10k |
+| **git.nix** | Git + 1Password signing | `enable`, `userName`, `userEmail`, `signing.{enable,key}` | git, gh CLI |
+| **ssh.nix** | SSH + 1Password agent + DevPod proxy | `enable`, `devpods.{enable,user}`, `onePasswordAgent.{enable,socketPath}` | 1Password SSH agent, tailscale (for DevPods) |
+| **ghostty.nix** | Terminal emulator | `enable`, `package`, `configSource` | None (Homebrew on macOS) |
 | **yazi.nix** | File manager | `enable`, `configSource` | fd, ripgrep, bat, ffmpegthumbnailer |
-| **claude-code.nix** | Claude Code assistant | `enable`, `profiles` | Node.js |
+| **claude-code.nix** | Claude Code assistant | `enable`, `litellm.enable`, `mcpServers`, `enableAllProjectMcpServers` | Node.js |
+| **opencode.nix** | Opencode CLI (Gemini OAuth) | `enable` | Bun runtime |
 | **python.nix** | Python 3 + pip + dev | `enable`, `package`, `enablePip`, `packages` | Python 3, pip, setuptools, pytest, black, ruff, mypy |
-| **biome.nix** | Linting/formatting | `enable`, `configSource` | biome binary |
-| **gritql.nix** | GritQL pattern linting | `enable`, `configSource` | grit binary |
+| **biome.nix** | Linting/formatting | `enable`, `package` | biome binary |
 | **npm.nix** | NPM configuration | `enable` | Node.js |
+
+> Note: GritQL is installed as a binary via `pkgs/default.nix`. `biome.json`
+> at the repo root references its patterns directly — no nix-side module needed.
 
 ## Adding/Modifying
 

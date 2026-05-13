@@ -48,10 +48,7 @@
       enable = true;
       litellm.enable = false;
     };
-    biome = {
-      enable = true;
-      gritql.enable = true;
-    };
+    biome.enable = true;
     npm.enable = true;
     yazi.enable = true;
 

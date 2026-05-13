@@ -9,24 +9,12 @@
   cfg = config.dev-config.biome;
 in {
   options.dev-config.biome = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Enable Biome linter and formatter";
-    };
+    enable = lib.mkEnableOption "Biome linter and formatter";
 
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.biome;
       description = "Biome package to use";
-    };
-
-    gritql = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Enable GritQL custom lint patterns (used by biome plugins)";
-      };
     };
   };
 

@@ -6,11 +6,7 @@
   ...
 }: {
   options.dev-config.neovim = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Enable dev-config Neovim setup";
-    };
+    enable = lib.mkEnableOption "dev-config Neovim setup";
 
     package = lib.mkOption {
       type = lib.types.package;

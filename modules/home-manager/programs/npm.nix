@@ -56,27 +56,23 @@
   '';
 in {
   options.dev-config.npm = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''
-        Whether to enable npm authentication and registry configuration.
+    enable = lib.mkEnableOption ''
+      npm authentication and registry configuration.
 
-        Token is automatically loaded from sops secrets:
-        - npm/token: NPM registry authentication (registry.npmjs.org)
+      Token is automatically loaded from sops secrets:
+      - npm/token: NPM registry authentication (registry.npmjs.org)
 
-        Configuration:
-        1. Add token to secrets/default.yaml:
-           npm:
-             token: npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      Configuration:
+      1. Add token to secrets/default.yaml:
+         npm:
+           token: npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
-        2. Encrypt with sops:
-           sops secrets/default.yaml
+      2. Encrypt with sops:
+         sops secrets/default.yaml
 
-        Security: Token is never exposed to Nix store. It is decrypted
-        at Home Manager activation time and injected into ~/.npmrc with 600 permissions.
-      '';
-    };
+      Security: Token is never exposed to Nix store. It is decrypted
+      at Home Manager activation time and injected into ~/.npmrc with 600 permissions
+    '';
 
     extraConfig = lib.mkOption {
       type = lib.types.str;

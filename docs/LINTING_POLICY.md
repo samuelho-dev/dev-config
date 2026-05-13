@@ -1,12 +1,12 @@
 ---
 scope: docs/
 title: Linting Policy for AI Assistants & Developers
-updated: 2025-12-26
+updated: 2026-05-12
 relates_to:
   - ../CLAUDE.md
-  - ../biome/CLAUDE.md
   - ../biome.json
   - ../.pre-commit-config.yaml
+  - ../biome/gritql-patterns/
 ---
 
 # Linting and Type Safety Policy
@@ -67,8 +67,8 @@ Three layers working together:
 
 **Coverage:**
 - Root CLAUDE.md: General type safety guardrails and rule modification overview
-- biome/CLAUDE.md: Detailed patterns (4 prohibited type safety patterns)
 - This document: Complete policy reference
+- Inline header comments in each `biome/gritql-patterns/*.grit` file
 
 **Effectiveness:** 80-90% - Most AI violations caught at documentation level
 
@@ -95,10 +95,11 @@ Three layers working together:
 **Purpose:** Detect violations in already-committed code
 
 **What it detects:**
-- `as any` type assertions → `noExplicitAny: "error"`
-- `@ts-ignore` comments → `ban-ts-ignore.grit`
-- Non-null assertions `!` → `noNonNullAssertion: "error"`
-- `satisfies` operator → `ban-satisfies.grit`
+- `as any` type assertions → Biome `noExplicitAny: "error"`
+- `as T` and `<T>expr` type assertions → `ban-type-assertions.grit`
+- `satisfies T` operator → `ban-type-assertions.grit` (same file, third pattern)
+- Non-null assertions `!` → Biome `noNonNullAssertion: "error"`
+- `@ts-ignore` / `@ts-expect-error` / `@ts-nocheck` comments → `validate-linting-config.sh` source scan (pre-commit)
 
 **Effectiveness:** 100% - Can detect violations in any code
 
@@ -115,7 +116,7 @@ These modifications are **immediately blocked** by pre-commit hooks. Cannot be c
 | Rule weakening (error → warn) | Lowers code quality standards | validate-linting-config.sh | `"noExplicitAny": "warn"` |
 | Rule disabling (error → off) | Removes validation entirely | validate-linting-config.sh | `"noExplicitAny": "off"` |
 | TypeScript strict mode disabled | Disables type safety | validate-linting-config.sh | `"strict": false` |
-| New `@ts-ignore` comments | Suppresses type errors | ban-ts-ignore.grit | `// @ts-ignore` |
+| New `@ts-ignore` comments | Suppresses type errors | validate-linting-config.sh source scan | `// @ts-ignore` |
 
 **Decision tree for Tier 1 requests:**
 
@@ -123,7 +124,7 @@ These modifications are **immediately blocked** by pre-commit hooks. Cannot be c
 AI receives request to modify linting config?
 ├─ Change rule from error → warn/off? → HARD ERROR: Blocked by pre-commit
 ├─ Set strict: false? → HARD ERROR: Blocked by pre-commit
-├─ Add @ts-ignore/@ts-expect-error? → HARD ERROR: Blocked by GritQL pattern
+├─ Add @ts-ignore/@ts-expect-error/@ts-nocheck? → HARD ERROR: Blocked by validate-linting-config.sh source scan
 ├─ Create bypass mechanism? → HARD ERROR: Blocked by validate-linting-config.sh
 └─ Use as any type assertion? → HARD ERROR: Blocked by Biome noExplicitAny
 ```
@@ -259,12 +260,16 @@ This requires:
 **Directory:** `biome/gritql-patterns/`
 
 **Critical patterns:**
-- `ban-ts-ignore.grit` - Detects `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`
-- `ban-satisfies.grit` - Detects `satisfies` operator usage
-- `ban-any-type-annotation.grit` - Detects `as any` patterns
-- `ban-non-null-assertions.grit` - Detects `!` operators
+- `ban-type-assertions.grit` - Detects `as T`, `<T>expr` (angle-bracket), and `satisfies T`
+- `ban-default-export-non-index.grit` - Discourages default exports outside index files
+- `ban-imperative-error-handling-in-effect.grit` - Forces Effect-style error handling
+- `ban-push-spread.grit` / `ban-return-types.grit` / `prefer-object-spread.grit` - Code quality patterns
+- `detect-missing-yield-star.grit` / `detect-unhandled-effect-promise.grit` / `enforce-effect-pipe.grit` - Effect-TS correctness
 
-**Trigger:** `biome check` or CI/CD linting phase
+**Note:** `as any` and `!` operator are caught by Biome native rules (`noExplicitAny`, `noNonNullAssertion`), not by GritQL.
+**Note:** `@ts-ignore` / `@ts-expect-error` / `@ts-nocheck` are caught by `scripts/validate-linting-config.sh` source scan at pre-commit time.
+
+**Trigger:** `biome check` or CI/CD linting phase (GritQL); pre-commit hook (source scan)
 
 ## Type Safety Patterns (Prohibited)
 
@@ -279,7 +284,7 @@ All of these patterns are **strictly prohibited** and must never be used.
 
 **Detection:**
 - Biome rule `noExplicitAny: "error"` catches at lint time
-- GritQL pattern `ban-any-type-annotation.grit` catches custom AST
+- GritQL pattern `ban-type-assertions.grit` (Pattern 1) catches all `expr as T` forms
 - Pre-commit hook validates no new patterns introduced
 
 **Type-safe alternatives:**
@@ -322,8 +327,8 @@ if (typeof result === 'object' && result !== null && 'prop' in result) {
 - `// @ts-nocheck` - Disables all type checking for entire file
 
 **Detection:**
-- GritQL pattern `ban-ts-ignore.grit` detects all three variants
-- Pre-commit hook validates no new suppression comments
+- `scripts/validate-linting-config.sh` source scan (pre-commit) greps staged TS/JS files for all three variants
+- Pre-commit hook fails the commit before suppression comments land
 
 **Type-safe alternatives:**
 
@@ -407,7 +412,7 @@ const value = Schema.decodeUnknownSync(MySchema)(maybeValue);
 - Anti-pattern that reduces type safety vs explicit annotation
 
 **Detection:**
-- GritQL pattern `ban-satisfies.grit` detects usage
+- GritQL pattern `ban-type-assertions.grit` (Pattern 3) detects `expr satisfies T`
 - Pre-commit hook validates no new satisfies introduced
 
 **Type-safe alternatives:**
@@ -584,8 +589,8 @@ User requests a type-safety related change?
 │  └─ "Just use satisfies" → REFUSE: Use as const or explicit type
 │
 └─ In any doubt?
-   → Consult biome/CLAUDE.md Type Safety section
-   → Consult CLAUDE.md AI Guardrails section
+   → Consult this document (Type Safety Patterns section above)
+   → Consult root CLAUDE.md AI Guardrails section
    → Ask for human clarification before proceeding
 ```
 
@@ -745,4 +750,4 @@ git restore biome.json
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Effect-TS Documentation](https://effect.website/)
 - Root CLAUDE.md - General guardrails
-- biome/CLAUDE.md - Type safety patterns with examples
+- `biome/gritql-patterns/*.grit` - Inline header comments document each pattern

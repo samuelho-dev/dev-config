@@ -17,7 +17,6 @@
     ./programs/claude-code.nix
     ./programs/opencode.nix
     ./programs/biome.nix
-    ./programs/gritql.nix
     ./programs/python.nix
     ./services/direnv.nix
     ./services/sops-env.nix

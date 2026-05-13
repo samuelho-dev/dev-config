@@ -5,8 +5,10 @@
   homeDirectory,
   ...
 }: {
-  # Import dev-config Home Manager module
-  imports = [./modules/home-manager];
+  imports = [
+    ./modules/home-manager
+    ./modules/home-manager/profiles/base.nix
+  ];
 
   # Home Manager needs to know your username and home directory
   # Passed via extraSpecialArgs from flake.nix
@@ -38,69 +40,24 @@
     };
   };
 
-  # Add sops and age packages for secrets management
-  # Note: Main dev packages come from modules/home-manager/default.nix via dev-config.packages
+  # Sops-only packages (everything else comes via dev-config.packages)
   home.packages = with pkgs; [
     sops
     age
   ];
 
-  # Add user-local directories to PATH (prepended, so they take precedence)
-  home.sessionPath = [
-    "$HOME/.nix-profile/bin" # Home Manager packages (cachix, etc.)
-    "$HOME/.local/bin" # Claude CLI, user scripts
-    "$HOME/.bun/bin" # Bun package manager (if installed)
-    "$HOME/Library/pnpm" # pnpm package manager (if installed)
-  ];
-
-  # Global session variables (exported to all shells)
+  # SOPS key file is sops-specific, layered on top of base session vars
   home.sessionVariables = {
-    # SOPS key file for manual sops CLI usage
     SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
-
-    # Default editors (neovim)
-    EDITOR = "nvim";
-    VISUAL = "nvim";
-
-    # Claude Code: maintain project working directory across bash sessions
-    CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
   };
 
-  # Enable dev-config modules (all enabled by default)
+  # Personal-profile dev-config overrides (base.nix handles common enables)
   dev-config = {
-    enable = true;
-
-    # Enable zsh module for direnv integration
-    zsh = {
-      enable = true;
-      # Let Home Manager manage .zshrc for direnv integration
-      # (Custom .zshrc from repo conflicts with Home Manager's generated config)
-      zshrcSource = null;
-      zprofileSource = null;
-      p10kSource = null;
-    };
-
-    # Git configuration (public info, not secrets)
-    git = {
-      enable = true;
-      userName = "samuelho-dev";
-      userEmail = "samuelho343@gmail.com";
-      signing = {
-        enable = true;
-        # SSH public key from 1Password (visible in commits, not secret)
-        # Get via: op read "op://Dev/GitHub SSH Key/public key"
-        key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAogjYBaWb3+oWrW1LYqnJVdxjbpRJ/qVSwaGyiznvcX";
-      };
-    };
-
     # Enable ghostty (package installed via Homebrew on macOS)
     ghostty = {
       enable = true;
       package = null; # Not available in nixpkgs, installed via Homebrew
     };
-
-    # Enable neovim module for Home Manager-managed config
-    neovim.enable = true;
 
     # Enable yazi terminal file manager (with full preview support)
     yazi.enable = true;
@@ -131,20 +88,6 @@
       };
     };
 
-    # Opencode CLI with Gemini OAuth (via opencode-gemini-auth plugin)
-    opencode.enable = true;
-
-    # NPM authentication (token managed via sops-nix)
-    # Add npm/token to secrets/default.yaml
-    npm.enable = true;
-
-    # Biome linter/formatter (exports config for monorepo extends)
-    # Generates ~/.config/biome/biome.json and GritQL patterns
-    biome = {
-      enable = true;
-      gritql.enable = true;
-    };
-
     # SSH configuration with 1Password agent + DevPod Tailscale proxy
     ssh.enable = true;
     ssh.devpods.enable = true;
@@ -159,7 +102,4 @@
     # Optional: Add extra packages
     # packages.extraPackages = with pkgs; [ kubectl k9s ];
   };
-
-  # Let Home Manager install and manage itself
-  programs.home-manager.enable = true;
 }

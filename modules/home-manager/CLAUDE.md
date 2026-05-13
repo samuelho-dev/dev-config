@@ -1,9 +1,10 @@
 ---
 scope: modules/home-manager/
-updated: 2025-12-21
+updated: 2026-05-12
 relates_to:
   - ../../CLAUDE.md
   - ../../home.nix
+  - ../../work-home.nix
   - ../../pkgs/default.nix
   - ./programs/neovim.nix
   - ./programs/tmux.nix
@@ -37,13 +38,14 @@ modules/home-manager/
 +-- default.nix              # Module aggregator, imports all programs/services
 +-- programs/                # User program configurations
 |   +-- biome.nix            # Biome linter/formatter
-|   +-- claude-code.nix      # Claude Code AI assistant
+|   +-- claude-code.nix      # Claude Code AI assistant + MCP servers
 |   +-- ghostty.nix          # Ghostty terminal emulator
 |   +-- git.nix              # Git with 1Password SSH signing
-|   +-- gritql.nix           # GritQL pattern linting
 |   +-- neovim.nix           # Neovim editor setup
 |   +-- npm.nix              # NPM configuration
-|   +-- ssh.nix              # SSH with 1Password agent
+|   +-- opencode.nix         # Opencode CLI (Gemini OAuth)
+|   +-- python.nix           # Python 3 + pip + dev tooling
+|   +-- ssh.nix              # SSH with 1Password agent + DevPod Tailscale proxy
 |   +-- tmux.nix             # Tmux terminal multiplexer
 |   +-- yazi.nix             # Yazi file manager
 |   +-- zsh.nix              # Zsh shell configuration
@@ -66,17 +68,18 @@ modules/home-manager/
 
 | Module | Purpose | Key Options |
 |--------|---------|-------------|
-| **default.nix** | Aggregates all modules, defines global options | `dev-config.enable`, `dev-config.packages.enable` |
-| **programs/neovim.nix** | Neovim with LazyVim config | `enable`, `package`, `configSource`, `defaultEditor` |
-| **programs/tmux.nix** | Tmux with TPM plugins | `enable`, `configSource` |
-| **programs/zsh.nix** | Zsh with Oh My Zsh + Powerlevel10k | `enable`, `zshrcSource`, `p10kSource` |
-| **programs/git.nix** | Git with 1Password signing | `enable`, `userEmail`, `userName`, `signingKey` |
-| **programs/ssh.nix** | SSH with 1Password agent | `enable`, `identityAgent` |
-| **programs/ghostty.nix** | Ghostty terminal config | `enable`, `configSource` |
+| **default.nix** | Aggregates all modules, defines global options | `dev-config.enable`, `dev-config.packages.{enable,extraPackages}` |
+| **programs/neovim.nix** | Neovim with LazyVim config | `enable`, `package`, `configSource`, `defaultEditor`, `vimAlias` |
+| **programs/tmux.nix** | Tmux with TPM plugins | `enable`, `configSource`, `devpodConnect.enable` |
+| **programs/zsh.nix** | Zsh with Oh My Zsh + Powerlevel10k | `enable`, `zshrcSource`, `zprofileSource`, `p10kSource` |
+| **programs/git.nix** | Git with 1Password signing | `enable`, `userName`, `userEmail`, `signing.{enable,key}` |
+| **programs/ssh.nix** | SSH with 1Password agent + DevPod proxy | `enable`, `devpods.{enable,user}`, `onePasswordAgent.{enable,socketPath}` |
+| **programs/ghostty.nix** | Ghostty terminal config | `enable`, `package`, `configSource` |
 | **programs/yazi.nix** | Yazi file manager | `enable`, `configSource` |
-| **programs/claude-code.nix** | Claude Code multi-profile + LiteLLM routing | `enable`, `profiles`, `litellm.*` |
-| **programs/biome.nix** | Biome linting configs | `enable`, `configSource` |
-| **programs/gritql.nix** | GritQL pattern linting | `enable`, `configSource` |
+| **programs/claude-code.nix** | Claude Code + MCP servers + LiteLLM routing | `enable`, `litellm.enable`, `mcpServers`, `enableAllProjectMcpServers` |
+| **programs/opencode.nix** | Opencode CLI with Gemini OAuth | `enable` |
+| **programs/python.nix** | Python 3 + pip + dev tooling | `enable`, `package`, `enablePip`, `packages` |
+| **programs/biome.nix** | Biome linting configs | `enable`, `package` |
 | **programs/npm.nix** | NPM configuration | `enable` |
 | **services/direnv.nix** | direnv + nix-direnv | `enable` |
 | **services/sops-env.nix** | Secret environment variables | `enable`, `secretsFile` |

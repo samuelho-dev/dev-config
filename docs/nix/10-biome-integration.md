@@ -165,10 +165,14 @@ Custom lint rules using [GritQL](https://biomejs.dev/reference/gritql/):
 
 | Pattern | Severity | Description |
 |---------|----------|-------------|
-| `ban-satisfies.grit` | error | Prevents TypeScript `satisfies` operator |
+| `ban-type-assertions.grit` | error | Prevents `as T`, `<T>expr`, and `satisfies T` |
 | `ban-return-types.grit` | error | Enforces type inference (except type guards) |
-| `ban-type-assertions.grit` | error | Prevents `as` and angle-bracket assertions |
 | `ban-push-spread.grit` | error | Prevents `array.push(...items)` pattern |
+| `ban-default-export-non-index.grit` | warn | Discourages default exports outside index files |
+| `ban-imperative-error-handling-in-effect.grit` | error | Forces Effect-style error handling |
+| `detect-missing-yield-star.grit` | error | Catches missing `yield*` in Effect generators |
+| `detect-unhandled-effect-promise.grit` | error | Catches unhandled Effect promises |
+| `enforce-effect-pipe.grit` | error | Enforces `pipe()` for Effect chains |
 | `prefer-object-spread.grit` | warn | Recommends spread over `Object.assign()` |
 
 ### Using GritQL Patterns
@@ -178,11 +182,18 @@ Add to your project's `biome.json`:
 ```json
 {
   "plugins": [
-    "~/.config/biome/gritql-patterns/ban-satisfies.grit",
-    "~/.config/biome/gritql-patterns/ban-type-assertions.grit"
+    "~/.config/biome/gritql-patterns/ban-type-assertions.grit",
+    "~/.config/biome/gritql-patterns/ban-return-types.grit"
   ]
 }
 ```
+
+> Note: `ban-type-assertions.grit` is a single file containing three patterns
+> (`as T`, `<T>expr`, `satisfies T`). Older docs that referenced separate
+> `ban-satisfies.grit` / `ban-ts-ignore.grit` / `ban-non-null-assertions.grit`
+> files were stale — those patterns were either consolidated here or replaced
+> by Biome's native rules (`noNonNullAssertion`) or the pre-commit source
+> scan in `scripts/validate-linting-config.sh` (`@ts-ignore` family).
 
 ## VS Code Integration
 
