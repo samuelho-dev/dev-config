@@ -44,38 +44,36 @@
       enable = true;
       enableDefaultConfig = false;
 
-      # GitHub-specific configuration
-      matchBlocks = {
+      # SSH config blocks using the modern `settings` API (home-manager 26.05+).
+      # Keys are OpenSSH directive names (HostName, User, ForwardAgent, ...) written
+      # directly — no camelCase aliases, no `extraOptions`.
+      settings = {
         # Wildcard block: 1Password SSH agent for all connections
         "*" = lib.mkMerge [
           {
-            forwardAgent = false;
+            ForwardAgent = false;
           }
           (lib.mkIf config.dev-config.ssh.onePasswordAgent.enable {
-            extraOptions = {
-              IdentityAgent = ''"${config.dev-config.ssh.onePasswordAgent.socketPath}"'';
-            };
+            IdentityAgent = ''"${config.dev-config.ssh.onePasswordAgent.socketPath}"'';
           })
         ];
 
         "github.com" = {
-          hostname = "github.com";
-          user = "git";
-          forwardAgent = false; # Security best practice: disable agent forwarding
+          HostName = "github.com";
+          User = "git";
+          ForwardAgent = false; # Security best practice: disable agent forwarding
           # Uses 1Password SSH agent from wildcard block (no identitiesOnly restriction)
         };
 
         # DevPod wildcard: ephemeral workspaces on Tailscale SSH
         # Uses tailscale nc as proxy since DevPods run Tailscale SSH (no sshd on port 22)
         "devpod-*" = lib.mkIf config.dev-config.ssh.devpods.enable {
-          user = config.dev-config.ssh.devpods.user;
-          forwardAgent = true; # Forward 1Password SSH agent for git operations
-          proxyCommand = "tailscale nc %h %p";
-          extraOptions = {
-            StrictHostKeyChecking = "no";
-            UserKnownHostsFile = "/dev/null";
-            LogLevel = "ERROR"; # Suppress host key warnings (ephemeral hosts)
-          };
+          User = config.dev-config.ssh.devpods.user;
+          ForwardAgent = true; # Forward 1Password SSH agent for git operations
+          ProxyCommand = "tailscale nc %h %p";
+          StrictHostKeyChecking = "no";
+          UserKnownHostsFile = "/dev/null";
+          LogLevel = "ERROR"; # Suppress host key warnings (ephemeral hosts)
         };
       };
     };

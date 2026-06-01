@@ -54,6 +54,11 @@
       vimAlias = config.dev-config.neovim.vimAlias;
       viAlias = config.dev-config.neovim.viAlias;
 
+      # No Python/Ruby remote-plugin hosts needed (providers disabled in nvim config).
+      # Set explicitly to adopt the new (26.05) defaults and silence the legacy warnings.
+      withPython3 = false;
+      withRuby = false;
+
       # Plugins managed by lazy.nvim in nvim/lua/plugins/
       # Nix only provides LSP servers/formatters as binaries
       plugins = [];

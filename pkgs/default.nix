@@ -101,6 +101,7 @@ in {
     pkgs.yq-go
     pkgs.gnumake
     pkgs.pkg-config
+    pkgs.tree-sitter # CLI to compile parsers (required by nvim-treesitter main branch)
     grit
   ];
 

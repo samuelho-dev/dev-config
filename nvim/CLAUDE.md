@@ -1119,23 +1119,23 @@ brew install pkg-config
 
 **Action:** Ignore completely (working as designed)
 
-#### tree-sitter CLI warning ✅ OPTIONAL
+#### tree-sitter CLI ✅ REQUIRED (provided by Nix)
 
-```
-⚠️ WARNING `tree-sitter` executable not found
-```
+The `tree-sitter` CLI is **required**, not optional. nvim-treesitter runs on the
+`main` branch (pinned in `lua/plugins/treesitter.lua`), which **compiles** parsers
+locally on `:TSUpdate` / `require('nvim-treesitter').install(...)`. The legacy
+`master` branch shipped precompiled parsers and is incompatible with Neovim 0.12
+(`node:range()` errors during markdown injection parsing).
 
-**Why this exists:**
+**Why this matters:**
 
-- Only needed for `:TSInstallFromGrammar` (parser development)
-- `:TSInstall` (normal usage) works fine without it
-- All parsers are pre-installed
+- `main` branch compiles parsers from source → needs `tree-sitter` CLI + a C compiler
+- Provided declaratively via `pkgs.tree-sitter` in `pkgs/default.nix` (on PATH after `home-manager switch`)
+- `pkgs.gcc` (neovim.nix) supplies the C compiler
 
-**When to fix:**
-
-```bash
-npm add -g tree-sitter-cli  # Only if developing grammars
-```
+**If `tree-sitter` is missing** (e.g. outside the Nix env), parser compilation fails
+with `ENOENT ... 'tree-sitter'`. Ensure `home-manager switch` has run, or install
+the CLI manually (`npm add -g tree-sitter-cli`).
 
 ### Fixed Warnings (No Longer Appear)
 
