@@ -189,6 +189,17 @@ return {
             },
           },
         },
+
+        -- Nix LSP (eval-based: diagnostics, completion, go-to-def).
+        -- Binary provided by Nix (pkgs.nixd in pkgs/default.nix linting category).
+        -- Uses alejandra for formatting to match `nix fmt` in this repo.
+        nixd = {
+          settings = {
+            nixd = {
+              formatting = { command = { 'alejandra' } },
+            },
+          },
+        },
       }
 
       -- Setup LSP servers using Neovim 0.11+ native API
@@ -220,6 +231,7 @@ return {
           'prettier', -- YAML/Markdown formatter (Biome doesn't support these yet)
           'ruff', -- Python formatter and linter
           'biome', -- JavaScript/TypeScript/JSON linter and formatter
+          'alejandra', -- Nix formatter (used by nixd LSP + conform)
         })
         require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -275,6 +287,8 @@ return {
         -- Prettier for unsupported languages (Biome doesn't support YAML/Markdown yet)
         yaml = { 'prettier' },
         markdown = { 'prettier' },
+        -- Nix (matches `nix fmt` in dev-config repos)
+        nix = { 'alejandra' },
       },
       formatters = {
         biome = {

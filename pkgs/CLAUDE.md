@@ -55,7 +55,7 @@ Note: Workspace initialization (biome.json, editor configs) is handled by `lib.d
 | **core** | Essential dev tools | git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit |
 | **runtimes** | Language runtimes | nodejs_24, bun, uv |
 | **utilities** | Dev utilities | direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, tree-sitter |
-| **linting** | Linters/formatters | biome, nil, nixd |
+| **linting** | Repo-wide linters/formatters | biome (editor LSPs live in neovim.nix) |
 
 ## Adding/Modifying
 

@@ -77,6 +77,10 @@
       pkgs.stylua # Lua formatter
       pkgs.prettier # JS/TS/JSON/YAML/Markdown
       pkgs.ruff # Python formatter + linter
+      pkgs.alejandra # Nix formatter (matches `nix fmt`; used by nixd LSP)
+
+      # Nix LSP (eval-based diagnostics/completion for .nix editing)
+      pkgs.nixd
 
       # Build tools for Neovim plugins
       pkgs.gnumake

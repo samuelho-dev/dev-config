@@ -33,11 +33,10 @@
     pkgs.tree-sitter # CLI to compile parsers (required by nvim-treesitter main branch)
   ];
 
-  # Linting and formatting tools
+  # Linting and formatting tools (repo-wide: devShell, pre-commit, biome.json)
+  # Note: editor LSPs (nixd, pyright, ...) live in modules/home-manager/programs/neovim.nix
   linting = [
     pkgs.biome # Fast formatter and linter for JS/TS/JSON/CSS
-    pkgs.nil # Nix LSP — diagnostics, completion, formatting
-    pkgs.nixd # Nix LSP — evaluation-based features
   ];
 
   # Combine all packages into a single list

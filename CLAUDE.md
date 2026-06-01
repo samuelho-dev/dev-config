@@ -102,7 +102,7 @@ All packages defined centrally in `pkgs/default.nix` by category:
 - `core`: git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit
 - `runtimes`: nodejs_24, bun, uv
 - `utilities`: direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, tree-sitter
-- `linting`: biome, nil, nixd
+- `linting`: biome (editor LSPs like nixd/pyright live in neovim.nix, not here)
 
 ### Secrets Management
 
