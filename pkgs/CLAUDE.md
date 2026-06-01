@@ -19,13 +19,13 @@ This directory provides a single source of truth for all development packages us
 
 ## Architecture Overview
 
-The `default.nix` file exports an attribute set with package categories as keys and lists of packages as values. A special `all` function combines all categories into a single list. Custom packages (like `grit`) are defined inline and included with nixpkgs packages.
+The `default.nix` file exports an attribute set with package categories as keys and lists of packages as values. A special `all` function combines all categories into a single list. Custom packages can be defined inline (via `let ... in`) when a tool is not available in nixpkgs.
 
 Key design decisions:
-- **Category-based organization**: Packages grouped by purpose (core, kubernetes, linting, etc.)
+- **Category-based organization**: Packages grouped by purpose (core, runtimes, utilities, linting)
 - **Self-referential `all` function**: `all = self: self.core ++ self.runtimes ++ ...` enables flexible composition
-- **Custom package support**: Local derivations in subdirectories (monorepo-library-generator)
-- **Platform-aware builds**: Custom packages handle multi-platform binaries
+- **Custom package support**: Inline derivations or local subdirectories for packages not in nixpkgs
+- **Platform-aware builds**: Custom binary packages handle multi-platform sources
 
 ## File Structure
 
@@ -42,20 +42,20 @@ Note: Workspace initialization (biome.json, editor configs) is handled by `lib.d
 
 | Pattern | Location | Purpose |
 |---------|----------|---------|
-| Category attributes | default.nix:54-142 | `core`, `kubernetes`, `linting`, etc. for organized package lists |
-| Self-referential all | default.nix:145-155 | `all = self: self.core ++ ...` enables flexible combination |
-| Custom derivation | default.nix:7-52 | Inline `mkDerivation` for packages not in nixpkgs |
-| Platform sources | default.nix:9-26 | `sources.${platformKey}` for multi-platform binaries |
-| Callpackage pattern | default.nix:128-129 | `pkgs.callPackage ./subdir {}` for local packages |
+| Category attributes | default.nix | `core`, `runtimes`, `utilities`, `linting` for organized package lists |
+| Self-referential all | default.nix (`all` fn) | `all = self: self.core ++ ...` enables flexible combination |
+| Custom derivation | (when needed) | Inline `let ... in pkgs.mkDerivation` for packages not in nixpkgs |
+| Platform sources | (when needed) | `sources.${platformKey}` for multi-platform prebuilt binaries |
+| Callpackage pattern | (when needed) | `pkgs.callPackage ./subdir {}` for local packages |
 
 ## Module Reference
 
 | Category | Purpose | Key Packages |
 |----------|---------|--------------|
 | **core** | Essential dev tools | git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit |
-| **runtimes** | Language runtimes | nodejs_20, bun |
-| **utilities** | Dev utilities | direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, grit |
-| **linting** | Linters/formatters | biome |
+| **runtimes** | Language runtimes | nodejs_24, bun, uv |
+| **utilities** | Dev utilities | direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, tree-sitter |
+| **linting** | Linters/formatters | biome, nil, nixd |
 
 ## Adding/Modifying
 

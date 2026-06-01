@@ -63,15 +63,6 @@ repos:
         pass_filenames: false
         description: Prevent rule weakening and enforce linting policy
 
-      # GritQL pattern testing (disabled - requires grit CLI setup)
-      # - id: grit-patterns-test
-      #   name: Test GritQL patterns
-      #   entry: grit patterns test
-      #   language: system
-      #   files: ^gritql-patterns/.*\.(md|grit)$
-      #   pass_filenames: false
-      #   description: Validate GritQL pattern syntax and test cases
-
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0

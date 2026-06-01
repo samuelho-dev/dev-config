@@ -100,9 +100,9 @@ in {
 
 All packages defined centrally in `pkgs/default.nix` by category:
 - `core`: git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit
-- `runtimes`: nodejs_20, bun
-- `utilities`: direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, grit
-- `linting`: biome
+- `runtimes`: nodejs_24, bun, uv
+- `utilities`: direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, tree-sitter
+- `linting`: biome, nil, nixd
 
 ### Secrets Management
 
@@ -194,12 +194,11 @@ Auto-creates project-level editor configurations on `nix develop`:
 | `.claude/` | commands/, agents/, settings.json | Claude Code integration | Symlinked from Nix store + user customization |
 | `.factory/` | commands/, droids/, hooks/ | Factory Droid integration | Symlinked from Nix store + user customization |
 | `.zed/` | Full Zed editor config | Zed editor configuration | Symlinked from Nix store (read-only) |
-| `.grit/` | GritQL patterns | GritQL linting rules | Symlinked from Nix store (read-only) |
 | `biome.json` | Config extends ~/.config/biome/ | Biome formatter/linter | Auto-generated if missing |
 
 ### Key Implementation Details
 
-- **Symlink strategy**: Full-directory symlinks for configs without internal relative paths (.zed, .grit), subdirectory symlinks for configs with user customization (.claude, .factory)
+- **Symlink strategy**: Full-directory symlinks for configs without internal relative paths (.zed), subdirectory symlinks for configs with user customization (.claude, .factory)
 - **Nix store paths**: Uses `${self}` references in flake.nix to handle symlinks correctly in `/nix/store`
 - **User customization**: Copies default settings.json on first run for user to customize
 - **Idempotent**: Checks `if [ ! -d .claude ]` to avoid overwriting user changes

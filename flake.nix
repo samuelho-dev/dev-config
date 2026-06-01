@@ -102,12 +102,6 @@
         printf "✓ Linked .zed/\n"
       fi
 
-      # GritQL (full directory symlink - no relative symlinks inside)
-      if [ ! -L .grit ] && [ ! -d .grit ]; then
-        ln -sfn ${self}/grit .grit
-        printf "✓ Linked .grit/\n"
-      fi
-
       # ====== Extend Configs (biome) ======
 
       # Biome (create extends file if missing)
@@ -143,8 +137,8 @@
               echo ""
               echo "Tool categories loaded:"
               echo "  • Core: git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit"
-              echo "  • Runtimes: nodejs_22, bun"
-              echo "  • Linting: biome, grit"
+              echo "  • Runtimes: nodejs_24, bun"
+              echo "  • Linting: biome (with GritQL patterns)"
               echo "  • Utilities: direnv, jq, yq, gnumake"
               echo ""
               echo "Commands:"
