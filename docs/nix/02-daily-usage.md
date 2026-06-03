@@ -1,710 +1,130 @@
 # Daily Usage and Common Workflows
 
-## Overview
-
-This guide covers day-to-day operations with your Nix-powered dev-config environment. After initial setup, these are the tasks you'll perform regularly.
+Day-to-day operations with the Nix + Home Manager dev-config environment.
 
 ## Environment Activation
 
-### Automatic Activation (Recommended)
-
-When you `cd` into dev-config, direnv automatically activates the Nix environment:
+`direnv` auto-activates the dev shell when you `cd` into the repo. At shell startup, AI credentials are fetched from 1Password via `~/.config/sops-nix/load-env.sh` (fields: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_AI_STUDIO_KEY`, `LITELLM_KEY`, `OPENROUTER_API_KEY`).
 
 ```bash
-cd ~/Projects/dev-config
-# 🔐 Loading AI credentials from 1Password...
-#   ✓ Loaded: ANTHROPIC_API_KEY
-#   ✓ Loaded: OPENAI_API_KEY
-#   ✓ Loaded: GOOGLE_AI_API_KEY
-# ✅ AI credentials loaded from 1Password
-```
+cd ~/Projects/dev-config   # direnv loads the dev shell
+direnv allow               # first time only, to approve .envrc
 
-**What happened:**
-1. direnv detected `.envrc`
-2. Loaded `nix develop` (all packages available)
-3. Sourced `scripts/load-ai-credentials.sh`
-4. Exported AI credentials from 1Password
-
-**Verify environment:**
-```bash
-which nvim     # Should show /nix/store/.../bin/nvim
-which claude   # Should show Claude Code CLI location
-echo $ANTHROPIC_API_KEY  # Should show your API key
-```
-
-### Manual Activation
-
-If direnv is not set up:
-
-```bash
-cd ~/Projects/dev-config
+# manual fallback if direnv is not set up:
 nix develop
 ```
 
-To load credentials manually:
-```bash
-source scripts/load-ai-credentials.sh
-```
-
-## Common Daily Tasks
-
-### 1. Updating Packages
-
-**Update all packages to latest versions:**
+Verify:
 
 ```bash
-cd ~/Projects/dev-config
-nix flake update
+which nvim                 # /nix/store/.../bin/nvim
+echo $ANTHROPIC_API_KEY    # populated from 1Password
 ```
 
-This updates `flake.lock` with latest package versions from nixpkgs.
+If credentials are missing, sign in: `op signin`.
 
-**View what changed:**
+## Core Commands
+
 ```bash
-git diff flake.lock
+# Apply / test configuration
+home-manager switch --flake .              # apply
+home-manager build --flake .               # build without applying
+home-manager switch --flake . --dry-run    # preview changes
+
+# Update dependencies
+nix flake update                           # update flake.lock
+git diff flake.lock                        # review
+nix flake check                            # validate
+
+# Rollback
+home-manager generations                   # list past generations
+git checkout <commit> flake.lock           # revert package versions
 ```
 
-**Test updated environment:**
-```bash
-nix develop
-nvim --version  # Check Neovim version
-tmux -V         # Check tmux version
-```
+## Adding or Removing a Package
 
-**Commit updated lock file:**
-```bash
-git add flake.lock
-git commit -m "chore: update Nix flake inputs"
-git push origin main
-```
+Packages live in `pkgs/default.nix` only (single source of truth), grouped by category (`core`, `runtimes`, `utilities`, `linting`).
 
-### 2. Adding a New Package
-
-**Edit flake.nix:**
-```bash
-nvim flake.nix
-```
-
-**Note:** Packages are centrally managed in `pkgs/default.nix` (single source of truth).
-
-Add package to appropriate category in `pkgs/default.nix`:
 ```nix
-# pkgs/default.nix
-{pkgs}: {
-  # ... existing categories ...
-
-  # Add to relevant category
-  data = [
-    pkgs.jq
-    pkgs.yq-go
-    pkgs.postgresql  # NEW: Add PostgreSQL client
-  ];
-
-  # ... rest of file ...
-}
-```
-
-**Rebuild environment:**
-```bash
-nix flake check  # Validate syntax
-nix develop      # Enter new environment
-```
-
-**Verify package installed:**
-```bash
-which psql  # Should show /nix/store/.../bin/psql
-```
-
-**Commit changes:**
-```bash
-git add pkgs/default.nix
-git commit -m "feat: add PostgreSQL client to data tools"
-git push origin main
-```
-
-### 3. Removing a Package
-
-**Edit `pkgs/default.nix`:**
-```nix
-# pkgs/default.nix
-{pkgs}: {
-  # ... existing categories ...
-
-  core = [
-    pkgs.git
-    pkgs.zsh
-    # Removed: pkgs.docker (if you no longer need it)
-    pkgs.neovim
-    pkgs.tmux
-  ];
-
-  # ... rest of file ...
-}
-```
-
-**Rebuild and test:**
-```bash
-nix develop
-which docker  # Should return "not found"
-```
-
-### 4. Updating Configuration Files
-
-**Example: Modify Neovim config**
-
-```bash
-nvim ~/Projects/dev-config/nvim/init.lua
-# Make changes...
-```
-
-**Apply changes:**
-```bash
-# No rebuild needed! Configs are symlinked.
-# Just restart Neovim to see changes.
-nvim
-```
-
-**Commit changes:**
-```bash
-git add nvim/init.lua
-git commit -m "feat(nvim): add new keybinding"
-git push origin main
-```
-
-### 5. Rerunning Activation Script
-
-**When to rerun:**
-- Added new dotfiles to flake.nix
-- Changed symlink structure
-- Need to reinstall Oh My Zsh
-
-**Rerun activation:**
-```bash
-nix run .#activate
-```
-
-This recreates symlinks and reinstalls plugins without breaking existing setup.
-
-### 6. Rolling Back Changes
-
-**If update broke something:**
-
-```bash
-# View generation history
-nix profile history
-
-# Output:
-# Version 42 (current) - 2025-01-18
-# Version 41 - 2025-01-15
-# Version 40 - 2025-01-10
-
-# Rollback to previous generation
-nix profile rollback
-
-# Or rollback to specific generation
-nix profile switch-generation 40
-```
-
-**Rollback flake.lock:**
-```bash
-git log --oneline flake.lock  # Find commit hash before update
-git checkout <commit-hash> flake.lock
-nix develop  # Uses older package versions
-```
-
-## Workflow Patterns
-
-### Pattern 1: Morning Routine
-
-Start your development day:
-
-```bash
-cd ~/Projects/dev-config   # Auto-activates Nix + credentials
-tmux new -s dev            # Start tmux session
-nvim                       # Open editor (LSP auto-starts)
-claude                     # Start Claude Code session
-```
-
-### Pattern 2: Making Config Changes
-
-Safe workflow for experimentation:
-
-```bash
-cd ~/Projects/dev-config
-
-# Create feature branch
-git checkout -b feat/new-config
-
-# Edit config
-nvim nvim/init.lua
-
-# Test changes (no rebuild needed for config files!)
-nvim test-file.txt
-
-# If satisfied, commit
-git add nvim/init.lua
-git commit -m "feat(nvim): add new feature"
-git push origin feat/new-config
-
-# Create PR for team review
-gh pr create --title "New Neovim feature"
-```
-
-### Pattern 3: Syncing to Another Machine
-
-**On your updated workstation:**
-```bash
-cd ~/Projects/dev-config
-git push origin main
-```
-
-**On target machine:**
-```bash
-cd ~/Projects/dev-config
-git pull origin main
-
-# If flake.lock changed, rebuild environment
-nix develop
-
-# If config files changed, restart affected tools
-tmux source-file ~/.tmux.conf  # Reload tmux
-source ~/.zshrc                # Reload zsh
-# Restart Neovim (no command, just exit and reopen)
-```
-
-### Pattern 4: Weekly Maintenance
-
-**Sunday evening checklist:**
-
-```bash
-cd ~/Projects/dev-config
-
-# Update packages
-nix flake update
-git add flake.lock
-git commit -m "chore: weekly flake update"
-
-# Rebuild and test
-nix develop
-nvim --version
-tmux -V
-
-# Run health checks
-nvim +checkhealth +qall  # Neovim health check
-bash scripts/validate.sh  # Repo validation
-
-# Push updates
-git push origin main
-```
-
-### Pattern 5: AI-Assisted Development
-
-**Using Claude Code via LiteLLM homelab gateway:**
-
-```bash
-cd ~/Projects/dev-config  # direnv loads Claude env vars automatically
-
-# Ask for code review
-claude ask "Review nvim/init.lua for improvements"
-
-# Generate new config
-claude ask "Create a tmux keybinding for splitting panes"
-
-# Debug issues
-claude ask "Why is my LSP not attaching? Here's my :LspInfo output: ..."
-```
-
-**LiteLLM credentials and headers auto-load** via direnv + 1Password integration.
-
-## direnv Integration
-
-### How It Works
-
-```
-1. You: cd ~/Projects/dev-config
-2. direnv: Detects .envrc file
-3. direnv: Runs `use flake`
-4. Nix: Loads all packages from flake.nix
-5. direnv: Sources scripts/load-ai-credentials.sh
-6. 1Password CLI: Fetches API keys from "Dev" vault
-7. You: All tools + credentials available!
-```
-
-### Allow/Block Directories
-
-**First time in directory:**
-```bash
-cd ~/Projects/dev-config
-# direnv: error .envrc is blocked. Run `direnv allow` to approve its content.
-
-direnv allow  # Approve .envrc
-# 🔐 Loading AI credentials...
-```
-
-**Block a directory:**
-```bash
-direnv block
-```
-
-**Re-allow:**
-```bash
-direnv allow
-```
-
-### Troubleshooting direnv
-
-**Environment not loading:**
-```bash
-direnv status  # Check direnv state
-
-# Should show:
-# Found RC allowed true
-# Found RC path /Users/you/Projects/dev-config/.envrc
-```
-
-**Manual reload:**
-```bash
-direnv reload
-```
-
-**Check hook installation:**
-```bash
-cat ~/.zshrc | grep direnv
-# Should show: eval "$(direnv hook zsh)"
-```
-
-## Claude Code Workflows
-
-### Common Claude CLI Commands
-
-**Ask a question:**
-```bash
-claude ask "How do I configure Neovim LSP for Python?"
-```
-
-**Review code:**
-```bash
-claude ask "Review nvim/init.lua and suggest improvements"
-```
-
-**Generate code:**
-```bash
-claude ask "Create a shell function to quickly switch tmux sessions"
-```
-
-**Debug:**
-```bash
-claude ask "Debug: Neovim LSP not working. :LspInfo shows: ..."
-```
-
-### LiteLLM + 1Password Integration
-
-**Automatic credential injection:**
-```bash
-cd ~/Projects/dev-config  # direnv loads ANTHROPIC_BASE_URL + headers
-claude ask "..."          # Uses LiteLLM proxy + secret headers
-```
-
-**Explicit op run (optional hardening):**
-```bash
-op run -- claude ask "Explain this codebase"
-# Injects headers just for the duration of this command
-```
-
-**Verify environment variables:**
-```bash
-env | grep ANTHROPIC_
-# Should show ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space
-# and ANTHROPIC_CUSTOM_HEADERS with x-litellm-api-key
-```
-
-### Provider Selection via LiteLLM
-
-**Default model (Anthropic Sonnet via Max subscription):**
-```bash
-claude --model claude-3-5-sonnet-20241022 ask "..."
-```
-
-**Use another routed model:**
-```bash
-claude --model claude-3-5-haiku-20241022 ask "..."           # Haiku
-claude --model minimax/MiniMax-M2.1 ask "..."                # MiniMax M2
-claude --model gemini-3.0-flash-exp ask "..."                # Gemini via LiteLLM
-```
-
-The LiteLLM dashboard controls which providers/models are available. Enable new models in the UI, then call them directly via `claude --model <name>`.
-
-## Team Collaboration
-
-### Sharing Config Changes
-
-**Push changes:**
-```bash
-cd ~/Projects/dev-config
-git add .
-git commit -m "feat: add new tmux plugin"
-git push origin main
-```
-
-**Team members pull:**
-```bash
-cd ~/Projects/dev-config
-git pull origin main
-nix develop  # Automatically rebuilds if flake.lock changed
-```
-
-**No manual "install updated packages" step!** Nix handles it automatically.
-
-### Sharing 1Password Credentials
-
-**For team vaults:**
-1. Create shared "Dev" vault in 1Password
-2. Add team members to vault
-3. Create "ai" item with team credentials
-4. Each team member runs `op signin`
-5. Credentials auto-load for all team members
-
-**Result:** Everyone uses same API keys, no manual distribution.
-
-### Binary Caching for Teams
-
-**First build (no cache):**
-- Time: 5-10 minutes (building packages from source)
-
-**Subsequent builds (with Cachix):**
-- Time: 10-30 seconds (downloading pre-built binaries)
-- 20x faster!
-
-**How it works:**
-1. First team member builds environment
-2. Cachix uploads build artifacts
-3. Other team members download instead of rebuilding
-
-**No setup needed** - configured in `flake.nix`.
-
-## Tips and Tricks
-
-### 1. Quick Environment Check
-
-**Verify everything is working:**
-```bash
-cd ~/Projects/dev-config
-nix develop --command bash -c "
-  nvim --version &&
-  tmux -V &&
-  op account get &&
-  echo '✅ All tools operational'
-"
-```
-
-### 2. Temporary Package Installation
-
-**Need a tool just once?**
-```bash
-nix shell nixpkgs#htop  # Temporarily add htop
-htop                    # Use it
-exit                    # Tool removed when shell exits
-```
-
-**Don't pollute flake.nix with temporary tools.**
-
-### 3. Search for Packages
-
-**Find package name:**
-```bash
-nix search nixpkgs postgresql
-# Returns: legacyPackages.x86_64-darwin.postgresql
-# Use: pkgs.postgresql in flake.nix
-```
-
-**Web search:**
-https://search.nixos.org/packages
-
-### 4. Garbage Collection
-
-**Nix store grows over time.** Clean up old generations:
-
-```bash
-# Remove old generations (keep last 10)
-nix-collect-garbage --delete-older-than 30d
-
-# Aggressive cleanup (keep only current generation)
-nix-collect-garbage -d
-```
-
-**Caution:** This removes ability to rollback to old generations.
-
-### 5. Offline Development
-
-**Nix works offline** if packages are cached:
-
-```bash
-# Build all dependencies while online
-nix build .#devShells.x86_64-darwin.default
-
-# Later, offline:
-cd ~/Projects/dev-config
-nix develop  # Uses cached packages
-```
-
-### 6. Multiple Projects with Different Dependencies
-
-**Use project-specific flake.nix:**
-
-```bash
-# Project A: Uses Python 3.9
-cd ~/Projects/project-a
-nix develop  # Loads Python 3.9
-
-# Project B: Uses Python 3.11
-cd ~/Projects/project-b
-nix develop  # Loads Python 3.11
-
-# No conflicts! Isolated environments.
-```
-
-### 7. Shell Integration
-
-**Add to ~/.zshrc.local:**
-```bash
-# Auto-activate Nix in dev-config
-cd() {
-  builtin cd "$@"
-  if [[ $(pwd) == "$HOME/Projects/dev-config"* ]]; then
-    echo "🔧 Nix environment active"
-  fi
-}
-
-# Quick rebuild alias
-alias nix-rebuild="cd ~/Projects/dev-config && nix develop && cd -"
-```
-
-## Performance Optimization
-
-### Cachix Binary Cache
-
-**Verify Cachix is working:**
-```bash
-nix build .#devShells.x86_64-darwin.default --print-build-logs
-# Look for: "copying path ... from 'https://dev-config.cachix.org'"
-```
-
-**If builds are slow:**
-1. Check internet connection
-2. Verify Cachix cache name in flake.nix
-3. Check GitHub Actions pushed to cache
-
-### Local Binary Cache
-
-**Create personal cache for fast rebuilds:**
-```bash
-# Build once
-nix build .#devShells.x86_64-darwin.default
-
-# Subsequent builds use local cache
-nix develop  # Nearly instant!
-```
-
-### Evaluation Cache
-
-**Speed up flake evaluation:**
-```bash
-nix develop --eval-cache  # Experimental feature
-```
-
-## Common Questions
-
-### Q: How do I update just one package?
-
-**A:** Update specific input:
-```bash
-nix flake lock --update-input nixpkgs
-```
-
-Or pin to specific version in flake.nix:
-```nix
-inputs.nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable?rev=abc123";
-```
-
-### Q: Can I use Homebrew alongside Nix?
-
-**A:** Yes! They coexist peacefully:
-- Nix packages: `/nix/store/`
-- Homebrew: `/opt/homebrew/` (Apple Silicon) or `/usr/local/` (Intel)
-
-Use Nix for development tools, Homebrew for GUI apps.
-
-### Q: What happens if I `nix develop` in a non-dev-config directory?
-
-**A:** Nothing, unless that directory has a flake.nix. Nix only activates when:
-1. You run `nix develop` in directory with flake.nix
-2. direnv detects .envrc with `use flake`
-
-### Q: How do I share my environment with CI/CD?
-
-**A:** GitHub Actions example:
-```yaml
-- uses: DeterminateSystems/nix-installer-action@main
-- uses: DeterminateSystems/magic-nix-cache-action@main
-- uses: cachix/cachix-action@v14
-  with:
-    name: dev-config
-    authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-- run: nix develop --command make test
-```
-
-CI builds use same flake.lock → identical environment.
-
-### Q: Can I override package versions?
-
-**A:** Yes, using overlays in flake.nix:
-```nix
-nixpkgs.overlays = [
-  (final: prev: {
-    neovim = prev.neovim.overrideAttrs (old: {
-      version = "0.10.0";  # Pin specific version
-    });
-  })
+# pkgs/default.nix — add to the relevant category
+utilities = [
+  pkgs.jq
+  pkgs.yq-go
+  pkgs.postgresql   # new
 ];
+```
+
+```bash
+nix flake check                # validate syntax
+home-manager switch --flake .  # apply
+which psql                     # verify
+git add pkgs/default.nix && git commit -m "feat: add postgresql"
+```
+
+To remove, delete the line and re-run `home-manager switch --flake .`.
+
+## Editing Config Files
+
+Dotfiles (`nvim/`, `tmux/tmux.conf`, etc.) are symlinked — no rebuild needed. Edit, then reload the app:
+
+```bash
+nvim nvim/lua/config/keymaps.lua   # edit
+# restart nvim to pick up changes
+
+tmux source-file ~/.config/tmux/tmux.conf   # reload tmux
+source ~/.zshrc                              # reload zsh
+```
+
+Only `.nix` changes require `home-manager switch --flake .`.
+
+## Syncing to Another Machine
+
+```bash
+git pull origin main
+home-manager switch --flake .   # rebuilds only if .nix / flake.lock changed
+```
+
+## AI / Claude Code via LiteLLM
+
+Credentials and `ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space` load automatically via direnv + 1Password.
+
+```bash
+claude                                          # default model
+claude --model claude-3-5-haiku-20241022        # alternate routed model
+```
+
+The LiteLLM dashboard controls which providers/models are available. See [07-litellm-proxy-setup.md](07-litellm-proxy-setup.md).
+
+## direnv
+
+```bash
+direnv allow     # approve .envrc (first time / after edits)
+direnv reload    # re-evaluate
+direnv status    # check state
+```
+
+The zsh hook (`eval "$(direnv hook zsh)"`) is installed by Home Manager. Each shell activates independently — variables loaded in one terminal are not global.
+
+## Maintenance
+
+```bash
+# Search for a package name
+nix search nixpkgs postgresql        # or https://search.nixos.org/packages
+
+# Temporary, throwaway tool (don't add to pkgs/default.nix)
+nix shell nixpkgs#htop
+
+# Garbage-collect old generations (frees /nix/store; removes rollback points)
+nix-collect-garbage --delete-older-than 30d
+nix-store --optimise                 # deduplicate
+
+# Neovim health check
+nvim +checkhealth +qall
 ```
 
 ## Next Steps
 
 - **Troubleshooting:** [Common Issues](03-troubleshooting.md)
+- **Testing changes:** [Testing](04-testing.md)
 - **Advanced Customization:** [Advanced Guide](06-advanced.md)
-- **Nix Concepts:** [Understanding Nix](01-concepts.md)
-- **Quick Reference:** [Quick Start](00-quickstart.md)
-
-## Quick Reference Card
-
-```bash
-# Daily Commands
-cd ~/Projects/dev-config      # Auto-activate environment
-nix flake update              # Update all packages
-nix develop                   # Enter dev environment
-nix run .#activate            # Rerun activation script
-nix profile rollback          # Undo last change
-
-# Package Management
-nix search nixpkgs <name>     # Find package
-nix shell nixpkgs#<pkg>       # Temporary package
-nix-collect-garbage -d        # Clean up old builds
-
-# Environment
-direnv allow                  # Approve .envrc
-direnv reload                 # Reload environment
-op signin                     # Authenticate 1Password
-
-# Claude Code
-claude ask "..."              # Ask AI assistant through LiteLLM
-claude --model minimax/MiniMax-M2.1 ask "..."  # Use alternate model
-
-# Validation
-nix flake check               # Validate flake.nix
-bash scripts/validate.sh      # Validate setup
-nvim +checkhealth +qall       # Neovim health check
-
-# Git
-git add flake.lock            # Commit package updates
-git push origin main          # Share with team
-```
+- **Concepts:** [Understanding dev-config](01-concepts.md)

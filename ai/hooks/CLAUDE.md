@@ -10,7 +10,7 @@ Hooks are automated shell commands that execute at specific points in Claude Cod
 
 **Configuration:** `.claude/settings.json` (project-level, committed to git)
 
-**Symlinked to:** `~/.config/claude-code/hooks/` (via Home Manager)
+**Wiring:** Hooks run from `ai/hooks/` via the `bash ai/hooks/*.sh` commands in `.claude/settings.json`. The `claude-code.nix` module copies `ai/agents/` and `ai/commands/` to `~/.claude/{agents,commands}` (`cp -Lr`, writable); hook scripts are referenced in-repo, not copied.
 
 ## Hook Scripts
 
@@ -39,7 +39,7 @@ Violations found:
   error[style/noExplicitAny]: Avoid using `any` type
 
 💡 Fix: Run 'biome check --write src/services/api.ts' to auto-fix issues
-📚 See biome/CLAUDE.md for linting policy
+📚 See docs/LINTING_POLICY.md for linting policy
 ```
 
 **Timeout:** 120 seconds
@@ -69,13 +69,13 @@ Violations found:
   45: // @ts-ignore missing property
   67: const value = obj.prop!;
 
-💡 Type-safe alternatives (see biome/CLAUDE.md for details):
+💡 Type-safe alternatives (see docs/LINTING_POLICY.md for details):
    - Instead of 'as any': Use Schema.decodeUnknown() or type guards
    - Instead of '@ts-ignore': Fix the underlying type error
    - Instead of '!': Use optional chaining (?.) or null checks
    - Instead of 'satisfies': Use 'as const' or explicit type annotation
 
-📚 Reference: biome/CLAUDE.md - Type Safety Guardrails section
+📚 Reference: docs/LINTING_POLICY.md - Type Safety Guardrails section
 ```
 
 **Timeout:** 30 seconds
@@ -109,7 +109,7 @@ Instead of workarounds, try:
   • Explicit type annotations with validation
   • Optional chaining (?.) instead of ! assertions
 
-📚 See biome/CLAUDE.md for type-safe alternatives
+📚 See docs/LINTING_POLICY.md for type-safe alternatives
 ```
 
 **Timeout:** 10 seconds
@@ -121,30 +121,36 @@ Instead of workarounds, try:
 ```json
 {
   "hooks": {
-    "enabled": true,
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
-        "type": "command",
-        "command": "bash ai/hooks/biome-validate.sh",
-        "timeout": 120,
-        "description": "Validate Biome linting + GritQL patterns"
-      },
-      {
-        "matcher": "Write|Edit",
-        "type": "command",
-        "command": "bash ai/hooks/enforce-type-safety.sh",
-        "timeout": 30,
-        "description": "Block type safety violations"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ai/hooks/biome-validate.sh",
+            "timeout": 120,
+            "description": "Validate Biome linting + GritQL patterns"
+          },
+          {
+            "type": "command",
+            "command": "bash ai/hooks/enforce-type-safety.sh",
+            "timeout": 30,
+            "description": "Block type safety violations"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
       {
         "matcher": "*",
-        "type": "command",
-        "command": "bash ai/hooks/check-type-safety-request.sh",
-        "timeout": 10,
-        "description": "Warn if requesting type-safe workarounds"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ai/hooks/check-type-safety-request.sh",
+            "timeout": 10,
+            "description": "Warn if requesting type-safe workarounds"
+          }
+        ]
       }
     ]
   }
@@ -152,10 +158,10 @@ Instead of workarounds, try:
 ```
 
 **How it works:**
-1. Each hook has a `matcher` (which tool/event to trigger on)
-2. `type: "command"` means run a shell script
-3. `command` path is relative to project root
-4. `timeout` is maximum time the hook can run
+1. Each event (`PostToolUse`, `UserPromptSubmit`) holds an array of matcher entries
+2. Each matcher entry has a `matcher` (which tool/event to trigger on) and a `hooks` array
+3. Each `hooks` entry: `type: "command"` runs a shell script; `command` path is relative to project root; `timeout` caps run time
+4. There is no `enabled` key — presence in `settings.json` enables the hook
 5. Exit code 0 = success, exit code 2 = blocking error
 
 ## Hook Execution Flow
@@ -230,10 +236,11 @@ echo "Exit code: $?"  # Should be 0 (warning only, request allowed)
 
 The Home Manager module (`modules/home-manager/programs/claude-code.nix`) automatically:
 
-1. Symlinks `ai/hooks/` to `~/.config/claude-code/hooks/`
-2. Symlinks `ai/agents/` to `~/.config/claude-code/agents/`
-3. Symlinks `ai/commands/` to `~/.config/claude-code/commands/`
-4. Copies `.claude/settings.json` to project-level configuration
+1. Copies `ai/agents/` to `~/.claude/agents/` (`cp -Lr`, writable)
+2. Copies `ai/commands/` to `~/.claude/commands/` (`cp -Lr`, writable)
+3. Merges `enableAllProjectMcpServers` + `mcpServers` into `~/.claude.json`
+
+Hook scripts in `ai/hooks/` are referenced in-repo by `.claude/settings.json` (`bash ai/hooks/*.sh`); they are not copied or symlinked.
 
 **Apply changes:**
 ```bash
@@ -247,17 +254,12 @@ home-manager switch --flake .
    inputs.dev-config.url = "github:samuelho-dev/dev-config";
    ```
 
-2. **Home Manager symlinks hooks:**
-   ```
-   ~/.config/claude-code/hooks/ → ai/hooks/
-   ```
-
-3. **`.claude/settings.json` references hooks:**
+2. **`.claude/settings.json` references hooks in-repo:**
    ```json
    "command": "bash ai/hooks/biome-validate.sh"
    ```
 
-4. **Claude Code loads hooks and executes them:**
+3. **Claude Code loads hooks and executes them:**
    - When Write/Edit tool is used
    - When user submits a prompt
    - Hook scripts run in project directory with full access to config
@@ -292,10 +294,9 @@ In `.claude/settings.json`, remove or comment out the hook configuration:
 ### Hook not running
 
 **Check:**
-1. Is `hooks.enabled: true` in `.claude/settings.json`?
+1. Is the hook present in `.claude/settings.json` under the right event?
 2. Is the script path correct (relative to project root)?
-3. Run `home-manager switch --flake .` to update symlinks
-4. Verify script is executable: `ls -la ai/hooks/*.sh`
+3. Verify script is executable: `ls -la ai/hooks/*.sh`
 
 ### Hook timing out
 
@@ -312,7 +313,7 @@ In `.claude/settings.json`, remove or comment out the hook configuration:
 
 **Biome finding errors that don't matter:**
 - Override in `biome.json` overrides section
-- See `biome/CLAUDE.md` for override patterns
+- See `docs/LINTING_POLICY.md` for override patterns
 
 ## Files
 
@@ -327,9 +328,8 @@ In `.claude/settings.json`, remove or comment out the hook configuration:
 ## References
 
 - **Claude Code Hooks:** https://code.claude.com/docs/en/hooks-guide.md
-- **Biome Configuration:** `biome/CLAUDE.md`
+- **Linting & Type Safety Policy:** `docs/LINTING_POLICY.md`
 - **GritQL Patterns:** `biome/gritql-patterns/`
-- **Type Safety Policy:** `biome/CLAUDE.md` - Type Safety Guardrails section
 
 ## For Future Claude Code Instances
 
@@ -339,7 +339,6 @@ When working with these hooks:
 - [ ] Test hooks locally before relying on them: `bash ai/hooks/<name>.sh <file>`
 - [ ] Keep hook logic simple and fast (timeout constraints)
 - [ ] Update `.claude/settings.json` when adding/removing hooks
-- [ ] Verify symlinks are created: `ls -la ~/.config/claude-code/hooks/`
 - [ ] Check hook output: Claude Code shows stderr when hook exits 2
 - [ ] Commit both `.claude/settings.json` and hook scripts
 - [ ] Reference documentation in hook output messages

@@ -1,99 +1,88 @@
-# Dev-Config Architecture (Portable AI Resources)
+# Dev-Config Architecture (Portable AI & Editor Resources)
 
 ## Overview
-The dev-config architecture uses a three-tier system to manage AI resources (commands, agents, templates) across multiple projects:
 
-1. **Source Tier (`dev-config/ai/`)**: The source of truth for all shared AI resources, managed by Git in the `dev-config` repository.
-2. **Global Deployment Tier (`~/.config/`)**: Shared resources are deployed to your home directory via Home Manager. This makes the resources portable and accessible to any project on the machine.
-   - `~/.config/claude-code/`: Managed by `claude-code.nix`
-3. **Project Linkage Tier (`project-repo/`)**: Individual projects link to dev-config via `lib.devShellHook` (automatic on `nix develop`).
-   - `.claude/ -> dev-config/.claude/`
-   - `.zed/ -> dev-config/zed/`
-   - `.grit/ -> dev-config/grit/`
+dev-config is the single source of truth for shared developer resources (Claude Code
+commands/agents, editor configs, linting). Resources flow from this repo to your
+machine via Home Manager, and into individual projects via the flake's `devShellHook`.
 
-## Directory Structure (Source)
+1. **Source** (`dev-config/`): canonical resources, Git-tracked.
+2. **Global deployment** (`~/.claude/`, `~/.config/biome/`): Home Manager copies AI
+   configs and linting config to the home directory so every tool/project finds them
+   automatically.
+3. **Project linkage** (`project-repo/`): `lib.devShellHook` runs on `nix develop` and
+   wires per-project editor config.
 
-### `ai/` - Centralized AI Resources (Single Source of Truth)
-- **commands/**: Slash commands (shared by all AI tools)
-- **agents/**: AI agents (shared by all AI tools)
-- **tools/**: Shared utilities
-- **Purpose**: Single source of truth for all AI-related resources, managed by Git.
+## Source Layout
 
-### `.claude/` - Claude Code Templates & Settings
-- **settings-base.json**: Base Claude Code settings (deployed to `~/.config/claude-code/`)
-- **templates/**: Claude Code templates (deployed to `~/.config/claude-code/`)
+### `ai/` — Centralized AI Resources (single source of truth)
+- `commands/` — slash commands
+- `agents/` — agent definitions
+- `hooks/`, `skills/`, `tools/` — supporting resources
 
-## Architecture Principles
+`claude-code.nix` (Home Manager) copies `ai/agents` and `ai/commands` to
+`~/.claude/{agents,commands}` (via `cp -Lr`). AI configs are **global** — no
+project-level sync of commands/agents is needed.
 
-### 1. Centralized Source, Global Deployment
-All shared AI resources (commands, agents) are stored in the `ai/` directory and deployed globally via Home Manager to `~/.config/`.
+### `.claude/` — Project-level Claude Code config (this repo)
+- `settings.json` — project hooks (reference `ai/hooks/`)
+- `templates/` — CLAUDE.md / README.md templates
+- `tools -> ../ai/tools` — symlink
 
-### 2. Project-Level Portability
-Individual projects use `lib.devShellHook` in their flake.nix to automatically create symlinks on `nix develop`. This ensures that the AI resources are available anywhere without duplicating files.
+## Project Linkage: `devShellHook`
 
-### 3. Tool-Specific Extensions
-Each tool maintains its own specific configuration while sharing the core resources:
-- Claude Code: `settings.json`, `templates/`
+On `nix develop`, `lib.devShellHook` (in `flake.nix`) performs exactly:
 
-### 4. Deployment Flow
+- creates `.envrc` (`use flake`) and auto-`direnv allow`
+- symlinks `.zed -> ${dev-config}/zed` (full-directory symlink; no internal relative
+  paths)
+- generates `biome.json` extending `~/.config/biome/biome.json` if missing
+
+The root `CLAUDE.md` "Flake Composition & devShellHook" section documents the full
+table of what gets linked/generated (`.claude/`, `.factory/`, `.zed/`, `biome.json`)
+and the symlink strategy. Treat that table as authoritative.
+
 ```
-dev-config/ai/              [Source]
-   ├── commands/
-   ├── agents/
-   └── tools/
+dev-config/                         [Source, Git]
+   ├── ai/  (commands, agents, hooks, skills, tools)
+   ├── zed/
+   └── biome/
 
-      │ (Home Manager switch)
+      │ Home Manager switch (claude-code.nix, biome module)
       ▼
 
-~/.config/claude-code/       [Global Deployment]
-   ├── commands/             (source: dev-config/ai/commands)
-   ├── agents/               (source: dev-config/ai/agents)
-   └── templates/
+~/.claude/        ← cp -Lr ai/agents, ai/commands     [Global, per-machine]
+~/.config/biome/  ← linting config
 
-      │ (nix develop with lib.devShellHook)
+      │ nix develop  →  lib.devShellHook
       ▼
 
-my-project/                   [Project Link]
-   ├── .claude/ -> dev-config/.claude/
-   ├── .zed/ -> dev-config/zed/
-   └── .grit/ -> dev-config/grit/
+my-project/                          [Project Link]
+   ├── .zed     -> ${dev-config}/zed   (full-dir symlink)
+   └── biome.json                       (generated; extends ~/.config/biome/)
 ```
-
-## How It Works
-
-### Claude Code
-1. `claude-code.nix` (Home Manager) deploys shared resources from `ai/` to `~/.config/claude-code/`.
-2. `lib.devShellHook` (in project flake.nix) links `.claude/` to dev-config on `nix develop`.
-
-## Benefits
-1. ✅ **Portability**: AI resources follow the developer across any project on the machine.
-2. ✅ **Single Maintenance**: Update `ai/` resources in one place.
-3. ✅ **No Duplication**: Files are linked, not copied.
-4. ✅ **Consistency**: Every project has the same toolset.
-5. ✅ **Clean Repositories**: Project-level `.gitignore` handles the symlinks.
 
 ## Maintenance
 
-### Updating Resources
-1. Edit files in `dev-config/ai/`.
-2. Run `home-manager switch --flake .` in the `dev-config` repository.
+**Update AI resources:** edit files in `dev-config/ai/`, then
+`home-manager switch --flake .` in this repo.
 
-### Re-initializing a Project
-If symlinks are broken or you want to refresh configuration:
+**Re-initialize a project's editor config:**
 ```bash
 cd project-directory
-rm -rf .claude .zed .grit  # Remove broken symlinks
-nix develop  # Re-creates symlinks via lib.devShellHook
+rm -f .zed biome.json   # remove stale links/generated config
+nix develop             # devShellHook recreates them
 ```
 
-### Setting Up a New Project
-```bash
-# Option 1: Initialize from template
-nix flake init -t github:samuelho-dev/dev-config
-nix develop
-
-# Option 2: Add to existing flake.nix
+**Set up a new project:**
+```nix
+# In the consumer flake.nix devShell:
 inputs.dev-config.url = "github:samuelho-dev/dev-config";
-# In devShell:
-shellHook = dev-config.lib.devShellHook;
+# ...
+shellHook = ''
+  ${dev-config.lib.devShellHook}
+'';
 ```
+
+See the root `CLAUDE.md` "Flake Composition & devShellHook" section for the full
+composition pattern and the `inputs ? dev-config` standalone/composed mechanism.

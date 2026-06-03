@@ -1,6 +1,6 @@
 ---
 scope: modules/home-manager/
-updated: 2026-05-12
+updated: 2026-06-03
 relates_to:
   - ../../CLAUDE.md
   - ../../home.nix
@@ -9,6 +9,7 @@ relates_to:
   - ./programs/neovim.nix
   - ./programs/tmux.nix
   - ./programs/zsh.nix
+  - ./services/sops-env.nix
 validation:
   max_days_stale: 30
 ---
@@ -84,6 +85,46 @@ modules/home-manager/
 | **services/direnv.nix** | direnv + nix-direnv | `enable` |
 | **services/sops-env.nix** | Secret environment variables | `enable`, `secretsFile` |
 
+> Note: GritQL is installed as a binary via `pkgs/default.nix`. `biome.json` at
+> the repo root references its patterns directly — no nix-side module needed.
+
+## Service Modules
+
+Service modules (`services/`) handle cross-cutting concerns (environment variable
+loading, shell hooks, activation scripts) rather than configuring a single app.
+
+| Pattern | Location | Purpose |
+|---------|----------|---------|
+| Session variables | direnv.nix:47-49 | `home.sessionVariables = { ... };` |
+| Shell integration | direnv.nix:39 | `enableZshIntegration = true;` |
+| Activation hooks | sops-env.nix:83 | `home.activation.generateLoadEnv = ...;` |
+| DAG ordering | sops-env.nix:83 | `lib.hm.dag.entryAfter ["sops-nix"]` |
+
+### sops-env.nix security model
+
+Loads encrypted secrets into shell environment variables at activation time:
+
+1. Secrets encrypted in `secrets/default.yaml` with age key
+2. sops-nix decrypts to tmpfs at `~/.local/share/sops-nix/secrets.d/`
+3. Activation script generates `~/.config/sops-nix/load-env.sh`
+4. Shell sources `load-env.sh` on startup
+
+**Environment variables loaded:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
+`GOOGLE_AI_API_KEY`, `LITELLM_MASTER_KEY`, `OPENROUTER_API_KEY`.
+
+**Benefits over 1Password CLI:** zero shell-startup latency, works offline after
+initial decryption, same encryption mechanism as all secrets.
+
+### Activation script DAG ordering
+
+Use `lib.hm.dag.entryAfter` to control execution order:
+- `["writeBoundary"]` — after config files are written
+- `["sops-nix"]` — after secrets are decrypted
+- `["linkGeneration"]` — after symlinks are created
+
+Prefer `home.sessionVariables` for static values; use `programs.zsh.envExtra`
+shell hooks only for dynamic values (e.g. `export VAR="$(some-command)"`).
+
 ## Adding/Modifying
 
 ### Adding a New Program Module
@@ -138,11 +179,15 @@ Set `configSource = null` to prevent symlink creation:
 dev-config.neovim.configSource = null;  # Manage with Chezmoi
 ```
 
-## For Future Claude Code Instances
+## Common Issues
 
-- [ ] Always use explicit `lib.` prefixes - never `with lib;`
-- [ ] Check `inputs ? dev-config` pattern for flake composition support
-- [ ] Test changes with `home-manager build --flake .`
-- [ ] Add new modules to the import list in `default.nix`
-- [ ] Keep options consistent with existing modules (enable, configSource pattern)
-- [ ] Document new options in this CLAUDE.md
+| Symptom | Fix |
+|---------|-----|
+| `home-manager switch` fails with "file exists" | Remove conflicting file, or set `home.file.<name>.force = true` |
+| Program fails to start (missing binary) | Add required package to `home.packages` in the module |
+| Tool doesn't auto-activate in shell | Ensure `enableZshIntegration = true` is set |
+| Env var shows empty (`echo $VAR`) | Check `enableZshIntegration`, restart terminal (don't just source `.zshrc`), confirm activation ran: `ls ~/.config/sops-nix/` |
+| `load-env.sh` has empty values | Verify sops-nix configured in `home.nix`, age key exists at `~/.config/sops/age/keys.txt`, run `home-manager switch` (not build) |
+| direnv not activating on `cd` | Run `direnv allow` in project, check `.envrc` exists |
+
+See root `CLAUDE.md` for general AI conventions and guardrails.

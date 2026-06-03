@@ -1,6 +1,11 @@
-# Strict Linting Guide
+# Biome & Strict Linting Guide
 
-Comprehensive guide to the enhanced strict linting rules in dev-config, covering TypeScript type safety, Effect-TS patterns, infrastructure validation, and code quality enforcement.
+Comprehensive guide to Biome integration and the strict linting rules in dev-config,
+covering setup, TypeScript type safety, Effect-TS patterns, infrastructure validation,
+and code quality enforcement.
+
+> For the AI guardrails and rule-modification policy (what may/may not be weakened,
+> the `APPROVE` workflow), see [docs/LINTING_POLICY.md](../LINTING_POLICY.md).
 
 ## Overview
 
@@ -12,6 +17,21 @@ This configuration provides:
 - **IaC validation** for Kubernetes, Terraform, Dockerfiles, GitHub Actions
 - **Pre-commit hooks** for automated enforcement
 
+[Biome](https://biomejs.dev/) is a fast (Rust-based) formatter and linter for
+JavaScript, TypeScript, JSX/TSX, JSON/JSONC, CSS, and GraphQL. It provides type-aware
+linting without the TypeScript compiler, custom GritQL patterns, and native VCS
+integration (respects `.gitignore`).
+
+## How It Works
+
+1. **Project root `biome.json`** is the **source of truth** for all Biome rules —
+   self-contained, portable, and editor-agnostic.
+2. **Nix sync** (`modules/home-manager/programs/biome.nix`) symlinks `biome.json` to
+   `~/.config/biome/biome.json`, symlinks GritQL patterns to
+   `~/.config/biome/gritql-patterns/`, and installs the `biome` package.
+3. **Editor integration** references the root `biome.json` directly (no `extends` needed).
+4. **Pre-commit hooks** run Biome on staged JS/TS/JSON files.
+
 ## Quick Start
 
 ```bash
@@ -22,6 +42,43 @@ home-manager switch --flake ~/Projects/dev-config
 biome --version
 hadolint --version
 actionlint --version
+
+# Inspect the exported config and patterns
+cat ~/.config/biome/biome.json
+ls ~/.config/biome/gritql-patterns/
+```
+
+### Enable / Customize in home.nix
+
+```nix
+dev-config = {
+  enable = true;
+
+  biome = {
+    enable = true;
+
+    formatter = {
+      lineWidth = 120;
+      indentWidth = 4;
+    };
+
+    javascript.formatter = {
+      quoteStyle = "double";
+      semicolons = "asNeeded";
+    };
+
+    gritql.enable = true;
+
+    extraConfig = {
+      overrides = [
+        {
+          include = ["**/*.test.ts"];
+          linter.rules.suspicious.noExplicitAny = "off";
+        }
+      ];
+    };
+  };
+};
 ```
 
 ## Philosophy: Direct Equality
@@ -129,7 +186,156 @@ Cognitive complexity > cyclomatic complexity because it accounts for nesting dep
 }
 ```
 
+### Biome Module Options Reference
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enable` | bool | true | Enable Biome module |
+| `package` | package | pkgs.biome | Biome package |
+| `exportConfig` | bool | true | Export to ~/.config/biome/ |
+| `vcs.enable` | bool | true | Enable VCS integration |
+| `vcs.useIgnoreFile` | bool | true | Respect .gitignore |
+| `formatter.enable` | bool | true | Enable formatter |
+| `formatter.indentStyle` | enum | "space" | Tab or space |
+| `formatter.indentWidth` | int | 2 | Indent width |
+| `formatter.lineWidth` | int | 100 | Max line width |
+| `linter.enable` | bool | true | Enable linter |
+| `linter.rules` | attrs | recommended | Linter rules |
+| `javascript.formatter.quoteStyle` | enum | "single" | Quote style |
+| `javascript.formatter.semicolons` | enum | "always" | Semicolons |
+| `javascript.formatter.trailingCommas` | enum | "all" | Trailing commas |
+| `json.parser.allowComments` | bool | true | JSONC support |
+| `gritql.enable` | bool | true | Enable GritQL patterns |
+| `extraConfig` | attrs | {} | Additional Biome config |
+
+## Consumer Project Setup
+
+### Nx Monorepo
+
+**1. Create a root `biome.json`** by copying dev-config's `biome.json` as a starting
+point (it is self-contained — no `extends` required).
+
+**2. Copy the Nx plugin template:**
+
+```bash
+cp ~/.config/biome/nx-plugin-template/biome-plugin.ts ./tools/biome-plugin.ts
+```
+
+**3. Register it in `nx.json`:**
+
+```json
+{
+  "plugins": [
+    {
+      "plugin": "./tools/biome-plugin",
+      "options": {
+        "checkTargetName": "biome-check",
+        "lintTargetName": "biome-lint",
+        "formatTargetName": "biome-format",
+        "ciTargetName": "biome-ci"
+      }
+    }
+  ]
+}
+```
+
+**4. Optionally add package-level overrides** in a nested `biome.json`:
+
+```json
+{
+  "linter": {
+    "rules": {
+      "suspicious": { "noConsole": "off" }
+    }
+  }
+}
+```
+
+### Simple Project
+
+Copy the full config from dev-config's `biome.json` to the project root and customize
+as needed. Configuration is self-contained — no `extends` required.
+
+## CLI Usage
+
+```bash
+biome check .              # Check without writing
+biome check --write .      # Format + lint with fixes
+biome lint .               # Lint only
+biome format --write .     # Format only
+biome ci .                 # CI mode (strict, no writes)
+biome check --changed      # Only changed files (VCS integration)
+biome check --staged       # Only staged files
+```
+
+## VS Code Integration
+
+**`.vscode/settings.json`:**
+
+```json
+{
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "quickfix.biome": "explicit",
+    "source.organizeImports.biome": "explicit"
+  },
+  "[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
+  "biome.lspBin": "./node_modules/@biomejs/biome/bin/biome"
+}
+```
+
+**`.vscode/extensions.json`:**
+
+```json
+{
+  "recommendations": ["biomejs.biome"],
+  "unwantedRecommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode"
+  ]
+}
+```
+
 ## GritQL Custom Patterns
+
+Custom lint rules using [GritQL](https://biomejs.dev/reference/gritql/), shipped in
+`biome/gritql-patterns/` and synced to `~/.config/biome/gritql-patterns/`:
+
+| Pattern | Severity | Description |
+|---------|----------|-------------|
+| `ban-type-assertions.grit` | error | Prevents `as T`, `<T>expr`, and `satisfies T` |
+| `ban-return-types.grit` | error | Enforces type inference (except type guards) |
+| `ban-push-spread.grit` | error | Prevents `array.push(...items)` pattern |
+| `ban-default-export-non-index.grit` | warn | Discourages default exports outside index files |
+| `ban-imperative-error-handling-in-effect.grit` | error | Forces Effect-style error handling |
+| `detect-missing-yield-star.grit` | error | Catches missing `yield*` in Effect generators |
+| `detect-unhandled-effect-promise.grit` | error | Catches unhandled Effect promises |
+| `enforce-effect-pipe.grit` | error | Enforces `pipe()` for Effect chains |
+| `prefer-object-spread.grit` | warn | Recommends spread over `Object.assign()` |
+
+> Note: `ban-type-assertions.grit` is a single file containing three patterns
+> (`as T`, `<T>expr`, `satisfies T`). Older docs that referenced separate
+> `ban-satisfies.grit` / `ban-ts-ignore.grit` / `ban-non-null-assertions.grit` files
+> were stale — those patterns were either consolidated here or replaced by Biome's
+> native rules (`noNonNullAssertion`) or the pre-commit source scan in
+> `scripts/validate-linting-config.sh` (`@ts-ignore` family).
+
+### Using GritQL Patterns
+
+Add to your project's `biome.json`:
+
+```json
+{
+  "plugins": [
+    "~/.config/biome/gritql-patterns/ban-type-assertions.grit",
+    "~/.config/biome/gritql-patterns/ban-return-types.grit"
+  ]
+}
+```
 
 ### Effect-TS Patterns
 
@@ -339,6 +545,31 @@ SKIP=kube-linter git commit -m "WIP"
 **Pattern not matching:**
 
 GritQL uses JavaScript AST, not TypeScript. Some TS-specific syntax may not match. Test patterns at https://grit.io/playground.
+
+**Patterns not loading:**
+
+```bash
+# Check the symlink and that source patterns exist
+ls -la ~/.config/biome/gritql-patterns/
+ls ~/Projects/dev-config/biome/gritql-patterns/
+```
+
+### Biome Not Found or Config Out of Date
+
+```bash
+# Re-apply Home Manager (installs biome, re-syncs ~/.config/biome/biome.json)
+home-manager switch --flake ~/Projects/dev-config
+
+# Or enter the devShell
+nix develop
+
+# Verify
+biome --version
+cat ~/.config/biome/biome.json
+```
+
+For performance on large repos, add big directories to `files.ignore`, use `--changed`
+/ `--staged` for incremental checks, and keep VCS integration enabled (`vcs.enable = true`).
 
 ## Reference
 

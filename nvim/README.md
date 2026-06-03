@@ -1,385 +1,153 @@
 # Neovim Configuration
 
-Modern Neovim configuration based on Kickstart.nvim with LSP, completion, and git integration.
+Modular Neovim configuration (originally based on Kickstart.nvim) managed by lazy.nvim,
+with LSP, completion, git tooling, markdown/Obsidian support, and AI assistance.
 
-## Overview
+**Leader key:** `<space>` (spacebar). Full keybinding reference: `docs/KEYBINDINGS_NEOVIM.md`.
 
-This configuration provides:
-- **LSP support** for TypeScript, Python, and Lua
-- **Auto-completion** with blink.cmp
-- **Git integration** (lazygit, GitHub PRs/issues, diff viewing)
-- **Markdown support** with Obsidian vault integration
-- **Fuzzy finding** with Telescope
-- **Custom diagnostic copy** for Claude Code workflows
+## Quick start
 
-**Leader key:** `<space>` (spacebar)
-
-## Quick Start
-
-### Installation
-
-Neovim plugins are automatically installed during `scripts/install.sh`.
-
-Manual plugin installation:
-```vim
-:Lazy sync
-```
-
-### Essential Commands
+Plugins install automatically during `scripts/install.sh`. Manual install: `:Lazy sync`.
 
 | Command | Purpose |
 |---------|---------|
 | `:Lazy` | Manage plugins |
-| `:Mason` | Manage LSP servers/formatters |
+| `:Mason` | Manage LSP servers/formatters (non-Nix machines) |
 | `:checkhealth` | Diagnose issues |
 | `:LspInfo` | Check LSP status |
 
-## Key Features
+## Plugin inventory
 
-### LSP & Code Intelligence
+One file per category under `lua/plugins/`. The list below matches the source exactly.
 
-**Navigation:**
-- `grd` - Go to definition
-- `grr` - Find references
-- `gri` - Go to implementation
-- `grt` - Go to type definition
-- `grn` - Rename symbol
-- `gra` - Code actions
+### editor.lua — files, search, navigation
+- **guess-indent.nvim** — auto-detect tabstop/shiftwidth
+- **neo-tree.nvim** — file explorer (`\` or `<leader>e`); auto-refresh, follows current file, shows hidden/gitignored
+- **nvim-lsp-file-operations** — updates imports on file move/rename
+- **yazi.nvim** — terminal file manager (`<leader>fy`, `<leader>fw`, `<leader>fY`)
+- **telescope.nvim** — fuzzy finder (+ fzf-native, ui-select)
+- **nvim-spectre** — project-wide search/replace (ripgrep + sed)
+- **harpoon** (harpoon2) — mark/jump to frequent files
 
-**Symbols:**
-- `gO` - Document symbols
-- `gW` - Workspace symbols
+### lsp.lua — language servers + formatting
+- **nvim-lspconfig** with **mason.nvim**, **mason-lspconfig.nvim**, **mason-tool-installer.nvim**, **fidget.nvim**
+- **conform.nvim** — formatter runner
+- **lazydev.nvim** — Neovim Lua API completion (ft=lua)
+- Servers: `ts_ls`, `biome`, `pyright`, `lua_ls`, `nixd`
+- Formatters: stylua (lua), ruff (python), **biome** (js/ts/jsx/tsx/json/jsonc), prettier (yaml/markdown), alejandra (nix)
 
-**Formatting:**
-- `<leader>f` - Format buffer
-- Auto-format on save (except C/C++)
+### completion.lua — autocompletion
+- **blink.cmp** — completion engine (super-tab preset, Lua fuzzy matcher)
+- **LuaSnip** — snippet engine
 
-### Fuzzy Finding (Telescope)
+### ai.lua — AI assistance (all gated on env vars)
+- **minuet-ai.nvim** — inline completion (OpenRouter / ZhipuAI / OpenAI)
+- **codecompanion.nvim** — chat/inline (above + Anthropic)
+- **avante.nvim** — Cursor-like assistant via LiteLLM proxy (`LITELLM_MASTER_KEY`)
+- **yarepl.nvim** — REPL integration (claude/aider/aichat + language REPLs)
 
-- `<leader>sf` - Find files
-- `<leader>sg` - Live grep
-- `<leader>sh` - Search help
-- `<leader>sk` - Search keymaps
-- `<leader><leader>` - Switch buffers
-- `<leader>/` - Search in current buffer
+### git.lua — git integration
+- **gitsigns.nvim** — gutter signs
+- **lazygit.nvim** — lazygit TUI (`<leader>gg`, `<leader>gf`)
+- **octo.nvim** — GitHub PRs/issues (`<leader>gp`, `<leader>gi`; needs `gh`)
+- **diffview.nvim** — diffs & history (`<leader>gd`, `<leader>gh`, `<leader>gH`)
+- **git-conflict.nvim** — merge conflict resolution (`<leader>gc*`)
 
-### Search and Replace (Spectre)
+### markdown.lua — markdown & notes
+- **obsidian.nvim** — auto-detects vault by searching upward for `.obsidian`; `<leader>ch` toggle checkbox
+- **render-markdown.nvim** — in-buffer rendering
+- **markdown-preview.nvim** — browser preview (`<leader>mp`)
+- **bullets.vim** — list/task auto-formatting
+- **outline.nvim** — document outline (`<leader>o`)
 
-Project-wide search and replace with visual interface:
+### ui.lua — interface
+- **which-key.nvim** — keybinding hints
+- **kanagawa.nvim** — colorscheme (`kanagawa-dragon`, comments non-italic)
+- **todo-comments.nvim** — highlight TODO/FIXME/NOTE
+- **mini.nvim** — mini.ai, mini.surround, mini.statusline
+- **vim-visual-multi** — multiple cursors (`<leader>m`, remapped off `<C-n>` to avoid blink conflict)
+- **indent-blankline.nvim** — indent guides with scope highlighting
 
-- `<leader>rr` - Open Spectre (search and replace in project)
-- `<leader>rw` - Replace word under cursor
-- `<leader>rf` - Replace in current file only
-- `<leader>rw` (visual mode) - Replace selected text
+### treesitter.lua — syntax
+- **nvim-treesitter** (`main` branch) — compiles parsers locally; needs `tree-sitter` CLI + C compiler
+- Parsers: bash, c, diff, html, lua, luadoc, markdown, markdown_inline, query, vim, vimdoc, javascript, typescript, tsx, jsdoc, python, json, yaml, toml, css
 
-**In Spectre UI:**
-- Enter search term and replacement
-- `dd` - Toggle individual match on/off
-- `<leader>R` - Replace all (after review)
-- `<leader>rc` - Replace current line only
-- `ti` - Toggle ignore case
-- `th` - Toggle search hidden files
-- `<leader>o` - Show all options
-- `<leader>q` - Send to quickfix list
+### tools.lua / training.lua
+- **csvview.nvim** — virtual-text CSV viewer (border mode; needs CSV filetype autocmd in `config/autocmds.lua`)
+- **vim-be-good** — Vim motion practice games (`<leader>tv`)
 
-Powered by ripgrep for blazing fast search!
+## Key features
 
-### Git Integration
+### LSP & code intelligence
+`grd` definition · `grr` references · `gri` implementation · `grt` type · `grD` declaration ·
+`grn` rename · `gra` code action · `gO` document symbols · `gW` workspace symbols ·
+`<leader>th` toggle inlay hints · `<leader>f` format · auto-format on save (except C/C++).
 
-**lazygit:**
-- `<leader>gg` - Open lazygit
-- `<leader>gf` - Lazygit for current file
+### Fuzzy finding (Telescope)
+`<leader>sf` files · `<leader>sg` grep · `<leader>sw` word · `<leader>sh` help ·
+`<leader>sk` keymaps · `<leader>sd` diagnostics · `<leader>sr` resume · `<leader>sn` nvim config ·
+`<leader><leader>` buffers · `<leader>/` current buffer.
 
-**GitHub (requires `gh` CLI):**
-- `<leader>gp` - List Pull Requests
-- `<leader>gi` - List Issues
+### Search & replace (Spectre)
+`<leader>rr` project search/replace · `<leader>rw` word (also visual) · `<leader>rf` current file.
+In the Spectre UI: `dd` toggle a match, `<leader>R` replace all, `ti`/`th` toggle ignore-case/hidden.
 
-**Diff & History:**
-- `<leader>gd` - Open diff view
-- `<leader>gh` - File history
-- `<leader>gH` - Branch history
+### Git
+`<leader>gg`/`<leader>gf` lazygit · `<leader>gp`/`<leader>gi` GitHub PRs/issues ·
+`<leader>gd`/`<leader>gh`/`<leader>gH` diff/file/branch history ·
+`<leader>gco/gct/gcb/gc0` conflict choose · `<leader>gcn`/`<leader>gcp` next/prev conflict.
 
-**Merge Conflicts:**
-- `<leader>gco` - Choose ours
-- `<leader>gct` - Choose theirs
-- `<leader>gcb` - Choose both
-- `<leader>gcn` - Next conflict
+### Markdown & Obsidian
+Vault auto-detection works from any directory (searches upward for `.obsidian`, handles symlinks,
+zero hardcoded paths). `<leader>ch` toggle checkbox in notes, `<leader>mp` browser preview,
+`<leader>o` outline. In-buffer rendering via render-markdown.nvim.
 
-### Markdown & Note-Taking
+### File navigation
+- Neo-tree: `\` or `<leader>e` toggle.
+- Yazi: `<leader>fy` open, `<leader>fw` in cwd, `<leader>fY` resume.
+- Harpoon: `<leader>ha` add, `<leader>hm` menu, `<leader>h1`–`<leader>h4` jump, `<leader>hp`/`<leader>hn` prev/next.
 
-**Obsidian Integration:**
-- **Auto-detects vaults** - Searches upward for `.obsidian` directory automatically
-- **Works from any location** - No need to open nvim from vault root
-- **Handles symlinks** - Works with symlinked vaults properly
-- `<CR>` (Enter) - Smart action: follow links, toggle checkboxes, cycle headings
-- `<leader>ch` - Toggle checkboxes
-- `[o` / `]o` - Navigate to previous/next link
-- Zero configuration needed - adapts to any machine automatically
+### Multiple cursors (vim-visual-multi)
+`<leader>m` start / select next occurrence · `<C-Down>`/`<C-Up>` add cursor · `n`/`N` next/prev ·
+`q` skip · `Q` remove · `Tab` cursor/extend · `<Esc>` exit.
 
-**Preview:**
-- `<leader>mp` - Toggle browser preview
-- In-buffer rendering with render-markdown.nvim
-- Mermaid diagrams render inline (requires ImageMagick and `@mermaid-js/mermaid-cli`)
+### AI assistance
+Each tool activates only when its API key/env var is exported before launching Neovim:
+- **minuet** — streaming inline completions (`OPENROUTER_API_KEY`/`ZHIPUAI_API_KEY`/`OPENAI_API_KEY`); accept with super-tab `<Tab>`/`<S-Tab>`.
+- **codecompanion** — `:CodeCompanionChat` and visual-select `:CodeCompanion` (above keys or `ANTHROPIC_API_KEY`).
+- **avante** — `:AvanteAsk` / `:AvanteEdit` / `:AvanteToggle` via a LiteLLM proxy; export `LITELLM_MASTER_KEY` and forward the proxy to `localhost:4000`.
+- **yarepl** — `:REPLStart claude` (or `aider`, `aichat`, `observability`, `python`, `R`, `bash`, `zsh`); `:REPLSendLine` / `:REPLSendVisual`, `:REPLFocus` / `:REPLHide`. Agent dir from `CLAUDE_AGENT_ROOT` (default `~/Projects/claude-code-agent`).
 
-**Outline:**
-- `<leader>o` - Toggle document outline
-
-### CSV Viewing
-
-- Modern CSV viewer with virtual text borders (csvview.nvim)
-- Border display mode shows clean column alignment
-- Automatic activation when opening CSV files
-- No file modification - uses virtual text rendering
-
-### Mermaid Diagrams
-
-Inline previews use `image.nvim` + Mermaid CLI. Install the supporting tools once per machine:
-
-```bash
-brew install imagemagick          # or your package manager of choice
-npm add -g @mermaid-js/mermaid-cli
-```
-
-Ghostty implements the Kitty graphics protocol, so diagrams also render there (keep an eye on upstream Ghostty releases for graphics fixes).
-
-### AI Assistance
-
-- **Cursor-like AI in Neovim (Avante)**
-  - Powered by LiteLLM proxy for team AI management with cost tracking.
-  - Chat-based coding assistant with inline code editing.
-  - Export `LITELLM_MASTER_KEY` and start `kubectl port-forward -n litellm svc/litellm 4000:4000`.
-  - `:AvanteAsk` - Ask AI about code (chat interface).
-  - `:AvanteEdit` - Request AI code edits (applies changes directly).
-  - `<leader>aa` - Quick ask (custom keybinding).
-  - See [LiteLLM Proxy Setup](../docs/nix/07-litellm-proxy-setup.md) for full configuration.
-
-- **Streaming Completions (Minuet)**
-  - Powered by GLM 4.5 via `minuet-ai.nvim` + `blink.cmp`.
-  - Export `ZHIPUAI_API_KEY` before launching Neovim.
-  - Completions stream automatically; use `<Tab>`/`<S-Tab>` (super-tab preset) to accept or cycle.
-
-- **Chat & Refactors (CodeCompanion)**
-  - `:CodeCompanionChat` opens a dedicated buffer backed by GLM 4.5.
-  - Use inline actions (visual select → `:CodeCompanion`) for targeted edits.
-  - You can still configure additional adapters (Claude, OpenAI) in `init.lua` if you need higher quality or ACP agents.
-
-- **Infrastructure REPLs (yarepl)**
-  - `:REPLStart claude` attaches to the Claude CLI in your `CLAUDE_AGENT_ROOT` (defaults to `~/Projects/claude-code-agent`).
-  - Additional presets: `aider`, `cursor` (runs `cursor-agent`), `observability` (runs `./scripts/start-system.sh`), and `sqlite` for the agent database.
-  - Toggle focus/hide with `:REPLFocus`, `:REPLHide`, and send code with `:REPLSendLine` / `:REPLSendVisual`.
-
-### File Explorer
-
-- `\` or `<leader>e` - Toggle Neo-tree
-- Auto-refreshes on external changes
-- Follows current file
-
-### Quick File Navigation (Harpoon)
-
-- `<leader>ha` - Add current file to Harpoon
-- `<leader>hm` - Toggle Harpoon menu
-- `<leader>h1-4` - Jump to marked files 1-4
-- `<leader>hp/hn` - Previous/Next in Harpoon list
-- Mark frequently used files for instant access
-
-### Multiple Cursors
-
-- `<leader>m` - Start multi-cursor mode, select word under cursor
-- `<leader>m` (again) - Select next occurrence
-- `<C-Down>` / `<C-Up>` - Add cursor down/up
-- `<C-LeftMouse>` - Add cursor at mouse click
-
-**In multi-cursor mode:**
-- `n` / `N` - Get next/previous occurrence
-- `[` / `]` - Select next/previous cursor
-- `q` - Skip current and get next
-- `Q` - Remove current cursor
-- `Tab` - Switch between cursor and extend mode
-- `<Esc>` - Exit multi-cursor mode
-
-### Indentation Guides
-
-Visual indentation guides show vertical lines for each indentation level, making nested code easier to read.
-
-- **Automatic:** Guides appear automatically in all code files
-- **Scope highlighting:** Current code block/scope is highlighted
-- **Works with:** Spaces and tabs
-- **Excluded from:** Terminal, help files, file explorer
-
-No keybindings needed - it's always active!
-
-### Diagnostic Copy (Claude Code Integration)
-
-- `<leader>ce` - Copy **E**rrors only
-- `<leader>cd` - Copy all **D**iagnostics
-
-Output includes file paths, line numbers, and severity grouping - perfect for pasting into Claude Code!
-
-### Quick Save (controlsave.nvim)
-
-**Custom plugin for quick file saving.**
-
-- `<C-s>` - Save current file (normal, insert, visual mode)
-
-**Features:**
-- Industry-standard `Ctrl+S` keybinding (matches VS Code, IntelliJ)
-- Works across all modes seamlessly
-- Error handling for read-only files and special buffers
-- Integrates with conform.nvim auto-format on save
-
-**Traditional Vim commands:**
-- `:w` - Save current file
-- `:wa` - Save all files
-- `:wq` - Save and quit
+### Productivity utilities
+- **Diagnostic copy** (Claude Code) — `<leader>ce` errors only, `<leader>cd` all diagnostics; output has file paths, line numbers, severity grouping.
+- **Quick save** — `<C-s>` in normal/insert/visual; handles read-only/special buffers and runs format-on-save.
+- **TypeScript return-type stripper** — runs automatically on save for ts/tsx/js/jsx; debug via `:TSStripPreview`, `:TSStripTest`, `:TSStripNow`, `:TSStripDebug`.
+- **Path copy** — `<leader>crp` relative path, `<leader>cp` absolute path.
+- **Reload config** — `<leader>Rc`.
+- **CSV** — automatic virtual-text column view on opening `.csv`/`.tsv`.
 
 ## Configuration
 
-### Adding LSP Servers
+- **Add an LSP server:** `lua/plugins/lsp.lua:159` (`servers` table), then `:Mason` (non-Nix machines).
+- **Add a formatter:** `lua/plugins/lsp.lua:277` (`formatters_by_ft`).
+- **Add a plugin:** append to the relevant `lua/plugins/*.lua`, or create a new category file and import it at `init.lua:46-57`.
+- See `nvim/CLAUDE.md` for the full where-to-add reference and architecture notes.
 
-Edit `lua/plugins/lsp.lua:149`:
-
-```lua
-local servers = {
-  ts_ls = {},          -- TypeScript
-  pyright = {},        -- Python
-  lua_ls = {},         -- Lua
-  rust_analyzer = {},  -- Add Rust
-  gopls = {},          -- Add Go
-}
-```
-
-Restart Neovim, then `:Mason` to install.
-
-### Adding Formatters
-
-Edit `lua/plugins/lsp.lua:221`:
-
-```lua
-formatters_by_ft = {
-  lua = { 'stylua' },
-  python = { 'ruff_format' },
-  javascript = { 'prettier' },
-  rust = { 'rustfmt' },  -- Add Rust formatter
-}
-```
-
-### Adding Plugins
-
-**Method 1:** Add to existing category file in `lua/plugins/`:
-
-```lua
--- lua/plugins/editor.lua (or appropriate category)
-return {
-  -- Existing plugins...
-
-  {
-    'author/plugin-name',
-    config = function()
-      require('plugin-name').setup()
-    end,
-  },
-}
-```
-
-**Method 2:** Create new category file `lua/plugins/mycategory.lua`:
-
-```lua
-return {
-  {
-    'author/plugin-name',
-    event = 'VimEnter',
-    config = function()
-      require('plugin-name').setup()
-    end,
-  },
-}
-```
-
-Then add to `init.lua:56`:
-```lua
-{ import = 'plugins.mycategory' },
-```
-
-## File Structure
-
-```
-nvim/
-├── init.lua                 # Main entry point (81 lines)
-├── lazy-lock.json           # Plugin versions (committed to git)
-├── .stylua.toml             # Lua formatter config
-├── CLAUDE.md                # AI assistant guidance
-├── README.md                # This file
-└── lua/
-    ├── config/              # Core Neovim configuration
-    │   ├── init.lua         # Loads all config modules
-    │   ├── options.lua      # Vim options
-    │   ├── autocmds.lua     # Autocommands
-    │   └── keymaps.lua      # Core keybindings
-    └── plugins/             # Plugin specifications by category
-        ├── editor.lua       # File explorer, fuzzy finder, search
-        ├── lsp.lua          # LSP configuration and formatting
-        ├── completion.lua   # Autocompletion
-        ├── ai.lua           # AI assistance
-        ├── git.lua          # Git integration
-        ├── markdown.lua     # Markdown and Obsidian
-        ├── ui.lua           # UI enhancements
-        ├── treesitter.lua   # Syntax highlighting
-        ├── tools.lua        # Utility tools
-        └── custom/          # Custom plugin utilities
-            ├── diagnostics-copy.lua
-            ├── controlsave.lua
-            └── mermaid.lua
-```
-
-### Modular Architecture
-
-This configuration uses a **modular architecture** instead of a single monolithic file:
-
-- **config/** - Core Neovim settings (options, autocmds, keymaps)
-- **plugins/** - Plugin specifications organized by category
-- **plugins/custom/** - Custom utility modules
-
-**Benefits:**
-- 94% reduction in main file size (1823 lines → 81 lines)
-- Easy to find and modify specific features
-- Clear separation of concerns
-- Scalable for future additions
-
-## Updating Plugins
+## Maintenance
 
 ```vim
-:Lazy update              " Update plugins
-:Lazy restore             " Restore to locked versions
+:Lazy update     " update plugins
+:Lazy restore    " restore locked versions
 ```
 
 Commit `lazy-lock.json` after updating to keep versions consistent across machines.
 
-## Troubleshooting
-
-### LSP not working
-```vim
-:LspInfo                  " Check LSP client status
-:Mason                    " Install/reinstall LSP servers
-:checkhealth lsp          " Diagnose LSP issues
-```
-
-### Completion not showing
-```vim
-:checkhealth blink        " Check blink.cmp status
-```
-
-### `pkg-config` warning on startup
-- We pin blink.cmp to the Lua fuzzy matcher, so missing `pkg-config` is expected.
-- Install `pkg-config` if you want to experiment with the optional Rust matcher.
-
-### File not auto-reloading
-Check that autoread is enabled: `:set autoread?`
-
-Should show `autoread` (no "no" prefix).
+**Troubleshooting:** `:LspInfo` / `:Mason` / `:checkhealth lsp` for LSP; `:checkhealth blink` for
+completion. The `blink_cmp_fuzzy lib is not downloaded/built` warning is expected (Lua fuzzy
+matcher is intentional). For auto-reload, confirm `:set autoread?` shows `autoread`.
 
 ## Resources
 
-- Full keybindings: See `docs/KEYBINDINGS_NEOVIM.md` in repository root
+- Keybindings: `docs/KEYBINDINGS_NEOVIM.md`
 - Kickstart.nvim: https://github.com/nvim-lua/kickstart.nvim
 - lazy.nvim: https://github.com/folke/lazy.nvim
-- Mason: https://github.com/mason-org/mason.nvim

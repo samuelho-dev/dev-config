@@ -111,9 +111,129 @@ which op
 
 ### Method 2: NixOS Module (NixOS Systems)
 
-**Best for:** NixOS installations
+**Best for:** NixOS installations (bare metal, VMs).
 
-See [07-nixos-integration.md](07-nixos-integration.md#option-1-nixos--home-manager-recommended) for complete NixOS + Home Manager integration.
+dev-config exposes two module sets:
+
+- `dev-config.nixosModules.default` — **system-level** (packages, Docker, users, shell)
+- `dev-config.homeManagerModules.default` — **user-level** (Neovim, tmux, zsh, git, direnv)
+
+All options use `lib.mkDefault`, so individual components can be enabled, disabled, or
+overridden independently.
+
+#### Step 1: Add dev-config to Your System Flake
+
+```nix
+# /etc/nixos/flake.nix
+{
+  description = "My NixOS Configuration";
+
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    dev-config.url = "github:samuelho-dev/dev-config";
+    # During development, use a local path:
+    # dev-config.url = "path:/home/user/Projects/dev-config";
+
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = { self, nixpkgs, dev-config, home-manager, ... }: {
+    nixosConfigurations.my-server = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        # System-level config (packages, Docker, users)
+        dev-config.nixosModules.default
+
+        # Home Manager as a NixOS module
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.users.developer = { pkgs, ... }: {
+            imports = [ dev-config.homeManagerModules.default ];
+            home.stateVersion = "24.05";
+
+            # Required: Git identity for commits
+            dev-config.git = {
+              userName = "John Doe";
+              userEmail = "john@example.com";
+            };
+          };
+        }
+
+        ./configuration.nix
+      ];
+    };
+  };
+}
+```
+
+**What this does:**
+- System-level: installs packages, enables Docker, creates users
+- User-level: configures Neovim, tmux, zsh, git, direnv
+- Config files: automatically symlinked from the dev-config repo
+
+#### Step 2: Configure Users (System-Level)
+
+```nix
+# /etc/nixos/configuration.nix
+{ config, pkgs, lib, ... }:
+
+{
+  dev-config.users = {
+    # Developer account: Docker access + sudo
+    developer = {
+      enable = true;
+      extraGroups = [ "docker" "wheel" ];
+    };
+
+    # CI/CD service account: Docker only, no home
+    ci-runner = {
+      enable = true;
+      isSystemUser = true;
+      extraGroups = [ "docker" ];
+    };
+  };
+
+  # Standard NixOS user options still work
+  users.users.developer.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAA..."
+  ];
+}
+```
+
+#### Step 3: Customize Packages (System-Level, Optional)
+
+```nix
+# Keep defaults, add extras
+dev-config.packages.extraPackages = [
+  pkgs.kubectl
+  pkgs.k9s
+  pkgs.argocd
+];
+
+# OR: disable defaults entirely and supply your own list
+dev-config.packages.enable = false;
+environment.systemPackages = [ pkgs.git pkgs.neovim pkgs.tmux ];
+```
+
+#### Step 4: Build and Deploy
+
+```bash
+# Build without applying
+sudo nixos-rebuild build --flake /etc/nixos#my-server
+
+# Test (temporary, doesn't persist across reboot)
+sudo nixos-rebuild test --flake /etc/nixos#my-server
+
+# Apply (persistent)
+sudo nixos-rebuild switch --flake /etc/nixos#my-server
+
+# Verify
+nvim --version && tmux -V && docker --version && op --version
+```
 
 ## Configuration Patterns
 
@@ -502,6 +622,182 @@ in
 }
 ```
 
+### NixOS: Multi-User Development Server
+
+```nix
+# /etc/nixos/configuration.nix
+{ config, pkgs, lib, ... }:
+
+{
+  imports = [ inputs.dev-config.nixosModules.default ];
+
+  # Create multiple developer accounts (system-level)
+  dev-config.users = {
+    alice = { enable = true; extraGroups = [ "docker" "wheel" ]; };
+    bob = { enable = true; extraGroups = [ "docker" "wheel" ]; };
+    charlie = { enable = true; extraGroups = [ "docker" ]; };  # No sudo
+  };
+
+  # Per-user Home Manager configs
+  home-manager.users.alice = { pkgs, ... }: {
+    imports = [ inputs.dev-config.homeManagerModules.default ];
+    dev-config.git = { userName = "Alice"; userEmail = "alice@company.com"; };
+  };
+
+  home-manager.users.bob = { pkgs, ... }: {
+    imports = [ inputs.dev-config.homeManagerModules.default ];
+    dev-config.git = { userName = "Bob"; userEmail = "bob@company.com"; };
+    dev-config.neovim.configSource = ./bob-nvim-config;  # Custom Neovim
+  };
+
+  home-manager.users.charlie = { pkgs, ... }: {
+    imports = [ inputs.dev-config.homeManagerModules.default ];
+    dev-config.git = { userName = "Charlie"; userEmail = "charlie@company.com"; };
+    dev-config.tmux.enable = false;  # Disable tmux for this user
+  };
+}
+```
+
+### NixOS: Minimal Server
+
+```nix
+{ config, pkgs, lib, ... }:
+
+{
+  imports = [ inputs.dev-config.nixosModules.default ];
+
+  dev-config.docker.enable = false;  # Not needed
+
+  # Minimal system package set
+  dev-config.packages.enable = false;
+  environment.systemPackages = [ pkgs.git pkgs.neovim pkgs.tmux ];
+
+  dev-config.users.admin.enable = true;
+
+  home-manager.users.admin = { pkgs, ... }: {
+    imports = [ inputs.dev-config.homeManagerModules.default ];
+    dev-config = {
+      packages.enable = false;
+      direnv.enable = false;
+      neovim.enable = true;
+      tmux.enable = true;
+      git = { userName = "Admin"; userEmail = "admin@server.com"; };
+    };
+  };
+}
+```
+
+### Hybrid: Nix Packages + External Dotfile Manager
+
+Install packages declaratively but manage dotfiles with another tool (e.g. Chezmoi)
+by setting each `configSource` to `null`:
+
+```nix
+dev-config = {
+  neovim = { enable = true; configSource = null; };
+  tmux = { enable = true; configSource = null; };
+  zsh = { enable = true; zshrcSource = null; };
+};
+```
+
+## Module Options Reference
+
+dev-config exposes a system-level option tree (via `nixosModules.default`) and a
+user-level option tree (via `homeManagerModules.default`). Both live under the
+`dev-config` namespace. All options default via `lib.mkDefault` and can be overridden.
+
+### NixOS Module Options (System-Level)
+
+```nix
+dev-config = {
+  enable = true;  # Default
+
+  packages = {
+    enable = true;                       # Default
+    extraPackages = [ pkgs.custom-tool ];
+  };
+
+  users = {
+    <username> = {
+      enable = true;
+      shell = pkgs.zsh;                  # Default
+      extraGroups = [ "docker" "wheel" ];
+      isSystemUser = false;              # Default (normal user)
+      home = "/home/<username>";         # Default
+    };
+  };
+
+  docker = {
+    enable = true;        # Default
+    autoAddUsers = true;  # Default (auto-add users to docker group)
+    enableOnBoot = true;  # Default
+  };
+
+  shell = {
+    enable = true;                     # Default
+    defaultShell = pkgs.zsh;           # Default
+    enableCompletion = true;           # Default
+    enableSyntaxHighlighting = true;   # Default
+    enableAutosuggestions = true;      # Default
+  };
+};
+```
+
+### Home Manager Module Options (User-Level)
+
+```nix
+dev-config = {
+  enable = true;  # Default
+
+  packages = {
+    enable = true;                       # Default
+    extraPackages = [ pkgs.custom-tool ];
+  };
+
+  neovim = {
+    enable = true;                                   # Default
+    configSource = "${inputs.dev-config}/nvim";      # Default (null = unmanaged)
+    defaultEditor = true;                            # Default
+    vimAlias = true;                                 # Default
+    viAlias = true;                                  # Default
+  };
+
+  tmux = {
+    enable = true;                                              # Default
+    configSource = "${inputs.dev-config}/tmux/tmux.conf";       # Default
+    gitmuxConfigSource = "${inputs.dev-config}/tmux/.gitmux.conf";  # Default
+    prefix = "C-a";                                            # Default
+    baseIndex = 1;                                             # Default
+    mouse = true;                                              # Default
+    historyLimit = 10000;                                      # Default
+  };
+
+  zsh = {
+    enable = true;                                       # Default
+    zshrcSource = "${inputs.dev-config}/zsh/.zshrc";      # Default
+    zprofileSource = "${inputs.dev-config}/zsh/.zprofile";  # Default
+    p10kSource = "${inputs.dev-config}/zsh/.p10k.zsh";    # Default
+    enableCompletion = true;                             # Default
+    enableAutosuggestions = true;                        # Default
+    enableSyntaxHighlighting = true;                     # Default
+  };
+
+  git = {
+    enable = true;                  # Default
+    userName = "John Doe";          # REQUIRED
+    userEmail = "john@example.com"; # REQUIRED
+    defaultBranch = "main";         # Default
+    editor = "nvim";                # Default
+    extraConfig = {};               # Additional git config
+  };
+
+  direnv = {
+    enable = true;            # Default
+    enableNixDirenv = true;   # Default
+  };
+};
+```
+
 ## Updating and Maintenance
 
 ### Update dev-config
@@ -606,6 +902,40 @@ echo 'source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' >> ~/.ba
 exec bash -l
 ```
 
+### User Not in Docker Group (NixOS)
+
+**Symptom:** `docker: permission denied`
+
+**Cause:** User created before the dev-config module was applied
+
+**Fix:**
+```bash
+sudo nixos-rebuild switch   # Re-apply to update group membership
+# Then log out and back in
+```
+
+### NixOS: Changes to dev-config Not Reflected
+
+**Symptom:** Edits to the dev-config repo aren't picked up
+
+**Cause:** Flake lock not updated
+
+**Fix:**
+```bash
+nix flake lock --update-input dev-config
+sudo nixos-rebuild switch --flake /etc/nixos#my-server
+```
+
+### NixOS Rollback
+
+```bash
+# Boot into the previous generation
+sudo nixos-rebuild switch --rollback
+
+# List generations
+nix-env --list-generations --profile /nix/var/nix/profiles/system
+```
+
 ## macOS-Specific Notes
 
 ### Homebrew Integration
@@ -648,20 +978,16 @@ Home Manager can manage Homebrew packages on macOS:
 }
 ```
 
-## Examples
-
-Complete working examples in:
-- `examples/home-manager-standalone/` - Standalone Home Manager setup
-- `examples/nixos-bare-metal/` - NixOS + Home Manager integration
-
 ## Next Steps
 
-- **NixOS Integration:** See [07-nixos-integration.md](07-nixos-integration.md)
 - **Advanced Customization:** See [06-advanced.md](06-advanced.md)
 - **Troubleshooting:** See [03-troubleshooting.md](03-troubleshooting.md)
+- **1Password SSH & CLI:** See [09-1password-ssh.md](09-1password-ssh.md)
 
 ## References
 
 - [Home Manager Manual](https://nix-community.github.io/home-manager/)
 - [Home Manager Options](https://nix-community.github.io/home-manager/options.xhtml)
+- [NixOS Manual](https://nixos.org/manual/nixos/stable/)
+- [NixOS Module System](https://nixos.wiki/wiki/NixOS_modules)
 - [Nix Package Search](https://search.nixos.org/packages)

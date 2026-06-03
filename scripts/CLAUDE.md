@@ -141,12 +141,4 @@ source scripts/load-ai-credentials.sh
 sudo chown -R $(whoami) ~/.config ~/.local
 ```
 
-## For Future Claude Code Instances
-
-- [ ] Use `set -euo pipefail` for strict error handling
-- [ ] Include colored logging functions for consistent output
-- [ ] Check for container environments when handling permissions
-- [ ] Make operations idempotent (safe to run multiple times)
-- [ ] Source Nix environment after installation
-- [ ] Prefer Nix/Home Manager over shell scripts for configuration
-- [ ] Document any new scripts in this CLAUDE.md
+See root `CLAUDE.md` for general AI conventions and guardrails.

@@ -176,17 +176,4 @@ User account templates for dev-config environments.
 
 **Rule of thumb:** If it requires `sudo`, it belongs in NixOS modules.
 
-## For Future Claude Code Instances
-
-When modifying NixOS modules:
-
-- [ ] **Follow Nix conventions** - explicit `lib.` prefixes, no `with lib;`
-- [ ] **Namespace options** under `dev-config.<module>`
-- [ ] **Document security implications** for privilege-related options
-- [ ] **Provide defaults** that work out of the box
-- [ ] **Add to imports** in default.nix when creating new modules
-- [ ] **Test with** `nix flake check` before committing
-- [ ] **Consider Home Manager** for user-level configuration instead
-- [ ] **Keep minimal** - prefer Home Manager for most configuration
-- [ ] **Update this CLAUDE.md** when adding new modules
-- [ ] **Cross-reference** with `../home-manager/CLAUDE.md` for user-level counterparts
+See root `CLAUDE.md` for general AI conventions and guardrails.

@@ -406,6 +406,51 @@ git clone https://github.com/user/repo.git
 
 ---
 
+## 1Password CLI Authentication
+
+The 1Password SSH agent handles SSH auth and commit signing without the CLI. The `op`
+CLI is only needed for reading secrets (e.g. AI service keys stored in the `Dev` vault,
+or the sops-nix bootstrap token). See [01-concepts.md](01-concepts.md) for the full
+secrets model.
+
+### Interactive Sign-In
+
+```bash
+op signin
+```
+
+Follow the prompts (account URL, email, secret key, master password). Verify:
+
+```bash
+op account get      # Shows your account details
+op vault list       # Should list the "Dev" vault
+```
+
+Enable biometric unlock for faster re-auth from the 1Password desktop app
+(Settings -> Developer / Security).
+
+### Service Accounts for CI/CD
+
+For non-interactive environments (GitHub Actions, containers, DevPod), use a
+1Password service account instead of interactive sign-in:
+
+1. Create a service account: https://1password.com/features/service-accounts
+2. Store its token as a CI secret named `OP_SERVICE_ACCOUNT_TOKEN`.
+3. Reference it in your workflow:
+
+   ```yaml
+   - name: Read secret
+     env:
+       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+     run: op read "op://Dev/<item>/<field>"
+   ```
+
+This repo's sops-nix bootstrap stores an `op/service_account_token` for the same
+purpose (declarative, non-interactive `op` access). See
+[01-concepts.md](01-concepts.md).
+
+---
+
 ## Troubleshooting
 
 ### SSH Authentication Fails

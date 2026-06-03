@@ -1,5 +1,8 @@
 # Neovim Keybindings Reference
 
+> **Generated reference — source of truth is `nvim/lua/config/keymaps.lua` + the
+> per-plugin `keys = {}` specs in `nvim/lua/plugins/*.lua`; keep in sync.**
+
 Complete reference for all Neovim keybindings in this configuration.
 
 **Leader Key:** `<Space>`
@@ -114,16 +117,16 @@ Cursor-like AI coding assistant powered by LiteLLM proxy for team AI management.
 | `:AvanteEdit` | Request AI code edits (applies changes directly to buffer) |
 | `:AvanteToggle` | Toggle Avante chat window |
 
-**Keybindings (if configured):**
+**Keybindings (avante.nvim defaults):**
 | Keybinding | Action | Description |
 |------------|--------|-------------|
 | `<leader>aa` | Quick Ask | Open `:AvanteAsk` with selected text or current line |
 | `<leader>ae` | Quick Edit | Open `:AvanteEdit` for AI code modifications |
-| `<leader>ar` | Toggle Chat | Toggle Avante chat window (`:AvanteToggle`) |
+| `<leader>at` | Toggle Chat | Toggle the Avante sidebar |
 
 **Prerequisites:**
-- LiteLLM proxy running: `kubectl port-forward -n litellm svc/litellm 4000:4000`
-- `LITELLM_MASTER_KEY` environment variable loaded (via direnv or manual export)
+- Plugin loads only when `LITELLM_MASTER_KEY` is set (`nvim/lua/plugins/ai.lua`)
+- Points at the LiteLLM proxy endpoint `http://localhost:4000/v1`
 
 **Example Workflow:**
 1. Open file to modify: `:e src/components/UserProfile.tsx`
@@ -135,7 +138,7 @@ Cursor-like AI coding assistant powered by LiteLLM proxy for team AI management.
 All requests go through LiteLLM proxy and are tracked in the dashboard alongside Claude Code usage.
 
 **Documentation:**
-See [LiteLLM Proxy Setup](nix/07-litellm-proxy-setup.md#neovim-integration-avantenm) for full configuration details.
+See [LiteLLM Proxy Setup](nix/07-litellm-proxy-setup.md) for full configuration details.
 
 ---
 
@@ -188,20 +191,24 @@ See [LiteLLM Proxy Setup](nix/07-litellm-proxy-setup.md#neovim-integration-avant
 Project-wide search and replace with visual preview.
 
 ### Opening Spectre
-| Keybinding | Action | Description |
-|------------|--------|-------------|
-| `<leader>rr` | Replace in Files | Open Spectre for project-wide search/replace |
-| `<leader>rw` | Replace Word | Replace word under cursor across project |
-| `<leader>rf` | Replace in File | Search and replace in current file only |
-| `<leader>rw` | Replace Selection | Replace selected text (visual mode) |
+| Keybinding | Mode | Action | Description |
+|------------|------|--------|-------------|
+| `<leader>rr` | Normal | Replace in Files | Open Spectre for project-wide search/replace |
+| `<leader>rw` | Normal | Replace Word | Replace word under cursor across project |
+| `<leader>rf` | Normal | Replace in File | Search and replace in current file only |
+| `<leader>rw` | Visual | Replace Selection | Replace selected text |
 
-### In Spectre UI
+### In Spectre UI (buffer-local)
+These mappings are active only inside the Spectre results buffer.
+
 | Keybinding | Action | Description |
 |------------|--------|-------------|
 | `dd` | Toggle Match | Exclude/include current match |
-| `<CR>` | Jump to File | Open file at match location |
+| `<CR>` | Open File | Open file at match location |
 | `<leader>R` | Replace All | Replace all enabled matches |
 | `<leader>rc` | Replace Current | Replace current line only |
+| `<leader>c` | Replace Command | Input a replace command |
+| `<leader>v` | Change View | Toggle Spectre view mode |
 | `<leader>o` | Options Menu | Show all options |
 | `<leader>q` | To Quickfix | Send matches to quickfix list |
 | `<leader>l` | Resume Search | Resume last search |
@@ -257,9 +264,9 @@ Project-wide search and replace with visual preview.
 ### Diagnostics
 | Keybinding | Action | Description |
 |------------|--------|-------------|
-| `<leader>q` | Quickfix List | Open diagnostic quickfix list |
-| `<leader>ce` | Copy Errors | **NEW:** Copy errors to clipboard |
-| `<leader>cd` | Copy Diagnostics | **NEW:** Copy all diagnostics to clipboard |
+| `<leader>q` | Diagnostic Loclist | Open diagnostic location list (`vim.diagnostic.setloclist`) |
+| `<leader>ce` | Copy Errors | Copy errors to clipboard |
+| `<leader>cd` | Copy Diagnostics | Copy all diagnostics to clipboard |
 
 ### Inlay Hints
 | Keybinding | Action | Description |
@@ -322,11 +329,12 @@ Mark and navigate between frequently used files with minimal keystrokes.
 
 **Auto-format on save** is enabled for most file types (except C/C++).
 
-**Formatters:**
+**Formatters (conform.nvim, `nvim/lua/plugins/lsp.lua`):**
 - **Lua:** stylua
-- **Python:** ruff
-- **JavaScript/TypeScript:** prettier
-- **JSON/YAML/Markdown:** prettier
+- **Python:** ruff_format
+- **JavaScript/TypeScript/JSON:** biome (`check --fix --unsafe`)
+- **YAML/Markdown:** prettier
+- **Nix:** alejandra
 
 ---
 
@@ -430,8 +438,7 @@ Enhanced text objects for better selection:
 ### Obsidian Integration
 | Keybinding | Action | Description |
 |------------|--------|-------------|
-| `gf` | Follow Link | Follow wikilink or markdown link |
-| `<leader>ch` | Toggle Checkbox | Toggle markdown checkbox |
+| `<leader>ch` | Toggle Checkbox | Toggle markdown checkbox (buffer-local, set when entering a vault note) |
 
 **Dynamic Workspace:** Auto-detects Obsidian vault from file location. No configuration needed!
 
@@ -440,12 +447,15 @@ Enhanced text objects for better selection:
 |------------|--------|-------------|
 | `<leader>mp` | Markdown Preview | Toggle browser preview with live updates |
 
-### Document Outline
+### Document Outline (outline.nvim)
 | Keybinding | Action | Description |
 |------------|--------|-------------|
-| `<leader>o` | Toggle Outline | Show/hide document structure outline |
+| `<leader>o` | Toggle Outline | Show/hide document structure outline (global) |
 
 **Works for:** Markdown headings, code symbols (functions, classes, etc.)
+
+> Note: `<leader>o` is the global outline toggle. Inside the Spectre results
+> buffer, `<leader>o` is remapped buffer-locally to the Spectre options menu.
 
 ---
 
@@ -483,10 +493,14 @@ When you press `<leader>`, which-key will show you available key groups:
 
 This configuration includes LSP support for:
 - **TypeScript/JavaScript:** `ts_ls`
+- **JS/TS/JSON lint + format:** `biome`
 - **Python:** `pyright`
 - **Lua:** `lua_ls`
+- **Nix:** `nixd`
 
-Additional servers can be added in `init.lua` under the `servers` table.
+Servers are configured in `nvim/lua/plugins/lsp.lua` (the `servers` table). On
+Nix machines the binaries come from `~/.nix-profile/bin` and Mason auto-enable is
+off; Mason only installs servers on the non-Nix fallback path.
 
 ---
 
@@ -495,7 +509,7 @@ Additional servers can be added in `init.lua` under the `servers` table.
 ### LSP
 - `:LspInfo` - Show LSP client info
 - `:LspRestart` - Restart LSP server
-- `:Mason` - Open Mason (LSP installer) UI
+- `:Mason` - Open Mason UI (only relevant on the non-Nix fallback path; LSP binaries are Nix-managed)
 
 ### Diagnostics
 - `:checkhealth` - Check Neovim health
@@ -517,14 +531,16 @@ Additional servers can be added in `init.lua` under the `servers` table.
 
 ## Customization
 
-To add your own keybindings, edit:
-```lua
-~/Projects/dev-config/nvim/init.lua
-```
+The Neovim config is modular (`init.lua` is ~81 lines and just bootstraps
+lazy.nvim and imports the modules). Add keybindings in the right place:
 
-Or create a new module in:
-```lua
-~/Projects/dev-config/nvim/lua/custom/plugins/
-```
+- **Core (non-plugin) keybindings** → `nvim/lua/config/keymaps.lua`
+- **Plugin keybindings** → the plugin's `keys = {}` spec in
+  `nvim/lua/plugins/*.lua` (never in `config/keymaps.lua`)
+- **LSP buffer-local keybindings** → the `LspAttach` autocmd in
+  `nvim/lua/plugins/lsp.lua`
+- **A new plugin category** → create `nvim/lua/plugins/<name>.lua` and import it
+  in `init.lua`
 
-And require it in `init.lua`.
+This file is a generated reference; whenever you change a binding in those
+sources, update the matching table here.

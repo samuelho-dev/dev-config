@@ -273,173 +273,18 @@ This requires:
 
 ## Type Safety Patterns (Prohibited)
 
-All of these patterns are **strictly prohibited** and must never be used.
+All of these patterns are **strictly prohibited** and must never be used. When a user
+requests one: identify the pattern, REFUSE, ask what they are actually trying to achieve,
+then provide a type-safe alternative with working code.
 
-### Pattern 1: `value as any` Assertions
+| Pattern | Why prohibited | Detection | Type-safe alternative |
+|---------|----------------|-----------|-----------------------|
+| `value as any` | Defeats all type checking for that value; hides bugs | Biome `noExplicitAny: "error"`; GritQL `ban-type-assertions.grit` catches all `expr as T` | `Schema.decodeUnknownSync(MySchema)(value)`, explicit `const x: T = value`, or a type guard after narrowing `value as unknown` |
+| `// @ts-ignore` / `// @ts-expect-error` / `// @ts-nocheck` | Suppresses type errors without fixing them; creates silent runtime bugs | `scripts/validate-linting-config.sh` source scan (pre-commit) greps staged TS/JS for all three | Fix the underlying return type, validate unknown data with `Schema.decodeUnknownSync`, or guard before access |
+| `value!` (non-null assertion) | Asserts non-null without runtime verification; crashes when wrong | Biome `noNonNullAssertion: "error"` | Optional chaining `value?.x`, explicit `if (value !== null)`, nullish coalescing `value ?? fallback`, type guard, or Schema validation |
+| `value satisfies T` | Allows type widening without assignment; errors surface late | GritQL `ban-type-assertions.grit` detects `expr satisfies T` | `as const` for literal preservation, explicit `const x: T = value`, or `Schema.decodeUnknownSync(Schema)(value)` for runtime validation |
 
-**Why prohibited:**
-- Defeats ALL type checking for that value
-- Makes type system completely useless for that variable
-- Hides bugs that would be caught by proper types
-
-**Detection:**
-- Biome rule `noExplicitAny: "error"` catches at lint time
-- GritQL pattern `ban-type-assertions.grit` (Pattern 1) catches all `expr as T` forms
-- Pre-commit hook validates no new patterns introduced
-
-**Type-safe alternatives:**
-
-```typescript
-// ❌ WRONG: Defeats type checking
-const result = someValue as any;
-
-// ✅ CORRECT: Option 1 - Schema validation (Effect-TS)
-import { Schema } from "effect";
-const result = Schema.decodeUnknownSync(MySchema)(someValue);
-
-// ✅ CORRECT: Option 2 - Proper type annotation
-const result: ExpectedType = someValue;
-
-// ✅ CORRECT: Option 3 - Type guard
-const result = someValue as unknown;
-if (typeof result === 'object' && result !== null && 'prop' in result) {
-  // result is now properly narrowed
-}
-```
-
-**When user requests this:**
-1. Identify they're asking for `as any` pattern
-2. REFUSE the request
-3. Ask clarifying questions: "What types does someValue have? What are you trying to achieve?"
-4. Suggest proper type annotation, Schema validation, or type guard instead
-5. Provide working code example
-
-### Pattern 2: TypeScript Suppression Comments
-
-**Why prohibited:**
-- `@ts-ignore` suppresses errors without fixing them
-- Creates silent bugs that will crash at runtime
-- Hides real type errors that need fixing
-
-**Patterns blocked:**
-- `// @ts-ignore` - Suppresses next line error
-- `// @ts-expect-error` - Acknowledges error exists but ignores it
-- `// @ts-nocheck` - Disables all type checking for entire file
-
-**Detection:**
-- `scripts/validate-linting-config.sh` source scan (pre-commit) greps staged TS/JS files for all three variants
-- Pre-commit hook fails the commit before suppression comments land
-
-**Type-safe alternatives:**
-
-```typescript
-// ❌ WRONG: Suppresses type error without fixing
-// @ts-ignore
-const x = functionWithWrongReturn();
-
-// ✅ CORRECT: Option 1 - Fix the function's return type
-function functionWithWrongReturn(): ProperReturnType {
-  // Implementation that returns the correct type
-  return { ... };
-}
-
-// ✅ CORRECT: Option 2 - Use Schema for unknown data
-const x = Schema.decodeUnknownSync(MySchema)(unknownData);
-
-// ✅ CORRECT: Option 3 - Use type guard before accessing
-if (isProperType(value)) {
-  const x = value;  // x is now properly typed
-}
-```
-
-**When user requests this:**
-1. Identify they're asking to add suppression comment
-2. REFUSE the request
-3. Ask: "What's the underlying type error?"
-4. Help fix the root cause instead
-5. Provide refactored code with proper types
-
-### Pattern 3: Non-null Assertions (`!`)
-
-**Why prohibited:**
-- Asserts null/undefined won't happen without runtime verification
-- Causes runtime crashes when assertion is wrong
-- Hides real null-safety bugs
-
-**Detection:**
-- Biome rule `noNonNullAssertion: "error"` catches at lint time
-- Pre-commit hook validates no new `!` assertions
-
-**Type-safe alternatives:**
-
-```typescript
-// ❌ WRONG: Asserts without verification
-const value = maybeValue!;
-
-// ✅ CORRECT: Option 1 - Optional chaining
-const value = maybeValue?.toString();
-
-// ✅ CORRECT: Option 2 - Explicit null check
-if (maybeValue !== null) {
-  const value = maybeValue;  // value is now non-null
-}
-
-// ✅ CORRECT: Option 3 - Nullish coalescing
-const value = maybeValue ?? defaultValue;
-
-// ✅ CORRECT: Option 4 - Type guard
-if (isProperType(maybeValue)) {
-  const value = maybeValue;  // value is now typed and non-null
-}
-
-// ✅ CORRECT: Option 5 - Schema validation
-const value = Schema.decodeUnknownSync(MySchema)(maybeValue);
-// Schema ensures non-null per definition
-```
-
-**When user requests this:**
-1. Identify they're asking for `!` operator
-2. REFUSE the request
-3. Ask: "When would this value be null? How should we handle that case?"
-4. Suggest optional chaining, null check, or type guard
-5. Provide refactored code with proper null handling
-
-### Pattern 4: `satisfies` Operator
-
-**Why prohibited:**
-- Allows type widening without explicit type assignment
-- Doesn't catch errors at assignment time (errors caught later)
-- Anti-pattern that reduces type safety vs explicit annotation
-
-**Detection:**
-- GritQL pattern `ban-type-assertions.grit` (Pattern 3) detects `expr satisfies T`
-- Pre-commit hook validates no new satisfies introduced
-
-**Type-safe alternatives:**
-
-```typescript
-// ❌ WRONG: satisfies allows type widening
-const config = { port: 3000 } satisfies Config;
-
-// ✅ CORRECT: Option 1 - const assertion for literals
-const config = { port: 3000 } as const;
-// Now config.port is type 3000 (literal), not number
-
-// ✅ CORRECT: Option 2 - Explicit type annotation
-const config: Config = { port: 3000 };
-// Errors caught immediately at assignment
-
-// ✅ CORRECT: Option 3 - Schema-based validation
-const config = Schema.decodeUnknownSync(ConfigSchema)({ port: 3000 });
-// Both type checking AND runtime validation
-```
-
-**When user requests this:**
-1. Identify they're asking for `satisfies` operator
-2. REFUSE the request
-3. Ask clarifying question about intent
-4. Suggest `as const` (for literal preservation) or explicit type annotation
-5. Offer Schema validation if runtime validation needed
+`as T` and `<T>expr` angle-bracket assertions are likewise banned by `ban-type-assertions.grit`.
 
 ## Rule Modification Guidelines
 

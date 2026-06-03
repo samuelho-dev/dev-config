@@ -14,6 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with Gh
 
 Ghostty is a GPU-accelerated terminal emulator written in Zig. This directory contains a minimal configuration that leverages Ghostty's sensible defaults.
 
+**Key features:** GPU-accelerated rendering, native macOS/Linux support, built-in themes, shell integration (zsh/bash/fish), live configuration reload.
+
 ## File Structure
 
 ```
@@ -40,8 +42,8 @@ keybind = cmd+shift+r=prompt_surface_title
 
 ### Theme
 - Uses "Cursor Dark" theme
-- Ghostty ships with many built-in themes
-- View available themes: `ghostty +list-themes`
+- Ghostty ships with many built-in themes; view them: `ghostty +list-themes`
+- Popular alternatives: Catppuccin (Mocha/Latte/Frappe/Macchiato), Tokyo Night, Nord, Gruvbox, Dracula
 
 ### Keybindings
 - `cmd+shift+r` - Prompt for surface title (custom window title)
@@ -99,7 +101,9 @@ This configuration follows the principle of **minimal override**:
 
 ## Resources
 
+- Homepage: https://ghostty.org
 - Official docs: https://ghostty.org/docs
 - All config options: https://ghostty.org/docs/config
-- Themes: `ghostty +list-themes`
 - Keybind syntax: https://ghostty.org/docs/config/keybind
+- GitHub: https://github.com/ghostty-org/ghostty
+- Themes: `ghostty +list-themes`

@@ -175,11 +175,4 @@ in {
 }
 ```
 
-## For Future Claude Code Instances
-
-- [ ] Check if package exists in nixpkgs before creating custom derivation
-- [ ] Use `pkgs.callPackage` for local packages in subdirectories
-- [ ] Handle multiple platforms for custom binary downloads
-- [ ] Update both category list AND `all` function when adding categories
-- [ ] Test package installation with `nix develop` or `home-manager build --flake .`
-- [ ] Add SHA256 hashes for all fetchurl sources (use `nix-prefetch-url`)
+See root `CLAUDE.md` for general AI conventions and guardrails.

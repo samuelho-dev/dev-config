@@ -9,193 +9,29 @@ relates_to:
 
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with Zed editor configuration in this directory.
+Guidance for the Zed editor configuration in this directory.
 
 ## Purpose
 
-This directory contains **Zed editor configuration** optimized for the dev-config workflow. The configuration mirrors Neovim keybindings and integrates with Biome for consistent formatting/linting.
+Zed config tuned to mirror the Neovim workflow: Vim mode, Space leader, and Biome
+as the primary JS/TS/JSON formatter/linter.
 
-## File Structure
+## Files
 
-```
-zed/
-+-- settings.json     # Editor settings, formatters, LSP config
-+-- keymap.json       # Vim-style keybindings (LazyVim-inspired)
-```
+- `settings.json` → `~/.config/zed/settings.json` — editor settings, formatters, LSP.
+- `keymap.json` → `~/.config/zed/keymap.json` — Vim-style, LazyVim-inspired bindings.
 
-**Symlink location:**
-- `~/.config/zed/settings.json`
-- `~/.config/zed/keymap.json`
+Both are symlinked by Home Manager. Changes take effect after restarting Zed.
 
-## Configuration Overview
+## Conventions
 
-### settings.json
+- Keep keybindings in sync with `nvim/lua/config/keymaps.lua` so muscle memory carries
+  between editors (Space leader, `Ctrl-h/j/k/l` pane nav, `g r *` LSP, `Space e`/`Space f`).
+- Point the Biome LSP at the shared config: `lsp.biome.settings.config_path = "~/.config/biome/biome.json"`.
+- Biome owns TypeScript/TSX/JavaScript/JSON (auto-fix + organize imports). Other languages
+  use external formatters: Lua `stylua`, Python `ruff`, YAML/Markdown `prettier` — same as
+  Neovim's conform setup.
+- `vim_mode: true`; add new languages under `languages` with an `external` formatter, and new
+  bindings under the appropriate `context` (e.g. `VimControl && !VimWaiting`).
 
-#### Core Settings
-```json
-{
-  "vim_mode": true,
-  "relative_line_numbers": true,
-  "cursor_blink": false,
-  "format_on_save": "on",
-  "buffer_font_family": "JetBrainsMono Nerd Font",
-  "buffer_font_size": 14
-}
-```
-
-#### Biome Integration
-
-Biome is the primary formatter/linter for TypeScript, JavaScript, TSX, and JSON:
-
-```json
-{
-  "lsp": {
-    "biome": {
-      "settings": {
-        "config_path": "~/.config/biome/biome.json"
-      }
-    }
-  }
-}
-```
-
-**Auto-fix on save** enabled for:
-- `source.fixAll.biome` - Apply all auto-fixable lint rules
-- `source.organizeImports.biome` - Sort and organize imports
-
-#### Language Formatters
-
-| Language | Formatter | Notes |
-|----------|-----------|-------|
-| TypeScript | Biome | Auto-fix + organize imports |
-| TSX | Biome | Auto-fix + organize imports |
-| JavaScript | Biome | Auto-fix + organize imports |
-| JSON | Biome | Auto-fix only |
-| Lua | stylua | External formatter |
-| Python | ruff | External formatter |
-| YAML | prettier | External formatter |
-| Markdown | prettier | External formatter |
-
-### keymap.json
-
-Keybindings designed to match LazyVim/Neovim muscle memory.
-
-#### Space Leader Bindings (Normal/Visual Mode)
-
-Uses `VimControl && !VimWaiting` context for instant triggering.
-
-| Keybinding | Action | Description |
-|------------|--------|-------------|
-| `Space Space` | file_finder::Toggle | Find files (LazyVim style) |
-| `Space f f` | file_finder::Toggle | Find files |
-| `Space e` | workspace::ToggleLeftDock | Toggle file explorer |
-| `Space t` | workspace::ToggleBottomDock | Toggle terminal |
-| `Space a a` | assistant::ToggleFocus | Toggle AI Assistant |
-| `Space s g` | workspace::NewSearch | Global search (grep) |
-| `Space s d` | diagnostics::Deploy | Show diagnostics |
-| `Space /` | workspace::NewSearch | Global search |
-| `Space f` | editor::Format | Format document |
-| `Space g g` | git_panel::ToggleFocus | Toggle git panel |
-| `Space q` | pane::CloseActiveItem | Close current tab |
-| `Space b d` | pane::CloseActiveItem | Close current tab |
-| `Space ,` | tab_switcher::Toggle | Switch buffers |
-
-#### Go-to Bindings (Normal Mode)
-
-| Keybinding | Action | Description |
-|------------|--------|-------------|
-| `g r d` | editor::GoToDefinition | Go to definition |
-| `g r r` | editor::FindAllReferences | Find all references |
-| `g r i` | editor::GoToImplementation | Go to implementation |
-| `g r n` | editor::Rename | Rename symbol |
-| `g r a` | editor::ToggleCodeActions | Code actions menu |
-| `g Shift-o` | outline::Toggle | Toggle outline view |
-| `] d` | editor::GoToDiagnostic | Next diagnostic |
-| `[ d` | editor::GoToPrevDiagnostic | Previous diagnostic |
-
-#### Global Pane Navigation
-
-Works in Editor, Terminal, and Docks.
-
-| Keybinding | Action | Description |
-|------------|--------|-------------|
-| `Ctrl-h` | workspace::ActivatePaneLeft | Focus left pane |
-| `Ctrl-j` | workspace::ActivatePaneDown | Focus down pane |
-| `Ctrl-k` | workspace::ActivatePaneUp | Focus up pane |
-| `Ctrl-l` | workspace::ActivatePaneRight | Focus right pane |
-
-#### Project Panel Bindings
-
-| Keybinding | Action | Description |
-|------------|--------|-------------|
-| `h` | CollapseSelectedEntry | Collapse folder |
-| `j` | menu::SelectNext | Move down |
-| `k` | menu::SelectPrev | Move up |
-| `l` | ExpandSelectedEntry | Expand folder |
-| `Enter` | project_panel::Open | Open file |
-| `a` | project_panel::NewFile | Create file |
-| `Shift-a` | project_panel::NewDirectory | Create directory |
-| `r` | project_panel::Rename | Rename |
-| `d` | project_panel::Delete | Delete |
-| `q` | workspace::ToggleLeftDock | Close panel |
-
-## Making Changes
-
-### Edit Settings
-```bash
-nvim ~/Projects/dev-config/zed/settings.json
-```
-
-Changes take effect after restarting Zed.
-
-### Add Language Formatter
-
-```json
-{
-  "languages": {
-    "NewLanguage": {
-      "formatter": {
-        "external": {
-          "command": "formatter-name",
-          "arguments": ["--stdin-filepath", "{buffer_path}", "-"]
-        }
-      }
-    }
-  }
-}
-```
-
-### Add Keybinding
-
-```json
-{
-  "context": "Editor && vim_mode == normal && !menu",
-  "bindings": {
-    "space n": "your::Action"
-  }
-}
-```
-
-## Relationship with Neovim
-
-This Zed config mirrors the Neovim setup:
-
-| Feature | Neovim | Zed |
-|---------|--------|-----|
-| Leader key | `Space` | `Space` |
-| File finder | `Space s f` (Telescope) | `Space s f` |
-| File explorer | `Space e` (neo-tree) | `Space e` |
-| Format | `Space f` | `Space f` |
-| Pane nav | `Ctrl-h/j/k/l` | `Ctrl-h/j/k/l` |
-
-This allows switching between editors without relearning keybindings.
-
-## For Future Claude Code Instances
-
-When working with this configuration:
-
-- [ ] Keep keybindings in sync with `nvim/lua/config/keymaps.lua`
-- [ ] Use Biome config path `~/.config/biome/biome.json` for consistency
-- [ ] Add new languages to `languages` section with external formatter
-- [ ] Test keybindings after changes by restarting Zed
-- [ ] Update this file when adding significant new configurations
+See root `CLAUDE.md` for general AI conventions and guardrails.

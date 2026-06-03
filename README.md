@@ -350,7 +350,7 @@ nvim  # Editor: `:AvanteAsk` for Cursor-like AI coding assistant
 - [Nix Concepts](docs/nix/01-concepts.md) - Understanding Nix
 - [Daily Usage](docs/nix/02-daily-usage.md) - Common workflows
 - [Troubleshooting](docs/nix/03-troubleshooting.md) - Fix issues
-- [sops-nix Setup](SETUP_SOPS.md) - Encrypted secrets management
+- [1Password + Secrets](docs/nix/09-1password-ssh.md) - 1Password CLI, secrets, SSH agent
 - [Advanced Guide](docs/nix/06-advanced.md) - Customization
 - [LiteLLM Proxy Setup](docs/nix/07-litellm-proxy-setup.md) - Team AI management with cost tracking
 
@@ -386,7 +386,7 @@ devpod up . --ide vscode
 - ✅ VS Code Remote Containers
 - ✅ GitHub Codespaces
 
-**Documentation:** See [docs/README_DEVPOD.md](docs/README_DEVPOD.md) for comprehensive guide.
+DevPod connect/bootstrap scripts live in `tmux/scripts/`; the tmux integration is configured in `modules/home-manager/programs/tmux.nix` (`dev-config.tmux.devpodConnect`).
 
 ---
 
@@ -522,8 +522,7 @@ No manual key copying or transfer needed.
 ### Documentation
 
 **Complete guides:**
-- **[1Password SSH Setup Guide](docs/nix/09-1password-ssh.md)** - Comprehensive step-by-step instructions
-- **[1Password Credentials](docs/nix/05-1password-setup.md)** - General 1Password integration
+- **[1Password SSH Setup Guide](docs/nix/09-1password-ssh.md)** - Comprehensive step-by-step instructions, `op` CLI auth, and CI service accounts
 - **[Installation Guide](docs/INSTALLATION.md#1password-ssh-setup-recommended)** - Setup during installation
 
 **Troubleshooting:**
@@ -570,7 +569,7 @@ Formatted output includes file path, line numbers, and severity grouping. Perfec
 - Task management with auto-formatting bullets
 - Document outline with `<leader>o`
 
-See [docs/NEOVIM.md](docs/NEOVIM.md) for complete keybinding reference.
+See [docs/KEYBINDINGS_NEOVIM.md](docs/KEYBINDINGS_NEOVIM.md) for complete keybinding reference.
 
 ### Git & GitHub Integration
 
@@ -616,7 +615,7 @@ See [docs/NEOVIM.md](docs/NEOVIM.md) for complete keybinding reference.
 - **Theme:** Catppuccin Mocha
 - **Plugins:** Resurrect, Continuum, tmux-fzf
 
-See [docs/TMUX.md](docs/TMUX.md) for complete keybinding reference.
+See [docs/KEYBINDINGS_TMUX.md](docs/KEYBINDINGS_TMUX.md) for complete keybinding reference.
 
 ### Ghostty
 
