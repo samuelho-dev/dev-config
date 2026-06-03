@@ -17,7 +17,7 @@ The install script automatically:
 1. ✅ **Installed Nix** (if not present) - Declarative package manager
 2. ✅ **Installed all packages** (Neovim, tmux, zsh, Docker, Claude CLI, 1Password CLI, etc.)
 3. ✅ **Created symlinks** (nvim config → `~/Projects/dev-config/nvim`)
-4. ✅ **Installed plugins** (Neovim: lazy.nvim, tmux: TPM, zsh: Oh My Zsh + Powerlevel10k)
+4. ✅ **Installed plugins** (Neovim: lazy.nvim, tmux: Nix store / Home Manager, zsh: Oh My Zsh + Powerlevel10k)
 5. ✅ **Set zsh as default shell**
 
 All package versions are pinned in `flake.lock` for reproducibility.

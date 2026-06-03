@@ -122,7 +122,7 @@ docs/
 ### KEYBINDINGS_TMUX.md
 
 **Update when:**
-- Adding keybindings to `tmux/tmux.conf`
+- Adding keybindings to `modules/home-manager/programs/tmux.nix` (`extraConfig`)
 - Adding plugin keybindings
 - Changing tmux prefix key
 - Adding custom bindings

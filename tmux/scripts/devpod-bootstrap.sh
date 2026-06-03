@@ -4,8 +4,8 @@
 # Creates devpod_{project} sessions with session-scoped SSH.
 
 # No sleep - run-shell blocks tmux until complete, so this runs synchronously
-
-PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
+# Note: project/mutagen resolution lives in devpod-mutagen-hook.sh, fired by the
+# tmux session-created hook for each session created below.
 
 # --- Tailscale CLI detection ---
 TS_CMD=()
@@ -42,13 +42,21 @@ if [ -z "$ONLINE_PODS" ]; then
   exit 0
 fi
 
+# Resolve the Tailnet MagicDNS suffix once (matches devpod-connect.sh). Empty
+# suffix falls back to the bare hostname, which MagicDNS still resolves.
+DNS_SUFFIX=$("${TS_CMD[@]}" status --json 2>/dev/null | jq -r '.MagicDNSSuffix // empty')
+
 for HOSTNAME in $ONLINE_PODS; do
   PROJECT_NAME="${HOSTNAME#devpod-}"
   # Remove any trailing -N suffix from project name (StatefulSet pod naming)
   PROJECT_NAME="${PROJECT_NAME%-[0-9]}"
   # tmux converts colons to underscores, so use underscore directly
   SESSION_NAME="devpod_${PROJECT_NAME}"
-  SSH_TARGET="coder@${HOSTNAME}"
+  if [ -n "$DNS_SUFFIX" ]; then
+    SSH_TARGET="coder@${HOSTNAME}.${DNS_SUFFIX}"
+  else
+    SSH_TARGET="coder@${HOSTNAME}"
+  fi
 
   # Skip if session already exists (e.g., restored by continuum)
   if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
@@ -66,13 +74,6 @@ for HOSTNAME in $ONLINE_PODS; do
   tmux set-option -t "$SESSION_NAME" remain-on-exit on
   tmux send-keys -t "$SESSION_NAME" "$SSH_CMD" Enter
   tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
-
-  # Start Mutagen sync if project has mutagen.yml
-  PROJECT_DIR="$PROJECTS_DIR/$PROJECT_NAME"
-  if [ -f "$PROJECT_DIR/mutagen.yml" ] && command -v mutagen &>/dev/null; then
-    if ! mutagen project list -f "$PROJECT_DIR/mutagen.yml" &>/dev/null 2>&1; then
-      (cd "$PROJECT_DIR" && mutagen project start) &>/dev/null &
-      disown
-    fi
-  fi
+  # Mutagen sync is started by the session-created hook (devpod-mutagen-hook.sh),
+  # which fires for each session created above. No inline mutagen logic here.
 done

@@ -1,6 +1,6 @@
 ---
 scope: tmux/
-updated: 2025-12-24
+updated: 2026-06-03
 relates_to:
   - ../CLAUDE.md
   - ../modules/home-manager/programs/tmux.nix
@@ -9,523 +9,188 @@ relates_to:
 
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with tmux configuration in this directory.
+Guidance for Claude Code when working with tmux configuration in this directory.
 
 ## Architecture Overview
 
-Single-file tmux configuration (~200 lines) with extensive plugin ecosystem managed by TPM (Tmux Plugin Manager).
+tmux is configured **declaratively by Home Manager** — NOT by TPM and NOT by
+symlinking the file in this directory.
+
+**Single source of truth:** `modules/home-manager/programs/tmux.nix`
+(`programs.tmux.extraConfig` + the `programs.tmux.plugins` list).
+
+Home Manager writes the real, generated config to `~/.config/tmux/tmux.conf`
+and installs plugins from `pkgs.tmuxPlugins` into the Nix store. There is no
+`~/.tmux.conf`, no `~/.tmux/plugins/`, and no `tpm`.
+
+> ⚠️ `tmux/tmux.conf` in this directory is a **non-consumed reference stub**.
+> Editing it has no effect. Do not symlink it. To change tmux behavior, edit
+> `tmux.nix` and run `home-manager switch --flake .`.
 
 ## File Structure
 
 ```
 tmux/
-+-- tmux.conf          # Complete tmux configuration
-+-- gitmux.conf        # Git status formatting configuration
+├── tmux.conf        # Reference stub only — points back to tmux.nix (not consumed)
+├── gitmux.conf      # gitmux config for per-pane git status (symlinked to ~/.gitmux.conf)
+└── scripts/         # DevPod integration (symlinked to ~/.local/bin/, gated on devpodConnect.enable)
+    ├── devpod-connect.sh        # prefix+D: fzf picker → SSH session
+    ├── devpod-bootstrap.sh      # run-shell on server start: auto-create sessions for online pods
+    ├── devpod-mutagen-hook.sh   # session-created hook: start mutagen sync for devpod_* sessions
+    └── devpod-status.sh         # status-right: count of active devpod_ sessions
 ```
 
-**Symlink locations:**
-- `~/.tmux.conf` → `~/Projects/dev-config/tmux/tmux.conf`
-- `~/.gitmux.conf` → `~/Projects/dev-config/tmux/gitmux.conf`
+**Symlinks (created by `tmux.nix`):**
+- `~/.gitmux.conf` → `tmux/gitmux.conf`
+- `~/.local/bin/devpod-*.sh` → `tmux/scripts/devpod-*.sh` (only when `dev-config.tmux.devpodConnect.enable = true`)
 
-## Configuration Sections
+## Where Configuration Lives
 
-The file is organized into logical sections:
+All of these are in `modules/home-manager/programs/tmux.nix`:
 
-### General Settings (lines 1-42)
-- Terminal colors: `tmux-256color` with true color support
-- Mouse support: Enabled
-- Base index: 1 (windows and panes)
-- Auto renumber windows
-- Scrollback: 10,000 lines
-- Escape time: 0 (no delay)
-- Repeat time: 300ms
-- Focus events: Enabled
-- Aggressive resize: Enabled
+| Setting | How it's set |
+|---------|--------------|
+| prefix (`C-a`), baseIndex, mouse, historyLimit | `programs.tmux.*` declarative options |
+| keyMode vi, escapeTime, aggressiveResize, focusEvents, terminal | `programs.tmux.*` declarative options |
+| plugins | `programs.tmux.plugins` list (Nix store, no TPM) |
+| keybinds, copy-mode, status bar, popups, plugin settings | `programs.tmux.extraConfig` |
+| DevPod integration | appended to `extraConfig` via `lib.optionalString devpodConnect.enable` |
 
-### Key Bindings (lines 44-83)
-**Prefix:** `C-a` (instead of default `C-b`)
+### Module Options (`dev-config.tmux.*`)
 
-**Core bindings:**
-- `Prefix + r` - Reload configuration
-- `Prefix + |` - Split horizontally
-- `Prefix + -` - Split vertically
-- `Prefix + H/J/K/L` - Resize panes (repeatable)
-- `Prefix + t` - Rename pane title
-- `Prefix + w` - Enhanced window tree
-- `Prefix + W` - Full session/window/pane tree
+- `enable` (default true)
+- `package` (default `pkgs.tmux`)
+- `gitmuxConfigSource` (path to gitmux.conf)
+- `prefix`, `baseIndex`, `mouse`, `historyLimit`
+- `devpodConnect.enable` + per-script source options
 
-**Note:** Pane navigation (`h/j/k/l`) is handled by vim-tmux-navigator plugin (lines 61-62).
+There is intentionally **no `configSource`** option — config is generated, not
+sourced from a file.
 
-### Copy Mode Settings (lines 85-104)
-- Vi-style keybindings
-- `v` - Begin selection
-- `V` - Select line
-- `C-v` - Rectangle toggle
-- `y` - Copy to clipboard (macOS: pbcopy)
-- Mouse drag also copies
+## Plugins
 
-### Claude Code + Git Worktree Workflow
+Installed via `programs.tmux.plugins` (Nix store):
+`sensible`, `catppuccin`, `resurrect`, `continuum`, `battery`, `cpu`,
+`vim-tmux-navigator`, `yank`, `tmux-fzf`.
 
-**Purpose:** Run multiple isolated Claude Code instances in different tmux panes, each working on a separate git worktree/branch.
+To add a plugin: add it to the `plugins` list in `tmux.nix`, then
+`home-manager switch --flake .`. There is no `prefix + I` install step.
 
-**The Problem:**
-When running multiple Claude Code instances in different panes without proper isolation, directory changes in one instance can affect others, leading to commands being executed in the wrong worktree.
+### Catppuccin v2 ordering (IMPORTANT)
 
-**The Solution:**
-Use `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1` environment variable to lock each Claude instance to its starting directory.
+The packaged `catppuccin` is **v2.x**, which reads its `@catppuccin_*` options
+at *source time*. Two consequences:
 
-**Configuration:**
-Set in `zsh/.zshrc` (lines 137-139):
-```bash
-# Claude Code: Maintain working directory per pane (prevents directory switching)
-# Critical for git worktree workflows with multiple Claude instances
-export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1
-```
+1. Options use the spelling `@catppuccin_flavor` (no `u`). The old v0.3
+   `@catppuccin_flavour` is silently ignored.
+2. Options must be set **before** the plugin's `run-shell`. Home Manager emits
+   a plugin **attrset's** `extraConfig` immediately before that plugin's
+   `run-shell`, so catppuccin is configured as:
 
-**How it works:**
-- Each tmux pane maintains its own working directory (tmux default behavior)
-- Claude Code respects the environment variable and stays in its starting directory
-- Git status shown in pane borders (via gitmux) so you always know which worktree/branch you're in
-- No accidental directory switching between instances
+   ```nix
+   {
+     plugin = catppuccin;
+     extraConfig = ''
+       set -g @catppuccin_flavor 'mocha'
+       set -g @catppuccin_window_status_style 'rounded'
+       # ...
+     '';
+   }
+   ```
 
-**Usage example:**
-```bash
-# Pane 1: Main branch
-cd ~/Projects/dev-config
-claude  # Works on main branch
+   It is also placed **ahead of** other status-line-touching plugins
+   (resurrect/continuum/battery/cpu) in the list.
 
-# Pane 2: Feature worktree (Prefix + |)
-cd ~/Projects/dev-config-worktrees/feature-x
-claude  # Works on feature-x branch, isolated from Pane 1
-
-# Pane 3: Another feature worktree (Prefix + |)
-cd ~/Projects/dev-config-worktrees/feature-y
-claude  # Works on feature-y branch, isolated from Panes 1 and 2
-
-# Each pane shows its git branch in the border:
-# 1: main ⎇ main ✔
-# 2: feature-x ⎇ feature-x ●2 ✚1
-# 3: feature-y ⎇ feature-y ↑3
-```
-
-**Benefits:**
-- ✅ Each Claude instance isolated to its own worktree
-- ✅ No accidental cross-worktree command execution
-- ✅ Git branch/status visible in each pane border
-- ✅ Official Claude Code environment variable (documented)
-- ✅ Works automatically - no manual setup per pane
-
-### Status Bar Configuration (lines 106-137)
-- Position: Bottom
-- Update interval: 5 seconds + auto-refresh on pane switch
-- Colors: Overridden by Catppuccin theme (see plugins)
-- Left: `#S #I #P:#{pane_title}` (session, window, pane, title)
-- Right: `#H %H:%M %d-%b-%y` (hostname, time, date)
-- Pane borders: Titles shown on top + **git status** (via gitmux)
-  - Format: `#P: #{pane_title} + git status`
-  - Git status shows: branch, ahead/behind, staged, modified, conflicts
-  - Auto-updates every 5 seconds + on pane switch
-  - Example: `1: editor ⎇ feature-x ↑2 ●3 ✚1`
-  - **Critical for git worktree workflows** - always shows which branch/worktree you're in
-
-### Popup Windows (lines 139-156)
-**Popups** are floating windows overlaid on current session.
-
-- `Prefix + !` - Quick shell popup (60% × 75%)
-- `Prefix + m` - New session prompt
-- ``Prefix + ` `` - Session switcher (fzf) (60% × 50%)
-- `Prefix + X` - Kill session (fzf)
-- `Prefix + g` - Lazygit popup (80% × 80%)
-
-All use `display-popup -E` for automatic closure on command exit.
-
-### Plugin Manager Configuration (lines 158-199)
-
-**Plugin list (lines 173-189):**
-1. `tpm` - Plugin manager itself
-2. `tmux-sensible` - Sensible defaults
-3. `tmux-resurrect` - Save/restore sessions
-4. `tmux-continuum` - Auto-save sessions
-5. `tmux-battery` - Battery indicator
-6. `tmux-cpu` - CPU usage indicator
-7. `catppuccin/tmux` - Mocha theme
-8. `vim-tmux-navigator` - Seamless Vim/tmux navigation
-9. `tmux-yank` - Enhanced clipboard
-10. `sainnhe/tmux-fzf` - Fuzzy finder integration
-
-**Plugin settings (lines 191-196):**
-- Resurrect: Capture pane contents
-- Continuum: Auto-restore on start, save every 60 minutes
-- Catppuccin: Mocha flavor
-
-**TPM initialization (line 199):**
-```bash
-run '~/.tmux/plugins/tpm/tpm'
-```
-Must be at the **very bottom** of the file.
-
-## Critical Plugins
+The status bar in the main `extraConfig` references catppuccin v2 modules
+(`#{E:@catppuccin_status_session}`, `..._directory`, `..._host`,
+`..._date_time`) and the `@thm_*` palette. These resolve because catppuccin is
+sourced earlier. The plugin sets `status-style` itself; do not set it before
+the plugin sources (the `@thm_*` vars don't exist yet).
 
 ### vim-tmux-navigator
 
-**Purpose:** Seamless navigation between Neovim splits and tmux panes.
+Seamless `C-h/j/k/l` navigation between Neovim splits and tmux panes (no
+prefix). Neovim side is configured in the Neovim config.
 
-**Keybindings (no prefix needed):**
-- `C-h` - Navigate left
-- `C-j` - Navigate down
-- `C-k` - Navigate up
-- `C-l` - Navigate right
+### resurrect + continuum
 
-Works in both Neovim and tmux!
+Session persistence. `@continuum-restore on`, save every 60 min,
+`@resurrect-processes 'ssh'` (preserves DevPod SSH sessions). Manual:
+`prefix + C-s` save, `prefix + C-r` restore. State in `~/.tmux/resurrect/`.
 
-**Implementation:** Plugin overrides tmux pane navigation to check if current pane is running Vim. If so, sends keys to Vim; otherwise, navigates tmux panes.
+## DevPod Integration
 
-**Neovim counterpart:** Neovim must have matching keybindings (already configured in `nvim/init.lua:197-200`).
+Gated on `dev-config.tmux.devpodConnect.enable`. Tailscale-based.
 
-### tmux-resurrect + tmux-continuum
+- **`prefix + D`** → `devpod-connect.sh`: lists online `devpod-*` peers via
+  `tailscale status --json`, fzf picker, creates/switches to a `devpod_<proj>`
+  session that SSHes in.
+- **Server start** → `devpod-bootstrap.sh` runs synchronously (`run-shell`),
+  auto-creating `devpod_<proj>` sessions for every online pod.
+- **`session-created` hook** → `devpod-mutagen-hook.sh <session>`: starts
+  `mutagen project start` if the session is `devpod_*` and the project has
+  `mutagen.yml`. This is the **single** mutagen entry point — connect and
+  bootstrap no longer inline mutagen logic.
 
-**Purpose:** Persist sessions across reboots.
-
-**Manual commands:**
-- `Prefix + C-s` - Save session manually
-- `Prefix + C-r` - Restore session manually
-
-**Automatic:**
-- Auto-save every 60 minutes (configurable)
-- Auto-restore on tmux start
-
-**What's saved:**
-- Panes, windows, layouts
-- Working directories
-- Pane contents (with `capture-pane-contents`)
-- Running programs
-
-**Location:** `~/.tmux/resurrect/`
-
-### tmux-fzf
-
-**Purpose:** Fuzzy finder for tmux objects.
-
-**Keybinding:** ``Prefix + ` ``
-
-**Features:**
-- Search sessions
-- Search windows
-- Search panes
-- Search commands
-- Manage keybindings
-
-**Custom binding (line 150):**
+**Shared SSH form** (connect and bootstrap are aligned):
 ```bash
-bind ` display-popup -E -w 60% -h 50% "tmux list-sessions | fzf --reverse --header='Select session:' | cut -d: -f1 | xargs tmux switch-client -t"
+ssh -t coder@<host>.<magicdns-suffix> 'cd ~ && exec zsh'
+```
+`-t` + `exec zsh` bypasses the container login shell (which fails with
+`mesg: cannot change mode` due to missing `CAP_FOWNER`). Sessions start in `~`
+(not the workspace) to avoid triggering direnv/nix on connect, with
+`remain-on-exit on`. The MagicDNS suffix is resolved dynamically from
+`tailscale status --json | .MagicDNSSuffix` (not hardcoded).
+
+## gitmux (per-pane git status)
+
+`pane-border-format` runs gitmux per pane to show branch/status in each pane
+border — critical for git-worktree workflows where different panes sit on
+different branches. gitmux is isolated from direnv to avoid Nix flake
+evaluation in subshells:
+
+```
+#(env -u DIRENV_DIR -u DIRENV_WATCHES gitmux -cfg ~/.gitmux.conf '#{pane_current_path}')
 ```
 
-Creates a popup session switcher.
+Colors/symbols configured in `tmux/gitmux.conf` (Catppuccin Mocha palette).
+Note: gitmux is used in **pane borders**, independent of catppuccin's own
+status-line gitmux module.
 
-### catppuccin/tmux
+## Claude Code + Git Worktree Workflow
 
-**Purpose:** Beautiful theme with Mocha flavor.
+Run isolated Claude Code instances in separate panes/worktrees. `zsh/.zshrc`
+exports `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1` so each Claude instance
+stays locked to its starting directory. The gitmux pane border shows which
+branch each pane is on.
 
-**Configuration:** `set -g @catppuccin_flavour 'mocha'`
+## Modifying Configuration
 
-**Other flavors:** frappe, macchiato, latte
+1. Edit `programs.tmux` / `extraConfig` / `plugins` in
+   `modules/home-manager/programs/tmux.nix`.
+2. `nix fmt modules/home-manager/programs/tmux.nix`
+3. `home-manager build --flake .` (verify it builds)
+4. `home-manager switch --flake .` (apply)
+5. `prefix + r` to reload the live session (sources `~/.config/tmux/tmux.conf`).
 
-**What it styles:**
-- Status bar
-- Window status
-- Pane borders
-- Message area
-- Copy mode
-
-## Adding Plugins
-
-1. **Add to plugin list:**
-   ```bash
-   set -g @plugin 'author/plugin-name'
-   ```
-
-2. **Reload config:**
-   ```
-   Prefix + r
-   ```
-
-3. **Install plugin:**
-   ```
-   Prefix + I  (capital I)
-   ```
-
-4. **Commit changes:**
-   ```bash
-   git add tmux/tmux.conf
-   git commit -m "Add tmux plugin: plugin-name"
-   ```
-
-## TPM Commands
-
-| Command | Action |
-|---------|--------|
-| `Prefix + I` | Install new plugins |
-| `Prefix + U` | Update all plugins |
-| `Prefix + Alt+u` | Remove unlisted plugins |
-
-## Customizing Configuration
-
-### Changing Prefix Key
-
-Edit line 48:
-```bash
-set-option -g prefix C-b  # Change to C-b or any other key
-```
-
-### Changing Theme
-
-Edit line 196:
-```bash
-set -g @catppuccin_flavour 'latte'  # Light theme
-```
-
-Reload with `Prefix + r`.
-
-### Adding Custom Keybindings
-
-Add after line 83:
-```bash
-# Example: Create new window in current directory
-bind c new-window -c "#{pane_current_path}"
-
-# Example: Kill pane without confirmation
-bind x kill-pane
-
-# Example: Toggle synchronize panes
-bind S set-window-option synchronize-panes
-```
-
-### Adjusting Status Bar
-
-Edit lines 119-128:
-```bash
-set -g status-left-length 100
-set -g status-left "#[fg=blue]Session: #S | Window: #I | Pane: #P"
-
-set -g status-right "#[fg=green]%H:%M:%S #[fg=yellow]%d-%b-%Y"
-```
-
-### Changing Popup Sizes
-
-Edit lines 143-161:
-```bash
-bind ! display-popup -E -w 80% -h 80%  # Larger shell popup
-bind g display-popup -E -w 100% -h 100%  # Full-screen lazygit
-```
-
-## Platform-Specific Features
-
-### macOS Clipboard Integration (lines 97-100)
-
-```bash
-if-shell "uname | grep -q Darwin" {
-  bind-key -T copy-mode-vi y send -X copy-pipe-and-cancel "pbcopy"
-  bind-key -T copy-mode-vi MouseDragEnd1Pane send -X copy-pipe-and-cancel "pbcopy"
-}
-```
-
-Uses `pbcopy` on macOS. On Linux, tmux-yank plugin handles clipboard automatically.
-
-### Conditional Plugin Features (lines 149-161)
-
-```bash
-if-shell "command -v fzf" {
-  bind ` display-popup ...
-}
-```
-
-Only binds keybinding if `fzf` is installed. Graceful degradation.
-
-## Reload Configuration
-
-**Method 1:** Keybinding
-```
-Prefix + r
-```
-
-**Method 2:** Command line
-```bash
-tmux source-file ~/.tmux.conf
-```
-
-**Method 3:** From tmux command mode
-```
-: source-file ~/.tmux.conf
-```
-
-Changes take effect immediately!
+DevPod scripts in `tmux/scripts/` are symlinked, so edits to script **content**
+take effect without a rebuild; adding/removing a script requires a rebuild.
 
 ## Troubleshooting
 
-### Plugins not installing
-
-1. Check TPM installed:
-   ```bash
-   ls ~/.tmux/plugins/tpm
-   ```
-
-2. If missing:
-   ```bash
-   git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-   ```
-
-3. Reload and install:
-   ```
-   Prefix + r
-   Prefix + I
-   ```
-
-### vim-tmux-navigator not working
-
-1. Ensure plugin installed: `ls ~/.tmux/plugins/vim-tmux-navigator`
-2. Check Neovim has matching keybindings (already configured)
-3. Restart tmux: `tmux kill-server && tmux`
-
-### Colors not working
-
-Check terminal supports true color:
-```bash
-echo $TERM  # Should be tmux-256color or similar
-```
-
-Add to shell rc:
-```bash
-export TERM=tmux-256color
-```
-
-### Resurrect not restoring
-
-Check saved sessions:
-```bash
-ls ~/.tmux/resurrect/
-```
-
-Manually restore:
-```
-Prefix + C-r
-```
-
-### Git status not showing
-
-1. Check gitmux installed:
-   ```bash
-   which gitmux  # Should return a path
-   brew install gitmux  # If missing
-   ```
-
-2. Check gitmux.conf symlink:
-   ```bash
-   ls -la ~/.gitmux.conf
-   # Should point to ~/Projects/dev-config/tmux/gitmux.conf
-   ```
-
-3. Test gitmux manually:
-   ```bash
-   gitmux -cfg ~/.gitmux.conf $(pwd)
-   ```
-
-4. Reload tmux:
-   ```
-   Prefix + r
-   ```
-
-## Git Worktree Integration
-
-**Critical for working with multiple git worktrees in separate panes!**
-
-### gitmux Configuration
-
-**Purpose:** Display git branch and status in each pane border, so you always know which worktree/branch you're working on.
-
-**Configuration file:** `tmux/gitmux.conf` (symlinked to `~/.gitmux.conf`)
-
-**Features:**
-- **Per-pane git status:** Each pane shows its own git branch and changes
-- **Catppuccin Mocha colors:** Matches tmux theme
-- **Compact format:** Optimized for pane borders
-- **Auto-refresh:** Updates every 5 seconds + on pane switch
-
-**Symbols:**
-- `⎇ branch-name` - Current git branch
-- `↑2` - 2 commits ahead of remote
-- `↓1` - 1 commit behind remote
-- `●3` - 3 staged files
-- `✖1` - 1 merge conflict
-- `✚2` - 2 modified files
-- `…4` - 4 untracked files
-- `⚑1` - 1 stash
-- `✔` - Clean working directory
-
-**Example pane border:**
-```
-┌─ 1: editor ⎇ feature-x ↑2 ●3 ✚1 ─┐
-│ $ nvim src/main.js                │
-└────────────────────────────────────┘
-```
-
-Meaning: Pane 1, titled "editor", on branch "feature-x", 2 commits ahead, 3 staged files, 1 modified file.
-
-**Customizing:**
-Edit `tmux/gitmux.conf` to change:
-- Colors (Catppuccin palette)
-- Symbols (branch, staged, modified, etc.)
-- Layout (order of elements)
-- Options (branch max length, hide clean state)
-
-**Implementation:**
-```bash
-# In tmux.conf
-set -g pane-border-format "#P: #{pane_title} #(gitmux -cfg ~/.gitmux.conf '#{pane_current_path}')"
-```
-
-### Typical Git Worktree Workflow with Claude Code
-
-**Scenario:** Working on 3 features simultaneously
-
-```
-Window 1: feature-x
-  Pane 1: editor    ⎇ feature-x ●2 ✚1
-  Pane 2: terminal  ⎇ feature-x
-  Pane 3: lazygit   ⎇ feature-x
-
-Window 2: feature-y
-  Pane 1: editor    ⎇ feature-y ↑3
-  Pane 2: terminal  ⎇ feature-y
-
-Window 3: main
-  Pane 1: editor    ⎇ main ✔
-  Pane 2: tests     ⎇ main
-```
-
-**Benefits:**
-- ✅ See branch/worktree at a glance in pane borders
-- ✅ Each Claude Code instance isolated to its own worktree
-- ✅ No accidentally running commands in wrong worktree
-- ✅ Multiple features developed in parallel without conflicts
-- ✅ Git status auto-updates to show current state
-
-## Best Practices
-
-1. **Always reload** after editing: `Prefix + r`
-2. **Keep TPM line at bottom** of file (line 199)
-3. **Use popup windows** for temporary tasks
-4. **Leverage vim-tmux-navigator** for seamless navigation
-5. **Save sessions manually** before risky operations: `Prefix + C-s`
-6. **Test keybindings** before committing changes
-7. **Check pane borders** for git branch before running commands in git worktrees
-8. **Launch Claude from correct directory** - `cd` into worktree before running `claude`
-9. **Use CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR** - Keeps Claude instances isolated
+| Symptom | Check |
+|---------|-------|
+| Theme not applying | Confirm `@catppuccin_flavor` (no `u`) is in the plugin **attrset** extraConfig, before its run-shell. Verify ordering in `~/.config/tmux/tmux.conf`. |
+| Colors wrong | `echo $TERM` should be `tmux-256color`. |
+| gitmux blank | `which gitmux`; test `gitmux -cfg ~/.gitmux.conf $(pwd)`; check `~/.gitmux.conf` symlink. |
+| DevPod picker missing | `dev-config.tmux.devpodConnect.enable` true? `tailscale` reachable? Debug log at `/tmp/devpod-connect.log`. |
+| Session not restoring | `ls ~/.tmux/resurrect/`; `prefix + C-r`. |
+| Edits to `tmux/tmux.conf` ignored | Expected — that file is a stub. Edit `tmux.nix`. |
 
 ## Resources
 
-- Full keybindings: `docs/KEYBINDINGS_TMUX.md` in repository root
-- TPM: https://github.com/tmux-plugins/tpm
+- Full keybindings: `docs/KEYBINDINGS_TMUX.md`
+- catppuccin/tmux (v2): https://github.com/catppuccin/tmux
 - vim-tmux-navigator: https://github.com/christoomey/vim-tmux-navigator
-- Catppuccin: https://github.com/catppuccin/tmux
 - tmux-resurrect: https://github.com/tmux-plugins/tmux-resurrect
 - gitmux: https://github.com/arl/gitmux

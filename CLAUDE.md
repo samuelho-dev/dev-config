@@ -135,7 +135,7 @@ Dotfiles in `nvim/`, `tmux/`, `zsh/`, `ghostty/`, `yazi/` are version controlled
 
 Component-specific documentation:
 - `nvim/CLAUDE.md` - Neovim plugin system, LSP, lazy loading
-- `tmux/CLAUDE.md` - Tmux plugins and TPM
+- `tmux/CLAUDE.md` - Tmux (Nix-managed plugins, no TPM), DevPod integration
 - `zsh/CLAUDE.md` - Oh My Zsh, Powerlevel10k
 - `docs/LINTING_POLICY.md` - Strict linting rules, GritQL patterns, AI guardrails
 

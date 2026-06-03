@@ -61,7 +61,7 @@ programs/
 | Module | Purpose | Key Options | Dependencies |
 |--------|---------|-------------|--------------|
 | **neovim.nix** | Neovim with LazyVim | `enable`, `package`, `configSource`, `defaultEditor`, `vimAlias` | LSP servers, formatters, gcc, make |
-| **tmux.nix** | Terminal multiplexer | `enable`, `configSource`, `devpodConnect.enable` | TPM plugins |
+| **tmux.nix** | Terminal multiplexer | `enable`, `package`, `gitmuxConfigSource`, `prefix`, `devpodConnect.enable` | Nix-store tmuxPlugins (no TPM), gitmux |
 | **zsh.nix** | Shell configuration | `enable`, `zshrcSource`, `zprofileSource`, `p10kSource` | Oh My Zsh, Powerlevel10k |
 | **git.nix** | Git + 1Password signing | `enable`, `userName`, `userEmail`, `signing.{enable,key}` | git, gh CLI |
 | **ssh.nix** | SSH + 1Password agent + DevPod proxy | `enable`, `devpods.{enable,user}`, `onePasswordAgent.{enable,socketPath}` | 1Password SSH agent, tailscale (for DevPods) |

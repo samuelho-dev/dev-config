@@ -176,7 +176,7 @@ git push origin main
 **When to rerun:**
 - Added new dotfiles to flake.nix
 - Changed symlink structure
-- Need to reinstall Oh My Zsh or TPM
+- Need to reinstall Oh My Zsh
 
 **Rerun activation:**
 ```bash

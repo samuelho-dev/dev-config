@@ -138,14 +138,12 @@ Complete reference for all tmux keybindings in this configuration.
 
 ---
 
-## Plugins (TPM - Tmux Plugin Manager)
+## Plugins (Nix-managed — no TPM)
 
-### Plugin Management
-| Keybinding | Action | Description |
-|------------|--------|-------------|
-| `Prefix + I` | Install plugins | Install new plugins from config |
-| `Prefix + U` | Update plugins | Update all installed plugins |
-| `Prefix + Alt+u` | Uninstall plugins | Remove plugins not in config |
+Plugins are installed from the Nix store via
+`modules/home-manager/programs/tmux.nix` (`programs.tmux.plugins`). There is no
+TPM and no in-tmux install/update step. To add, update, or remove a plugin,
+edit `tmux.nix` and run `home-manager switch --flake .`.
 
 ### Installed Plugins
 
@@ -255,11 +253,11 @@ nvim src/other.js   # Edit in feature-y branch
 
 ## Troubleshooting
 
-### Plugins Not Installing
-1. Ensure TPM is installed: `ls ~/.tmux/plugins/tpm`
-2. Install if missing: `git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm`
-3. Reload config: `Prefix + r`
-4. Install plugins: `Prefix + I`
+### Plugins Not Loading
+Plugins are Nix-managed (no TPM). If one is missing:
+1. Confirm it's in the `programs.tmux.plugins` list in `modules/home-manager/programs/tmux.nix`
+2. Apply: `home-manager switch --flake .`
+3. Restart tmux: `tmux kill-server && tmux`
 
 ### vim-tmux-navigator Not Working
 1. Ensure plugin is installed in both Neovim and tmux
@@ -337,7 +335,7 @@ bind <key> split-window -v -c "#{pane_current_path}"
 
 - [Tmux GitHub](https://github.com/tmux/tmux)
 - [Tmux Cheat Sheet](https://tmuxcheatsheet.com/)
-- [TPM (Plugin Manager)](https://github.com/tmux-plugins/tpm)
+- [catppuccin/tmux (v2)](https://github.com/catppuccin/tmux)
 - [vim-tmux-navigator](https://github.com/christoomey/vim-tmux-navigator)
 - [tmux-resurrect](https://github.com/tmux-plugins/tmux-resurrect)
 

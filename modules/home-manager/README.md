@@ -18,7 +18,7 @@ dev-config.tmux.enable = false;  # Disable tmux
 | Module | Description |
 |--------|-------------|
 | **neovim** | Neovim with LazyVim, LSP servers, formatters |
-| **tmux** | Terminal multiplexer with TPM plugins |
+| **tmux** | Terminal multiplexer with Nix-managed plugins (no TPM) |
 | **zsh** | Shell with Oh My Zsh + Powerlevel10k |
 | **git** | Git with 1Password SSH commit signing |
 | **ssh** | SSH with 1Password agent integration |

@@ -75,7 +75,7 @@ The installer automatically installs all required dependencies with zero manual 
 
 **Plugin Managers:**
 - **Lazy.nvim** - Neovim plugin manager (auto-configured)
-- **TPM** - Tmux Plugin Manager (auto-installed to `~/.tmux/plugins/tpm`)
+- **tmux plugins** - installed from the Nix store by Home Manager (no TPM)
 
 **Neovim Plugins (60+ plugins via Lazy.nvim):**
 All Neovim plugins are auto-installed on first run, including:
@@ -90,8 +90,8 @@ All Neovim plugins are auto-installed on first run, including:
 
 See [nvim/README.md](nvim/README.md) for complete plugin list.
 
-**Tmux Plugins (9 plugins via TPM):**
-All tmux plugins are auto-installed, including:
+**Tmux Plugins (9 plugins via Home Manager / Nix store):**
+All tmux plugins are installed declaratively (no TPM), including:
 - `tmux-resurrect` + `tmux-continuum` - Session persistence
 - `vim-tmux-navigator` - Seamless Vim/tmux navigation
 - `tmux-fzf` - Fuzzy finder for sessions/windows/panes
@@ -264,7 +264,7 @@ Quick reference for all dependencies and their purposes:
 | **Oh My Zsh** | ✅ Yes | Zsh framework | Shell plugin system |
 | **Powerlevel10k** | ✅ Yes | Zsh theme | Shell prompt |
 | **zsh-autosuggestions** | ✅ Yes | Zsh plugin | Shell autosuggestions |
-| **TPM** | ✅ Yes | Tmux plugin manager | Tmux plugin installation |
+| **tmux plugins** | ✅ Yes | via Home Manager (Nix store) | Tmux plugins (no TPM) |
 | **Lazy.nvim** | ✅ Yes | Neovim plugin manager | Neovim plugin management |
 | **Mason** | ✅ Yes | LSP/tool installer | LSP servers, formatters, linters |
 
@@ -325,8 +325,8 @@ bash scripts/install.sh
 2. Enables flakes and configures direnv
 3. Installs all development tools (Neovim, tmux, zsh, Docker, sops)
 4. Creates symlinks using battle-tested logic from shared libraries
-5. Sets up Oh My Zsh, Powerlevel10k, and TPM
-6. Auto-installs all Neovim and tmux plugins
+5. Sets up Oh My Zsh and Powerlevel10k
+6. Installs Neovim plugins (Lazy.nvim) and tmux plugins (Nix store, no TPM)
 
 **Benefits:**
 - ✅ **Reproducible**: Exact package versions across all machines (via `flake.lock`)
@@ -693,8 +693,8 @@ When you run `bash scripts/install.sh`, here's what happens:
 - Creates `~/.zshrc.local` for machine-specific config
 
 **Phase 3: Tmux Setup**
-- TPM (Tmux Plugin Manager) to `~/.tmux/plugins/tpm`
-- 9 tmux plugins auto-installed via TPM
+- 9 tmux plugins installed from the Nix store by Home Manager (no TPM)
+- Config generated to `~/.config/tmux/tmux.conf` (from `modules/home-manager/programs/tmux.nix`)
 
 **Phase 4: Symlinks**
 - Backs up existing configs (timestamped: `~/.config/nvim.backup.20241008_120000`)
@@ -711,7 +711,7 @@ When you run `bash scripts/install.sh`, here's what happens:
 **Phase 6: Verification**
 - Symlinks verified
 - Oh My Zsh verified
-- TPM verified
+- tmux plugins verified (Nix store)
 - Default shell verified (zsh)
 - Reports any issues with actionable fixes
 
@@ -727,7 +727,7 @@ When you run `bash scripts/install.sh`, here's what happens:
 - Homebrew installation (macOS)
 - Package installation (apt/dnf/pacman/brew)
 - Oh My Zsh, Powerlevel10k, zsh-autosuggestions (git clone)
-- TPM and tmux plugins (git clone)
+- tmux plugins (fetched into the Nix store by Home Manager)
 - Neovim plugins (60+ via Lazy.nvim)
 - Mason LSP servers/formatters
 - Treesitter parsers (git clone)
@@ -906,7 +906,7 @@ This checks:
 - Symlinks
 - Core dependencies (git, zsh, neovim, tmux, fzf, ripgrep, lazygit)
 - Tool versions (Neovim ≥ 0.9.0, tmux ≥ 1.9)
-- Oh My Zsh, TPM, Powerlevel10k
+- Oh My Zsh, Powerlevel10k, tmux plugins (Nix store)
 - Provides actionable fix suggestions
 
 ### Neovim LSP not working?

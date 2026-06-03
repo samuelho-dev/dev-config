@@ -8,10 +8,7 @@ echo "TMUX=${TMUX:-unset}" >&2
 
 # DevPod Connect - Discover and connect to DevPods via Tailscale
 # Creates tmux sessions with session-scoped SSH (all panes auto-SSH)
-# Also starts Mutagen file sync if project has mutagen.yml
-
-# --- Configuration ---
-PROJECTS_DIR="${PROJECTS_DIR:-$HOME/Projects}"
+# Mutagen file sync is started by the session-created hook (devpod-mutagen-hook.sh)
 
 # --- Tailscale CLI detection (macOS app vs PATH, with socket support) ---
 TS_CMD=()
@@ -87,39 +84,33 @@ HOSTNAME=$(echo "$SELECTED" | awk '{print $1}')
 PROJECT_NAME="${HOSTNAME#devpod-}"
 # tmux converts colons to underscores, so use underscore directly
 SESSION_NAME="devpod_${PROJECT_NAME}"
-# Use full Tailscale MagicDNS hostname for reliable SSH
-SSH_HOST="${HOSTNAME}.taile99f5b.ts.net"
+# Resolve the Tailnet MagicDNS suffix dynamically (do not hardcode it).
+# Falls back to the bare hostname (MagicDNS resolves it) if lookup fails.
+DNS_SUFFIX=$("${TS_CMD[@]}" status --json 2>/dev/null | jq -r '.MagicDNSSuffix // empty')
+if [ -n "$DNS_SUFFIX" ]; then
+  SSH_HOST="${HOSTNAME}.${DNS_SUFFIX}"
+else
+  SSH_HOST="$HOSTNAME"
+fi
 SSH_TARGET="coder@${SSH_HOST}"
-
-# --- Start Mutagen sync if project has mutagen.yml ---
-start_mutagen_sync() {
-  local project_dir="$PROJECTS_DIR/$PROJECT_NAME"
-
-  if [[ -f "$project_dir/mutagen.yml" ]] && command -v mutagen &>/dev/null; then
-    # Check if sync is already running for this project
-    if ! mutagen project list -f "$project_dir/mutagen.yml" &>/dev/null; then
-      # Start mutagen sync in background
-      (cd "$project_dir" && mutagen project start) &
-    fi
-  fi
-}
 
 # --- Create session if needed ---
 # NOTE: tmux new-session inside display-popup can crash tmux (Issue #3748)
 # The -d flag creates detached session which is safe
 if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-  # Session doesn't exist, create it
-  start_mutagen_sync
+  # Create session and SSH into devpod.
+  # Use the same SSH form as devpod-bootstrap.sh: explicit TTY + `exec zsh`
+  # bypasses the container login shell, which fails with "mesg: cannot change
+  # mode" due to missing CAP_FOWNER. Start in ~ (not the workspace) to avoid
+  # triggering local direnv/nix on connect.
+  SSH_CMD="ssh -t $SSH_TARGET 'cd ~ && exec zsh'"
 
-  # Create session and SSH into devpod
-  # Simple SSH - let the devpod's shell handle cd and environment
-  SSH_CMD="ssh $SSH_TARGET"
-
-  # Start session in $HOME to avoid local direnv activation
   # Using -d (detached) is safe inside popup per tmux issue #3748
   tmux new-session -d -s "$SESSION_NAME" -c "$HOME" -e "DEVPOD_HOST=$HOSTNAME"
+  tmux set-option -t "$SESSION_NAME" remain-on-exit on
   tmux send-keys -t "$SESSION_NAME" "$SSH_CMD" Enter
   tmux set-option -t "$SESSION_NAME" default-command "$SSH_CMD"
+  # Mutagen sync is started by the session-created hook (devpod-mutagen-hook.sh)
 fi
 
 # Switch to session

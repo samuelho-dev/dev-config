@@ -221,8 +221,8 @@ When you `cd` into dev-config:
 
 Custom scripts for one-time setup:
 - Create symlinks (reuses `scripts/lib/common.sh`)
-- Install Oh My Zsh, Powerlevel10k, TPM
-- Auto-install Neovim and tmux plugins
+- Install Oh My Zsh, Powerlevel10k
+- Auto-install Neovim plugins (tmux plugins come from the Nix store via Home Manager)
 
 ## Nix vs Traditional Package Managers
 

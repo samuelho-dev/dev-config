@@ -70,7 +70,7 @@ modules/home-manager/
 |--------|---------|-------------|
 | **default.nix** | Aggregates all modules, defines global options | `dev-config.enable`, `dev-config.packages.{enable,extraPackages}` |
 | **programs/neovim.nix** | Neovim with LazyVim config | `enable`, `package`, `configSource`, `defaultEditor`, `vimAlias` |
-| **programs/tmux.nix** | Tmux with TPM plugins | `enable`, `configSource`, `devpodConnect.enable` |
+| **programs/tmux.nix** | Tmux with Nix-managed plugins (no TPM) | `enable`, `package`, `gitmuxConfigSource`, `prefix`, `devpodConnect.enable` |
 | **programs/zsh.nix** | Zsh with Oh My Zsh + Powerlevel10k | `enable`, `zshrcSource`, `zprofileSource`, `p10kSource` |
 | **programs/git.nix** | Git with 1Password signing | `enable`, `userName`, `userEmail`, `signing.{enable,key}` |
 | **programs/ssh.nix** | SSH with 1Password agent + DevPod proxy | `enable`, `devpods.{enable,user}`, `onePasswordAgent.{enable,socketPath}` |

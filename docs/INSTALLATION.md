@@ -25,7 +25,7 @@ The following will be installed automatically if missing:
 - **Oh My Zsh** - Zsh framework
 - **Powerlevel10k** - Zsh theme
 - **zsh-autosuggestions** - Zsh plugin
-- **TPM** - Tmux Plugin Manager
+- **tmux plugins** - installed from the Nix store by Home Manager (no TPM)
 
 ### Mason-Installed Tools (via Neovim)
 These are automatically installed when you first open Neovim:
@@ -84,13 +84,12 @@ bash scripts/install.sh
 4. ✅ Installs core dependencies (git, zsh, neovim, tmux, fzf, ripgrep, lazygit)
 5. ✅ Checks tool versions (Neovim ≥ 0.9.0, tmux ≥ 1.9)
 6. ✅ Installs Oh My Zsh + Powerlevel10k + zsh-autosuggestions
-7. ✅ Installs TPM (Tmux Plugin Manager)
-8. ✅ Creates backups of existing configs (timestamped)
-9. ✅ Creates symlinks from home directory → repository
-10. ✅ Creates `~/.zshrc.local` for machine-specific config
-11. ✅ Auto-installs Neovim plugins (via Lazy.nvim)
-12. ✅ Auto-installs tmux plugins (via TPM)
-13. ✅ Verifies installation
+7. ✅ Creates backups of existing configs (timestamped)
+8. ✅ Creates symlinks from home directory → repository
+9. ✅ Creates `~/.zshrc.local` for machine-specific config
+10. ✅ Auto-installs Neovim plugins (via Lazy.nvim)
+11. ✅ Installs tmux plugins from the Nix store (Home Manager, no TPM)
+12. ✅ Verifies installation
 
 **Zero manual intervention required!**
 
@@ -345,7 +344,7 @@ This will check:
 - ✅ Symlinks pointing to correct locations
 - ✅ All dependencies installed
 - ✅ Tool versions meet requirements
-- ✅ Oh My Zsh, Powerlevel10k, TPM installed
+- ✅ Oh My Zsh, Powerlevel10k installed; tmux plugins in Nix store
 
 ---
 
