@@ -221,100 +221,36 @@ This pattern in modules enables dev-config to work both:
 
 ## AI GUARDRAILS (CRITICAL) ⚠️
 
-This repository enforces strict guardrails to prevent AI assistants from introducing type safety violations and linting rule weakening. These guardrails apply to all AI agents (Claude Code, ChatGPT, etc.).
+`docs/LINTING_POLICY.md` is the **single source of truth** for linting and
+type-safety rules (full tables, decision trees, warning template, enforcement).
+This section is the enforced summary — applies to all AI agents (Claude Code, ChatGPT, etc.).
 
-### SOFT WARNING: Linting Configuration Modifications
+### HARD ERROR: Type-safety workarounds (PROHIBITED)
 
-When modifying any linting configuration file (`biome.json`, `tsconfig.json`, `.pre-commit-config.yaml`, or `biome/gritql-patterns/*.grit`), the AI must provide explicit warning and request confirmation before proceeding.
+Never emit these. If asked, REFUSE and propose the type-safe alternative
+(`Schema.decodeUnknown()`, type guards, optional chaining, explicit annotations):
 
-**Required warning template:**
+- `value as any` / `value as T` — unverified assertion
+- `value!` — non-null assertion
+- `@ts-ignore` / `@ts-expect-error` / `@ts-nocheck` — error suppression
+- `satisfies` without an explicit type
 
-```
-⚠️  WARNING: Linting Configuration Modification Requested
+Enforced by: Biome (`noExplicitAny`, `noNonNullAssertion`), GritQL
+(`ban-type-assertions.grit`), and `scripts/validate-linting-config.sh`.
 
-This change affects the linting/type checking rules that apply to the entire codebase.
-Rule modifications can have downstream effects on hundreds of files.
+### HARD ERROR: Rule weakening (PROHIBITED)
 
-Change Summary:
-[Details of the specific modification]
+Never weaken linting rules: `error` → `warn`/`off`, disabling TS `strict`,
+adding suppression comments, GritQL patterns that override error-level rules, or
+editing `.pre-commit-config.yaml` to skip hooks. Adding *stricter* rules is fine.
+Enforced by `validate-linting-config.sh` (cannot bypass without `--no-verify`).
 
-Rationale:
-[Explanation of why this change is necessary]
+### SOFT WARNING: Linting-config edits require APPROVE
 
-Impact Analysis:
-[What files will be affected, what rules are being changed]
-
-Requires human approval. To approve, type: APPROVE [change description]
-```
-
-**Example usage pattern:**
-1. AI identifies need to modify linting rules
-2. AI displays warning with full details of the change
-3. AI waits for explicit human approval with the "APPROVE" keyword
-4. Only after approval does AI proceed with the modification
-5. AI documents the approval in the commit message
-
-See `docs/LINTING_POLICY.md` for complete policy and decision workflows.
-
-### HARD ERROR: Type Safety Workarounds (STRICTLY PROHIBITED)
-
-The following patterns are **strictly prohibited** and must never be used. If a request asks you to implement any of these patterns, you must refuse and suggest the type-safe alternative instead.
-
-| Forbidden Pattern | Why Prohibited | Type-Safe Alternative | Example |
-|------------------|---------------|-----------------------|---------|
-| `value as any` | Defeats all type checking for that value | Use `Schema.decodeUnknown()` from Effect or explicit type guards | `const x: unknown = getValue(); const parsed = Schema.decodeUnknown(MySchema)(x)` |
-| `@ts-ignore` comment | Suppresses type errors without fixing them | Fix the underlying type error properly | Add proper type annotations or use type guards |
-| `@ts-expect-error` comment | Acknowledges error exists but ignores it | Fix the root cause | Refactor code to satisfy type constraints |
-| `@ts-nocheck` comment | Disables all type checking for entire file | Add proper types to individual declarations | Split file, add gradual typing, use `as const` |
-| `value as T` (non-null assertion with `as`) | Asserts type without verification | Use runtime validation with Schema or type guards | `if (value !== null && typeof value === 'T') { ... }` |
-| `value!` (non-null assertion) | Suppresses null/undefined error without checking | Verify existence before use, use optional chaining | `value?.property` or `if (value) { ... }` |
-| `satisfies` operator without type | Type-checking without explicit return type | Use explicit type annotation instead | `const x: MyType = { ... }` |
-
-**Decision tree for type-related requests:**
-
-```
-Request to modify type-related code?
-├─ "Just use 'as any'" → REFUSE: Suggest Schema.decodeUnknown()
-├─ "Add @ts-ignore comment" → REFUSE: Fix the underlying type error
-├─ "Use non-null assertion (!)" → REFUSE: Add proper null checking
-├─ "The types are too strict" → PROPOSE: Discuss type narrowing, guards, or Schema validation
-└─ "Simplify the types" → EVALUATE: Consider if simplification loses runtime safety
-```
-
-Enforcement mechanisms:
-- **Biome rule**: `noExplicitAny: "error"` — Blocks `as any`
-- **Biome rule**: `noNonNullAssertion: "error"` — Blocks `!` operator
-- **GritQL pattern**: `biome/gritql-patterns/ban-type-assertions.grit` — Blocks `as T`, `<T>expr`, and `satisfies T`
-- **Pre-commit hook**: `scripts/validate-linting-config.sh` — Blocks rule weakening in config files AND scans staged source files for `@ts-ignore`/`@ts-expect-error`/`@ts-nocheck`
-
-### HARD ERROR: Rule Weakening (STRICTLY PROHIBITED)
-
-Linting rules establish minimum code quality standards. Weakening these rules (changing severity from `error` → `warn` or `off`) is not permitted without explicit approval from the project maintainer.
-
-**Prohibited modifications:**
-
-- Changing Biome rule level from `error` to `warn` or `off`
-- Disabling TypeScript `strict` mode
-- Adding new `@ts-ignore` or suppression comments
-- Creating GritQL patterns that override existing error-level rules
-- Modifying `.pre-commit-config.yaml` to skip validation hooks
-
-**Decision tree for rule modification requests:**
-
-```
-Request to modify linting rules?
-├─ "Add a new stricter rule" → ALLOW: This improves code quality
-├─ "Change error → warn" → REFUSE: Would weaken the codebase
-├─ "Disable a rule (off)" → REFUSE: Would weaken the codebase
-├─ "Update rule configuration (same level)" → SOFT WARNING: Requires approval
-└─ "Fix a rule that has bugs" → EVALUATE: Propose refinement, not removal
-```
-
-Enforcement mechanisms:
-- **Pre-commit hook**: `validate-linting-config.sh` automatically detects and blocks rule weakening
-- **Git blockers**: Cannot be bypassed without `git commit --no-verify` (which requires developer attention)
-
-See `docs/LINTING_POLICY.md` for complete policy and enforcement details.
+Before modifying `biome.json`, `tsconfig*.json`, `.pre-commit-config.yaml`, or
+`biome/gritql-patterns/*.grit`: show the warning template from
+`docs/LINTING_POLICY.md` (change summary, rationale, impact), then wait for the
+human to type `APPROVE <description>`. Document the approval in the commit.
 
 ## Key Conventions
 
