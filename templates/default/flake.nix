@@ -25,9 +25,7 @@
     devShells = forAllSystems ({pkgs, ...}: {
       default = pkgs.mkShell {
         packages = [
-          # Add your project dependencies here
-          # pkgs.nodejs_22
-          # pkgs.bun
+          # Add project-specific tools here only when the project needs them.
         ];
 
         shellHook = ''

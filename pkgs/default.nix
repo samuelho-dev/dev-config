@@ -15,12 +15,6 @@
     pkgs.lazygit
   ];
 
-  # Programming language runtimes
-  runtimes = [
-    pkgs.nodejs_24
-    pkgs.bun
-    pkgs.uv
-  ];
 
   # Development utilities
   utilities = [
@@ -42,7 +36,6 @@
   # Combine all packages into a single list
   all = self:
     self.core
-    ++ self.runtimes
     ++ self.utilities
     ++ self.linting;
 }

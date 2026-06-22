@@ -13,13 +13,6 @@
     stateVersion = "24.05";
   };
 
-  # Minimal session path for containers
-  home.sessionPath = [
-    "$HOME/.nix-profile/bin"
-    "$HOME/.local/bin"
-    "$HOME/.bun/bin"
-  ];
-
   # Session variables
   home.sessionVariables = {
     EDITOR = "nvim";

@@ -44,7 +44,7 @@
       then import workUserConfigPath
       else null;
 
-    systems = nixpkgs.lib.systems.flakeExposed;
+    systems = ["aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux"];
 
     forAllSystems = fn:
       nixpkgs.lib.genAttrs systems (system:
@@ -137,7 +137,6 @@
               echo ""
               echo "Tool categories loaded:"
               echo "  • Core: git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit"
-              echo "  • Runtimes: nodejs_24, bun"
               echo "  • Linting: biome (with GritQL patterns)"
               echo "  • Utilities: direnv, jq, yq, gnumake"
               echo ""
@@ -165,6 +164,7 @@
     }: {
       set-shell = {
         type = "app";
+        meta.description = "Set the user's default shell to this flake's zsh";
         program = toString (pkgs.writeShellScript "set-shell" ''
           ZSH_PATH="${pkgs.zsh}/bin/zsh"
 

@@ -16,13 +16,6 @@
 #   - MCP server lists (per-profile)
 #   - Disable overrides (per-profile)
 {lib, ...}: {
-  home.sessionPath = [
-    "$HOME/.nix-profile/bin"
-    "$HOME/.local/bin"
-    "$HOME/.bun/bin"
-    "$HOME/Library/pnpm"
-  ];
-
   home.sessionVariables = {
     EDITOR = "nvim";
     VISUAL = "nvim";

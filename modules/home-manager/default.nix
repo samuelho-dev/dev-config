@@ -48,13 +48,8 @@
   };
 
   config = lib.mkIf config.dev-config.enable (let
-    # Import centralized package definitions (DRY - single source of truth)
     devPkgs = import ../../pkgs {inherit pkgs;};
-    # Runtimes (nodejs/bun/uv) are exposed via devShells only.
-    # Installing them at user level shadows project-flake-pinned versions
-    # because ~/.nix-profile/bin ranks ahead of devShell PATH after some
-    # shell init paths (typeset -U dedup, etc).
-    homePkgs = lib.subtractLists devPkgs.runtimes (devPkgs.all devPkgs);
+    homePkgs = devPkgs.all devPkgs;
   in {
     # Install packages at user level (merged with any packages defined in home.nix)
     home.packages = lib.mkIf config.dev-config.packages.enable (

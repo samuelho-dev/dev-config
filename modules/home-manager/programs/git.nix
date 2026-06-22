@@ -97,6 +97,7 @@
 
       # SSH commit signing configuration
       signing = lib.mkIf cfg.signing.enable {
+        format = cfg.signing.format;
         key = lib.mkIf (cfg.signing.key != null) cfg.signing.key;
         signByDefault = cfg.signing.signByDefault;
       };

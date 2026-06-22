@@ -24,8 +24,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # Install opencode CLI via bun (npm package not in nixpkgs)
-    # Requires bun in PATH (provided by dev-config.npm module)
+    # Install opencode CLI when bun is already available outside Nix.
     home.activation.installOpencodeCli = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
       if command -v bun &>/dev/null; then
         if ! command -v opencode &>/dev/null || ! opencode --version &>/dev/null 2>&1; then

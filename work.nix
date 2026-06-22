@@ -14,6 +14,7 @@
     stateVersion = "24.05";
   };
 
+
   # NO sops-nix secrets at work
 
   # Work-profile dev-config overrides (base.nix handles common enables)

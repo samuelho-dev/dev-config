@@ -173,8 +173,7 @@ in {
       cc = "claude --dangerously-skip-permissions";
     };
 
-    # Install Claude Code CLI via bun (npm package not in nixpkgs)
-    # Requires bun in PATH (provided by dev-config.npm module)
+    # Install Claude Code CLI when bun is already available outside Nix.
     home.activation.installClaudeCodeCli = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
       if command -v bun &>/dev/null; then
         # Check if claude is already installed and up to date

@@ -95,11 +95,7 @@ in {
       lib.hm.dag.entryAfter ["sops-nix"] generateNpmrcScript
     );
 
-    # Ensure Node.js tooling is available
-    home.packages = [
-      # npm comes bundled with nodejs_22 (installed via modules/home-manager/default.nix)
-      # pnpm is a separate package
-      pkgs.pnpm
-    ];
+    # Do not install Node/package managers from Nix here. Project repos and
+    # user-level installers own those versions; Nix should not shadow them.
   };
 }
