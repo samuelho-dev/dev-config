@@ -6,10 +6,10 @@
   # Import dev-config Home Manager module
   imports = [./modules/home-manager];
 
-  # DevPod user configuration (coder user in Kubernetes container)
+  # DevPod user configuration (admin user (uid 1000) in Kubernetes container)
   home = {
-    username = "coder";
-    homeDirectory = "/home/coder";
+    username = "admin";
+    homeDirectory = "/home/admin";
     stateVersion = "24.05";
   };
 

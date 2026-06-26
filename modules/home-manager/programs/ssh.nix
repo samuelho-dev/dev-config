@@ -12,7 +12,7 @@
 
       user = lib.mkOption {
         type = lib.types.str;
-        default = "coder";
+        default = "admin";
         description = "Default SSH user for DevPod connections";
       };
     };
