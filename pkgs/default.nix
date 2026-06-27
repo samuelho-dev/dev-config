@@ -33,9 +33,18 @@
     pkgs.biome # Fast formatter and linter for JS/TS/JSON/CSS
   ];
 
+  # JavaScript/TypeScript runtimes + package managers
+  # On PATH for every dev surface (devShell + Home Manager + DevPod image).
+  runtimes = [
+    pkgs.nodejs_24 # Node.js 24 (latest stable) - also provides npm + corepack
+    pkgs.pnpm # repo pins packageManager: pnpm@10.x
+    pkgs.bun # Bun runtime
+  ];
+
   # Combine all packages into a single list
   all = self:
     self.core
     ++ self.utilities
-    ++ self.linting;
+    ++ self.linting
+    ++ self.runtimes;
 }
