@@ -43,6 +43,19 @@ require 'config'
 --
 -- Plugins are organized into separate files in lua/plugins/
 -- Each file returns a table of plugin specifications
+-- lazy-lock.json normally lives in the nvim config dir, which dev-config ships
+-- as a read-only Nix-store symlink (recursive xdg.configFile). lazy.nvim must
+-- write the lockfile, so redirect it to a writable state dir. Seed it from the
+-- committed lockfile on first run to preserve the pinned plugin versions.
+local lockfile = vim.fn.stdpath('state') .. '/lazy-lock.json'
+do
+  local committed = vim.fn.stdpath('config') .. '/lazy-lock.json'
+  if vim.fn.filereadable(lockfile) == 0 and vim.fn.filereadable(committed) == 1 then
+    vim.fn.mkdir(vim.fn.stdpath('state'), 'p')
+    vim.fn.writefile(vim.fn.readfile(committed), lockfile)
+  end
+end
+
 require('lazy').setup({
   -- Import all plugin modules
   { import = 'plugins.editor' },     -- File explorer, fuzzy finder, search/replace
@@ -56,6 +69,7 @@ require('lazy').setup({
   { import = 'plugins.tools' },      -- Utility tools (CSV viewer)
   { import = 'plugins.training' },   -- Vim training games
 }, {
+  lockfile = lockfile,
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
     -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table

@@ -191,6 +191,17 @@
       source = "${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k";
     };
 
+    # Symlink zsh-autosuggestions into Oh My Zsh custom plugins.
+    # The committed zsh/.zshrc (the default zshrcSource) lists
+    # `plugins=(git zsh-autosuggestions)`, which oh-my-zsh resolves from
+    # $ZSH_CUSTOM/plugins/. Without this the plugin is "not found" and the
+    # resulting console output trips Powerlevel10k's instant-prompt warning.
+    # (When zshrcSource=null, HM generates .zshrc and autosuggestion.enable
+    # above sources it directly — this symlink is harmless there.)
+    home.file.".oh-my-zsh/custom/plugins/zsh-autosuggestions" = {
+      source = "${pkgs.zsh-autosuggestions}/share/zsh/plugins/zsh-autosuggestions";
+    };
+
     # Symlink zsh configurations if sources are provided
     home.file.".zshrc" = lib.mkIf (config.dev-config.zsh.zshrcSource != null) {
       source = config.dev-config.zsh.zshrcSource;
