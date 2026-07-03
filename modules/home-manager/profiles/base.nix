@@ -48,6 +48,7 @@
     npm.enable = lib.mkDefault true;
     biome.enable = lib.mkDefault true;
     opencode.enable = lib.mkDefault true;
+    omp.enable = lib.mkDefault true;
     neovim.enable = lib.mkDefault true;
   };
 

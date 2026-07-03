@@ -16,6 +16,7 @@
     ./programs/yazi.nix
     ./programs/claude-code.nix
     ./programs/opencode.nix
+    ./programs/omp.nix
     ./programs/biome.nix
     ./programs/python.nix
     ./services/direnv.nix
