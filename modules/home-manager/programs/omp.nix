@@ -20,6 +20,26 @@ in {
       default = true;
       description = "Vendor mattpocock/skills into ~/.agents/skills + ~/.claude/skills (cloned, git-pulled, symlinked on activation).";
     };
+
+    obsidian = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Install pi-obsidian and publish a headless Obsidian vault config for OMP.";
+      };
+
+      package = lib.mkOption {
+        type = lib.types.str;
+        default = "pi-obsidian";
+        description = "npm package that provides the OMP-compatible Obsidian extension.";
+      };
+
+      vaultPath = lib.mkOption {
+        type = lib.types.str;
+        default = "$HOME/Obsidian/Main";
+        description = "Filesystem path exposed to pi-obsidian as the default vault.";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -36,6 +56,29 @@ in {
         fi
       fi
     '';
+
+    home.activation.configureOmp = lib.hm.dag.entryAfter ["writeBoundary" "installOmpCli"] ''
+      if command -v omp &>/dev/null; then
+        $DRY_RUN_CMD omp config set memory.backend hindsight >/dev/null 2>&1 || true
+        if [ -n "''${HINDSIGHT_API_URL:-}" ]; then
+          $DRY_RUN_CMD omp config set hindsight.apiUrl "''${HINDSIGHT_API_URL}" >/dev/null 2>&1 || true
+        fi
+      fi
+    '';
+
+    home.activation.installPiObsidian = lib.mkIf cfg.obsidian.enable (
+      lib.hm.dag.entryAfter ["writeBoundary" "installOmpCli"] ''
+        if command -v bun &>/dev/null; then
+          $DRY_RUN_CMD bun add -g ${cfg.obsidian.package} 2>/dev/null || true
+        fi
+
+        VAULT_PATH="${cfg.obsidian.vaultPath}"
+        $DRY_RUN_CMD mkdir -p "$HOME/.config/obsidian" "$VAULT_PATH"
+        if [ -z "''${DRY_RUN_CMD:-}" ]; then
+          printf '{"vaults":{"main":{"path":"%s","ts":0,"open":true}}}\n' "$VAULT_PATH" > "$HOME/.config/obsidian/obsidian.json"
+        fi
+      ''
+    );
 
     # mattpocock/skills lives in the skill roots omp discovers (~/.agents/skills
     # native, ~/.claude/skills), alongside the dev-config Effect/Nx skills.
