@@ -285,27 +285,25 @@ in {
       $DRY_RUN_CMD mv "$CLAUDE_JSON.tmp" "$CLAUDE_JSON"
     '');
 
-    # Export Claude Code configs directly to ~/.claude/ (global, writable)
+    # dev-config skills belong in the global skill roots discovered by Claude
+    # and omp (~/.claude/skills, ~/.agents/skills). Agents and commands are not
+    # exported, and stale global copies of them do not persist.
     home.activation.exportClaudeConfigs = lib.mkIf (cfg.exportConfig && cfg.configSource != null) (
       lib.hm.dag.entryAfter ["writeBoundary"] ''
-        # Source paths from dev-config
-        AGENTS_SRC="${cfg.configSource}/../ai/agents"
-        COMMANDS_SRC="${cfg.configSource}/../ai/commands"
+        $DRY_RUN_CMD rm -rf "$HOME/.claude/agents" "$HOME/.claude/commands"
 
-        # Copy agents (writable so user can add new ones)
-        if [ -d "$AGENTS_SRC" ]; then
-          $DRY_RUN_CMD rm -rf "$HOME/.claude/agents"
-          $DRY_RUN_CMD mkdir -p "$HOME/.claude"
-          $DRY_RUN_CMD cp -Lr "$AGENTS_SRC" "$HOME/.claude/agents"
-          $DRY_RUN_CMD chmod -R +w "$HOME/.claude/agents"
-        fi
-
-        # Copy commands (writable so user can add new ones)
-        if [ -d "$COMMANDS_SRC" ]; then
-          $DRY_RUN_CMD rm -rf "$HOME/.claude/commands"
-          $DRY_RUN_CMD mkdir -p "$HOME/.claude"
-          $DRY_RUN_CMD cp -Lr "$COMMANDS_SRC" "$HOME/.claude/commands"
-          $DRY_RUN_CMD chmod -R +w "$HOME/.claude/commands"
+        SKILLS_SRC="${cfg.configSource}/../ai/skills"
+        if [ -d "$SKILLS_SRC" ]; then
+          for DEST in "$HOME/.claude/skills" "$HOME/.agents/skills"; do
+            $DRY_RUN_CMD mkdir -p "$DEST"
+            for SKILL in "$SKILLS_SRC"/*/; do
+              [ -d "$SKILL" ] || continue
+              NAME="$(basename "$SKILL")"
+              $DRY_RUN_CMD rm -rf "$DEST/$NAME"
+              $DRY_RUN_CMD cp -Lr "''${SKILL%/}" "$DEST/$NAME"
+              $DRY_RUN_CMD chmod -R +w "$DEST/$NAME"
+            done
+          done
         fi
       ''
     );

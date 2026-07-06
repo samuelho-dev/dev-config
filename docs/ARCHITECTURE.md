@@ -16,18 +16,16 @@ machine via Home Manager, and into individual projects via the flake's `devShell
 ## Source Layout
 
 ### `ai/` — Centralized AI Resources (single source of truth)
-- `commands/` — slash commands
-- `agents/` — agent definitions
-- `hooks/`, `skills/`, `tools/` — supporting resources
+- `skills/` — Effect/Nx skills (Effect service patterns, type-safety, GritQL)
+- `hooks/` — Biome / type-safety hooks (referenced in-repo by `.claude/settings.json`)
 
-`claude-code.nix` (Home Manager) copies `ai/agents` and `ai/commands` to
-`~/.claude/{agents,commands}` (via `cp -Lr`). AI configs are **global** — no
-project-level sync of commands/agents is needed.
+`claude-code.nix` (Home Manager) exports `ai/skills` to `~/.claude/skills` and
+`~/.agents/skills` (via `cp -Lr`); `omp.nix` vendors `mattpocock/skills` into the
+same roots. AI configs are **global** — no project-level sync is needed.
 
 ### `.claude/` — Project-level Claude Code config (this repo)
 - `settings.json` — project hooks (reference `ai/hooks/`)
 - `templates/` — CLAUDE.md / README.md templates
-- `tools -> ../ai/tools` — symlink
 
 ## Project Linkage: `devShellHook`
 
@@ -44,14 +42,14 @@ and the symlink strategy. Treat that table as authoritative.
 
 ```
 dev-config/                         [Source, Git]
-   ├── ai/  (commands, agents, hooks, skills, tools)
+   ├── ai/  (skills, hooks, tools)
    ├── zed/
    └── biome/
 
       │ Home Manager switch (claude-code.nix, biome module)
       ▼
 
-~/.claude/        ← cp -Lr ai/agents, ai/commands     [Global, per-machine]
+~/.{claude,agents}/skills  ← ai/skills + vendored mattpocock/skills   [Global, per-machine]
 ~/.config/biome/  ← linting config
 
       │ nix develop  →  lib.devShellHook

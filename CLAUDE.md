@@ -59,16 +59,12 @@ flake.nix                    # Entry point: exports homeManagerModules, nixosMod
 |   |   +-- programs/        # Per-program modules (neovim.nix, tmux.nix, etc.)
 |   |   +-- services/        # Service modules (direnv.nix, sops-env.nix)
 |   +-- nixos/               # System-level modules (for NixOS servers)
-+-- ai/                      # Source of truth for Claude Code configs (exported globally by Nix)
-|   +-- commands/            # Slash commands (copied to ~/.claude/commands/ by home-manager)
-|   +-- agents/              # Agent definitions (copied to ~/.claude/agents/ by home-manager)
-|   +-- hooks/               # PostToolUse/UserPromptSubmit hooks
-|   +-- skills/              # Skill definitions
-|   +-- tools/               # Tool definitions
++-- ai/                      # Source of truth for AI configs (exported globally by Nix)
+|   +-- skills/              # Effect/Nx skills (exported to ~/.claude/skills + ~/.agents/skills)
+|   +-- hooks/               # PostToolUse/UserPromptSubmit hooks (referenced in-repo)
 +-- .claude/                 # Project-level Claude Code config (NOT commands/agents)
 |   +-- settings.json        # Project hooks (references ai/hooks/)
 |   +-- templates/           # CLAUDE.md and README.md templates
-|   +-- tools -> ../ai/tools # Symlink to ai/tools
 +-- pkgs/default.nix         # Centralized package definitions (DRY)
 +-- secrets/default.yaml     # sops-nix encrypted secrets
 ```
@@ -191,17 +187,15 @@ Auto-creates project-level editor configurations on `nix develop`:
 
 | Directory | Contents | Purpose | Management |
 |-----------|----------|---------|------------|
-| `.claude/` | commands/, agents/, settings.json | Claude Code integration | Symlinked from Nix store + user customization |
-| `.factory/` | commands/, droids/, hooks/ | Factory Droid integration | Symlinked from Nix store + user customization |
+| `.envrc` | `use flake` | direnv loads the flake into the shell | Created if missing, then auto-`direnv allow` |
 | `.zed/` | Full Zed editor config | Zed editor configuration | Symlinked from Nix store (read-only) |
-| `biome.json` | Config extends ~/.config/biome/ | Biome formatter/linter | Auto-generated if missing |
+| `biome.json` | Extends `~/.config/biome/` | Biome formatter/linter | Auto-generated if missing |
 
 ### Key Implementation Details
 
-- **Symlink strategy**: Full-directory symlinks for configs without internal relative paths (.zed), subdirectory symlinks for configs with user customization (.claude, .factory)
+- **Symlink strategy**: Full-directory symlink for `.zed` (no internal relative paths); `.envrc` and `biome.json` are generated in-place, not symlinked
 - **Nix store paths**: Uses `${self}` references in flake.nix to handle symlinks correctly in `/nix/store`
-- **User customization**: Copies default settings.json on first run for user to customize
-- **Idempotent**: Checks `if [ ! -d .claude ]` to avoid overwriting user changes
+- **Idempotent**: Each file/link is created only when absent, so user edits are never overwritten
 
 ### The `inputs ? dev-config` Pattern
 

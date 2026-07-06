@@ -55,4 +55,4 @@ Catalog of documentation in the dev-config repository. Each top-level component 
 
 ## AI Tooling (`ai/`)
 
-Functional config copied to `~/.claude/` by Home Manager — not documentation. `ai/agents/` (agent definitions), `ai/commands/` (slash commands), `ai/skills/`, `ai/hooks/` (scripts).
+Functional config exported globally by Home Manager — not documentation. `ai/skills/` (Effect/Nx skills, exported to `~/.claude/skills` + `~/.agents/skills`; `mattpocock/skills` vendored alongside) and `ai/hooks/` (Biome / type-safety hook scripts).

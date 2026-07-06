@@ -10,7 +10,7 @@ Hooks are automated shell commands that execute at specific points in Claude Cod
 
 **Configuration:** `.claude/settings.json` (project-level, committed to git)
 
-**Wiring:** Hooks run from `ai/hooks/` via the `bash ai/hooks/*.sh` commands in `.claude/settings.json`. The `claude-code.nix` module copies `ai/agents/` and `ai/commands/` to `~/.claude/{agents,commands}` (`cp -Lr`, writable); hook scripts are referenced in-repo, not copied.
+**Wiring:** Hooks run from `ai/hooks/` via the `bash ai/hooks/*.sh` commands in `.claude/settings.json`. The `claude-code.nix` module exports `ai/skills/` to `~/.claude/skills` and `~/.agents/skills` (`cp -Lr`, writable); hook scripts are referenced in-repo, not copied.
 
 ## Hook Scripts
 
@@ -236,8 +236,8 @@ echo "Exit code: $?"  # Should be 0 (warning only, request allowed)
 
 The Home Manager module (`modules/home-manager/programs/claude-code.nix`) automatically:
 
-1. Copies `ai/agents/` to `~/.claude/agents/` (`cp -Lr`, writable)
-2. Copies `ai/commands/` to `~/.claude/commands/` (`cp -Lr`, writable)
+1. Exports `ai/skills/` to `~/.claude/skills/` and `~/.agents/skills/` (`cp -Lr`, writable)
+2. Purges stale `~/.claude/{agents,commands}` copies from earlier versions
 3. Merges `enableAllProjectMcpServers` + `mcpServers` into `~/.claude.json`
 
 Hook scripts in `ai/hooks/` are referenced in-repo by `.claude/settings.json` (`bash ai/hooks/*.sh`); they are not copied or symlinked.
