@@ -67,7 +67,7 @@ in {
   # JavaScript/TypeScript runtimes + package managers
   # On PATH for every dev surface (devShell + Home Manager + DevPod image).
   runtimes = [
-    pkgs.nodejs_24 # Node.js 24 (latest stable) - also provides npm + corepack
+    pkgs.nodejs_26 # Node.js 26 (latest stable) - also provides npm + corepack
     pkgs.pnpm # repo pins packageManager: pnpm@10.x
     bun-latest # Bun 1.3.14 (overridden — omp needs >= 1.3.14; see top of file)
   ];
