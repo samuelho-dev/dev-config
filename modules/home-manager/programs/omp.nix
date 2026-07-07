@@ -60,6 +60,7 @@ in {
     home.activation.configureOmp = lib.hm.dag.entryAfter ["writeBoundary" "installOmpCli"] ''
       if command -v omp &>/dev/null; then
         $DRY_RUN_CMD omp config set memory.backend hindsight >/dev/null 2>&1 || true
+        $DRY_RUN_CMD omp config set autolearn.enabled true >/dev/null 2>&1 || true
         if [ -n "''${HINDSIGHT_API_URL:-}" ]; then
           $DRY_RUN_CMD omp config set hindsight.apiUrl "''${HINDSIGHT_API_URL}" >/dev/null 2>&1 || true
         fi
