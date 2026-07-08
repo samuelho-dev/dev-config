@@ -1,43 +1,22 @@
 {
   description = "Project with dev-config integration";
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    dev-config.url = "github:samuelho-dev/dev-config";
-  };
+  # Single source of truth: dev-config carries nixpkgs + the shell recipe.
+  # No project-level nixpkgs input — everything follows the hub, so there is
+  # exactly one nixpkgs to update (bump dev-config).
+  inputs.dev-config.url = "github:samuelho-dev/dev-config";
 
-  outputs = {
-    nixpkgs,
-    dev-config,
-    ...
-  }: let
-    # Supported systems
-    systems = ["aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux"];
-
-    # Helper to generate attrs for all systems
-    forAllSystems = fn:
-      nixpkgs.lib.genAttrs systems (system:
-        fn {
-          pkgs = nixpkgs.legacyPackages.${system};
-          inherit system;
-        });
-  in {
-    devShells = forAllSystems ({pkgs, ...}: {
-      default = pkgs.mkShell {
-        packages = [
-          # Add project-specific tools here only when the project needs them.
-        ];
-
-        shellHook = ''
-          ${dev-config.lib.devShellHook}
-
-          # Add project-specific shell setup here
-          echo "🚀 Development environment ready"
-        '';
+  outputs = {dev-config, ...}: {
+    devShells = dev-config.lib.forEachSystem ({pkgs, ...}: {
+      default = dev-config.lib.mkDevShell {
+        inherit pkgs;
+        # Project-specific tools only (e.g. [pkgs.ffmpeg pkgs.postgresql]):
+        packages = [];
+        # Project-specific shell setup:
+        extraHook = ''echo "🚀 Development environment ready"'';
       };
     });
 
-    # Optional: Add formatter
-    formatter = forAllSystems ({pkgs, ...}: pkgs.alejandra);
+    formatter = dev-config.lib.forEachSystem ({pkgs, ...}: pkgs.alejandra);
   };
 }

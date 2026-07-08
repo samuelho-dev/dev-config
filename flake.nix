@@ -111,6 +111,28 @@
       fi
     '';
 
+    # Reusable helpers for consumer ("spoke") project flakes.
+    # Goal: spokes stay thin + consistent — one nixpkgs, one shell recipe,
+    # defined here once. See templates/default/flake.nix for usage.
+    lib.forEachSystem = forAllSystems;
+
+    # Build a project dev shell: dev-config's toolchain + hook, plus the
+    # project's own native deps and shell setup.
+    lib.mkDevShell = {
+      pkgs,
+      packages ? [],
+      env ? {},
+      extraHook ? "",
+    }:
+      pkgs.mkShellNoCC {
+        packages = getDevPackages pkgs ++ packages;
+        env = {NIXPKGS_ALLOW_UNFREE = "1";} // env;
+        shellHook = ''
+          ${self.lib.devShellHook}
+          ${extraHook}
+        '';
+      };
+
     packages = forAllSystems ({pkgs, ...}: {
       default = pkgs.buildEnv {
         name = "dev-config-packages";
