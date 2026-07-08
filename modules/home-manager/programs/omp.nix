@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }: let
   cfg = config.dev-config.omp;
@@ -15,11 +14,6 @@ in {
       description = "npm package for the omp CLI (bin: omp).";
     };
 
-    mattSkills = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Vendor mattpocock/skills into ~/.agents/skills + ~/.claude/skills (cloned, git-pulled, symlinked on activation).";
-    };
 
     obsidian = {
       enable = lib.mkOption {
@@ -77,31 +71,6 @@ in {
         $DRY_RUN_CMD mkdir -p "$HOME/.config/obsidian" "$VAULT_PATH"
         if [ -z "''${DRY_RUN_CMD:-}" ]; then
           printf '{"vaults":{"main":{"path":"%s","ts":0,"open":true}}}\n' "$VAULT_PATH" > "$HOME/.config/obsidian/obsidian.json"
-        fi
-      ''
-    );
-
-    # mattpocock/skills lives in the skill roots omp discovers (~/.agents/skills
-    # native, ~/.claude/skills), alongside the dev-config Effect/Nx skills.
-    # Skill names are unique across sources and never collide.
-    home.activation.vendorMattSkills = lib.mkIf cfg.mattSkills (
-      lib.hm.dag.entryAfter ["writeBoundary"] ''
-        REPO="$HOME/.local/share/mattpocock-skills"
-        if [ ! -d "$REPO/.git" ]; then
-          $DRY_RUN_CMD ${pkgs.git}/bin/git clone --depth 1 https://github.com/mattpocock/skills "$REPO" 2>/dev/null || true
-        else
-          $DRY_RUN_CMD ${pkgs.git}/bin/git -C "$REPO" pull --ff-only 2>/dev/null || true
-        fi
-        if [ -d "$REPO/skills" ]; then
-          for DEST in "$HOME/.agents/skills" "$HOME/.claude/skills"; do
-            $DRY_RUN_CMD mkdir -p "$DEST"
-            for SRC in "$REPO"/skills/*/*/; do
-              [ -f "''${SRC}SKILL.md" ] || continue
-              case "$SRC" in *"/deprecated/"*|*"/node_modules/"*) continue ;; esac
-              NAME="$(basename "''${SRC%/}")"
-              $DRY_RUN_CMD ln -sfn "''${SRC%/}" "$DEST/$NAME"
-            done
-          done
         fi
       ''
     );
