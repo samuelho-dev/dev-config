@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
+  "_comment": "Canonical MCP server list. Single source of truth fanned out to Claude Code (~/.claude.json), OMP (~/.omp/agent/mcp.json), and Codex (~/.codex/config.toml) by ai/mcp/apply-mcp.sh. linear uses keyless OAuth via mcp-remote (first use prompts an interactive login, then caches). A server that needs a static API key can add an `auth` object { header, prefix, op, env } resolved via 1Password (op://) on nix machines or an env var in containers. Project-specific servers belong in each project's .mcp.json, not here.",
+  "mcpServers": {
+    "linear-server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.linear.app/sse"]
+    },
+    "effect-docs": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["--bun", "effect-mcp@latest"]
+    }
+  }
+}

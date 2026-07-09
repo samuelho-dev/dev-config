@@ -17,6 +17,7 @@
     ./programs/claude-code.nix
     ./programs/opencode.nix
     ./programs/omp.nix
+    ./programs/mcp.nix
     ./programs/biome.nix
     ./programs/python.nix
     ./services/direnv.nix

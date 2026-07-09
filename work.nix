@@ -39,9 +39,11 @@
     claude-code = {
       enable = true;
       litellm.enable = false;
-      enableAllProjectMcpServers = true;
-      mcpServers = {}; # Add work-specific servers here
     };
+
+    # Work machine has no 1Password/sops, so skip the shared global MCP servers
+    # (their op:// secrets won't resolve). Project .mcp.json servers still load.
+    mcp.servers = {};
 
     # Ghostty installed via Homebrew on macOS (not in nixpkgs)
     ghostty = {
