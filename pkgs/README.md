@@ -23,20 +23,21 @@ in {
 
 ## Categories
 
-There are exactly four categories. Each is a plain list of packages.
+There are exactly five categories. Each is a plain list of packages.
 
 | Category | Packages |
 |----------|----------|
 | **core** | git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit |
-| **runtimes** | nodejs_24, bun, uv |
+| **runtimes** | nodejs_26, pnpm, bun |
 | **utilities** | direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, tree-sitter |
 | **linting** | biome |
+| **cloud** | terraform, awscli2, cloudflared, kubectl, helm, k9s, argocd, talosctl, doctl, hcloud, kubeseal, kubeconform, kustomize, sops, age, cilium-cli |
 
 Notes:
 - Editor LSPs (`nixd`, `pyright`, `ts_ls`, `lua_ls`, ...) are **not** here — they
   live in `modules/home-manager/programs/neovim.nix`.
 - `tree-sitter` is the CLI used to compile parsers for nvim-treesitter (main branch).
-- `all` is a self-referential function: `all = self: self.core ++ self.runtimes ++ self.utilities ++ self.linting`.
+- `all` combines `core`, `utilities`, `linting`, `runtimes`, and `cloud`.
 
 ## Usage
 
@@ -91,7 +92,7 @@ mlg-mcp                  # MCP server mode
 
 ```
 pkgs/
-+-- default.nix                  # Central package definitions (4 categories + `all`)
++-- default.nix                  # Central package definitions (5 categories + `all`)
 +-- monorepo-library-generator/  # Custom package: library scaffolding tool
     +-- default.nix
 ```

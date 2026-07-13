@@ -72,10 +72,31 @@ in {
     bun-latest # Bun 1.3.14 (overridden — omp needs >= 1.3.14; see top of file)
   ];
 
+  # Cloud / infrastructure-as-code CLIs
+  cloud = [
+    pkgs.terraform # IaC (unfree BSL; allowUnfree set in flake.nix)
+    pkgs.awscli2 # AWS CLI v2
+    pkgs.cloudflared # Cloudflare Tunnel daemon
+    pkgs.kubectl
+    pkgs.kubernetes-helm
+    pkgs.k9s
+    pkgs.argocd
+    pkgs.talosctl
+    pkgs.doctl
+    pkgs.hcloud
+    pkgs.kubeseal
+    pkgs.kubeconform
+    pkgs.kustomize
+    pkgs.sops
+    pkgs.age
+    pkgs.cilium-cli
+  ];
+
   # Combine all packages into a single list
   all = self:
     self.core
     ++ self.utilities
     ++ self.linting
-    ++ self.runtimes;
+    ++ self.runtimes
+    ++ self.cloud;
 }
