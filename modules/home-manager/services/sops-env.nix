@@ -51,7 +51,7 @@
       printf '%s\n' ""
     } > "$TMP"
 
-    # Resolve all five keys in ONE op call and append them as static, shell-quoted exports.
+    # Resolve all five keys in ONE op call and append only non-empty, non-placeholder exports.
     KEYS_OK=0
     if [ -n "$OP_BIN" ] && [ -f "${opServiceAccountTokenPath}" ]; then
       if OP_SERVICE_ACCOUNT_TOKEN="$(cat ${opServiceAccountTokenPath})" \
@@ -59,12 +59,16 @@
            --fields label=ANTHROPIC_API_KEY,label=OPENAI_API_KEY,label=GOOGLE_AI_STUDIO_KEY,label=LITELLM_KEY,label=OPENROUTER_API_KEY \
            --reveal 2>/dev/null \
          | ${pkgs.jq}/bin/jq -r '
-             def pick($l): (first(.[] | select(.label == $l).value) // "") | @sh;
-             "export ANTHROPIC_API_KEY="  + pick("ANTHROPIC_API_KEY"),
-             "export OPENAI_API_KEY="     + pick("OPENAI_API_KEY"),
-             "export GOOGLE_AI_API_KEY="  + pick("GOOGLE_AI_STUDIO_KEY"),
-             "export LITELLM_MASTER_KEY=" + pick("LITELLM_KEY"),
-             "export OPENROUTER_API_KEY=" + pick("OPENROUTER_API_KEY")
+             def field($label): first(.[] | select(.label == $label).value) // "";
+             def export($env; $label):
+               field($label) as $value
+               | select($value != "" and ($value | startswith("PLACEHOLDER_") | not))
+               | "export \($env)=" + ($value | @sh);
+             export("ANTHROPIC_API_KEY"; "ANTHROPIC_API_KEY"),
+             export("OPENAI_API_KEY"; "OPENAI_API_KEY"),
+             export("GOOGLE_AI_API_KEY"; "GOOGLE_AI_STUDIO_KEY"),
+             export("LITELLM_MASTER_KEY"; "LITELLM_KEY"),
+             export("OPENROUTER_API_KEY"; "OPENROUTER_API_KEY")
            ' >> "$TMP" 2>/dev/null \
          && grep -q '^export ANTHROPIC_API_KEY=' "$TMP"; then
         KEYS_OK=1
@@ -93,7 +97,7 @@ in {
         - Centralized secrets: AI keys stored in 1Password vault
         - On-demand loading: Keys fetched via `op item get` when needed
 
-        Environment variables set:
+        Environment variables set when their 1Password values are non-empty and non-placeholder:
         - OP_SERVICE_ACCOUNT_TOKEN (from sops-nix for non-interactive op CLI)
         - ANTHROPIC_API_KEY (from 1Password vault)
         - OPENAI_API_KEY (from 1Password vault)
