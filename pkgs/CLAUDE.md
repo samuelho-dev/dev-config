@@ -56,6 +56,7 @@ Note: Workspace initialization (biome.json, editor configs) is handled by `lib.d
 | **runtimes** | Language runtimes | nodejs_24, bun, uv |
 | **utilities** | Dev utilities | direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, tree-sitter |
 | **linting** | Repo-wide linters/formatters | biome (editor LSPs live in neovim.nix) |
+| **cloud** | IaC / cloud CLIs | terraform, awscli2, cloudflared |
 
 ## Adding/Modifying
 
