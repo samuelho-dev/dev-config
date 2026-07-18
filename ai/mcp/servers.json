@@ -16,6 +16,16 @@
       "type": "stdio",
       "command": "bunx",
       "args": ["--bun", "effect-mcp@latest"]
+    },
+    "vercel": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@robinson_ai_systems/vercel-mcp@1.0.1"],
+      "auth": {
+        "op": "op://Dev/Vercel/TOKEN",
+        "env": "VERCEL_TOKEN",
+        "envKey": "VERCEL_TOKEN"
+      }
     }
   }
 }

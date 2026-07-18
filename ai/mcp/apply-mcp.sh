@@ -45,6 +45,7 @@ for name in $(printf '%s' "$RESOLVED" | jq -r 'keys[]'); do
   prefix=$(printf '%s' "$auth" | jq -r '.prefix // ""')
   opref=$(printf '%s' "$auth" | jq -r '.op // ""')
   envname=$(printf '%s' "$auth" | jq -r '.env // ""')
+  envkey=$(printf '%s' "$auth" | jq -r '.envKey // ""')
 
   secret=""
   if [ -n "$opref" ] && command -v op >/dev/null 2>&1; then
@@ -55,11 +56,19 @@ for name in $(printf '%s' "$RESOLVED" | jq -r 'keys[]'); do
   fi
 
   if [ -n "$secret" ]; then
-    RESOLVED=$(printf '%s' "$RESOLVED" | jq -c \
-      --arg n "$name" --arg h "$header" --arg v "$prefix$secret" \
-      '.[$n].headers[$h] = $v | del(.[$n].auth)')
+    if [ -n "$envkey" ]; then
+      # stdio server: inject the resolved secret into the child process env
+      # (envKey) instead of an HTTP header — the CLIs pass .env to the subprocess.
+      RESOLVED=$(printf '%s' "$RESOLVED" | jq -c \
+        --arg n "$name" --arg k "$envkey" --arg v "$secret" \
+        '.[$n].env[$k] = $v | del(.[$n].auth)')
+    else
+      RESOLVED=$(printf '%s' "$RESOLVED" | jq -c \
+        --arg n "$name" --arg h "$header" --arg v "$prefix$secret" \
+        '.[$n].headers[$h] = $v | del(.[$n].auth)')
+    fi
   else
-    echo "mcp: WARN no secret for '$name' (op:$opref env:$envname); server listed without auth header" >&2
+    echo "mcp: WARN no secret for '$name' (op:$opref env:$envname); server listed without auth" >&2
     RESOLVED=$(printf '%s' "$RESOLVED" | jq -c --arg n "$name" 'del(.[$n].auth)')
   fi
 done
