@@ -1,9 +1,19 @@
 {
   config,
   lib,
+  pkgs,
+  inputs ? {},
   ...
 }: let
   cfg = config.dev-config.omp;
+  pluginsFileSrc =
+    if inputs ? dev-config
+    then "${inputs.dev-config}/ai/omp/plugins.txt"
+    else ../../../ai/omp/plugins.txt;
+  applyPluginsScriptSrc =
+    if inputs ? dev-config
+    then "${inputs.dev-config}/ai/omp/apply-plugins.sh"
+    else ../../../ai/omp/apply-plugins.sh;
 in {
   options.dev-config.omp = {
     enable = lib.mkEnableOption "Oh My Pi (omp) coding-agent CLI";
@@ -13,7 +23,6 @@ in {
       default = "@oh-my-pi/pi-coding-agent";
       description = "npm package for the omp CLI (bin: omp).";
     };
-
 
     obsidian = {
       enable = lib.mkOption {
@@ -44,6 +53,7 @@ in {
     # activation does NOT run — the container entrypoint performs the same
     # `bun add -g` on boot. Both paths need bun >= 1.3.14 (see pkgs/default.nix).
     home.activation.installOmpCli = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
+      export PATH="$HOME/.bun/bin:$PATH"
       if command -v bun &>/dev/null; then
         if ! command -v omp &>/dev/null || ! omp --version &>/dev/null 2>&1; then
           $DRY_RUN_CMD bun add -g ${cfg.package} 2>/dev/null || true
@@ -51,7 +61,14 @@ in {
       fi
     '';
 
+    home.activation.installOmpPlugins = lib.hm.dag.entryAfter ["installOmpCli"] ''
+      export PATH="$HOME/.bun/bin:$PATH"
+      OMP_PLUGINS_FILE=${pluginsFileSrc} \
+        $DRY_RUN_CMD ${pkgs.bash}/bin/bash ${applyPluginsScriptSrc} || true
+    '';
+
     home.activation.configureOmp = lib.hm.dag.entryAfter ["writeBoundary" "installOmpCli"] ''
+      export PATH="$HOME/.bun/bin:$PATH"
       if command -v omp &>/dev/null; then
         $DRY_RUN_CMD omp config set memory.backend hindsight >/dev/null 2>&1 || true
         $DRY_RUN_CMD omp config set autolearn.enabled true >/dev/null 2>&1 || true

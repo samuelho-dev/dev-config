@@ -18,10 +18,16 @@ machine via Home Manager, and into individual projects via the flake's `devShell
 ### `ai/` — Centralized AI Resources (single source of truth)
 - `skills/` — Effect/Nx skills (Effect service patterns, type-safety, GritQL)
 - `hooks/` — Biome / type-safety hooks (referenced in-repo by `.claude/settings.json`)
+- `mcp/` — canonical MCP server list and cross-agent fan-out script
+- `omp/` — canonical OMP plugin list and idempotent installer
 
 `claude-code.nix` (Home Manager) exports `ai/skills` to `~/.claude/skills` and
 `~/.agents/skills` (via `cp -Lr`); `omp.nix` vendors `mattpocock/skills` into the
 same roots. AI configs are **global** — no project-level sync is needed.
+
+`omp.nix` and the DevPod/Orca entrypoints run `ai/omp/apply-plugins.sh`, so
+workstations and container runtimes install the same plugins from
+`ai/omp/plugins.txt`.
 
 ### `.claude/` — Project-level Claude Code config (this repo)
 - `settings.json` — project hooks (reference `ai/hooks/`)
@@ -42,7 +48,7 @@ and the symlink strategy. Treat that table as authoritative.
 
 ```
 dev-config/                         [Source, Git]
-   ├── ai/  (skills, hooks, tools)
+   ├── ai/  (skills, hooks, MCP servers, OMP plugins)
    ├── zed/
    └── biome/
 
@@ -51,6 +57,7 @@ dev-config/                         [Source, Git]
 
 ~/.{claude,agents}/skills  ← ai/skills + vendored mattpocock/skills   [Global, per-machine]
 ~/.config/biome/  ← linting config
+~/.omp/plugins  ← ai/omp/plugins.txt
 
       │ nix develop  →  lib.devShellHook
       ▼
@@ -64,6 +71,9 @@ my-project/                          [Project Link]
 
 **Update AI resources:** edit files in `dev-config/ai/`, then
 `home-manager switch --flake .` in this repo.
+
+**Update global OMP plugins:** edit `ai/omp/plugins.txt`, then run
+`home-manager switch --flake .`; DevPod/Orca images consume the same list on boot.
 
 **Re-initialize a project's editor config:**
 ```bash
