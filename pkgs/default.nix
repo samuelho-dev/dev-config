@@ -33,6 +33,43 @@
         };
       };
   });
+  vercelVersion = "57.0.0";
+  vercelPlatform =
+    {
+      "aarch64-darwin" = {
+        npmArch = "darwin-arm64";
+        hash = "sha512-1yXaFv7H5/b/VhphpiXrfGezkDAsA/NKUR1iujx2k43WP+Il+HiLvcFI1ONkogjtkYfZt6JWlhjIXgcXduSqaA==";
+      };
+      "x86_64-darwin" = {
+        npmArch = "darwin-x64";
+        hash = "sha512-jhvTu/LcEjECbBpsk62+g8H99YnB8iLNw8MTwBizDPUZdSIqbH1PmjF8JztfbB7Ke+pBTC1zSwmpsLq76zQ/9g==";
+      };
+      "aarch64-linux" = {
+        npmArch = "linux-arm64";
+        hash = "sha512-qw5m+B6ev9sZpmRGdZDLSnvo27XdS2oWHKEDfbof5oxTWEK6/uHYd26eDX94d1GFTrMsFtuzKuNjFPBy5QOUcQ==";
+      };
+      "x86_64-linux" = {
+        npmArch = "linux-x64";
+        hash = "sha512-72JG1hqCs/jub3oofI6bIaqGox7P6qurj8XCvRyLCeXdiyNxwzGoo80e2jZ4FWjl9sbvG8EhGJ1oW1BObMpFtA==";
+      };
+    }.${
+      pkgs.stdenv.hostPlatform.system
+    };
+  vercel-cli = pkgs.stdenvNoCC.mkDerivation {
+    pname = "vercel-cli";
+    version = vercelVersion;
+    src = pkgs.fetchurl {
+      url = "https://registry.npmjs.org/@vercel/vc-native-${vercelPlatform.npmArch}/-/vc-native-${vercelPlatform.npmArch}-${vercelVersion}.tgz";
+      inherit (vercelPlatform) hash;
+    };
+    sourceRoot = "package";
+    installPhase = ''
+      runHook preInstall
+      install -Dm755 bin/vercel "$out/bin/vercel"
+      ln -s vercel "$out/bin/vc"
+      runHook postInstall
+    '';
+  };
 in {
   # Core development tools
   core = [
@@ -75,6 +112,9 @@ in {
   # Cloud / infrastructure-as-code CLIs
   cloud = [
     pkgs.terraform # IaC (unfree BSL; allowUnfree set in flake.nix)
+    pkgs._1password-cli
+    pkgs.stripe-cli
+    vercel-cli
     pkgs.awscli2 # AWS CLI v2
     pkgs.cloudflared # Cloudflare Tunnel daemon
     pkgs.kubectl
