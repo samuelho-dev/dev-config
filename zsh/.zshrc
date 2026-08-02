@@ -127,13 +127,13 @@ export VISUAL='nvim'
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Add ~/.local/bin to PATH if it exists
-[ -d "$HOME/.local/bin" ] && export PATH="$HOME/.local/bin:$PATH"
+# Home Manager normally supplies this session path; keep standalone DevPod and
+# Orca shells working when activation does not run.
+[[ ":$PATH:" == *":$HOME/.local/bin:"* ]] || export PATH="$HOME/.local/bin:$PATH"
 
-# bun setup (if installed)
+# Bun environment (packages are not exposed globally on PATH).
 if [ -d "$HOME/.bun" ]; then
   export BUN_INSTALL="$HOME/.bun"
-  [ -d "$BUN_INSTALL/bin" ] && export PATH="$BUN_INSTALL/bin:$PATH"
   [ -s "$BUN_INSTALL/_bun" ] && source "$BUN_INSTALL/_bun"
 fi
 

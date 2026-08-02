@@ -7,6 +7,5 @@ result-*
 
 # Editor symlinks (managed by dev-config devShellHook)
 .claude
-.factory
 .zed
 .grit

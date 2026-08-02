@@ -16,6 +16,13 @@
 #   - MCP server lists (per-profile)
 #   - Disable overrides (per-profile)
 {lib, ...}: {
+  # User-installed CLIs expose their stable launchers here. Package-manager
+  # implementation directories (for example ~/.bun/bin) stay off the global
+  # PATH so every shell and automation resolves the same executable.
+  home.sessionPath = [
+    "$HOME/.local/bin"
+  ];
+
   home.sessionVariables = {
     EDITOR = "nvim";
     VISUAL = "nvim";

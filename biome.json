@@ -22,7 +22,6 @@
       "biome/**/*.ts",
       "biome/**/*.json",
       "zed/**/*.json",
-      ".factory/**/*.json",
       "test-patterns/**/*.ts",
       "test-patterns/**/*.json",
       "*.ts",

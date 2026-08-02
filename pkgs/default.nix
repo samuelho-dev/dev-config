@@ -2,37 +2,6 @@
 # Single source of truth for all development packages
 # Used by both devShells and Home Manager modules
 {pkgs}: let
-  # Bun 1.3.14 — nixpkgs (even unstable HEAD) is pinned at 1.3.13, but omp
-  # (@oh-my-pi/pi-coding-agent) refuses to run on < 1.3.14. Override the
-  # prebuilt-binary sources with the 1.3.14 release; keep all build logic.
-  bun-latest = pkgs.bun.overrideAttrs (old: {
-    version = "1.3.14";
-    # src is computed from passthru.sources via finalAttrs (recomputes below);
-    # the version/src heuristic can't see that, so assert intent explicitly.
-    __intentionallyOverridingVersion = true;
-    passthru =
-      old.passthru
-      // {
-        sources = {
-          "aarch64-darwin" = pkgs.fetchurl {
-            url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-darwin-aarch64.zip";
-            hash = "sha256-2LliIYKK1vl6x6wKt+lYcjQa92MAHogD6CZ2UsJlJiA=";
-          };
-          "aarch64-linux" = pkgs.fetchurl {
-            url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-linux-aarch64.zip";
-            hash = "sha256-on/7Y6gxA3WDbg1vZorhf6jY0YuIw3yCHGUzGXOhmjs=";
-          };
-          "x86_64-darwin" = pkgs.fetchurl {
-            url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-darwin-x64-baseline.zip";
-            hash = "sha256-PjWtb1OXGpg0v55nhuKt9ytfGSHMmpxf3gc9KXKUQHY=";
-          };
-          "x86_64-linux" = pkgs.fetchurl {
-            url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-linux-x64.zip";
-            hash = "sha256-lR7iruhV8IWVruxiJSJqKY0/6oOj3NZGXAnLzN9+hI8=";
-          };
-        };
-      };
-  });
   vercelVersion = "57.0.0";
   vercelPlatform =
     {
@@ -70,6 +39,43 @@
       runHook postInstall
     '';
   };
+  ompVersion = "17.2.4";
+  ompPlatform =
+    {
+      "aarch64-darwin" = {
+        asset = "omp-darwin-arm64";
+        hash = "sha256-850lbGsuzn8uuFwk/Ef/vjmheW6m7qJgWtVk/OQsQI4=";
+      };
+      "x86_64-darwin" = {
+        asset = "omp-darwin-x64";
+        hash = "sha256-mXvAyYrCvTAQv4b947dTR4Mt1cEQvGxgOs5n5wokn5U=";
+      };
+      "aarch64-linux" = {
+        asset = "omp-linux-arm64";
+        hash = "sha256-rEc8v2HMGiYH0og5MOZB4V6Oedos3UL/7I1wGthaIZw=";
+      };
+      "x86_64-linux" = {
+        asset = "omp-linux-x64";
+        hash = "sha256-pucIbzuAf2ilsItJWX9DSeXONzZWObevXpyP41mYmEA=";
+      };
+    }.${
+      pkgs.stdenv.hostPlatform.system
+    };
+  omp-cli = pkgs.stdenvNoCC.mkDerivation {
+    pname = "omp";
+    version = ompVersion;
+    src = pkgs.fetchurl {
+      url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/${ompPlatform.asset}";
+      inherit (ompPlatform) hash;
+    };
+    dontUnpack = true;
+    installPhase = ''
+      runHook preInstall
+      install -Dm755 "$src" "$out/bin/omp"
+      runHook postInstall
+    '';
+    meta.mainProgram = "omp";
+  };
 in {
   # Core development tools
   core = [
@@ -106,7 +112,7 @@ in {
   runtimes = [
     pkgs.nodejs_26 # Node.js 26 (latest stable) - also provides npm + corepack
     pkgs.pnpm # repo pins packageManager: pnpm@10.x
-    bun-latest # Bun 1.3.14 (overridden — omp needs >= 1.3.14; see top of file)
+    pkgs.bun
   ];
 
   # Cloud / infrastructure-as-code CLIs
@@ -132,11 +138,19 @@ in {
     pkgs.cilium-cli
   ];
 
+  inherit omp-cli;
+
+  # Coding-agent CLIs
+  agents = [
+    omp-cli
+  ];
+
   # Combine all packages into a single list
   all = self:
     self.core
     ++ self.utilities
     ++ self.linting
     ++ self.runtimes
+    ++ self.agents
     ++ self.cloud;
 }

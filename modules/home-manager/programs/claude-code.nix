@@ -77,16 +77,6 @@ in {
       cc = "claude --dangerously-skip-permissions";
     };
 
-    # Install Claude Code CLI when bun is already available outside Nix.
-    home.activation.installClaudeCodeCli = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
-      if command -v bun &>/dev/null; then
-        # Check if claude is already installed and up to date
-        if ! command -v claude &>/dev/null || ! claude --version &>/dev/null 2>&1; then
-          $DRY_RUN_CMD bun add -g @anthropic-ai/claude-code 2>/dev/null || true
-        fi
-      fi
-    '';
-
     # Ensure ~/.claude directory exists
     home.activation.createClaudeConfigDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
       $DRY_RUN_CMD mkdir -p "$HOME/.claude"
@@ -97,21 +87,81 @@ in {
     # exported, and stale global copies of them do not persist.
     home.activation.exportClaudeConfigs = lib.mkIf (cfg.exportConfig && cfg.configSource != null) (
       lib.hm.dag.entryAfter ["writeBoundary"] ''
-        $DRY_RUN_CMD rm -rf "$HOME/.claude/agents" "$HOME/.claude/commands"
+                $DRY_RUN_CMD rm -rf "$HOME/.claude/agents" "$HOME/.claude/commands"
 
-        SKILLS_SRC="${cfg.configSource}/../ai/skills"
-        if [ -d "$SKILLS_SRC" ]; then
-          for DEST in "$HOME/.claude/skills" "$HOME/.agents/skills"; do
-            $DRY_RUN_CMD mkdir -p "$DEST"
-            for SKILL in "$SKILLS_SRC"/*/; do
-              [ -d "$SKILL" ] || continue
-              NAME="$(basename "$SKILL")"
-              $DRY_RUN_CMD rm -rf "$DEST/$NAME"
-              $DRY_RUN_CMD cp -Lr "''${SKILL%/}" "$DEST/$NAME"
-              $DRY_RUN_CMD chmod -R +w "$DEST/$NAME"
-            done
-          done
-        fi
+                SKILLS_SRC="${cfg.configSource}/../ai/skills"
+                MANIFEST="$HOME/.local/state/dev-config/skills"
+                $DRY_RUN_CMD mkdir -p "$(dirname "$MANIFEST")"
+                if [ -f "$MANIFEST" ]; then
+                  OLD_SKILLS="$(cat "$MANIFEST")"
+                else
+                  OLD_SKILLS='ask-matt
+        batch-grill-me
+        claude-handoff
+        code-review
+        codebase-design
+        design-an-interface
+        diagnosing-bugs
+        domain-modeling
+        edit-article
+        effect-service-architect
+        git-guardrails-claude-code
+        grill-me
+        grill-with-docs
+        grilling
+        gritql-linter-effect-nx
+        handoff
+        implement
+        improve-codebase-architecture
+        loop-me
+        migrate-to-shoehorn
+        obsidian-vault
+        prototype
+        qa
+        request-refactor-plan
+        research
+        resolving-merge-conflicts
+        scaffold-exercises
+        setup-matt-pocock-skills
+        setup-pre-commit
+        setup-ts-deep-modules
+        tdd
+        teach
+        to-questionnaire
+        to-spec
+        to-tickets
+        triage
+        type-safety-enforcer
+        ubiquitous-language
+        wayfinder
+        wizard
+        writing-beats
+        writing-fragments
+        writing-great-skills
+        writing-shape'
+                fi
+
+                if [ -d "$SKILLS_SRC" ]; then
+                  for DEST in "$HOME/.claude/skills" "$HOME/.agents/skills"; do
+                    $DRY_RUN_CMD mkdir -p "$DEST"
+                    printf '%s\n' "$OLD_SKILLS" | while IFS= read -r NAME; do
+                      [ -n "$NAME" ] || continue
+                      $DRY_RUN_CMD rm -rf "$DEST/$NAME"
+                    done
+                    for SKILL in "$SKILLS_SRC"/*/; do
+                      [ -d "$SKILL" ] || continue
+                      NAME="$(basename "$SKILL")"
+                      $DRY_RUN_CMD cp -Lr "''${SKILL%/}" "$DEST/$NAME"
+                      $DRY_RUN_CMD chmod -R +w "$DEST/$NAME"
+                    done
+                  done
+
+                  if [ -z "''${DRY_RUN_CMD:-}" ]; then
+                    for SKILL in "$SKILLS_SRC"/*/; do
+                      [ -d "$SKILL" ] && basename "$SKILL"
+                    done > "$MANIFEST"
+                  fi
+                fi
       ''
     );
 

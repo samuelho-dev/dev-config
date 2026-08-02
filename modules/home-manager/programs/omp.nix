@@ -6,6 +6,7 @@
   ...
 }: let
   cfg = config.dev-config.omp;
+  ompPackage = (import ../../../pkgs {inherit pkgs;}).omp-cli;
   pluginsFileSrc =
     if inputs ? dev-config
     then "${inputs.dev-config}/ai/omp/plugins.txt"
@@ -17,12 +18,6 @@
 in {
   options.dev-config.omp = {
     enable = lib.mkEnableOption "Oh My Pi (omp) coding-agent CLI";
-
-    package = lib.mkOption {
-      type = lib.types.str;
-      default = "@oh-my-pi/pi-coding-agent";
-      description = "npm package for the omp CLI (bin: omp).";
-    };
 
     obsidian = {
       enable = lib.mkOption {
@@ -46,43 +41,31 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # omp is not in nixpkgs and pulls native postinstalls (onnxruntime-node,
-    # protobufjs), so it can't be a declarative nix package like claude-code.
-    # Install it globally via bun when bun is available outside Nix (real-nix
-    # machines run HM activation). In the devpod/orca images — where HM
-    # activation does NOT run — the container entrypoint performs the same
-    # `bun add -g` on boot. Both paths need bun >= 1.3.14 (see pkgs/default.nix).
-    home.activation.installOmpCli = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
-      export PATH="$HOME/.bun/bin:$PATH"
-      if command -v bun &>/dev/null; then
-        if ! command -v omp &>/dev/null || ! omp --version &>/dev/null 2>&1; then
-          $DRY_RUN_CMD bun add -g ${cfg.package} 2>/dev/null || true
-        fi
-      fi
+    # OMP is a pinned native Nix package. Remove launchers from the former
+    # binary and Bun installs so PATH cannot select a second copy.
+    home.activation.removeLegacyOmpCli = lib.hm.dag.entryBefore ["writeBoundary"] ''
+      $DRY_RUN_CMD rm -f "$HOME/.local/bin/omp" "$HOME/.bun/bin/omp"
     '';
+    home.packages = lib.mkIf (!config.dev-config.packages.enable) [ompPackage];
 
-    home.activation.installOmpPlugins = lib.hm.dag.entryAfter ["installOmpCli"] ''
-      export PATH="$HOME/.bun/bin:$PATH"
+    home.activation.installOmpPlugins = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
+      export PATH="${ompPackage}/bin:$PATH"
       OMP_PLUGINS_FILE=${pluginsFileSrc} \
         $DRY_RUN_CMD ${pkgs.bash}/bin/bash ${applyPluginsScriptSrc} || true
     '';
 
-    home.activation.configureOmp = lib.hm.dag.entryAfter ["writeBoundary" "installOmpCli"] ''
-      export PATH="$HOME/.bun/bin:$PATH"
-      if command -v omp &>/dev/null; then
-        $DRY_RUN_CMD omp config set memory.backend hindsight >/dev/null 2>&1 || true
-        $DRY_RUN_CMD omp config set autolearn.enabled true >/dev/null 2>&1 || true
-        if [ -n "''${HINDSIGHT_API_URL:-}" ]; then
-          $DRY_RUN_CMD omp config set hindsight.apiUrl "''${HINDSIGHT_API_URL}" >/dev/null 2>&1 || true
-        fi
+    home.activation.configureOmp = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
+      OMP="${lib.getExe ompPackage}"
+      $DRY_RUN_CMD "$OMP" config set memory.backend hindsight >/dev/null 2>&1 || true
+      $DRY_RUN_CMD "$OMP" config set autolearn.enabled true >/dev/null 2>&1 || true
+      if [ -n "''${HINDSIGHT_API_URL:-}" ]; then
+        $DRY_RUN_CMD "$OMP" config set hindsight.apiUrl "''${HINDSIGHT_API_URL}" >/dev/null 2>&1 || true
       fi
     '';
 
     home.activation.installPiObsidian = lib.mkIf cfg.obsidian.enable (
-      lib.hm.dag.entryAfter ["writeBoundary" "installOmpCli"] ''
-        if command -v bun &>/dev/null; then
-          $DRY_RUN_CMD bun add -g ${cfg.obsidian.package} 2>/dev/null || true
-        fi
+      lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
+        $DRY_RUN_CMD ${pkgs.bun}/bin/bun add -g ${cfg.obsidian.package} 2>/dev/null || true
 
         VAULT_PATH="${cfg.obsidian.vaultPath}"
         $DRY_RUN_CMD mkdir -p "$HOME/.config/obsidian" "$VAULT_PATH"

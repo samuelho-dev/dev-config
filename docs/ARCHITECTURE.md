@@ -16,14 +16,15 @@ machine via Home Manager, and into individual projects via the flake's `devShell
 ## Source Layout
 
 ### `ai/` — Centralized AI Resources (single source of truth)
-- `skills/` — Effect/Nx skills (Effect service patterns, type-safety, GritQL)
+- `skills/` — active skills synchronized from `mattpocock/skills`.
+  OMP autolearn skills stay machine-local in `~/.omp/agent/managed-skills`.
 - `hooks/` — Biome / type-safety hooks (referenced in-repo by `.claude/settings.json`)
 - `mcp/` — canonical MCP server list and cross-agent fan-out script
 - `omp/` — canonical OMP plugin list and idempotent installer
 
 `claude-code.nix` (Home Manager) exports `ai/skills` to `~/.claude/skills` and
-`~/.agents/skills` (via `cp -Lr`); `omp.nix` vendors `mattpocock/skills` into the
-same roots. AI configs are **global** — no project-level sync is needed.
+`~/.agents/skills` (via `cp -Lr`). AI configs are **global** — no project-level
+sync is needed.
 
 `omp.nix` and the DevPod/Orca entrypoints run `ai/omp/apply-plugins.sh`, so
 workstations and container runtimes install the same plugins from
@@ -43,7 +44,7 @@ On `nix develop`, `lib.devShellHook` (in `flake.nix`) performs exactly:
 - generates `biome.json` extending `~/.config/biome/biome.json` if missing
 
 The root `CLAUDE.md` "Flake Composition & devShellHook" section documents the full
-table of what gets linked/generated (`.claude/`, `.factory/`, `.zed/`, `biome.json`)
+table of what gets linked/generated (`.claude/`, `.zed/`, `biome.json`)
 and the symlink strategy. Treat that table as authoritative.
 
 ```
@@ -55,7 +56,7 @@ dev-config/                         [Source, Git]
       │ Home Manager switch (claude-code.nix, biome module)
       ▼
 
-~/.{claude,agents}/skills  ← ai/skills + vendored mattpocock/skills   [Global, per-machine]
+~/.{claude,agents}/skills  ← ai/skills                                [Global, per-machine]
 ~/.config/biome/  ← linting config
 ~/.omp/plugins  ← ai/omp/plugins.txt
 

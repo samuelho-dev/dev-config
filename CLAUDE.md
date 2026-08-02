@@ -60,7 +60,7 @@ flake.nix                    # Entry point: exports homeManagerModules, nixosMod
 |   |   +-- services/        # Service modules (direnv.nix, sops-env.nix)
 |   +-- nixos/               # System-level modules (for NixOS servers)
 +-- ai/                      # Source of truth for AI configs (exported globally by Nix)
-|   +-- skills/              # Effect/Nx skills (exported to ~/.claude/skills + ~/.agents/skills)
+|   +-- skills/              # Active mattpocock/skills (exported to ~/.claude/skills + ~/.agents/skills)
 |   +-- hooks/               # PostToolUse/UserPromptSubmit hooks (referenced in-repo)
 +-- .claude/                 # Project-level Claude Code config (NOT commands/agents)
 |   +-- settings.json        # Project hooks (references ai/hooks/)

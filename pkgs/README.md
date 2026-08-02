@@ -23,7 +23,7 @@ in {
 
 ## Categories
 
-There are exactly five categories. Each is a plain list of packages.
+There are exactly six categories. Each is a plain list of packages.
 
 | Category | Packages |
 |----------|----------|
@@ -31,13 +31,14 @@ There are exactly five categories. Each is a plain list of packages.
 | **runtimes** | nodejs_26, pnpm, bun |
 | **utilities** | direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, tree-sitter |
 | **linting** | biome |
+| **agents** | omp |
 | **cloud** | terraform, awscli2, cloudflared, kubectl, helm, k9s, argocd, talosctl, doctl, hcloud, kubeseal, kubeconform, kustomize, sops, age, cilium-cli |
 
 Notes:
 - Editor LSPs (`nixd`, `pyright`, `ts_ls`, `lua_ls`, ...) are **not** here — they
   live in `modules/home-manager/programs/neovim.nix`.
 - `tree-sitter` is the CLI used to compile parsers for nvim-treesitter (main branch).
-- `all` combines `core`, `utilities`, `linting`, `runtimes`, and `cloud`.
+- `all` combines `core`, `utilities`, `linting`, `runtimes`, `agents`, and `cloud`.
 
 ## Usage
 
@@ -92,7 +93,7 @@ mlg-mcp                  # MCP server mode
 
 ```
 pkgs/
-+-- default.nix                  # Central package definitions (5 categories + `all`)
++-- default.nix                  # Central package definitions (6 categories + `all`)
 +-- monorepo-library-generator/  # Custom package: library scaffolding tool
     +-- default.nix
 ```
@@ -112,8 +113,8 @@ devShells.default = pkgs.mkShell {
 ```
 
 On `nix develop`, this links `.zed/` and generates `biome.json` if missing.
-Claude Code and Factory Droid configs live globally under `~/.claude/` and
-`~/.factory/` via Home Manager.
+Claude Code and OMP configs live globally under `~/.claude/` and `~/.agents/`
+via Home Manager.
 
 ## Adding Packages
 
