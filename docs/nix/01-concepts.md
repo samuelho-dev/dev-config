@@ -22,7 +22,7 @@ runtimes = [ pkgs.nodejs_24 pkgs.bun pkgs.uv ];
 
 ### 2. Modules (`modules/home-manager/programs/*.nix`)
 
-Each program (neovim, tmux, git, zsh, ...) is a Home Manager module gated by a `dev-config.<program>.enable` option. Modules wire packages plus their config (symlinked dotfiles, generated settings). See `modules/home-manager/CLAUDE.md` for the module pattern.
+Each program (neovim, tmux, git, zsh, ...) is a Home Manager module gated by a `dev-config.<program>.enable` option. Modules wire packages plus their config (symlinked dotfiles, generated settings).
 
 ### 3. Version locking (`flake.lock`)
 

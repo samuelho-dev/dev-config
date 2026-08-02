@@ -126,6 +126,5 @@ which fd rg
 
 ## Related Documentation
 
-- [CLAUDE.md](./CLAUDE.md) - Architecture and detailed configuration
-- [Neovim Integration](../nvim/CLAUDE.md) - yazi.nvim setup
-- [Home Manager](../modules/home-manager/CLAUDE.md) - Module configuration
+- [Neovim integration](../nvim/lua/plugins/editor.lua) - yazi.nvim setup
+- [Home Manager module](../modules/home-manager/programs/yazi.nix) - Module configuration

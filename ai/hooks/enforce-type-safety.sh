@@ -4,7 +4,7 @@
 #
 # Claude Code Hook: PostToolUse (Write|Edit)
 # Timeout: 30 seconds
-# Enforces type-safe patterns from biome/CLAUDE.md
+# Enforces type-safe patterns from docs/LINTING_POLICY.md
 #
 # Blocked patterns:
 # - as any / as Type (use Schema.decodeUnknown() instead)
@@ -68,13 +68,13 @@ if [ $violation_found -eq 1 ]; then
     echo "Violations found:"
     echo "$violation_details"
     echo ""
-    echo "💡 Type-safe alternatives (see biome/CLAUDE.md for details):"
+    echo "💡 Type-safe alternatives (see docs/LINTING_POLICY.md for details):"
     echo "   - Instead of 'as any': Use Schema.decodeUnknown() or type guards"
     echo "   - Instead of '@ts-ignore': Fix the underlying type error"
     echo "   - Instead of '!': Use optional chaining (?.) or null checks"
     echo "   - Instead of 'satisfies': Use 'as const' or explicit type annotation"
     echo ""
-    echo "📚 Reference: biome/CLAUDE.md - Type Safety Guardrails section"
+    echo "📚 Reference: docs/LINTING_POLICY.md - Type Safety Guardrails section"
   } >&2
   exit 2  # Blocking error
 fi

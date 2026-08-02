@@ -113,7 +113,7 @@ bind-key C-f display-popup -E "nvim ~/notes.md"
 ```
 
 Apply with `home-manager switch --flake .`, then reload the running server with
-`Prefix + r`. See `tmux/CLAUDE.md` and `docs/KEYBINDINGS_TMUX.md`.
+`Prefix + r`. See `docs/KEYBINDINGS_TMUX.md`.
 
 ## Zsh Customization
 

@@ -65,7 +65,7 @@ if [ $warning_issued -eq 1 ]; then
     echo "  • Explicit type annotations with validation"
     echo "  • Optional chaining (?.) instead of ! assertions"
     echo ""
-    echo "📚 See biome/CLAUDE.md for type-safe alternatives"
+    echo "📚 See docs/LINTING_POLICY.md for type-safe alternatives"
   } >&2
   # Exit 0 to allow the prompt to proceed (just a warning)
   # Claude Code will see the stderr message

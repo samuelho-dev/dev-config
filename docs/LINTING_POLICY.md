@@ -47,7 +47,7 @@ Applies to:
 ### Enforcement
 
 Three layers working together:
-1. **Documentation** (CLAUDE.md files) - Proactive guidance
+1. **Documentation** (root `CLAUDE.md` and this policy) - Proactive guidance
 2. **Validation** (pre-commit hooks) - Reactive blocking
 3. **Runtime** (Biome rules + GritQL patterns) - Automatic detection
 

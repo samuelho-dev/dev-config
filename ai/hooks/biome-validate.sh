@@ -45,7 +45,7 @@ if ! biome check "$FILE_PATH" 2>&1; then
     biome check "$FILE_PATH" 2>&1 | head -30
     echo ""
     echo "💡 Fix: Run 'biome check --write $FILE_PATH' to auto-fix issues"
-    echo "📚 See biome/CLAUDE.md for linting policy"
+    echo "📚 See docs/LINTING_POLICY.md for linting policy"
   } >&2
   exit 2  # Blocking error - send feedback to Claude
 fi

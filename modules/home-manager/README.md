@@ -123,5 +123,4 @@ home-manager packages
 
 ## Related Documentation
 
-- [CLAUDE.md](./CLAUDE.md) - Architecture, module reference, program + service patterns
 - [Parent CLAUDE.md](../../CLAUDE.md) - Repository overview

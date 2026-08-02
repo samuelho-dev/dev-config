@@ -38,20 +38,20 @@ Catalog of documentation in the dev-config repository. Each top-level component 
 
 ## Components
 
-| Component | README | CLAUDE | Description |
-|-----------|--------|--------|-------------|
-| ghostty | - | [CLAUDE](../ghostty/CLAUDE.md) | Ghostty terminal |
-| tmux | [README](../tmux/README.md) | [CLAUDE](../tmux/CLAUDE.md) | Terminal multiplexer (Nix-managed plugins) |
-| zsh | [README](../zsh/README.md) | [CLAUDE](../zsh/CLAUDE.md) | Shell (Oh My Zsh + Powerlevel10k) |
-| nvim | [README](../nvim/README.md) | [CLAUDE](../nvim/CLAUDE.md) | Neovim (LazyVim-based) |
-| zed | - | [CLAUDE](../zed/CLAUDE.md) | Zed editor (Vim mode + Biome) |
-| yazi | [README](../yazi/README.md) | [CLAUDE](../yazi/CLAUDE.md) | Terminal file manager |
-| biome/gritql-patterns | - | - | GritQL pattern sources (see [LINTING_POLICY](./LINTING_POLICY.md)) |
-| modules/nixos | - | [CLAUDE](../modules/nixos/CLAUDE.md) | NixOS system-level modules |
-| modules/home-manager | [README](../modules/home-manager/README.md) | [CLAUDE](../modules/home-manager/CLAUDE.md) | Home Manager modules (programs + services) |
-| pkgs | [README](../pkgs/README.md) | [CLAUDE](../pkgs/CLAUDE.md) | Centralized package definitions |
-| scripts | [README](../scripts/README.md) | [CLAUDE](../scripts/CLAUDE.md) | Installation and utility scripts |
-| ai/hooks | - | [CLAUDE](../ai/hooks/CLAUDE.md) | Claude Code linting/type-safety hooks |
+| Component | README | Description |
+|-----------|--------|-------------|
+| ghostty | - | Ghostty terminal |
+| tmux | [README](../tmux/README.md) | Terminal multiplexer (Nix-managed plugins) |
+| zsh | [README](../zsh/README.md) | Shell (Oh My Zsh + Powerlevel10k) |
+| nvim | [README](../nvim/README.md) | Neovim (LazyVim-based) |
+| zed | - | Zed editor (Vim mode + Biome) |
+| yazi | [README](../yazi/README.md) | Terminal file manager |
+| biome/gritql-patterns | - | GritQL pattern sources (see [LINTING_POLICY](./LINTING_POLICY.md)) |
+| modules/nixos | - | NixOS system-level modules |
+| modules/home-manager | [README](../modules/home-manager/README.md) | Home Manager modules (programs + services) |
+| pkgs | [README](../pkgs/README.md) | Centralized package definitions |
+| scripts | [README](../scripts/README.md) | Installation and utility scripts |
+| ai/hooks | - | Claude Code linting/type-safety hooks |
 
 ## AI Tooling (`ai/`)
 

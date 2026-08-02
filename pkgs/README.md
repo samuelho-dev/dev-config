@@ -162,6 +162,4 @@ utilities = [
 
 ## Related Documentation
 
-- [CLAUDE.md](./CLAUDE.md) - Architecture and patterns
-- [Home Manager CLAUDE.md](../modules/home-manager/CLAUDE.md) - Package consumption
 - [flake.nix](../flake.nix) - Flake integration

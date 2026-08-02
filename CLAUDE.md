@@ -4,9 +4,6 @@ updated: 2026-04-03
 relates_to:
   - ./home.nix
   - ./flake.nix
-  - ./modules/home-manager/CLAUDE.md
-  - ./pkgs/CLAUDE.md
-  - ./docs/CLAUDE.md
 validation:
   max_days_stale: 30
 ---
@@ -129,11 +126,7 @@ All packages defined centrally in `pkgs/default.nix` by category:
 
 Dotfiles in `nvim/`, `tmux/`, `zsh/`, `ghostty/`, `yazi/` are version controlled and symlinked by Home Manager. Edit them directly - no rebuild needed (just reload the application).
 
-Component-specific documentation:
-- `nvim/CLAUDE.md` - Neovim plugin system, LSP, lazy loading
-- `tmux/CLAUDE.md` - Tmux (Nix-managed plugins, no TPM), DevPod integration
-- `zsh/CLAUDE.md` - Oh My Zsh, Powerlevel10k
-- `docs/LINTING_POLICY.md` - Strict linting rules, GritQL patterns, AI guardrails
+Reference documentation: `docs/LINTING_POLICY.md`.
 
 ## Machine Setup
 
@@ -266,9 +259,7 @@ When working with this repository:
 - [ ] **Use explicit `lib.` prefixes** - never use `with lib;`
 - [ ] **Add packages** to `pkgs/default.nix` by category, not scattered in modules
 - [ ] **Stage `user.nix`** before flake evaluation: `git add -f user.nix`
-- [ ] **Update component CLAUDE.md** when modifying that component's architecture
 - [ ] **Reference docs/** for user-facing documentation updates
-- [ ] **Consult `modules/home-manager/CLAUDE.md`** for Home Manager module patterns
 
 ### AI Guardrails (CRITICAL) ⚠️
 - [ ] **NEVER use `as any`** - Forbidden pattern. Use `Schema.decodeUnknown()` instead

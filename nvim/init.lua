@@ -6,7 +6,6 @@ The configuration is organized into these modules:
   - lua/plugins/custom/ : Custom plugin utilities
 
 For more information, see:
-  - nvim/CLAUDE.md     : AI assistant guidance
   - nvim/README.md     : User documentation
   - :help lua-guide    : Neovim Lua guide
 

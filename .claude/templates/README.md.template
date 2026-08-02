@@ -89,7 +89,6 @@ Copy this template and adapt it to your component. Focus on helping developers g
 
 ## Related Documentation
 
-- [CLAUDE.md](./CLAUDE.md) - Architecture and design details
 - [Parent Component](../README.md) - Parent component documentation
 - {Other relevant links}
 ```

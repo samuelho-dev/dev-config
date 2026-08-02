@@ -131,7 +131,6 @@ Each tool activates only when its API key/env var is exported before launching N
 - **Add an LSP server:** `lua/plugins/lsp.lua:159` (`servers` table), then `:Mason` (non-Nix machines).
 - **Add a formatter:** `lua/plugins/lsp.lua:277` (`formatters_by_ft`).
 - **Add a plugin:** append to the relevant `lua/plugins/*.lua`, or create a new category file and import it at `init.lua:46-57`.
-- See `nvim/CLAUDE.md` for the full where-to-add reference and architecture notes.
 
 ## Maintenance
 
