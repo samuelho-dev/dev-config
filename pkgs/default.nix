@@ -117,6 +117,7 @@ in {
 
   # Cloud / infrastructure-as-code CLIs
   cloud = [
+    pkgs.docker-client
     pkgs.terraform # IaC (unfree BSL; allowUnfree set in flake.nix)
     pkgs._1password-cli
     pkgs.stripe-cli
