@@ -39,24 +39,24 @@
       runHook postInstall
     '';
   };
-  ompVersion = "17.2.4";
+  ompVersion = "17.2.6";
   ompPlatform =
     {
       "aarch64-darwin" = {
         asset = "omp-darwin-arm64";
-        hash = "sha256-850lbGsuzn8uuFwk/Ef/vjmheW6m7qJgWtVk/OQsQI4=";
+        hash = "sha256-KljnWu9lZAQ8xxDkBb6d6dNonywcu5GBl96JHe7Sers=";
       };
       "x86_64-darwin" = {
         asset = "omp-darwin-x64";
-        hash = "sha256-mXvAyYrCvTAQv4b947dTR4Mt1cEQvGxgOs5n5wokn5U=";
+        hash = "sha256-TGW+RQU5FzZmq/qkG9lLmRgFNkaskLA1C3bnam5v3fI=";
       };
       "aarch64-linux" = {
         asset = "omp-linux-arm64";
-        hash = "sha256-rEc8v2HMGiYH0og5MOZB4V6Oedos3UL/7I1wGthaIZw=";
+        hash = "sha256-Zc1/Xn1TewtB8ncZHBuVtT1Qn4FHw9G9UIUD3ASPFFM=";
       };
       "x86_64-linux" = {
         asset = "omp-linux-x64";
-        hash = "sha256-pucIbzuAf2ilsItJWX9DSeXONzZWObevXpyP41mYmEA=";
+        hash = "sha256-pJHw9Ey0RMATBcI7cFkqbmwg7bSKOCvHvpKwbLWJUiQ=";
       };
     }.${
       pkgs.stdenv.hostPlatform.system
