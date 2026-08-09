@@ -54,15 +54,6 @@ in {
         $DRY_RUN_CMD ${pkgs.bash}/bin/bash ${applyPluginsScriptSrc} || true
     '';
 
-    home.activation.configureOmp = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
-      OMP="${lib.getExe ompPackage}"
-      $DRY_RUN_CMD "$OMP" config set memory.backend hindsight >/dev/null 2>&1 || true
-      $DRY_RUN_CMD "$OMP" config set autolearn.enabled true >/dev/null 2>&1 || true
-      if [ -n "''${HINDSIGHT_API_URL:-}" ]; then
-        $DRY_RUN_CMD "$OMP" config set hindsight.apiUrl "''${HINDSIGHT_API_URL}" >/dev/null 2>&1 || true
-      fi
-    '';
-
     home.activation.installPiObsidian = lib.mkIf cfg.obsidian.enable (
       lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
         $DRY_RUN_CMD ${pkgs.bun}/bin/bun add -g ${cfg.obsidian.package} 2>/dev/null || true
