@@ -31,9 +31,11 @@ workstations and container runtimes install the same plugins from
 `ai/omp/plugins.txt`.
 
 `omp` itself is not a Nix package (a read-only `/nix/store` install cannot
-self-update). `omp.nix` bootstraps the standalone binary into `~/.local/bin`
-once via `https://omp.sh/install --binary`; container images install it with
-`bun add -g @oh-my-pi/pi-coding-agent`.
+self-update). Everywhere — `omp.nix` on workstations, the DevPod/Orca
+entrypoints in containers — it is the same prebuilt standalone binary from
+`https://omp.sh/install --binary`, which self-updates via `omp update`.
+It is deliberately *not* installed with `bun add -g`: that yields a shim that
+runs on bun, pinning omp to whatever bun the image baked.
 
 ### `.claude/` — Project-level Claude Code config (this repo)
 - `settings.json` — project hooks (reference `ai/hooks/`)
