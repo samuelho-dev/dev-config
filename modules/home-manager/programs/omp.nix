@@ -6,7 +6,6 @@
   ...
 }: let
   cfg = config.dev-config.omp;
-  ompPackage = (import ../../../pkgs {inherit pkgs;}).omp-cli;
   pluginsFileSrc =
     if inputs ? dev-config
     then "${inputs.dev-config}/ai/omp/plugins.txt"
@@ -41,15 +40,19 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # OMP is a pinned native Nix package. Remove launchers from the former
-    # binary and Bun installs so PATH cannot select a second copy.
-    home.activation.removeLegacyOmpCli = lib.hm.dag.entryBefore ["writeBoundary"] ''
-      $DRY_RUN_CMD rm -f "$HOME/.local/bin/omp" "$HOME/.bun/bin/omp"
+    # omp is NOT a Nix package: /nix/store is read-only, so `omp update`
+    # refuses to self-update there. Install the standalone binary into
+    # ~/.local/bin (on home.sessionPath) once, then let omp update itself.
+    home.activation.bootstrapOmpCli = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      if [ -z "''${DRY_RUN_CMD:-}" ] && [ ! -x "$HOME/.local/bin/omp" ]; then
+        PATH="${lib.makeBinPath [pkgs.curl pkgs.coreutils pkgs.gnugrep pkgs.gnused]}:$PATH" \
+          ${pkgs.curl}/bin/curl -fsSL https://omp.sh/install \
+          | ${pkgs.bash}/bin/bash -s -- --binary || true
+      fi
     '';
-    home.packages = lib.mkIf (!config.dev-config.packages.enable) [ompPackage];
 
-    home.activation.installOmpPlugins = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
-      export PATH="${ompPackage}/bin:$PATH"
+    home.activation.installOmpPlugins = lib.hm.dag.entryAfter ["bootstrapOmpCli"] ''
+      export PATH="$HOME/.local/bin:$PATH"
       OMP_PLUGINS_FILE=${pluginsFileSrc} \
         $DRY_RUN_CMD ${pkgs.bash}/bin/bash ${applyPluginsScriptSrc} || true
     '';

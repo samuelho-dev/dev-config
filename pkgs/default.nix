@@ -39,43 +39,6 @@
       runHook postInstall
     '';
   };
-  ompVersion = "17.2.6";
-  ompPlatform =
-    {
-      "aarch64-darwin" = {
-        asset = "omp-darwin-arm64";
-        hash = "sha256-KljnWu9lZAQ8xxDkBb6d6dNonywcu5GBl96JHe7Sers=";
-      };
-      "x86_64-darwin" = {
-        asset = "omp-darwin-x64";
-        hash = "sha256-TGW+RQU5FzZmq/qkG9lLmRgFNkaskLA1C3bnam5v3fI=";
-      };
-      "aarch64-linux" = {
-        asset = "omp-linux-arm64";
-        hash = "sha256-Zc1/Xn1TewtB8ncZHBuVtT1Qn4FHw9G9UIUD3ASPFFM=";
-      };
-      "x86_64-linux" = {
-        asset = "omp-linux-x64";
-        hash = "sha256-pJHw9Ey0RMATBcI7cFkqbmwg7bSKOCvHvpKwbLWJUiQ=";
-      };
-    }.${
-      pkgs.stdenv.hostPlatform.system
-    };
-  omp-cli = pkgs.stdenvNoCC.mkDerivation {
-    pname = "omp";
-    version = ompVersion;
-    src = pkgs.fetchurl {
-      url = "https://github.com/can1357/oh-my-pi/releases/download/v${ompVersion}/${ompPlatform.asset}";
-      inherit (ompPlatform) hash;
-    };
-    dontUnpack = true;
-    installPhase = ''
-      runHook preInstall
-      install -Dm755 "$src" "$out/bin/omp"
-      runHook postInstall
-    '';
-    meta.mainProgram = "omp";
-  };
 in {
   # Core development tools
   core = [
@@ -139,19 +102,11 @@ in {
     pkgs.cilium-cli
   ];
 
-  inherit omp-cli;
-
-  # Coding-agent CLIs
-  agents = [
-    omp-cli
-  ];
-
   # Combine all packages into a single list
   all = self:
     self.core
     ++ self.utilities
     ++ self.linting
     ++ self.runtimes
-    ++ self.agents
     ++ self.cloud;
 }

@@ -30,6 +30,11 @@ sync is needed.
 workstations and container runtimes install the same plugins from
 `ai/omp/plugins.txt`.
 
+`omp` itself is not a Nix package (a read-only `/nix/store` install cannot
+self-update). `omp.nix` bootstraps the standalone binary into `~/.local/bin`
+once via `https://omp.sh/install --binary`; container images install it with
+`bun add -g @oh-my-pi/pi-coding-agent`.
+
 ### `.claude/` — Project-level Claude Code config (this repo)
 - `settings.json` — project hooks (reference `ai/hooks/`)
 - `templates/` — CLAUDE.md / README.md templates
