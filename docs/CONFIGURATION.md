@@ -153,3 +153,21 @@ Then use the git plugin keybindings in Neovim (see `docs/KEYBINDINGS_NEOVIM.md`)
 
 `zsh/.zprofile` detects the OS for Homebrew shellenv (Apple Silicon, Intel, Linuxbrew)
 with no hardcoded paths, so the same config works across machines.
+
+## Mac Orca remote access
+
+The personal Mac profile installs `orca-serve-sync` as a launchd user agent. Desktop
+Orca chooses a WebSocket port on each launch and records it in
+`~/Library/Application Support/Orca/mobile-ws-fallback-port.json`; the agent checks
+that the same port belongs to the live desktop runtime, then keeps Tailscale Serve's
+tailnet-only TCP `:6768` forward aimed at it. It does not start another Orca runtime,
+change the separate `:443` Funnel, or bypass Orca pairing.
+
+Check `launchctl print user/$(id -u)/org.nix-community.home.orca-serve-sync`,
+`tailscale serve status --json`, and `orca status --json`. A Home Manager switch
+installs the agent; restarting only this agent with
+`launchctl kickstart -k user/$(id -u)/org.nix-community.home.orca-serve-sync`
+does not restart desktop Orca or Tailscale. To roll back a bad update, boot out
+only this agent and restore the prior TCP route with
+`tailscale serve --bg --tcp=6768 --yes tcp://127.0.0.1:6768`; revert the
+Home Manager change before the next login.
