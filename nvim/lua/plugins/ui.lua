@@ -50,20 +50,113 @@ return {
     },
   },
 
-  -- Colorscheme: kanagawa
+  -- Cathode Amber from Rex Beta themes.json; Kanagawa provides the syntax/plugin highlight coverage.
   {
     'rebelot/kanagawa.nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     config = function()
+      -- ANSI 0-15 from /Applications/Rex Beta.app/Contents/Resources/SuperUI_SuperDesignTokens.bundle/Contents/Resources/themes.json
+      local ansi = {
+        '#241a0e', '#e8763f', '#b8a83f', '#ffb642',
+        '#c98d4f', '#cf8a62', '#d4a852', '#cfa972',
+        '#7a6238', '#f2925f', '#d0c05e', '#ffcc70',
+        '#dca86e', '#e2a67f', '#e7c077', '#ffe8c2',
+      }
       ---@diagnostic disable-next-line: missing-fields
       require('kanagawa').setup {
-        theme = 'dragon', -- 'wave' (default), 'dragon' (darker), 'lotus' (light)
-        styles = {
-          comments = { italic = false }, -- Disable italics in comments
+        theme = 'dragon',
+        commentStyle = { italic = false },
+        colors = {
+          theme = {
+            dragon = {
+              ui = {
+                fg = '#f0c88a',
+                fg_dim = ansi[8],
+                fg_reverse = '#140f08',
+                bg_dim = ansi[1],
+                bg_gutter = '#140f08',
+                bg_m3 = ansi[1],
+                bg_m2 = ansi[1],
+                bg_m1 = ansi[1],
+                bg = '#140f08',
+                bg_p1 = ansi[1],
+                bg_p2 = '#4a3212',
+                special = ansi[7],
+                nontext = ansi[9],
+                whitespace = ansi[9],
+                bg_search = '#4a3212',
+                bg_visual = '#4a3212',
+                pmenu = {
+                  fg = '#f0c88a',
+                  fg_sel = '#ffe8c2',
+                  bg = ansi[1],
+                  bg_sel = '#4a3212',
+                  bg_sbar = ansi[1],
+                  bg_thumb = ansi[9],
+                },
+                float = {
+                  fg = '#f0c88a',
+                  bg = ansi[1],
+                  fg_border = ansi[9],
+                  bg_border = ansi[1],
+                },
+              },
+              syn = {
+                string = ansi[3],
+                variable = 'none',
+                number = ansi[12],
+                constant = ansi[4],
+                identifier = ansi[7],
+                parameter = ansi[8],
+                fun = ansi[13],
+                statement = ansi[6],
+                keyword = ansi[4],
+                operator = ansi[14],
+                preproc = ansi[2],
+                type = ansi[11],
+                regex = ansi[12],
+                deprecated = ansi[9],
+                comment = ansi[9],
+                punct = ansi[8],
+                special1 = ansi[5],
+                special2 = ansi[10],
+                special3 = ansi[15],
+              },
+              diag = {
+                error = ansi[2],
+                warning = ansi[4],
+                info = ansi[7],
+                hint = ansi[8],
+                ok = ansi[3],
+              },
+              vcs = {
+                added = ansi[3],
+                removed = ansi[2],
+                changed = ansi[4],
+              },
+              diff = {
+                add = '#4a3212',
+                delete = ansi[1],
+                change = ansi[9],
+                text = '#4a3212',
+              },
+              term = ansi,
+            },
+          },
         },
+        overrides = function()
+          return {
+            Cursor = { fg = '#140f08', bg = '#ffb642' },
+            Visual = { fg = '#ffe8c2', bg = '#4a3212' },
+            -- VM has no custom palette API; without VM_theme it preserves these links.
+            VM_Mono = { link = 'Cursor' },
+            VM_Cursor = { link = 'Visual' },
+            VM_Extend = { link = 'Search' },
+            VM_Insert = { link = 'Cursor' },
+          }
+        end,
       }
 
-      -- Load the colorscheme
       vim.cmd.colorscheme 'kanagawa-dragon'
     end,
   },
@@ -109,9 +202,6 @@ return {
         ['Find Under'] = '<leader>m',         -- Start multi-cursor, select word under cursor
         ['Find Subword Under'] = '<leader>m', -- Same for subwords
       }
-
-      -- Customize theme to match tokyonight
-      vim.g.VM_theme = 'iceblue'
 
       -- Show messages in statusline instead of command line
       vim.g.VM_silent_exit = 1

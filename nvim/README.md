@@ -62,7 +62,7 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 
 ### ui.lua — interface
 - **which-key.nvim** — keybinding hints
-- **kanagawa.nvim** — colorscheme (`kanagawa-dragon`, comments non-italic)
+- **kanagawa.nvim** — `kanagawa-dragon` highlighting with the Rex Cathode Amber palette; no extra theme plugin
 - **todo-comments.nvim** — highlight TODO/FIXME/NOTE
 - **mini.nvim** — mini.ai, mini.surround, mini.statusline
 - **vim-visual-multi** — multiple cursors (`<leader>m`, remapped off `<C-n>` to avoid blink conflict)

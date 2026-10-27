@@ -86,7 +86,12 @@ in `lsp.lua`, and run `home-manager switch --flake .`.
 ## Tools: LSP, Formatters, Colorscheme
 
 Tmux plugins and Neovim LSPs/formatters are **not** installed by Mason or TPM at
-runtime — they are provisioned by Nix. Colorscheme is **kanagawa**.
+runtime — they are provisioned by Nix.
+
+Neovim uses the Rex Cathode Amber palette through existing Kanagawa Dragon
+highlighting; no extra plugin is needed. After `home-manager switch --flake .`,
+the matching takes effect on the next Neovim launch because installed files are
+Nix-store symlinks.
 
 | Tool | Language | Role | Source |
 |------|----------|------|--------|
