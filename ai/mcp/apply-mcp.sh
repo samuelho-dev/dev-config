@@ -18,6 +18,7 @@
 #   MCP_TARGET_OMP     1|0                           (default: 1)
 #   MCP_TARGET_CODEX   1|0                           (default: 1)
 set -eu
+umask 077
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 SERVERS_FILE="${MCP_SERVERS_FILE:-$SCRIPT_DIR/servers.json}"
@@ -38,6 +39,7 @@ fi
 # Resolve every server's `auth` hint into a concrete header, then drop the hint
 # so the output is a clean .mcp.json shape the CLIs understand.
 RESOLVED=$(jq -c '.mcpServers // {}' "$SERVERS_FILE")
+MANAGED_KEYS=$(printf '%s' "$RESOLVED" | jq -c 'keys')
 for name in $(printf '%s' "$RESOLVED" | jq -r 'keys[]'); do
   auth=$(printf '%s' "$RESOLVED" | jq -c --arg n "$name" '.[$n].auth // empty')
   [ -n "$auth" ] || continue
@@ -68,8 +70,8 @@ for name in $(printf '%s' "$RESOLVED" | jq -r 'keys[]'); do
         '.[$n].headers[$h] = $v | del(.[$n].auth)')
     fi
   else
-    echo "mcp: WARN no secret for '$name' (op:$opref env:$envname); server listed without auth" >&2
-    RESOLVED=$(printf '%s' "$RESOLVED" | jq -c --arg n "$name" 'del(.[$n].auth)')
+    echo "mcp: WARN no secret for '$name' (op:$opref env:$envname); omitting server" >&2
+    RESOLVED=$(printf '%s' "$RESOLVED" | jq -c --arg n "$name" 'del(.[$n])')
   fi
 done
 
@@ -78,8 +80,8 @@ if [ "$DO_CLAUDE" = "1" ]; then
   CJSON="$HOME/.claude.json"
   [ -f "$CJSON" ] || printf '{}\n' > "$CJSON"
   tmp=$(mktemp)
-  jq --argjson servers "$RESOLVED" --argjson proj "$ENABLE_PROJECT" \
-    '.mcpServers = ((.mcpServers // {}) + $servers) | .enableAllProjectMcpServers = $proj' \
+  jq --argjson servers "$RESOLVED" --argjson managed "$MANAGED_KEYS" --argjson proj "$ENABLE_PROJECT" \
+    '.mcpServers = ((.mcpServers // {} | with_entries(select(.key as $key | $managed | index($key) | not))) + $servers) | .enableAllProjectMcpServers = $proj' \
     "$CJSON" > "$tmp" && mv "$tmp" "$CJSON"
   echo "mcp: wrote $CJSON"
 fi
@@ -91,9 +93,9 @@ if [ "$DO_OMP" = "1" ]; then
   OJSON="$OMP_DIR/mcp.json"
   [ -f "$OJSON" ] || printf '{}\n' > "$OJSON"
   tmp=$(mktemp)
-  jq --argjson servers "$RESOLVED" \
+  jq --argjson servers "$RESOLVED" --argjson managed "$MANAGED_KEYS" \
     '.["$schema"] = (.["$schema"] // "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json")
-     | .mcpServers = ((.mcpServers // {}) + $servers)' \
+     | .mcpServers = ((.mcpServers // {} | with_entries(select(.key as $key | $managed | index($key) | not))) + $servers)' \
     "$OJSON" > "$tmp" && mv "$tmp" "$OJSON"
   echo "mcp: wrote $OJSON"
   if command -v omp >/dev/null 2>&1; then

@@ -19,12 +19,36 @@
     },
     "vercel": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@robinson_ai_systems/vercel-mcp@1.0.1"],
+      "command": "sh",
+      "args": [
+        "-c",
+        "cd /tmp && exec npx -y @robinson_ai_systems/vercel-mcp@1.0.1"
+      ],
       "auth": {
         "op": "op://Dev/Vercel/TOKEN",
         "env": "VERCEL_TOKEN",
         "envKey": "VERCEL_TOKEN"
+      }
+    },
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp/creativetoolkits",
+      "auth": {
+        "header": "Authorization",
+        "prefix": "Sentry-Bearer ",
+        "op": "op://Dev/creativetoolkits-sentry-mcp/TOKEN",
+        "env": "SENTRY_MCP_KEY"
+      }
+    },
+    "posthog": {
+      "type": "http",
+      "url": "https://mcp.posthog.com/mcp",
+      "headers": { "x-posthog-mcp-mode": "tools" },
+      "auth": {
+        "header": "Authorization",
+        "prefix": "Bearer ",
+        "op": "op://Dev/creativetoolkits-posthog-mcp/TOKEN",
+        "env": "POSTHOG_MCP_KEY"
       }
     }
   }
