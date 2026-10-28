@@ -4,7 +4,7 @@ Day-to-day operations with the Nix + Home Manager dev-config environment.
 
 ## Environment Activation
 
-`direnv` auto-activates the dev shell when you `cd` into the repo. At shell startup, AI credentials are fetched from 1Password via `~/.config/sops-nix/load-env.sh` (fields: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_AI_STUDIO_KEY`, `LITELLM_KEY`, `OPENROUTER_API_KEY`).
+`direnv` auto-activates the dev shell when you `cd` into the repo. During Home Manager activation, AI credentials are fetched from 1Password and written to mode-0600 `~/.config/sops-nix/load-env.sh` on disk. At shell startup, that file is sourced without another fetch (fields: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_AI_STUDIO_KEY`, `LITELLM_KEY`, `OPENROUTER_API_KEY`).
 
 ```bash
 cd ~/Projects/dev-config   # direnv loads the dev shell
@@ -18,10 +18,10 @@ Verify:
 
 ```bash
 which nvim                 # /nix/store/.../bin/nvim
-echo $ANTHROPIC_API_KEY    # populated from 1Password
+test -n "${ANTHROPIC_API_KEY:-}" && echo "AI key present"
 ```
 
-If credentials are missing, sign in: `op signin`.
+If credentials are missing, confirm the bootstrap token and 1Password access, then re-run `home-manager switch --flake .` to regenerate the loader.
 
 ## Core Commands
 

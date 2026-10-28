@@ -31,10 +31,11 @@ export DATABASE_URL="postgresql://localhost:5432/mydb"
 ### Secrets / API Keys (1Password)
 
 Do **not** put real secrets in `.zshrc.local`. AI service keys are 1Password-first:
-they live in the `Dev` vault and are loaded at shell startup via
-`~/.config/sops-nix/load-env.sh` (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
-`GOOGLE_AI_STUDIO_KEY`, `LITELLM_KEY`, `OPENROUTER_API_KEY`). See the root `CLAUDE.md`
-"Secrets Management" section and `docs/nix/07-litellm-proxy-setup.md`.
+Home Manager retrieves them from the `Dev` vault during activation and writes
+mode-0600 `~/.config/sops-nix/load-env.sh` on disk. Shells source that file
+without querying 1Password (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
+`GOOGLE_AI_API_KEY`, `LITELLM_MASTER_KEY`, `OPENROUTER_API_KEY`). See the root
+`CLAUDE.md` "Secrets Management" section and `docs/nix/07-litellm-proxy-setup.md`.
 
 ## Editing Configs
 

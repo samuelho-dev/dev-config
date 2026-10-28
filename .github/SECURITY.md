@@ -14,7 +14,7 @@
 | `B2_SECRET_ACCESS_KEY` | B2 S3 API secret | Write: `ai-dev-env/nix/cache` |
 | `NIX_SIGNING_KEY` | Package signing | Sign: Nix store paths |
 
-**Source**: 1Password (Dev/backblaze)
+**B2 source inventory**: 1Password item `Backblaze` in vault `Dev`. Confirm the signing-key provenance and field names before using this record for credential recovery.
 
 ## Protection Mechanisms
 

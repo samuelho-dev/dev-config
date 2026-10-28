@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
-  "_comment": "Canonical MCP server list. Single source of truth fanned out to Claude Code (~/.claude.json), OMP (~/.omp/agent/mcp.json), and Codex (~/.codex/config.toml) by ai/mcp/apply-mcp.sh. Secrets in `auth` resolve via 1Password (auth.op) on nix machines and via the env var (auth.env) in containers. Project-specific servers belong in each project's .mcp.json, not here.",
+  "_comment": "Canonical MCP server list. Single source of truth fanned out to Claude Code (~/.claude.json), OMP (~/.omp/agent/mcp.json), and Codex (~/.codex/config.toml) by ai/mcp/apply-mcp.sh. Secrets in `auth` resolve via 1Password (auth.op) on nix machines and via the env var (auth.env) in containers. op:// references use named Dev vault items and exact field labels. Project-specific servers belong in each project's .mcp.json, not here.",
   "mcpServers": {
     "linear-server": {
       "type": "http",
