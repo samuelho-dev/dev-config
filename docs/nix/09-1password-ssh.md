@@ -408,6 +408,10 @@ non-interactive `op` access during Home Manager activation. For automation,
 pin vault and item UUIDs (`op://<vault-id>/<item-id>/<field>`); the human titles
 remain descriptive metadata and may be renamed. See [01-concepts.md](01-concepts.md).
 
+The `1password-sync` workflow runs only on the repo-scoped `dev-config-runners`
+pool, not the `ai-dev-env` runner pool. Its plaintext bootstrap files and
+temporary age key are mode-restricted and removed on exit, including failures.
+
 ---
 
 ## Troubleshooting
