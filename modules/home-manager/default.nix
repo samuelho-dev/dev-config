@@ -58,6 +58,8 @@
       homePkgs
       ++ config.dev-config.packages.extraPackages
     );
+    home.file.".local/bin/argocd-core.sh".source = ../../scripts/argocd-core.sh;
+    home.file.".local/bin/check-rex-access.py".source = ../../scripts/check-rex-access.py;
 
     # This module automatically enables (all can be individually disabled):
     # - Neovim with config from dev-config repo

@@ -91,6 +91,8 @@ in {
     pkgs.kubernetes-helm
     pkgs.k9s
     pkgs.argocd
+    pkgs.supabase-cli
+    pkgs.postgresql
     pkgs.talosctl
     pkgs.doctl
     pkgs.hcloud

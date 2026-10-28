@@ -31,7 +31,7 @@ There are exactly five categories. Each is a plain list of packages.
 | **runtimes** | nodejs_26, pnpm, bun |
 | **utilities** | direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, tree-sitter |
 | **linting** | biome |
-| **cloud** | terraform, awscli2, cloudflared, kubectl, helm, k9s, argocd, talosctl, doctl, hcloud, kubeseal, kubeconform, kustomize, sops, age, cilium-cli |
+| **cloud** | terraform, awscli2, cloudflared, kubectl, helm, k9s, argocd, supabase-cli, postgresql (`psql`), talosctl, doctl, hcloud, kubeseal, kubeconform, kustomize, sops, age, cilium-cli |
 
 Notes:
 - Editor LSPs (`nixd`, `pyright`, `ts_ls`, `lua_ls`, ...) are **not** here — they
@@ -39,8 +39,8 @@ Notes:
 - `tree-sitter` is the CLI used to compile parsers for nvim-treesitter (main branch).
 - `all` combines `core`, `utilities`, `linting`, `runtimes`, and `cloud`.
 - `omp` is deliberately **not** packaged here: a `/nix/store` copy cannot run
-  `omp update`. It is installed into `~/.local/bin` by
-  `modules/home-manager/programs/omp.nix` and self-updates.
+  `omp update`. The shared `ai/omp/install.sh` installs the standalone binary
+  into `~/.local/bin` for both Home Manager and the Rex container bootstrap.
 
 ## Usage
 

@@ -17,7 +17,8 @@ fi
 
 while IFS= read -r plugin; do
   [ -n "$plugin" ] || continue
-  [ ! -d "$PLUGIN_DIR/$plugin" ] || continue
+  plugin_name=${plugin%@*}
+  [ ! -d "$PLUGIN_DIR/$plugin_name" ] || continue
 
   echo "omp-plugins: installing $plugin"
   omp install "$plugin" >/dev/null

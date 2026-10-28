@@ -37,6 +37,77 @@ without querying 1Password (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
 `GOOGLE_AI_API_KEY`, `LITELLM_MASTER_KEY`, `OPENROUTER_API_KEY`). See the root
 `CLAUDE.md` "Secrets Management" section and `docs/nix/07-litellm-proxy-setup.md`.
 
+### Rex homelab access (separate identity)
+
+The shared Nix toolchain includes `supabase`, `psql`, `kubectl`, and `argocd`
+on Darwin and Linux. Rex must use its own projected Kubernetes ServiceAccount
+token and CA, with an explicit kubeconfig context in namespace `argocd`;
+`KUBECONFIG` points at that config. The operator grant belongs only to this Rex
+profile, not every DevPod. Do not copy an Orca/Mac home, admin kubeconfig, or
+broker credential into Rex. On the Mac, `argocd-core.sh --tailnet
+https://<kubernetes-proxy> app list -o json` creates private throwaway
+Kubernetes/Argo configs with a **nonsecret** bearer placeholder solely to
+prevent the tailnet proxy's Basic prompt; it does not grant Kubernetes access.
+Inside Rex, `argocd-core.sh --in-cluster app list -o json` uses the projected
+`tokenFile` and creates only the private Argo core config. Neither mode edits
+`~/.argocd/config` or other kube contexts, and neither logs into Argo API mode.
+
+Source validation: the Mac tailnet core helper listed 64 Argo applications,
+all Synced. The shared Nix cloud package set evaluated with `supabase-cli` and
+`postgresql` on aarch64-darwin and x86_64-linux, without building them.
+Using existing approved Orca development provider tokens only in process
+memory, the unmodified HTTP MCP smoke authenticated Sentry `find_projects`
+(`api`) and PostHog `project-get` (`112088`) and observed invalid-token
+denials. These prove the source protocol/auth contract, not Rex's as-yet-
+undeployed credential projections or Kubernetes authorization.
+
+Canonical MCP definitions in `ai/mcp/servers.json` fan out to Claude Code,
+OMP and Codex. Fresh installations use pinned `effect-mcp@0.1.16` and the
+`pi-ponytail@0.1.2` plugin; this does not disable a user's later explicit
+`omp update`. Resolve these **dedicated** credential sources during activation
+(`op` on Mac, environment projection in Rex):
+
+| Server | 1Password reference | Rex environment | Required authorization |
+|--------|---------------------|-----------------|------------------------|
+| Linear | `op://Dev/Linear/MCP_API_KEY` | `LINEAR_API_KEY` | Approved Linear MCP account |
+| Vercel community | `op://Dev/Vercel/TOKEN` | `VERCEL_TOKEN` | Approved Vercel team; pinned stdio package, no second official-MCP OAuth grant required |
+| Sentry | `op://Dev/creativetoolkits-sentry-mcp/TOKEN` | `SENTRY_MCP_KEY` | `Sentry-Bearer` access to the intended project |
+| PostHog | `op://Dev/creativetoolkits-posthog-mcp/TOKEN` | `POSTHOG_MCP_KEY` | Bearer access to the intended project; tools mode, **not** globally read-only |
+
+The renderer omits an unresolved authenticated MCP server instead of publishing
+an unauthenticated/stale entry and writes all managed credential-bearing configs
+mode 0600 without passing resolved secrets as subprocess arguments; an omitted
+**required** server is an enrollment failure, not a healthy integration.
+These references are credential *sources*, not credentials to commit. Supabase
+CLI needs a **valid Management API PAT**
+through its native `SUPABASE_ACCESS_TOKEN` environment source (or the user's
+authorized CLI keychain enrollment on macOS). The existing legacy Mac
+`Supabase CLI/access-token` value was rejected by the API; do not reuse it.
+Rex PostgreSQL access needs an approved DB principal via `PGHOST`, `PGDATABASE`,
+`PGUSER`, `PGPASSWORD` (prefer a scoped role rather than an application owner).
+Never put either password in a command argument or tracked config.
+
+For AWS select a named project profile explicitly, e.g.
+`aws --profile ctk-operator sts get-caller-identity` in Rex (the existing Mac
+project profile is `creativetoolkits`). The smoke removes inherited AWS access-key,
+session, region and endpoint overrides before using that profile, then checks
+both account and exact expected ARN. Backblaze B2's `us-east-005` region
+and S3 endpoint belong only to B2 commands/backend; do not overwrite the
+default profile, which other backup/Terraform callers use.
+
+`check-rex-access.py` is a read-only, fail-closed smoke entrypoint once
+credentials are enrolled. Supply expected nonsecret
+`REX_EXPECTED_KUBE_IDENTITY`, `REX_EXPECTED_AWS_ACCOUNT`,
+`REX_EXPECTED_AWS_ARN`, `REX_EXPECTED_POSTGRES_IDENTITY` (`user|database`),
+`REX_EXPECTED_SUPABASE_PROJECT_ID`, `REX_EXPECTED_SENTRY_PROJECT`,
+`REX_EXPECTED_POSTHOG_PROJECT_ID`, `REX_EXPECTED_VERCEL_TEAM`, and the
+PostHog MCP's accepted `REX_POSTHOG_MODEL` identifier (the observed
+`project-get` proof used `openai-codex/gpt-6-sol`). It checks actual CLI
+identities, an anonymous Kubernetes secret denial, MCP read-only project/team
+calls, and invalid MCP credentials. Missing required credentials/targets fail
+the check. Do not report enrollment complete from package presence or an MCP
+tools list alone; optional profile integrations may remain unconfigured.
+
 ## Editing Configs
 
 | Config | Path | Reload |

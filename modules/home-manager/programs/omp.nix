@@ -14,6 +14,10 @@
     if inputs ? dev-config
     then "${inputs.dev-config}/ai/omp/apply-plugins.sh"
     else ../../../ai/omp/apply-plugins.sh;
+  installScriptSrc =
+    if inputs ? dev-config
+    then "${inputs.dev-config}/ai/omp/install.sh"
+    else ../../../ai/omp/install.sh;
 in {
   options.dev-config.omp = {
     enable = lib.mkEnableOption "Oh My Pi (omp) coding-agent CLI";
@@ -44,10 +48,9 @@ in {
     # refuses to self-update there. Install the standalone binary into
     # ~/.local/bin (on home.sessionPath) once, then let omp update itself.
     home.activation.bootstrapOmpCli = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      if [ -z "''${DRY_RUN_CMD:-}" ] && [ ! -x "$HOME/.local/bin/omp" ]; then
+      if [ -z "''${DRY_RUN_CMD:-}" ]; then
         PATH="${lib.makeBinPath [pkgs.curl pkgs.coreutils pkgs.gnugrep pkgs.gnused]}:$PATH" \
-          ${pkgs.curl}/bin/curl -fsSL https://omp.sh/install \
-          | ${pkgs.bash}/bin/bash -s -- --binary || true
+          ${pkgs.bash}/bin/bash ${installScriptSrc}
       fi
     '';
 
