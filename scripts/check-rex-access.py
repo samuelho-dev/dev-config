@@ -49,7 +49,7 @@ const configs = [
   ["posthog", "https://mcp.posthog.com/mcp", "Bearer ", process.env.POSTHOG_MCP_KEY, {"x-posthog-mcp-mode": "tools"}],
 ];
 for (const [name, url, prefix, token, extra] of configs) {
-  async function rpc(method, credential, session, args = {}) {
+  async function rpc(method, credential, session, args = {}, allowDenied = false) {
     const headers = {"Authorization": prefix + credential, "Content-Type": "application/json", "Accept": "application/json, text/event-stream", ...extra};
     if (session) headers["Mcp-Session-Id"] = session;
     const response = await fetch(url, {method: "POST", headers, body: JSON.stringify({
@@ -61,7 +61,10 @@ for (const [name, url, prefix, token, extra] of configs) {
     const data = response.headers.get("content-type")?.includes("text/event-stream")
       ? body.split("\n").find(line => line.startsWith("data: "))?.slice(6) : body;
     const message = JSON.parse(data);
-    if (message.error || message.result?.isError) throw Error(name + " " + method + " failed");
+    if (message.error || message.result?.isError) {
+      if (allowDenied) return {error: message.error || message.result};
+      throw Error(name + " " + method + " failed");
+    }
     return {result: message.result, session: response.headers.get("mcp-session-id") || session};
   }
   const init = await rpc("initialize", token);
@@ -70,12 +73,11 @@ for (const [name, url, prefix, token, extra] of configs) {
   if (!notification.ok) throw Error(name + " initialization acknowledgement failed");
   const tools = await rpc("tools/list", token, init.session);
   if (!tools.result?.tools?.length) throw Error(name + " has no authorized tools");
-  const denied = await rpc("tools/list", "nonsecret-invalid-auth-probe");
   const toolName = name === "sentry" ? "find_projects" : "project-get";
   if (!tools.result.tools.some(tool => tool.name === toolName)) throw Error(name + " read tool unavailable");
   const arguments_ = name === "sentry" ? {} : {
-    context: "Verify the selected PostHog project identity with a read-only query",
-    model: process.env.REX_POSTHOG_MODEL
+    context: "Verify which PostHog project is available for this owner profile without changing any data or configuration in the project.",
+    llm_model: process.env.REX_POSTHOG_MODEL
   };
   const called = await rpc("tools/call", token, init.session, {name: toolName, arguments: arguments_});
   const expected = name === "sentry" ? process.env.REX_EXPECTED_SENTRY_PROJECT : process.env.REX_EXPECTED_POSTHOG_PROJECT_ID;
@@ -95,9 +97,15 @@ for (const [name, url, prefix, token, extra] of configs) {
     return new RegExp("(?:^|\\n)\\s*(?:[-*]\\s*)?(?:(?:\\*\\*)?slug(?:\\*\\*)?\\s*:\\s*`?" + slug + "`?(?=\\s|$)|(?:\\*\\*|`)?" + slug + "(?:\\*\\*|`)?(?=\\s|\\(|$))", "im").test(item.text)
       || new RegExp("/projects/" + slug + "(?:/|[?#)]|$)").test(item.text);
   });
-  if (!payloads.some(hasIdentity) && !markdownProject) throw Error(name + " did not return the expected project");
-  if (![401, 403].includes(denied.status)) throw Error(name + " accepted a false credential");
-  console.log(name + ": authenticated tools available; invalid credential denied");
+  const yamlProject = name === "posthog" && called.result?.content?.some(item =>
+    typeof item.text === "string" &&
+    new RegExp("^id:\\s*" + expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s*$", "m").test(item.text));
+  if (!payloads.some(hasIdentity) && !markdownProject && !yamlProject) throw Error(name + " did not return the expected project");
+  const denied = await rpc("tools/call", "nonsecret-invalid-auth-probe", undefined, {name: toolName, arguments: arguments_}, true);
+  if (![401, 403].includes(denied.status) &&
+      !(denied.error && /unauthori[sz]ed|invalid.{0,20}token|authentication|forbidden|access denied/i.test(JSON.stringify(denied.error))))
+    throw Error(name + " accepted a false credential");
+  console.log(name + ": authenticated project read succeeded; invalid credential denied");
 }
 """
 
