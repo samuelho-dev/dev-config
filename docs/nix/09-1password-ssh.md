@@ -33,17 +33,11 @@
 - Keys sync automatically across machines
 - Declarative Nix configuration
 
-**What gets committed to PUBLIC repo:**
-- ✅ SSH configuration (programs.ssh module)
-- ✅ Git signing configuration (programs.git module)
-- ✅ 1Password agent socket path
-- ✅ GitHub-specific settings
-- ✅ Template file (secrets.nix.example)
+**What gets committed to the public repo:**
+- SSH configuration, Git signing configuration, and agent socket path
+- Git identity and public signing key in Home Manager configuration
 
-**What stays LOCAL (not committed):**
-- ❌ SSH private keys (in 1Password only)
-- ❌ Your Git user info (name/email)
-- ❌ SSH public keys (in ~/.config/home-manager/secrets.nix)
+**What stays local:** SSH private keys in 1Password; never commit private keys.
 
 ---
 
@@ -201,12 +195,9 @@ git config --global commit.gpgsign true
 
 **1. Get your public key:**
 
-From 1Password:
-- Open "GitHub SSH Key" item
-- Click "Public Key"
-- Copy to clipboard
+From 1Password, open the "GitHub SSH Key" item in the Dev vault,
+click "Public Key", and copy it. For scripted lookup:
 
-Or using 1Password CLI:
 ```bash
 op read "op://Dev/GitHub SSH Key/public key"
 ```
@@ -230,36 +221,12 @@ op read "op://Dev/GitHub SSH Key/public key"
 
 **Why twice?** GitHub requires separate entries for authentication (SSH push/pull) and signing (verified commits).
 
-### Step 5: Create Machine-Specific Secrets
+### Step 5: Configure Git Identity
 
-**1. Copy template:**
-```bash
-cp secrets.nix.example ~/.config/home-manager/secrets.nix
-```
-
-**2. Edit with your values:**
-```bash
-nvim ~/.config/home-manager/secrets.nix
-```
-
-**3. Fill in:**
-```nix
-{
-  # Your Git identity
-  gitUserName = "Your Name";
-  gitUserEmail = "your-email@example.com";
-
-  # Your SSH public key from 1Password (for commit signing)
-  # Get from 1Password or: op read "op://Dev/GitHub SSH Key/public key"
-  sshSigningKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIExampleKey... your-email@example.com";
-}
-```
-
-**4. Verify it's gitignored:**
-```bash
-git check-ignore ~/.config/home-manager/secrets.nix
-# Should output: /Users/you/.config/home-manager/secrets.nix
-```
+Set the public Git identity and signing key in your Home Manager configuration
+(`home.nix` / the `dev-config.git` options). The current base profile already
+configures the public signing key; SSH authentication uses the 1Password agent
+socket, not a private key file. No `secrets.nix` is required by this repository.
 
 ### Step 6: Apply Home Manager Configuration
 
@@ -431,23 +398,15 @@ Enable biometric unlock for faster re-auth from the 1Password desktop app
 
 ### Service Accounts for CI/CD
 
-For non-interactive environments (GitHub Actions, containers, DevPod), use a
-1Password service account instead of interactive sign-in:
+For non-interactive environments (trusted CI workflows, containers, DevPod), use a
+1Password service account instead of interactive sign-in. Give each account only
+its intended vault/item access. Keep its token in designated trusted workflows;
+never copy a vault-wide service token to PR jobs.
 
-1. Create a service account: https://1password.com/features/service-accounts
-2. Store its token as a CI secret named `OP_SERVICE_ACCOUNT_TOKEN`.
-3. Reference it in your workflow:
-
-   ```yaml
-   - name: Read secret
-     env:
-       OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-     run: op read "op://Dev/<item>/<field>"
-   ```
-
-This repo's sops-nix bootstrap stores an `op/service_account_token` for the same
-purpose (declarative, non-interactive `op` access). See
-[01-concepts.md](01-concepts.md).
+This repo's sops-nix bootstrap declares `op/service_account_token` to allow
+non-interactive `op` access during Home Manager activation. For automation,
+pin vault and item UUIDs (`op://<vault-id>/<item-id>/<field>`); the human titles
+remain descriptive metadata and may be renamed. See [01-concepts.md](01-concepts.md).
 
 ---
 
@@ -584,24 +543,6 @@ open -a 1Password
 - Unlock your computer
 - Retry operation
 
-### Secrets.nix Not Found Error
-
-**Symptom:**
-```
-error: path '/Users/you/.config/home-manager/secrets.nix' does not exist
-```
-
-**Fix:**
-```bash
-# Create secrets.nix from template
-cp ~/Projects/dev-config/secrets.nix.example ~/.config/home-manager/secrets.nix
-
-# Edit with your values
-nvim ~/.config/home-manager/secrets.nix
-
-# Re-run Home Manager
-home-manager switch --flake ~/Projects/dev-config
-```
 
 ### Commit Shows "Unverified" on GitHub
 

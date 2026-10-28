@@ -102,9 +102,8 @@ All packages defined centrally in `pkgs/default.nix` by category:
 **1Password-first approach with sops-nix bootstrap:**
 
 **sops-nix** (bootstrap only):
-- Only stores `op/service_account_token` in `secrets/default.yaml` (encrypted with age)
-- Decrypted to tmpfs at Home Manager activation
-- Enables non-interactive 1Password CLI access
+- Declares `op/service_account_token` from `secrets/default.yaml` (age-encrypted); a legacy `git.github_token` field may remain in ciphertext until the next sync
+- Enables non-interactive 1Password CLI access during Home Manager activation
 - Age key at `~/.config/sops/age/keys.txt`
 
 **Git config** (not secrets - set in Nix):
@@ -113,9 +112,11 @@ All packages defined centrally in `pkgs/default.nix` by category:
 - See `dev-config.git` options in `home.nix`
 
 **1Password** (AI service keys):
-- All secrets stored in 1Password vault item `xsuolbdwx4vmcp3zysjczfatam` (vault: Dev)
-- Fetched at shell startup via `~/.config/sops-nix/load-env.sh`
+- Automation reads item `ai` in vault `Dev` by name.
+- Fetched once at Home Manager activation into mode-0600 `~/.config/sops-nix/load-env.sh` on disk; shells source it without fetching
 - Fields: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_AI_STUDIO_KEY`, `LITELLM_KEY`, `OPENROUTER_API_KEY`
+
+**1Password automation convention:** Use human-readable vault and item names with exact field/section labels in `op://` references and CLI calls. Grant each service account only the vaults/items it needs. Never copy a vault-wide service token into PR jobs; keep operational credentials in the designated trusted workflows.
 
 **1Password SSH Agent** for authentication:
 - SSH keys stored in 1Password vault (never on disk)

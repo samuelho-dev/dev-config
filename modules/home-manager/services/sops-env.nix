@@ -6,7 +6,7 @@
 }: let
   cfg = config.dev-config.sops-env;
 
-  # 1Password item UUID for AI service keys (from module option)
+  # 1Password item for AI service keys (Dev / "ai").
   onePassAiItemId = cfg.onePasswordItemId;
   onePassAiVault = cfg.onePasswordVault;
 
@@ -55,7 +55,7 @@
     KEYS_OK=0
     if [ -n "$OP_BIN" ] && [ -f "${opServiceAccountTokenPath}" ]; then
       if OP_SERVICE_ACCOUNT_TOKEN="$(cat ${opServiceAccountTokenPath})" \
-         "$OP_BIN" item get ${onePassAiItemId} --vault ${onePassAiVault} --format json \
+         "$OP_BIN" item get ${lib.escapeShellArg onePassAiItemId} --vault ${lib.escapeShellArg onePassAiVault} --format json \
            --fields label=ANTHROPIC_API_KEY,label=OPENAI_API_KEY,label=GOOGLE_AI_STUDIO_KEY,label=LITELLM_KEY,label=OPENROUTER_API_KEY \
            --reveal 2>/dev/null \
          | ${pkgs.jq}/bin/jq -r '
@@ -89,14 +89,14 @@ in {
       type = lib.types.bool;
       default = true;
       description = ''
-        Load 1Password service account token from sops-nix and generate shell script
-        to fetch AI service API keys from 1Password on demand.
+        Load the 1Password service-account token from sops-nix and generate a
+        mode-0600 shell script with AI service API keys at Home Manager activation.
+        Shells source the generated file; they do not fetch keys from 1Password.
 
-        This hybrid approach combines:
-        - Secure token storage: OP_SERVICE_ACCOUNT_TOKEN via sops-nix (encrypted at rest)
-        - Centralized secrets: AI keys stored in 1Password vault
-        - On-demand loading: Keys fetched via `op item get` when needed
-
+        This combines:
+        - Encrypted bootstrap token storage: OP_SERVICE_ACCOUNT_TOKEN via sops-nix
+        - Centralized AI keys: 1Password Dev vault, item "ai"
+        - Activation-time loading: one `op item get` per Home Manager activation
         Environment variables set when their 1Password values are non-empty and non-placeholder:
         - OP_SERVICE_ACCOUNT_TOKEN (from sops-nix for non-interactive op CLI)
         - ANTHROPIC_API_KEY (from 1Password vault)
@@ -109,16 +109,16 @@ in {
 
     onePasswordItemId = lib.mkOption {
       type = lib.types.str;
-      default = "xsuolbdwx4vmcp3zysjczfatam";
-      description = "1Password item UUID for AI service keys";
+      default = "ai";
+      description = "1Password item title for AI service keys";
     };
 
     onePasswordVault = lib.mkOption {
       type = lib.types.str;
       default = "Dev";
       description = ''
-        1Password vault holding the AI keys item. Required: the service-account `op` CLI
-        rejects `item get` without a vault ("a vault query must be provided").
+        1Password vault holding the AI keys item.
+        The service-account `op` CLI requires a vault query for `item get`.
       '';
     };
   };
@@ -130,7 +130,7 @@ in {
     # Source the script in shell initialization
     # Using programs.zsh.envExtra which runs in .zshenv (before .zshrc)
     programs.zsh.envExtra = ''
-      # Load AI secrets from sops-nix (decrypted at Home Manager activation)
+      # Source activation-generated AI keys and the sops-nix bootstrap token
       if [ -f "$HOME/.config/sops-nix/load-env.sh" ]; then
         source "$HOME/.config/sops-nix/load-env.sh"
       fi
@@ -138,7 +138,7 @@ in {
 
     # Also support bash
     programs.bash.bashrcExtra = ''
-      # Load AI secrets from sops-nix (decrypted at Home Manager activation)
+      # Source activation-generated AI keys and the sops-nix bootstrap token
       if [ -f "$HOME/.config/sops-nix/load-env.sh" ]; then
         source "$HOME/.config/sops-nix/load-env.sh"
       fi

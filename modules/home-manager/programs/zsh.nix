@@ -146,8 +146,8 @@
           # Source Powerlevel10k configuration
           [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-          # Credentials loaded by LaunchAgent (macOS) or systemd (Linux) at login
-          # No need for per-shell loading - eliminates 50ms overhead
+          # Home Manager activation generates the mode-0600 AI key loader;
+          # .zshenv sources it without any per-shell 1Password queries.
         ''
 
         # Late init - source machine-specific config (mkOrder 1500)
