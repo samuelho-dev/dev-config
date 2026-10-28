@@ -5,8 +5,7 @@ import os
 import select
 import subprocess
 import sys
-import urllib.error
-import urllib.request
+
 
 
 def check(command, *, env=None):
@@ -23,22 +22,38 @@ def require(name):
     return value
 
 
-def rpc(url, token, prefix, method, params, session=None, extra=None):
-    headers = {"Authorization": prefix + token, "Content-Type": "application/json", "Accept": "application/json, text/event-stream"}
-    headers.update(extra or {})
-    if session:
-        headers["Mcp-Session-Id"] = session
-    payload = json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params}).encode()
-    request = urllib.request.Request(url, data=payload, headers=headers)
-    with urllib.request.urlopen(request, timeout=20) as response:
-        body = response.read(2_000_000).decode()
-        session = response.headers.get("Mcp-Session-Id", session)
-    if "data: " in body:
-        body = next(line[6:] for line in body.splitlines() if line.startswith("data: "))
-    result = json.loads(body)
-    if "error" in result or result.get("result", {}).get("isError"):
-        raise RuntimeError(f"{method} returned an MCP error")
-    return result["result"], session
+HTTP_MCP_CHECK = r"""
+const configs = [
+  ["sentry", "https://mcp.sentry.dev/mcp/creativetoolkits", "Sentry-Bearer ", process.env.SENTRY_MCP_KEY, {}],
+  ["posthog", "https://mcp.posthog.com/mcp", "Bearer ", process.env.POSTHOG_MCP_KEY, {"x-posthog-mcp-mode": "tools"}],
+];
+for (const [name, url, prefix, token, extra] of configs) {
+  async function rpc(method, credential, session) {
+    const headers = {"Authorization": prefix + credential, "Content-Type": "application/json", "Accept": "application/json, text/event-stream", ...extra};
+    if (session) headers["Mcp-Session-Id"] = session;
+    const response = await fetch(url, {method: "POST", headers, body: JSON.stringify({
+      jsonrpc: "2.0", id: 1, method, params: method === "initialize"
+        ? {protocolVersion: "2025-03-26", capabilities: {}, clientInfo: {name: "rex-access-check", version: "1"}} : {}
+    }), signal: AbortSignal.timeout(20000)});
+    if (!response.ok) return {status: response.status};
+    const body = await response.text();
+    const data = response.headers.get("content-type")?.includes("text/event-stream")
+      ? body.split("\n").find(line => line.startsWith("data: "))?.slice(6) : body;
+    const message = JSON.parse(data);
+    if (message.error || message.result?.isError) throw Error(name + " " + method + " failed");
+    return {result: message.result, session: response.headers.get("mcp-session-id") || session};
+  }
+  const init = await rpc("initialize", token);
+  if (!init.result?.serverInfo) throw Error(name + " did not initialize");
+  const notification = await fetch(url, {method: "POST", headers: {"Authorization": prefix + token, "Content-Type": "application/json", "Accept": "application/json, text/event-stream", ...(init.session ? {"Mcp-Session-Id": init.session} : {}), ...extra}, body: JSON.stringify({jsonrpc: "2.0", method: "notifications/initialized"}), signal: AbortSignal.timeout(20000)});
+  if (!notification.ok) throw Error(name + " initialization acknowledgement failed");
+  const tools = await rpc("tools/list", token, init.session);
+  if (!tools.result?.tools?.length) throw Error(name + " has no authorized tools");
+  const denied = await rpc("tools/list", "nonsecret-invalid-auth-probe");
+  if (![401, 403].includes(denied.status)) throw Error(name + " accepted a false credential");
+  console.log(name + ": authenticated tools available; invalid credential denied");
+}
+"""
 
 
 def main():
@@ -63,24 +78,9 @@ def main():
     pg = check(["psql", "-Atqc", "SELECT current_user || '|' || current_database()"])
     if pg != require("REX_EXPECTED_POSTGRES_IDENTITY"):
         raise RuntimeError("unexpected PostgreSQL identity")
-    for name, url, prefix, token, headers in (
-        ("sentry", "https://mcp.sentry.dev/mcp/creativetoolkits", "Sentry-Bearer ", require("SENTRY_MCP_KEY"), {}),
-        ("posthog", "https://mcp.posthog.com/mcp", "Bearer ", require("POSTHOG_MCP_KEY"), {"x-posthog-mcp-mode": "tools"}),
-    ):
-        init, session = rpc(url, token, prefix, "initialize", {"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "rex-access-check", "version": "1"}}, extra=headers)
-        if not init.get("serverInfo"):
-            raise RuntimeError(f"{name} did not initialize")
-        tools, _ = rpc(url, token, prefix, "tools/list", {}, session, headers)
-        if not tools.get("tools"):
-            raise RuntimeError(f"{name} has no authorized tools")
-        try:
-            rpc(url, "nonsecret-invalid-auth-probe", prefix, "tools/list", {}, None, headers)
-        except urllib.error.HTTPError as error:
-            if error.code not in (401, 403):
-                raise
-        else:
-            raise RuntimeError(f"{name} accepted a false credential")
-        print(f"{name}: authenticated tools available; invalid credential denied")
+    require("SENTRY_MCP_KEY")
+    require("POSTHOG_MCP_KEY")
+    print(check(["node", "--input-type=module", "-e", HTTP_MCP_CHECK]))
     # verify the real tool through an actual stdio initialize/list/call exchange.
     command = "cd /tmp && exec npx -y @robinson_ai_systems/vercel-mcp@1.0.1"
     proc = subprocess.Popen(["sh", "-c", command], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, env={**os.environ, "VERCEL_TOKEN": require("VERCEL_TOKEN")})
@@ -110,6 +110,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except (OSError, ValueError, KeyError, RuntimeError, urllib.error.URLError) as error:
+    except (OSError, ValueError, KeyError, RuntimeError) as error:
         print(f"access check failed: {error}", file=sys.stderr)
         sys.exit(1)
