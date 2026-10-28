@@ -71,8 +71,8 @@ OMP and Codex. Fresh installations use pinned `effect-mcp@0.1.16` and the
 |--------|---------------------|-----------------|------------------------|
 | Linear | `op://Dev/Linear/MCP_API_KEY` | `LINEAR_API_KEY` | Approved Linear MCP account |
 | Vercel community | `op://Dev/Vercel/TOKEN` | `VERCEL_TOKEN` | Approved Vercel team; pinned stdio package, no second official-MCP OAuth grant required |
-| Sentry | `op://Dev/creativetoolkits-sentry-mcp/TOKEN` | `SENTRY_MCP_KEY` | `Sentry-Bearer` access to the intended project |
-| PostHog | `op://Dev/creativetoolkits-posthog-mcp/TOKEN` | `POSTHOG_MCP_KEY` | Bearer access to the intended project; tools mode, **not** globally read-only |
+| Sentry | `op://Dev/creativetoolkits/SENTRY_MCP_TOKEN` | `SENTRY_MCP_KEY` | `Sentry-Bearer` access to the intended project |
+| PostHog | `op://Dev/creativetoolkits/POSTHOG_MCP_TOKEN` | `POSTHOG_MCP_KEY` | Bearer access to the intended project; tools mode, **not** globally read-only |
 
 The renderer omits an unresolved authenticated MCP server instead of publishing
 an unauthenticated/stale entry and writes all managed credential-bearing configs

@@ -36,7 +36,7 @@
       "auth": {
         "header": "Authorization",
         "prefix": "Sentry-Bearer ",
-        "op": "op://Dev/creativetoolkits-sentry-mcp/TOKEN",
+        "op": "op://Dev/creativetoolkits/SENTRY_MCP_TOKEN",
         "env": "SENTRY_MCP_KEY"
       }
     },
@@ -47,7 +47,7 @@
       "auth": {
         "header": "Authorization",
         "prefix": "Bearer ",
-        "op": "op://Dev/creativetoolkits-posthog-mcp/TOKEN",
+        "op": "op://Dev/creativetoolkits/POSTHOG_MCP_TOKEN",
         "env": "POSTHOG_MCP_KEY"
       }
     }
