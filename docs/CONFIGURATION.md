@@ -54,11 +54,17 @@ Inside Rex, `argocd-core.sh --in-cluster app list -o json` uses the projected
 
 Source validation: the Mac tailnet core helper listed 64 Argo applications,
 all Synced. The shared Nix cloud package set evaluated with `supabase-cli` and
-`postgresql` on aarch64-darwin and x86_64-linux, without building them. This
-does not prove the as-yet-undeployed Rex projected-token path or provider auth.
+`postgresql` on aarch64-darwin and x86_64-linux, without building them.
+Using existing approved Orca development provider tokens only in process
+memory, the unmodified HTTP MCP smoke authenticated Sentry `find_projects`
+(`api`) and PostHog `project-get` (`112088`) and observed invalid-token
+denials. These prove the source protocol/auth contract, not Rex's as-yet-
+undeployed credential projections or Kubernetes authorization.
 
 Canonical MCP definitions in `ai/mcp/servers.json` fan out to Claude Code,
-OMP and Codex. Resolve these **dedicated** credential sources during activation
+OMP and Codex. Fresh installations use pinned `effect-mcp@0.1.16` and the
+`pi-ponytail@0.1.2` plugin; this does not disable a user's later explicit
+`omp update`. Resolve these **dedicated** credential sources during activation
 (`op` on Mac, environment projection in Rex):
 
 | Server | 1Password reference | Rex environment | Required authorization |

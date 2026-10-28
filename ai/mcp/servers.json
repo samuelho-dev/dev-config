@@ -15,7 +15,7 @@
     "effect-docs": {
       "type": "stdio",
       "command": "bunx",
-      "args": ["--bun", "effect-mcp@latest"]
+      "args": ["--bun", "effect-mcp@0.1.16"]
     },
     "vercel": {
       "type": "stdio",
