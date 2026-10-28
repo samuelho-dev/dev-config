@@ -52,6 +52,11 @@ Inside Rex, `argocd-core.sh --in-cluster app list -o json` uses the projected
 `tokenFile` and creates only the private Argo core config. Neither mode edits
 `~/.argocd/config` or other kube contexts, and neither logs into Argo API mode.
 
+Source validation: the Mac tailnet core helper listed 64 Argo applications,
+all Synced. The shared Nix cloud package set evaluated with `supabase-cli` and
+`postgresql` on aarch64-darwin and x86_64-linux, without building them. This
+does not prove the as-yet-undeployed Rex projected-token path or provider auth.
+
 Canonical MCP definitions in `ai/mcp/servers.json` fan out to Claude Code,
 OMP and Codex. Resolve these **dedicated** credential sources during activation
 (`op` on Mac, environment projection in Rex):
