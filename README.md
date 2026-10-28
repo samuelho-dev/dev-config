@@ -640,7 +640,7 @@ This repository provides **enterprise-grade linting configurations** for TypeScr
 - `.kube-linter.yaml` - Kubernetes manifests (resource limits, no :latest)
 - `.hadolint.yaml` - Dockerfiles (version pinning, non-root)
 - `.tflint.hcl` - Terraform (snake_case, documented variables)
-- `.actionlint.yaml` - GitHub Actions workflows
+- `.github/actionlint.yaml` - GitHub Actions workflows
 
 **Pre-commit Integration:**
 ```bash
