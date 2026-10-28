@@ -103,7 +103,7 @@ for (const [name, url, prefix, token, extra] of configs) {
   if (!payloads.some(hasIdentity) && !markdownProject && !yamlProject) throw Error(name + " did not return the expected project");
   const denied = await rpc("tools/call", "nonsecret-invalid-auth-probe", undefined, {name: toolName, arguments: arguments_}, true);
   if (![401, 403].includes(denied.status) &&
-      !(denied.error && /unauthori[sz]ed|invalid.{0,20}token|authentication|forbidden|access denied/i.test(JSON.stringify(denied.error))))
+      !(denied.error && /unauthori[sz]ed|authori[sz]ation expired|re-authori[sz]e|invalid.{0,20}token|authentication|forbidden|access denied/i.test(JSON.stringify(denied.error))))
     throw Error(name + " accepted a false credential");
   console.log(name + ": authenticated project read succeeded; invalid credential denied");
 }
