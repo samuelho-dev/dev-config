@@ -95,7 +95,8 @@ credentials are enrolled. Supply expected nonsecret
 `REX_EXPECTED_AWS_ARN`, `REX_EXPECTED_POSTGRES_IDENTITY` (`user|database`),
 `REX_EXPECTED_SUPABASE_PROJECT_ID`, `REX_EXPECTED_SENTRY_PROJECT`,
 `REX_EXPECTED_POSTHOG_PROJECT_ID`, `REX_EXPECTED_VERCEL_TEAM`, and the
-PostHog MCP's accepted `REX_POSTHOG_MODEL` identifier. It checks actual CLI
+PostHog MCP's accepted `REX_POSTHOG_MODEL` identifier (the observed
+`project-get` proof used `openai-codex/gpt-6-sol`). It checks actual CLI
 identities, an anonymous Kubernetes secret denial, MCP read-only project/team
 calls, and invalid MCP credentials. Missing required credentials/targets fail
 the check. Do not report enrollment complete from package presence or an MCP
