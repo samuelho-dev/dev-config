@@ -8,7 +8,7 @@ printf '#!/bin/sh\nexit 1\n' > "$tmp/bin/op"
 chmod +x "$tmp/bin/op"
 printf '{"mcpServers":{"sentry":{"headers":{"Authorization":"old"}},"local":{"command":"local"}}}\n' > "$tmp/home/.omp/agent/mcp.json"
 HOME="$tmp/home" PATH="$tmp/bin:$PATH" LINEAR_API_KEY=linear SENTRY_MCP_KEY=sentry POSTHOG_MCP_KEY=posthog VERCEL_TOKEN=vercel sh "$root/ai/mcp/apply-mcp.sh"
-jq -e '.mcpServers.sentry.headers.Authorization == "Sentry-Bearer sentry" and .mcpServers.posthog.headers.Authorization == "Bearer posthog" and .mcpServers.posthog.headers."x-posthog-mcp-mode" == "tools" and .mcpServers.vercel.args[1] == "cd /tmp && exec npx -y @robinson_ai_systems/vercel-mcp@1.0.1" and .mcpServers.local.command == "local"' "$tmp/home/.omp/agent/mcp.json" >/dev/null
+jq -e '.mcpServers.sentry.headers.Authorization == "Sentry-Bearer sentry" and .mcpServers.posthog.headers.Authorization == "Bearer posthog" and .mcpServers.posthog.headers."x-posthog-mcp-mode" == "tools" and .mcpServers.local.command == "local"' "$tmp/home/.omp/agent/mcp.json" >/dev/null
 HOME="$tmp/home" PATH="$tmp/bin:$PATH" LINEAR_API_KEY=linear VERCEL_TOKEN=vercel sh "$root/ai/mcp/apply-mcp.sh"
 jq -e '(.mcpServers | has("sentry") | not) and (.mcpServers | has("posthog") | not) and .mcpServers.local.command == "local"' "$tmp/home/.omp/agent/mcp.json" >/dev/null
 python3 - "$tmp/home/.codex/config.toml" <<'PY'

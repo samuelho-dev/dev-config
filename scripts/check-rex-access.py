@@ -5,11 +5,15 @@ import os
 import select
 import subprocess
 import sys
+import signal
 
 
 
 def check(command, *, env=None):
-    result = subprocess.run(command, env=env, text=True, capture_output=True, timeout=40)
+    try:
+        result = subprocess.run(command, env=env, text=True, capture_output=True, timeout=180 if command[0] == "node" else 40)
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(f"{command[0]} timed out") from error
     if result.returncode:
         raise RuntimeError(f"{command[0]} failed (exit {result.returncode})")
     return result.stdout.strip()
@@ -28,12 +32,12 @@ const configs = [
   ["posthog", "https://mcp.posthog.com/mcp", "Bearer ", process.env.POSTHOG_MCP_KEY, {"x-posthog-mcp-mode": "tools"}],
 ];
 for (const [name, url, prefix, token, extra] of configs) {
-  async function rpc(method, credential, session) {
+  async function rpc(method, credential, session, args = {}) {
     const headers = {"Authorization": prefix + credential, "Content-Type": "application/json", "Accept": "application/json, text/event-stream", ...extra};
     if (session) headers["Mcp-Session-Id"] = session;
     const response = await fetch(url, {method: "POST", headers, body: JSON.stringify({
       jsonrpc: "2.0", id: 1, method, params: method === "initialize"
-        ? {protocolVersion: "2025-03-26", capabilities: {}, clientInfo: {name: "rex-access-check", version: "1"}} : {}
+        ? {protocolVersion: "2025-03-26", capabilities: {}, clientInfo: {name: "rex-access-check", version: "1"}} : args
     }), signal: AbortSignal.timeout(20000)});
     if (!response.ok) return {status: response.status};
     const body = await response.text();
@@ -50,6 +54,24 @@ for (const [name, url, prefix, token, extra] of configs) {
   const tools = await rpc("tools/list", token, init.session);
   if (!tools.result?.tools?.length) throw Error(name + " has no authorized tools");
   const denied = await rpc("tools/list", "nonsecret-invalid-auth-probe");
+  const toolName = name === "sentry" ? "find_projects" : "project-get";
+  if (!tools.result.tools.some(tool => tool.name === toolName)) throw Error(name + " read tool unavailable");
+  const arguments_ = name === "sentry" ? {} : {
+    context: "Verify the selected PostHog project identity with a read-only query",
+    model: process.env.REX_POSTHOG_MODEL
+  };
+  const called = await rpc("tools/call", token, init.session, {name: toolName, arguments: arguments_});
+  const expected = name === "sentry" ? process.env.REX_EXPECTED_SENTRY_PROJECT : process.env.REX_EXPECTED_POSTHOG_PROJECT_ID;
+  function hasIdentity(value) {
+    if (Array.isArray(value)) return value.some(hasIdentity);
+    if (!value || typeof value !== "object") return false;
+    if (["id", "slug", "name", "projectId"].some(key => String(value[key]) === expected)) return true;
+    return Object.values(value).some(hasIdentity);
+  }
+  const payloads = called.result?.content?.map(item => {
+    try { return JSON.parse(item.text); } catch { return null; }
+  }) || [];
+  if (!payloads.some(hasIdentity)) throw Error(name + " did not return the expected project");
   if (![401, 403].includes(denied.status)) throw Error(name + " accepted a false credential");
   console.log(name + ": authenticated tools available; invalid credential denied");
 }
@@ -59,6 +81,14 @@ for (const [name, url, prefix, token, extra] of configs) {
 def main():
     expected = require("REX_EXPECTED_KUBE_IDENTITY")
     kube = require("KUBECONFIG")
+    for name in (
+        "REX_EXPECTED_AWS_ACCOUNT", "REX_EXPECTED_POSTGRES_IDENTITY",
+        "REX_EXPECTED_SUPABASE_PROJECT_ID", "REX_EXPECTED_SENTRY_PROJECT",
+        "REX_EXPECTED_POSTHOG_PROJECT_ID", "REX_EXPECTED_VERCEL_TEAM",
+        "REX_POSTHOG_MODEL", "SUPABASE_ACCESS_TOKEN", "SENTRY_MCP_KEY",
+        "POSTHOG_MCP_KEY", "VERCEL_TOKEN",
+    ):
+        require(name)
     profile = os.environ.get("REX_AWS_PROFILE", "ctk-operator")
     env = {**os.environ, "AWS_PROFILE": profile}
     identity = check(["kubectl", "--kubeconfig", kube, "auth", "whoami", "-o", "json"])
@@ -67,23 +97,32 @@ def main():
     if check(["kubectl", "--kubeconfig", kube, "auth", "can-i", "get", "applications.argoproj.io", "-n", "argocd"]) != "yes":
         raise RuntimeError("Argo read permission denied")
     # The named owner cluster-admin profile legitimately has no namespace-level denial.
-    denied = check(["kubectl", "--kubeconfig", kube, "auth", "can-i", "get", "secrets", "--as=system:anonymous", "-n", "argocd"])
-    if denied != "no":
-        raise RuntimeError("anonymous Kubernetes secret access unexpectedly allowed")
+    try:
+        denied = subprocess.run(
+            ["kubectl", "--kubeconfig", kube, "auth", "can-i", "get", "secrets", "--as=system:anonymous", "-n", "argocd"],
+            text=True, capture_output=True, timeout=40,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError("anonymous Kubernetes denial timed out") from error
+    if denied.returncode not in (0, 1) or denied.stdout.strip() != "no":
+        raise RuntimeError("anonymous Kubernetes secret denial not verified")
     check(["argocd-core.sh", "--in-cluster", "app", "list", "-o", "json"])
     aws = json.loads(check(["aws", "sts", "get-caller-identity", "--output", "json"], env=env))
     if aws.get("Account") != require("REX_EXPECTED_AWS_ACCOUNT"):
         raise RuntimeError("unexpected AWS account")
-    check(["supabase", "projects", "list", "--output", "json"])
+    projects = json.loads(check(["supabase", "projects", "list", "--output", "json"]))
+    if not isinstance(projects, list) or not any(
+        project.get("id") == require("REX_EXPECTED_SUPABASE_PROJECT_ID") for project in projects
+    ):
+        raise RuntimeError("expected Supabase project not accessible")
     pg = check(["psql", "-Atqc", "SELECT current_user || '|' || current_database()"])
     if pg != require("REX_EXPECTED_POSTGRES_IDENTITY"):
         raise RuntimeError("unexpected PostgreSQL identity")
-    require("SENTRY_MCP_KEY")
-    require("POSTHOG_MCP_KEY")
+    # MCP probes below perform provider reads and assert the expected project/team.
     print(check(["node", "--input-type=module", "-e", HTTP_MCP_CHECK]))
     # verify the real tool through an actual stdio initialize/list/call exchange.
     command = "cd /tmp && exec npx -y @robinson_ai_systems/vercel-mcp@1.0.1"
-    proc = subprocess.Popen(["sh", "-c", command], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, env={**os.environ, "VERCEL_TOKEN": require("VERCEL_TOKEN")})
+    proc = subprocess.Popen(["sh", "-c", command], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, start_new_session=True, env={**os.environ, "VERCEL_TOKEN": require("VERCEL_TOKEN")})
     try:
         for index, (method, params) in enumerate((("initialize", {"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "rex-access-check", "version": "1"}}), ("tools/list", {}), ("tools/call", {"name": "vercel_list_teams", "arguments": {}})), 1):
             proc.stdin.write(json.dumps({"jsonrpc": "2.0", "id": index, "method": method, "params": params}) + "\n")
@@ -99,11 +138,18 @@ def main():
                 if response.get("id") == index:
                     if "error" in response or response.get("result", {}).get("isError") or not response.get("result"):
                         raise RuntimeError(f"Vercel MCP {method} failed")
+                    if method == "tools/call" and require("REX_EXPECTED_VERCEL_TEAM") not in json.dumps(response["result"]):
+                        raise RuntimeError("expected Vercel team not accessible")
                     break
         print("vercel: authenticated list_teams succeeded")
     finally:
-        proc.terminate()
-        proc.wait(timeout=5)
+        if proc.poll() is None:
+            os.killpg(proc.pid, signal.SIGTERM)
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                os.killpg(proc.pid, signal.SIGKILL)
+                proc.wait(timeout=5)
     print("Kubernetes, Argo, AWS, Supabase, PostgreSQL: identities and permissions verified")
 
 
