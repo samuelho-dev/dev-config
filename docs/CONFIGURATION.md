@@ -64,9 +64,11 @@ OMP and Codex. Resolve these **dedicated** credential sources during activation
 | PostHog | `op://Dev/creativetoolkits-posthog-mcp/TOKEN` | `POSTHOG_MCP_KEY` | Bearer access to the intended project; tools mode, **not** globally read-only |
 
 The renderer omits an unresolved authenticated MCP server instead of publishing
-an unauthenticated/stale entry; an omitted **required** server is an enrollment
-failure, not a healthy integration. These references are credential *sources*,
-not credentials to commit. Supabase CLI needs a **valid Management API PAT**
+an unauthenticated/stale entry and writes all managed credential-bearing configs
+mode 0600 without passing resolved secrets as subprocess arguments; an omitted
+**required** server is an enrollment failure, not a healthy integration.
+These references are credential *sources*, not credentials to commit. Supabase
+CLI needs a **valid Management API PAT**
 through its native `SUPABASE_ACCESS_TOKEN` environment source (or the user's
 authorized CLI keychain enrollment on macOS). The existing legacy Mac
 `Supabase CLI/access-token` value was rejected by the API; do not reuse it.
@@ -74,17 +76,18 @@ Rex PostgreSQL access needs an approved DB principal via `PGHOST`, `PGDATABASE`,
 `PGUSER`, `PGPASSWORD` (prefer a scoped role rather than an application owner).
 Never put either password in a command argument or tracked config.
 
-For AWS use a selected named project profile, e.g.
-`AWS_PROFILE=ctk-operator aws sts get-caller-identity` in Rex (the existing Mac
-project profile is `creativetoolkits`). Backblaze B2's `us-east-005` region
+For AWS select a named project profile explicitly, e.g.
+`aws --profile ctk-operator sts get-caller-identity` in Rex (the existing Mac
+project profile is `creativetoolkits`). The smoke removes inherited AWS access-key,
+session, region and endpoint overrides before using that profile, then checks
+both account and exact expected ARN. Backblaze B2's `us-east-005` region
 and S3 endpoint belong only to B2 commands/backend; do not overwrite the
-default profile, which other backup/Terraform callers use. The account identity
-must be checked before operations.
+default profile, which other backup/Terraform callers use.
 
 `check-rex-access.py` is a read-only, fail-closed smoke entrypoint once
 credentials are enrolled. Supply expected nonsecret
 `REX_EXPECTED_KUBE_IDENTITY`, `REX_EXPECTED_AWS_ACCOUNT`,
-`REX_EXPECTED_POSTGRES_IDENTITY` (`user|database`),
+`REX_EXPECTED_AWS_ARN`, `REX_EXPECTED_POSTGRES_IDENTITY` (`user|database`),
 `REX_EXPECTED_SUPABASE_PROJECT_ID`, `REX_EXPECTED_SENTRY_PROJECT`,
 `REX_EXPECTED_POSTHOG_PROJECT_ID`, `REX_EXPECTED_VERCEL_TEAM`, and the
 PostHog MCP's accepted `REX_POSTHOG_MODEL` identifier. It checks actual CLI

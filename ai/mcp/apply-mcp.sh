@@ -61,13 +61,13 @@ for name in $(printf '%s' "$RESOLVED" | jq -r 'keys[]'); do
     if [ -n "$envkey" ]; then
       # stdio server: inject the resolved secret into the child process env
       # (envKey) instead of an HTTP header — the CLIs pass .env to the subprocess.
-      RESOLVED=$(printf '%s' "$RESOLVED" | jq -c \
-        --arg n "$name" --arg k "$envkey" --arg v "$secret" \
-        '.[$n].env[$k] = $v | del(.[$n].auth)')
+      RESOLVED=$(printf '%s' "$RESOLVED" | SECRET="$secret" jq -c \
+        --arg n "$name" --arg k "$envkey" \
+        '.[$n].env[$k] = env.SECRET | del(.[$n].auth)')
     else
-      RESOLVED=$(printf '%s' "$RESOLVED" | jq -c \
-        --arg n "$name" --arg h "$header" --arg v "$prefix$secret" \
-        '.[$n].headers[$h] = $v | del(.[$n].auth)')
+      RESOLVED=$(printf '%s' "$RESOLVED" | SECRET="$prefix$secret" jq -c \
+        --arg n "$name" --arg h "$header" \
+        '.[$n].headers[$h] = env.SECRET | del(.[$n].auth)')
     fi
   else
     echo "mcp: WARN no secret for '$name' (op:$opref env:$envname); omitting server" >&2
@@ -79,10 +79,15 @@ done
 if [ "$DO_CLAUDE" = "1" ]; then
   CJSON="$HOME/.claude.json"
   [ -f "$CJSON" ] || printf '{}\n' > "$CJSON"
+  chmod 600 "$CJSON"
   tmp=$(mktemp)
-  jq --argjson servers "$RESOLVED" --argjson managed "$MANAGED_KEYS" --argjson proj "$ENABLE_PROJECT" \
-    '.mcpServers = ((.mcpServers // {} | with_entries(select(.key as $key | $managed | index($key) | not))) + $servers) | .enableAllProjectMcpServers = $proj' \
-    "$CJSON" > "$tmp" && mv "$tmp" "$CJSON"
+  RESOLVED="$RESOLVED" MANAGED_KEYS="$MANAGED_KEYS" ENABLE_PROJECT="$ENABLE_PROJECT" \
+    jq -n --slurpfile original "$CJSON" \
+    '($ENV.RESOLVED | fromjson) as $servers | ($ENV.MANAGED_KEYS | fromjson) as $managed |
+     ($ENV.ENABLE_PROJECT | fromjson) as $proj |
+     $original[0] | .mcpServers = ((.mcpServers // {} | with_entries(select(.key as $key | $managed | index($key) | not))) + $servers)
+     | .enableAllProjectMcpServers = $proj' \
+    > "$tmp" && mv "$tmp" "$CJSON"
   echo "mcp: wrote $CJSON"
 fi
 
@@ -92,11 +97,14 @@ if [ "$DO_OMP" = "1" ]; then
   mkdir -p "$OMP_DIR"
   OJSON="$OMP_DIR/mcp.json"
   [ -f "$OJSON" ] || printf '{}\n' > "$OJSON"
+  chmod 600 "$OJSON"
   tmp=$(mktemp)
-  jq --argjson servers "$RESOLVED" --argjson managed "$MANAGED_KEYS" \
-    '.["$schema"] = (.["$schema"] // "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json")
+  RESOLVED="$RESOLVED" MANAGED_KEYS="$MANAGED_KEYS" \
+    jq -n --slurpfile original "$OJSON" \
+    '($ENV.RESOLVED | fromjson) as $servers | ($ENV.MANAGED_KEYS | fromjson) as $managed |
+     $original[0] | .["$schema"] = (.["$schema"] // "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json")
      | .mcpServers = ((.mcpServers // {} | with_entries(select(.key as $key | $managed | index($key) | not))) + $servers)' \
-    "$OJSON" > "$tmp" && mv "$tmp" "$OJSON"
+    > "$tmp" && mv "$tmp" "$OJSON"
   echo "mcp: wrote $OJSON"
   if command -v omp >/dev/null 2>&1; then
     omp config set mcp.enableProjectConfig "$ENABLE_PROJECT" >/dev/null 2>&1 || true
@@ -111,6 +119,7 @@ if [ "$DO_CODEX" = "1" ] && command -v python3 >/dev/null 2>&1; then
   mkdir -p "$CODEX_DIR"
   CODEX_TOML="$CODEX_DIR/config.toml"
   [ -f "$CODEX_TOML" ] || : > "$CODEX_TOML"
+  chmod 600 "$CODEX_TOML"
   RESOLVED="$RESOLVED" CODEX_TOML="$CODEX_TOML" python3 - <<'PY'
 import json, os, re
 
@@ -167,6 +176,7 @@ else:
 
 with open(path, "w") as f:
     f.write(updated)
+os.chmod(path, 0o600)
 print(f"mcp: wrote {path}")
 PY
 fi

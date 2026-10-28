@@ -26,6 +26,23 @@ def require(name):
     return value
 
 
+def has_vercel_team(result, expected):
+    def matches(value):
+        if isinstance(value, list):
+            return any(map(matches, value))
+        if isinstance(value, dict):
+            return value.get("id") == expected or value.get("slug") == expected or any(map(matches, value.values()))
+        return False
+
+    payloads = [result.get("structuredContent")]
+    for item in result.get("content", []):
+        try:
+            payloads.append(json.loads(item["text"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return any(map(matches, payloads))
+
+
 HTTP_MCP_CHECK = r"""
 const configs = [
   ["sentry", "https://mcp.sentry.dev/mcp/creativetoolkits", "Sentry-Bearer ", process.env.SENTRY_MCP_KEY, {}],
@@ -68,10 +85,17 @@ for (const [name, url, prefix, token, extra] of configs) {
     if (["id", "slug", "name", "projectId"].some(key => String(value[key]) === expected)) return true;
     return Object.values(value).some(hasIdentity);
   }
-  const payloads = called.result?.content?.map(item => {
+  const payloads = [called.result?.structuredContent, ...(called.result?.content?.map(item => {
     try { return JSON.parse(item.text); } catch { return null; }
-  }) || [];
-  if (!payloads.some(hasIdentity)) throw Error(name + " did not return the expected project");
+  }) || [])];
+  // Older Sentry servers render project rows as Markdown rather than JSON.
+  const markdownProject = name === "sentry" && called.result?.content?.some(item => {
+    if (typeof item.text !== "string") return false;
+    const slug = expected.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp("(?:^|\\n)\\s*(?:[-*]\\s*)?(?:(?:\\*\\*)?slug(?:\\*\\*)?\\s*:\\s*`?" + slug + "`?(?=\\s|$)|(?:\\*\\*|`)?" + slug + "(?:\\*\\*|`)?(?=\\s|\\(|$))", "im").test(item.text)
+      || new RegExp("/projects/" + slug + "(?:/|[?#)]|$)").test(item.text);
+  });
+  if (!payloads.some(hasIdentity) && !markdownProject) throw Error(name + " did not return the expected project");
   if (![401, 403].includes(denied.status)) throw Error(name + " accepted a false credential");
   console.log(name + ": authenticated tools available; invalid credential denied");
 }
@@ -82,7 +106,7 @@ def main():
     expected = require("REX_EXPECTED_KUBE_IDENTITY")
     kube = require("KUBECONFIG")
     for name in (
-        "REX_EXPECTED_AWS_ACCOUNT", "REX_EXPECTED_POSTGRES_IDENTITY",
+        "REX_EXPECTED_AWS_ACCOUNT", "REX_EXPECTED_AWS_ARN", "REX_EXPECTED_POSTGRES_IDENTITY",
         "REX_EXPECTED_SUPABASE_PROJECT_ID", "REX_EXPECTED_SENTRY_PROJECT",
         "REX_EXPECTED_POSTHOG_PROJECT_ID", "REX_EXPECTED_VERCEL_TEAM",
         "REX_POSTHOG_MODEL", "SUPABASE_ACCESS_TOKEN", "SENTRY_MCP_KEY",
@@ -90,7 +114,11 @@ def main():
     ):
         require(name)
     profile = os.environ.get("REX_AWS_PROFILE", "ctk-operator")
-    env = {**os.environ, "AWS_PROFILE": profile}
+    env = {key: value for key, value in os.environ.items() if key not in (
+        "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN",
+        "AWS_SECURITY_TOKEN", "AWS_PROFILE", "AWS_REGION", "AWS_DEFAULT_REGION",
+        "AWS_ENDPOINT_URL", "AWS_ENDPOINT_URL_STS",
+    )}
     identity = check(["kubectl", "--kubeconfig", kube, "auth", "whoami", "-o", "json"])
     if json.loads(identity)["status"]["userInfo"]["username"] != expected:
         raise RuntimeError("unexpected Kubernetes identity")
@@ -107,9 +135,9 @@ def main():
     if denied.returncode not in (0, 1) or denied.stdout.strip() != "no":
         raise RuntimeError("anonymous Kubernetes secret denial not verified")
     check(["argocd-core.sh", "--in-cluster", "app", "list", "-o", "json"])
-    aws = json.loads(check(["aws", "sts", "get-caller-identity", "--output", "json"], env=env))
-    if aws.get("Account") != require("REX_EXPECTED_AWS_ACCOUNT"):
-        raise RuntimeError("unexpected AWS account")
+    aws = json.loads(check(["aws", "--profile", profile, "sts", "get-caller-identity", "--output", "json"], env=env))
+    if aws.get("Account") != require("REX_EXPECTED_AWS_ACCOUNT") or aws.get("Arn") != require("REX_EXPECTED_AWS_ARN"):
+        raise RuntimeError("unexpected AWS account or principal")
     projects = json.loads(check(["supabase", "projects", "list", "--output", "json"]))
     if not isinstance(projects, list) or not any(
         project.get("id") == require("REX_EXPECTED_SUPABASE_PROJECT_ID") for project in projects
@@ -138,8 +166,8 @@ def main():
                 if response.get("id") == index:
                     if "error" in response or response.get("result", {}).get("isError") or not response.get("result"):
                         raise RuntimeError(f"Vercel MCP {method} failed")
-                    if method == "tools/call" and require("REX_EXPECTED_VERCEL_TEAM") not in json.dumps(response["result"]):
-                        raise RuntimeError("expected Vercel team not accessible")
+                    if method == "tools/call" and not has_vercel_team(response["result"], require("REX_EXPECTED_VERCEL_TEAM")):
+                        raise RuntimeError("expected Vercel team ID/slug not accessible")
                     break
         print("vercel: authenticated list_teams succeeded")
     finally:
