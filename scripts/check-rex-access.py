@@ -110,15 +110,82 @@ for (const [name, url, prefix, token, extra] of configs) {
 """
 
 
+def check_vercel_access():
+    """Verify native owner identity and the separately rendered community MCP."""
+    expected_user = require("REX_EXPECTED_VERCEL_USER")
+    expected_native_team = require("REX_EXPECTED_VERCEL_TEAM")
+    expected_mcp_team = require("REX_EXPECTED_VERCEL_MCP_TEAM")
+
+    native = json.loads(check([
+        "vercel", "whoami", "--format=json", "--non-interactive",
+        "--scope", expected_native_team,
+    ]))
+    team = native.get("team")
+    if isinstance(team, dict):
+        team_ids = (team.get("id"), team.get("slug"))
+    else:
+        team_ids = (team, native.get("teamId"), native.get("teamSlug"))
+    if native.get("username") != expected_user or expected_native_team not in team_ids:
+        raise RuntimeError("unexpected native Vercel user or team")
+
+    config_path = os.path.join(os.path.expanduser("~"), ".omp", "agent", "mcp.json")
+    with open(config_path, encoding="utf-8") as config_file:
+        server = json.load(config_file).get("mcpServers", {}).get("vercel", {})
+    command = server.get("command")
+    args = server.get("args", [])
+    child_env = server.get("env", {})
+    if (server.get("type") != "stdio" or not isinstance(command, str) or not command
+            or not isinstance(args, list) or not all(isinstance(arg, str) for arg in args)
+            or not isinstance(child_env, dict) or not child_env.get("VERCEL_TOKEN")):
+        raise RuntimeError("rendered Vercel MCP stdio credentials or launcher missing")
+    proc = subprocess.Popen(
+        [command, *args], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL, text=True, start_new_session=True,
+        env={**os.environ, **child_env},
+    )
+    try:
+        calls = (
+            ("initialize", {"protocolVersion": "2025-03-26", "capabilities": {},
+                            "clientInfo": {"name": "rex-access-check", "version": "1"}}),
+            ("tools/list", {}),
+            ("tools/call", {"name": "vercel_list_teams", "arguments": {}}),
+        )
+        for index, (method, params) in enumerate(calls, 1):
+            proc.stdin.write(json.dumps({"jsonrpc": "2.0", "id": index, "method": method, "params": params}) + "\n")
+            proc.stdin.flush()
+            while True:
+                ready, _, _ = select.select([proc.stdout], [], [], 30)
+                if not ready:
+                    raise RuntimeError("Vercel MCP response timed out")
+                line = proc.stdout.readline()
+                if not line:
+                    raise RuntimeError("Vercel MCP ended before response")
+                response = json.loads(line)
+                if response.get("id") == index:
+                    if "error" in response or response.get("result", {}).get("isError") or not response.get("result"):
+                        raise RuntimeError(f"Vercel MCP {method} failed")
+                    if method == "tools/call" and not has_vercel_team(response["result"], expected_mcp_team):
+                        raise RuntimeError("expected Vercel MCP team ID/slug not accessible")
+                    break
+    finally:
+        if proc.poll() is None:
+            os.killpg(proc.pid, signal.SIGTERM)
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                os.killpg(proc.pid, signal.SIGKILL)
+                proc.wait(timeout=5)
+    print("vercel: native owner and configured MCP team verified")
+
+
 def main():
     expected = require("REX_EXPECTED_KUBE_IDENTITY")
     kube = require("KUBECONFIG")
     for name in (
         "REX_EXPECTED_AWS_ACCOUNT", "REX_EXPECTED_AWS_ARN", "REX_EXPECTED_POSTGRES_IDENTITY",
         "REX_EXPECTED_SUPABASE_PROJECT_ID", "REX_EXPECTED_SENTRY_PROJECT",
-        "REX_EXPECTED_POSTHOG_PROJECT_ID", "REX_EXPECTED_VERCEL_TEAM",
-        "REX_POSTHOG_MODEL", "SUPABASE_ACCESS_TOKEN", "SENTRY_MCP_KEY",
-        "POSTHOG_MCP_KEY", "VERCEL_TOKEN",
+        "REX_EXPECTED_POSTHOG_PROJECT_ID", "REX_POSTHOG_MODEL",
+        "SUPABASE_ACCESS_TOKEN", "SENTRY_MCP_KEY", "POSTHOG_MCP_KEY",
     ):
         require(name)
     profile = os.environ.get("REX_AWS_PROFILE", "ctk-operator")
@@ -156,36 +223,7 @@ def main():
         raise RuntimeError("unexpected PostgreSQL identity")
     # MCP probes below perform provider reads and assert the expected project/team.
     print(check(["node", "--input-type=module", "-e", HTTP_MCP_CHECK]))
-    # verify the real tool through an actual stdio initialize/list/call exchange.
-    command = "cd /tmp && exec npx -y @robinson_ai_systems/vercel-mcp@1.0.1"
-    proc = subprocess.Popen(["sh", "-c", command], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, start_new_session=True, env={**os.environ, "VERCEL_TOKEN": require("VERCEL_TOKEN")})
-    try:
-        for index, (method, params) in enumerate((("initialize", {"protocolVersion": "2025-03-26", "capabilities": {}, "clientInfo": {"name": "rex-access-check", "version": "1"}}), ("tools/list", {}), ("tools/call", {"name": "vercel_list_teams", "arguments": {}})), 1):
-            proc.stdin.write(json.dumps({"jsonrpc": "2.0", "id": index, "method": method, "params": params}) + "\n")
-            proc.stdin.flush()
-            while True:
-                ready, _, _ = select.select([proc.stdout], [], [], 30)
-                if not ready:
-                    raise RuntimeError("Vercel MCP response timed out")
-                line = proc.stdout.readline()
-                if not line:
-                    raise RuntimeError("Vercel MCP ended before response")
-                response = json.loads(line)
-                if response.get("id") == index:
-                    if "error" in response or response.get("result", {}).get("isError") or not response.get("result"):
-                        raise RuntimeError(f"Vercel MCP {method} failed")
-                    if method == "tools/call" and not has_vercel_team(response["result"], require("REX_EXPECTED_VERCEL_TEAM")):
-                        raise RuntimeError("expected Vercel team ID/slug not accessible")
-                    break
-        print("vercel: authenticated list_teams succeeded")
-    finally:
-        if proc.poll() is None:
-            os.killpg(proc.pid, signal.SIGTERM)
-            try:
-                proc.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                os.killpg(proc.pid, signal.SIGKILL)
-                proc.wait(timeout=5)
+    check_vercel_access()
     print("Kubernetes, Argo, AWS, Supabase, PostgreSQL: identities and permissions verified")
 
 

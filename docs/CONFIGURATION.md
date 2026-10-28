@@ -70,9 +70,21 @@ OMP and Codex. Fresh installations use pinned `effect-mcp@0.1.16` and the
 | Server | 1Password reference | Rex environment | Required authorization |
 |--------|---------------------|-----------------|------------------------|
 | Linear | `op://Dev/Linear/MCP_API_KEY` | `LINEAR_API_KEY` | Approved Linear MCP account |
-| Vercel community | `op://Dev/Vercel/TOKEN` | `VERCEL_TOKEN` | Approved Vercel team; pinned stdio package, no second official-MCP OAuth grant required |
+| Vercel community | `op://Dev/Vercel/TOKEN` | `VERCEL_MCP_TOKEN`, exposed as `VERCEL_TOKEN` only to `apply-mcp.sh` | Existing Creativetoolkits MCP account; pinned stdio package, no second official-MCP OAuth grant required |
 | Sentry | `op://Dev/creativetoolkits/SENTRY_MCP_TOKEN` | `SENTRY_MCP_KEY` | `Sentry-Bearer` access to the intended project |
 | PostHog | `op://Dev/creativetoolkits/POSTHOG_MCP_TOKEN` | `POSTHOG_MCP_KEY` | Bearer access to the intended project; tools mode, **not** globally read-only |
+
+Vercel has **two deliberate identities**: the existing
+`Dev/Vercel/TOKEN`/rendered MCP child is the Creativetoolkits integration
+(`samuelho-dev`, team `samuelho-dev`); Rex's native Vercel CLI is the owner's
+`samuelho` account scoped to team `samuelho`. Enroll that CLI with native
+Vercel OAuth in Rex's own persisted private home; it does not consume the
+Creativetoolkits MCP token. Rex projects the existing MCP token separately as
+`VERCEL_MCP_TOKEN`; the runtime exposes it as `VERCEL_TOKEN` **only while
+rendering** the MCP configuration, not globally. No new token or official
+Vercel MCP OAuth grant is required, and neither Mac identity is overwritten.
+The doctor reads the actual rendered `~/.omp/agent/mcp.json` stdio command,
+arguments and child environment rather than assuming its launcher/token.
 
 The renderer omits an unresolved authenticated MCP server instead of publishing
 an unauthenticated/stale entry and writes all managed credential-bearing configs
@@ -100,7 +112,9 @@ credentials are enrolled. Supply expected nonsecret
 `REX_EXPECTED_KUBE_IDENTITY`, `REX_EXPECTED_AWS_ACCOUNT`,
 `REX_EXPECTED_AWS_ARN`, `REX_EXPECTED_POSTGRES_IDENTITY` (`user|database`),
 `REX_EXPECTED_SUPABASE_PROJECT_ID`, `REX_EXPECTED_SENTRY_PROJECT`,
-`REX_EXPECTED_POSTHOG_PROJECT_ID`, `REX_EXPECTED_VERCEL_TEAM`, and the
+`REX_EXPECTED_POSTHOG_PROJECT_ID`, `REX_EXPECTED_VERCEL_USER`,
+`REX_EXPECTED_VERCEL_TEAM` (native owner scope),
+`REX_EXPECTED_VERCEL_MCP_TEAM` (configured community MCP integration), and the
 PostHog MCP's accepted `REX_POSTHOG_MODEL` identifier (the observed
 `project-get` proof used `openai-codex/gpt-6-sol`). It checks actual CLI
 identities, an anonymous Kubernetes secret denial, MCP read-only project/team
