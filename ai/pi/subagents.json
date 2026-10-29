@@ -1,0 +1,9 @@
+{
+  "toolActivation": "eager",
+  "toolDescriptionMode": "compact",
+  "globalConcurrencyLimit": 3,
+  "maxSubagentSpawnsPerRun": 8,
+  "maxSubagentSpawnsPerSession": 24,
+  "maxActiveAsyncRunsPerSession": 3,
+  "maxSubagentDepth": 1
+}

@@ -1,0 +1,5 @@
+npm:pi-web-access
+npm:@upstash/context7-pi
+npm:pi-subagents
+npm:@aliou/pi-processes
+npm:@capdiem/pi-todo

@@ -45,6 +45,7 @@
     npm.enable = true;
     yazi.enable = true;
     omp.enable = true;
+    pi.enable = true;
 
     # Disabled: macOS-specific or not needed in DevPods
     ghostty.enable = false;
