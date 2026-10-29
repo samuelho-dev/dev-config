@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Centralized development configuration repository using **Nix + Home Manager** for declarative, reproducible dotfile and package management.
 
-**Managed configurations:** Neovim, Tmux, Ghostty, Yazi, Zsh (Oh My Zsh + Powerlevel10k), Git (1Password SSH signing), Claude Code multi-profile, Biome.
+**Managed configurations:** Neovim, Tmux, Ghostty, Yazi, Zsh (Oh My Zsh + Powerlevel10k), Git (1Password SSH signing), Claude Code native CLI bootstrap, Biome.
 
 ## Essential Commands
 
@@ -56,8 +56,9 @@ flake.nix                    # Entry point: exports homeManagerModules, nixosMod
 |   |   +-- programs/        # Per-program modules (neovim.nix, tmux.nix, etc.)
 |   |   +-- services/        # Service modules (direnv.nix, sops-env.nix)
 |   +-- nixos/               # System-level modules (for NixOS servers)
-+-- ai/                      # Source of truth for AI configs (exported globally by Nix)
-|   +-- skills/              # Active mattpocock/skills (exported to ~/.claude/skills + ~/.agents/skills)
++-- ai/                      # Source of truth for AI configs and curated skills
+|   +-- claude/              # Native writable CLI bootstrap only; preserves existing installs
+|   +-- skills/              # Curated upstream-derived skills (installation managed separately)
 |   +-- hooks/               # PostToolUse/UserPromptSubmit hooks (referenced in-repo)
 +-- .claude/                 # Project-level Claude Code config (NOT commands/agents)
 |   +-- settings.json        # Project hooks (references ai/hooks/)

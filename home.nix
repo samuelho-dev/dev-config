@@ -63,10 +63,9 @@
     # Enable yazi terminal file manager (with full preview support)
     yazi.enable = true;
 
-    # Claude Code with native OAuth (use /login to switch accounts)
-    claude-code = {
+    mcp = {
       enable = true;
-      litellm.enable = false; # LiteLLM requires server-side config for OAuth pass-through
+      targets.claude = true;
     };
 
     # Global MCP servers (linear, effect-docs) are centralized in the dev-config

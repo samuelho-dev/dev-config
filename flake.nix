@@ -77,9 +77,8 @@
     # Usage in consumer flakes:
     #   shellHook = dev-config.lib.devShellHook;
     #
-    # NOTE: AI configs (Claude Code, OMP) are now GLOBAL.
-    # They are exported to ~/.claude/ and ~/.agents/ by Home Manager.
-    # No project-level sync is needed - these tools automatically find global configs.
+    # MCP configs are managed globally by Home Manager; skill installation is separate.
+    # No project-level AI config sync is performed by this hook.
     lib.devShellHook = ''
       # ====== Setup direnv for zsh integration ======
       # Creates .envrc so direnv loads the flake into your shell

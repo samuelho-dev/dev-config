@@ -55,4 +55,4 @@ Catalog of documentation in the dev-config repository. Each top-level component 
 
 ## AI Tooling (`ai/`)
 
-Functional config exported globally by Home Manager — not documentation. `ai/skills/` contains the active `mattpocock/skills` set exported to `~/.claude/skills` and `~/.agents/skills`; `ai/hooks/` contains Biome/type-safety hook scripts.
+Functional config sources. [`ai/claude/`](../ai/claude/README.md) bootstraps the floating native CLI only when absent, preserving existing installs and user configuration. `ai/skills/` contains the curated upstream-derived skill set; Home Manager no longer installs or retires skill copies. `ai/mcp/` owns shared MCP configuration and fan-out; `ai/hooks/` contains Biome/type-safety hook scripts.

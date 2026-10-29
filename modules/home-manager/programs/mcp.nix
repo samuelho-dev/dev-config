@@ -27,8 +27,8 @@ in {
   options.dev-config.mcp = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = config.dev-config.claude-code.enable or false || config.dev-config.omp.enable or false;
-      defaultText = lib.literalExpression "claude-code.enable || omp.enable";
+      default = config.dev-config.omp.enable or false;
+      defaultText = lib.literalExpression "omp.enable";
       description = ''
         Render the canonical MCP server list into every agent CLI config
         (Claude Code, OMP, Codex). Single source of truth: ai/mcp/servers.json.
@@ -70,8 +70,7 @@ in {
     targets = {
       claude = lib.mkOption {
         type = lib.types.bool;
-        default = config.dev-config.claude-code.enable or false;
-        defaultText = lib.literalExpression "claude-code.enable";
+        default = false;
         description = "Render MCP servers into ~/.claude.json.";
       };
       omp = lib.mkOption {

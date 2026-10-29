@@ -6,170 +6,27 @@
   ...
 }: let
   cfg = config.dev-config.claude-code;
-
-  # Path to Claude Code config assets in dev-config repo
-  claudeAssetsPath =
+  claudeSource =
     if inputs ? dev-config
-    then "${inputs.dev-config}/.claude"
-    else ../../../.claude;
+    then "${inputs.dev-config}/ai/claude"
+    else ../../../ai/claude;
+  discoveryPath = lib.concatStringsSep ":" (
+    config.home.sessionPath
+    ++ lib.optional pkgs.stdenv.isDarwin "/opt/homebrew/bin"
+    ++ ["/usr/local/bin" "/usr/bin" "/bin"]
+  );
 in {
-  options.dev-config.claude-code = {
-    enable = lib.mkEnableOption "Claude Code CLI with OAuth authentication";
-
-    # Configuration export for lib.devShellHook
-    configSource = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
-      default =
-        if builtins.pathExists claudeAssetsPath
-        then claudeAssetsPath
-        else null;
-      description = "Path to Claude Code configuration directory (.claude/)";
-    };
-
-    exportConfig = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''
-        Export Claude Code configs (agents, commands) directly to ~/.claude/.
-        These are available globally in all projects without project-level sync.
-      '';
-    };
-
-    # Base settings.json content (projects can extend)
-    baseSettings = lib.mkOption {
-      type = lib.types.attrs;
-      default = {
-        hooks.enabled = false;
-      };
-      description = "Base settings.json configuration for consumer projects";
-    };
-
-    # LiteLLM pass-through proxy for traffic logging/tracking
-    # Uses /anthropic endpoint - Claude Code handles OAuth natively
-    litellm = {
-      enable =
-        (lib.mkEnableOption "Route Claude Code through LiteLLM pass-through proxy")
-        // {default = true;};
-
-      baseUrl = lib.mkOption {
-        type = lib.types.str;
-        default = "https://litellm.infra.samuelho.space";
-        description = ''
-          LiteLLM proxy base URL (without /anthropic suffix).
-          The /anthropic pass-through endpoint is appended automatically.
-
-          Examples:
-            - "http://localhost:4000" (local/port-forwarded)
-            - "https://litellm.infra.samuelho.space" (Tailscale ingress)
-
-          Pass-through mode: Claude Code authenticates with Anthropic directly
-          using native OAuth. LiteLLM only logs traffic for cost tracking.
-
-          Use /login in Claude Code to switch between accounts.
-        '';
-      };
-    };
-  };
+  options.dev-config.claude-code.enable = lib.mkEnableOption "writable native Claude Code CLI";
 
   config = lib.mkIf cfg.enable {
-    # Shell aliases for Claude Code
-    programs.zsh.shellAliases = {
-      cc = "claude --dangerously-skip-permissions";
-    };
+    home.sessionPath = ["$HOME/.local/bin"];
 
-    # Ensure ~/.claude directory exists
-    home.activation.createClaudeConfigDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      $DRY_RUN_CMD mkdir -p "$HOME/.claude"
+    # Supply installer tools and bounded CLI discovery only to this activation.
+    home.activation.bootstrapClaudeCode = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
+      if [ -z "''${DRY_RUN_CMD:-}" ]; then
+        PATH="${lib.makeBinPath [pkgs.curl pkgs.coreutils]}:${config.home.path}/bin:$PATH:${discoveryPath}" \
+          ${pkgs.bash}/bin/bash ${claudeSource}/bootstrap.sh
+      fi
     '';
-
-    # dev-config skills belong in the global skill roots discovered by Claude
-    # and omp (~/.claude/skills, ~/.agents/skills). Agents and commands are not
-    # exported, and stale global copies of them do not persist.
-    home.activation.exportClaudeConfigs = lib.mkIf (cfg.exportConfig && cfg.configSource != null) (
-      lib.hm.dag.entryAfter ["writeBoundary"] ''
-                $DRY_RUN_CMD rm -rf "$HOME/.claude/agents" "$HOME/.claude/commands"
-
-                SKILLS_SRC="${cfg.configSource}/../ai/skills"
-                MANIFEST="$HOME/.local/state/dev-config/skills"
-                $DRY_RUN_CMD mkdir -p "$(dirname "$MANIFEST")"
-                if [ -f "$MANIFEST" ]; then
-                  OLD_SKILLS="$(cat "$MANIFEST")"
-                else
-                  OLD_SKILLS='ask-matt
-        batch-grill-me
-        claude-handoff
-        code-review
-        codebase-design
-        design-an-interface
-        diagnosing-bugs
-        domain-modeling
-        edit-article
-        effect-service-architect
-        git-guardrails-claude-code
-        grill-me
-        grill-with-docs
-        grilling
-        gritql-linter-effect-nx
-        handoff
-        implement
-        improve-codebase-architecture
-        loop-me
-        migrate-to-shoehorn
-        obsidian-vault
-        prototype
-        qa
-        request-refactor-plan
-        research
-        resolving-merge-conflicts
-        scaffold-exercises
-        setup-matt-pocock-skills
-        setup-pre-commit
-        setup-ts-deep-modules
-        tdd
-        teach
-        to-questionnaire
-        to-spec
-        to-tickets
-        triage
-        type-safety-enforcer
-        ubiquitous-language
-        wayfinder
-        wizard
-        writing-beats
-        writing-fragments
-        writing-great-skills
-        writing-shape'
-                fi
-
-                if [ -d "$SKILLS_SRC" ]; then
-                  for DEST in "$HOME/.claude/skills" "$HOME/.agents/skills"; do
-                    $DRY_RUN_CMD mkdir -p "$DEST"
-                    printf '%s\n' "$OLD_SKILLS" | while IFS= read -r NAME; do
-                      [ -n "$NAME" ] || continue
-                      $DRY_RUN_CMD rm -rf "$DEST/$NAME"
-                    done
-                    for SKILL in "$SKILLS_SRC"/*/; do
-                      [ -d "$SKILL" ] || continue
-                      NAME="$(basename "$SKILL")"
-                      $DRY_RUN_CMD cp -Lr "''${SKILL%/}" "$DEST/$NAME"
-                      $DRY_RUN_CMD chmod -R +w "$DEST/$NAME"
-                    done
-                  done
-
-                  if [ -z "''${DRY_RUN_CMD:-}" ]; then
-                    for SKILL in "$SKILLS_SRC"/*/; do
-                      [ -d "$SKILL" ] && basename "$SKILL"
-                    done > "$MANIFEST"
-                  fi
-                fi
-      ''
-    );
-
-    # LiteLLM pass-through configuration
-    # Uses /anthropic endpoint for transparent pass-through
-    # Claude Code handles OAuth natively - use /login to switch accounts
-    home.sessionVariables = lib.mkIf cfg.litellm.enable {
-      ANTHROPIC_BASE_URL = "${cfg.litellm.baseUrl}/anthropic";
-    };
   };
 }

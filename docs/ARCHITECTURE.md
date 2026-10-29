@@ -2,29 +2,35 @@
 
 ## Overview
 
-dev-config is the single source of truth for shared developer resources (Claude Code
-commands/agents, editor configs, linting). Resources flow from this repo to your
-machine via Home Manager, and into individual projects via the flake's `devShellHook`.
+dev-config is the single source of truth for shared developer resources (curated AI
+skills, MCP configuration, editor configs, linting). Home Manager deploys tool
+configuration; agent skills are installed separately. The flake's `devShellHook`
+links per-project editor settings.
 
 1. **Source** (`dev-config/`): canonical resources, Git-tracked.
-2. **Global deployment** (`~/.claude/`, `~/.config/biome/`): Home Manager copies AI
-   configs and linting config to the home directory so every tool/project finds them
-   automatically.
+2. **Global deployment**: Home Manager configures enabled MCP targets and linting.
+   Agent skill installation is separate from Home Manager.
 3. **Project linkage** (`project-repo/`): `lib.devShellHook` runs on `nix develop` and
    wires per-project editor config.
 
 ## Source Layout
 
 ### `ai/` — Centralized AI Resources (single source of truth)
-- `skills/` — active skills synchronized from `mattpocock/skills`.
+- `skills/` — curated skills derived from `mattpocock/skills`.
   OMP autolearn skills stay machine-local in `~/.omp/agent/managed-skills`.
 - `hooks/` — Biome / type-safety hooks (referenced in-repo by `.claude/settings.json`)
 - `mcp/` — canonical MCP server list and cross-agent fan-out script
 - `omp/` — canonical OMP plugin list and idempotent installer
+- `claude/` — [native Claude CLI bootstrap](../ai/claude/README.md), only when absent
 
-`claude-code.nix` (Home Manager) exports `ai/skills` to `~/.claude/skills` and
-`~/.agents/skills` (via `cp -Lr`). AI configs are **global** — no project-level
-sync is needed.
+`claude-code.nix` is a minimal writable CLI bootstrap, enabled in personal/work
+and DevPod profiles. It preserves existing CLIs; otherwise it runs the official
+native installer for floating latest. Native installs own their launcher and
+updates. It does not manage settings, OAuth, plugins, skills or proxy routing.
+Home Manager no longer copies or retires agent skills or cleans up global
+agents/commands. Existing installed resources are left intact; changes to
+`ai/skills` require a separate installation step. MCP fan-out remains in
+`mcp.nix`; profiles explicitly opt into the Claude target.
 
 `omp.nix` and the DevPod/Orca entrypoints run `ai/omp/apply-plugins.sh`, so
 workstations and container runtimes install the same plugins from
@@ -60,10 +66,9 @@ dev-config/                         [Source, Git]
    ├── zed/
    └── biome/
 
-      │ Home Manager switch (claude-code.nix, biome module)
+      │ Home Manager switch (MCP, Biome and OMP modules)
       ▼
 
-~/.{claude,agents}/skills  ← ai/skills                                [Global, per-machine]
 ~/.config/biome/  ← linting config
 ~/.omp/plugins  ← ai/omp/plugins.txt
 
@@ -77,8 +82,9 @@ my-project/                          [Project Link]
 
 ## Maintenance
 
-**Update AI resources:** edit files in `dev-config/ai/`, then
-`home-manager switch --flake .` in this repo.
+**Update MCP resources:** edit `ai/mcp/`, then run
+`home-manager switch --flake .` in this repo. Skill source changes under
+`ai/skills/` are not installed by that command.
 
 **Update global OMP plugins:** edit `ai/omp/plugins.txt`, then run
 `home-manager switch --flake .`; DevPod/Orca images consume the same list on boot.

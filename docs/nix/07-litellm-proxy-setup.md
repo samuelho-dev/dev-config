@@ -109,22 +109,29 @@ echo $LITELLM_MASTER_KEY    # Should output: sk-...
 
 ### Step 3: Verify Claude Code Environment
 
-Claude Code picks up LiteLLM settings from environment variables set by the
-`claude-code` module when `dev-config.claude-code.litellm.enable = true`:
+Home Manager no longer configures Claude Code proxy routing. If the gateway is
+configured to support your authentication method, opt in for a single command:
 
 ```bash
-env | grep ANTHROPIC_
+ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space/anthropic claude
 ```
 
-Expected output:
+To inspect an explicitly configured shell override without printing credentials:
+
+```bash
+printf '%s\n' "${ANTHROPIC_BASE_URL:-not set}"
+```
+
+For an explicit shell override, the output is the configured URL:
 
 ```
-ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space/anthropic
+https://litellm.infra.samuelho.space/anthropic
 ```
 
-If `ANTHROPIC_BASE_URL` is missing, re-run `home-manager switch --flake .` and
-confirm `dev-config.claude-code.litellm.enable` is set (and `baseUrl` if you
-override the default gateway).
+A per-command override does not change the parent shell's environment.
+
+An unset `ANTHROPIC_BASE_URL` is normal for native Claude Code access. Running
+`home-manager switch --flake .` does not enable proxy routing.
 
 ### Step 4: Test the Integration
 
@@ -132,8 +139,8 @@ override the default gateway).
 # Health check against the gateway
 curl https://litellm.infra.samuelho.space/health
 
-# Claude Code query (routes through the gateway)
-claude "What is 2+2?"
+# Claude Code query (explicit gateway opt-in)
+ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space/anthropic claude "What is 2+2?"
 ```
 
 ## Self-Hosting Locally (Optional)
@@ -141,8 +148,8 @@ claude "What is 2+2?"
 > **Only follow this section if you run LiteLLM yourself in Kubernetes.**
 > The default team setup uses the HTTPS gateway above and needs none of this.
 
-If you run LiteLLM in a local cluster, expose it on `localhost:4000` and point
-`baseUrl` at it.
+If you run LiteLLM in a local cluster, expose it on `localhost:4000` and use
+an explicit per-command URL override.
 
 **Port-forward the service:**
 
@@ -164,15 +171,13 @@ while true; do
 done
 ```
 
-**Point Claude Code at localhost** by overriding the module option in your
-`home.nix`:
+**Point Claude Code at localhost** for one invocation:
 
-```nix
-dev-config.claude-code.litellm.baseUrl = "http://localhost:4000";
+```bash
+ANTHROPIC_BASE_URL=http://localhost:4000/anthropic claude
 ```
 
-Then `home-manager switch --flake .` and verify
-`ANTHROPIC_BASE_URL=http://localhost:4000/anthropic`.
+No Home Manager option or activation is required.
 
 ## Neovim Integration (avante.nvim)
 

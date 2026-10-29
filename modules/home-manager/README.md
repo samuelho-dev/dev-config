@@ -24,12 +24,24 @@ dev-config.tmux.enable = false;  # Disable tmux
 | **ssh** | SSH with 1Password agent integration |
 | **ghostty** | Ghostty terminal configuration |
 | **yazi** | Terminal file manager |
-| **claude-code** | Claude Code AI assistant |
+| **claude-code** | Floating writable native CLI bootstrap only |
+| **mcp** | Shared MCP configuration with per-agent targets |
 | **biome** | Linting/formatting configuration |
 | **direnv** | Per-project environments with nix-direnv |
 | **sops-env** | AI secrets from sops-nix |
 
 ## Configuration
+
+`dev-config.claude-code.enable` retains any existing CLI and otherwise runs the
+official native installer for the floating latest release. The shared personal/work
+profile and DevPod configuration enable it. Native installs remain writable and
+self-updating; settings, OAuth, plugins and skills are untouched. See the
+[bootstrap README](../../ai/claude/README.md).
+
+Enable Claude MCP configuration independently with `dev-config.mcp.enable = true`
+and `dev-config.mcp.targets.claude = true`. Home Manager no longer exports or
+deletes global skills, commands or agents, adds no skip-permissions alias, and
+does not set Claude proxy routing; existing installed copies are left intact.
 
 ### Disable a Program
 
@@ -88,6 +100,7 @@ modules/home-manager/
 |   +-- ghostty.nix
 |   +-- yazi.nix
 |   +-- claude-code.nix
+|   +-- mcp.nix
 |   +-- biome.nix
 |   +-- npm.nix
 |   +-- typescript-strict.nix

@@ -37,15 +37,16 @@
       # ASCII p10k config for terminals without Nerd Font support (iSH, basic SSH)
       p10kSource = ./zsh/.p10k-ascii.zsh;
     };
-    claude-code = {
+    mcp = {
       enable = true;
-      litellm.enable = false;
+      targets.claude = true;
     };
     biome.enable = true;
     npm.enable = true;
     yazi.enable = true;
     omp.enable = true;
     pi.enable = true;
+    claude-code.enable = true;
 
     # Disabled: macOS-specific or not needed in DevPods
     ghostty.enable = false;

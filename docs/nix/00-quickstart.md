@@ -71,7 +71,14 @@ nix develop                         # Enter a temporary shell with all packages
 exit                                # Leave temporary shell
 ```
 
-## Claude Code + LiteLLM Integration
+## Claude Code + Optional LiteLLM Integration
+
+The personal/work and DevPod profiles enable `dev-config.claude-code.enable`.
+Activation preserves any existing executable Claude; only when absent does it
+run the official native installer for floating latest. The CLI stays writable
+and native installs self-update. Settings, OAuth, plugins and skills are not
+managed by this bootstrap. See [native bootstrap details](../../ai/claude/README.md).
+MCP targeting is configured separately through `dev-config.mcp.targets.claude`.
 
 AI service keys live in **1Password** (not in the Nix store). The `sops-env`
 Home Manager module fetches them during activation and writes mode-0600
@@ -98,17 +105,16 @@ Home Manager module fetches them during activation and writes mode-0600
 
 ```bash
 # Open a new shell; load-env.sh sources keys fetched during Home Manager activation.
-# Claude Code routes through the LiteLLM gateway (ANTHROPIC_BASE_URL is set by
-# the claude-code module when dev-config.claude-code.litellm.enable = true).
+# Claude Code uses its native configuration; Home Manager does not set a proxy.
+# LiteLLM routing requires an explicit opt-in (see the proxy guide below).
 
 claude "What is this repository about?"
 ```
 
-Verify the gateway is wired up:
+If you explicitly configured a gateway, check its URL without printing API keys:
 
 ```bash
-env | grep ANTHROPIC_
-# ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space/anthropic
+printf '%s\n' "${ANTHROPIC_BASE_URL:-not set}"
 ```
 
 See [LiteLLM Proxy Setup](07-litellm-proxy-setup.md) for full details.
@@ -129,7 +135,7 @@ dev-config/
 │
 ├── modules/home-manager/   # Program + service modules
 ├── pkgs/default.nix        # Centralized package definitions
-├── ai/                     # Claude Code commands/agents/hooks (source of truth)
+├── ai/                     # CLI bootstraps, MCP, curated skills and hooks
 │
 ├── nvim/               # Neovim config (symlinked to ~/.config/nvim)
 ├── tmux/               # Tmux config

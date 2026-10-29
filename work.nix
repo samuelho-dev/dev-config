@@ -14,7 +14,6 @@
     stateVersion = "24.05";
   };
 
-
   # NO sops-nix secrets at work
 
   # Work-profile dev-config overrides (base.nix handles common enables)
@@ -35,15 +34,13 @@
       devpods.enable = false;
     };
 
-    # Claude Code — trust all project MCP servers at work
-    claude-code = {
-      enable = true;
-      litellm.enable = false;
-    };
-
     # Work machine has no 1Password/sops, so skip the shared global MCP servers
     # (their op:// secrets won't resolve). Project .mcp.json servers still load.
-    mcp.servers = {};
+    mcp = {
+      enable = true;
+      targets.claude = true;
+      servers = {};
+    };
 
     # Ghostty installed via Homebrew on macOS (not in nixpkgs)
     ghostty = {

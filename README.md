@@ -335,17 +335,18 @@ bash scripts/install.sh
 - ✅ **Isolated**: Per-project environments with zero conflicts
 - ✅ **Cross-platform**: Works on macOS (Intel/ARM) and Linux
 - ✅ **Binary cache**: 20x faster builds with Cachix (10 minutes → 30 seconds)
-- ✅ **AI integration**: Claude Code + Neovim (avante.nvim) with sops-nix encrypted API keys and LiteLLM proxy support for team AI management
+- ✅ **AI integration**: Writable native Claude Code bootstrap (preserves existing installs) + Neovim (avante.nvim), with sops-nix encrypted API keys and optional LiteLLM routing
 
 **After installation:**
 ```bash
 cd ~/Projects/dev-config  # direnv auto-activates Nix environment
-claude ask "What should I work on today?"  # Terminal: Uses LiteLLM proxy + Claude Code
+claude "What should I work on today?"  # Terminal: Existing Claude configuration is preserved
 nvim  # Editor: `:AvanteAsk` for Cursor-like AI coding assistant
-# All tools route through LiteLLM proxy (team mode) with automatic secrets loading
+# Claude proxy routing is explicit opt-in, not configured by Home Manager
 ```
 
 **Documentation:**
+- [Native Claude bootstrap](ai/claude/README.md) - Floating CLI install only when absent; settings and skills untouched
 - [Quick Start Guide](docs/nix/00-quickstart.md) - 5-minute setup
 - [Nix Concepts](docs/nix/01-concepts.md) - Understanding Nix
 - [Daily Usage](docs/nix/02-daily-usage.md) - Common workflows
