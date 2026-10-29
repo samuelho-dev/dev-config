@@ -1,6 +1,8 @@
 # HTML Report Format
 
-The architectural review is rendered as a single self-contained HTML file in the OS temp directory. Tailwind and Mermaid both come from CDNs. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (mass diagrams, cross-sections). Mix the two — don't lean on Mermaid for everything, it'll start to look generic.
+The architectural review is rendered as a single-file, network-dependent HTML report in the OS temp directory. Tailwind and Mermaid both come from CDNs. Mermaid handles graph-shaped diagrams reliably; hand-built divs and inline SVG handle the more editorial visuals (mass diagrams, cross-sections). Mix the two — don't lean on Mermaid for everything, it'll start to look generic.
+
+Escape repository-derived text for its HTML/SVG/Mermaid context; do not interpolate raw labels as markup or scripts. Mermaid strict mode disables unnecessary HTML/click features, but is not a substitute for escaping. CDN scripts execute with access to the report page: opening a private-code report with remote scripts requires approval of that exposure. For offline/private rendering, use already-approved local assets or plain HTML/CSS/SVG instead; do not claim CDN assets are bundled.
 
 ## Scaffold
 
@@ -13,7 +15,7 @@ The architectural review is rendered as a single self-contained HTML file in the
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
       import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "strict" });
     </script>
     <style>
       /* small custom layer for things Tailwind doesn't cover cleanly:
@@ -97,7 +99,7 @@ Before: a tree of function calls rendered as nested boxes. After: the same tree 
 - Colour sparingly: one accent (emerald or indigo) plus red for leakage and amber for warnings.
 - Keep diagrams ~320px tall so before/after sits comfortably side by side without scrolling.
 - Use `text-xs uppercase tracking-wider` for module labels inside diagrams — they should read as schematic, not as UI.
-- The only scripts are the Tailwind CDN and the Mermaid ESM import. The report is otherwise static — no app code, no interactivity beyond Mermaid's own rendering.
+- The only scripts are the Tailwind CDN and the Mermaid ESM import. The authored report has no app code; remote scripts still execute. Network/CDN failure may remove styling or diagrams, so retain readable text and file evidence.
 
 ## Top recommendation section
 

@@ -1,26 +1,31 @@
 ---
 name: code-review
-description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/PRD asked for?). Runs both reviews in parallel sub-agents and reports them side by side. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to "review since X".
+description: Review the changes since a fixed point (commit, branch, tag, or merge-base) along two axes — Standards (does the code follow this repo's documented coding standards?) and Spec (does the code match what the originating issue/PRD asked for?). Reports both axes side by side, using authorized host-native parallel subagents when available. Use when the user wants to review a branch, a PR, work-in-progress changes, or asks to "review since X".
 ---
 
-Two-axis review of the diff between `HEAD` and a fixed point the user supplies:
+Two-axis review against a fixed point, covering either committed branch changes or the requested work-in-progress scope:
 
 - **Standards** — does the code conform to this repo's documented coding standards?
 - **Spec** — does the code faithfully implement the originating issue / PRD / spec?
 
-Both axes run as **parallel sub-agents** so they don't pollute each other's context, then this skill aggregates their findings.
+When delegation is authorized, both axes run as **parallel read-only subagents** with separate contexts, then this skill aggregates their findings. On Pi, use native Pi subagents and the installed `pi-subagents` contract; on Claude Code, use its `Agent` tool. Do not substitute OMP, Orca, another agent CLI, or a different model if the requested native runner is unavailable: report the limitation. If delegation is not authorized, review the two axes directly and label the lack of independent contexts.
 
 Use the project's documented issue tracker. If it is unclear, ask the user before fetching issues.
 
 ## Process
 
-### 1. Pin the fixed point
+### 1. Pin the fixed point and review scope
 
-Whatever the user said is the fixed point — a commit SHA, branch name, tag, `main`, `HEAD~5`, etc. If they didn't specify one, ask for it.
+Resolve the user's commit, branch or tag to a commit (`git rev-parse --verify '<fixed-point>^{commit}'`) and record its SHA, the current `HEAD` SHA, and the comparison base. Ask for the fixed point if absent; `/implement` may explicitly pass `HEAD` for its uncommitted work. Preserve the user's requested semantics: three-dot uses `git merge-base <fixed-point> HEAD`; a comparison to an exact commit uses that commit itself. Do not silently substitute one for the other.
 
-Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base). Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
+Choose and state the mode before gathering input:
 
-Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here — not inside two parallel sub-agents.
+- **Committed branch/PR**: `git diff <base> HEAD` and `git log <base>..HEAD --oneline`. This mode excludes dirty work; say so, even if the checkout is dirty.
+- **Work in progress / pre-commit**: include the committed delta above when relevant, **plus** `git diff --cached` (index versus HEAD), `git diff` (unstaged versus index), and relevant untracked files enumerated with `git ls-files --others --exclude-standard`. Read the in-scope untracked files in full; ordinary diffs do not include them. Use `git diff <base>` to inspect the combined tracked final state as well. Inspect both staged and working-tree versions when they differ; a later unstaged reversal must not hide code still staged for commit.
+
+Record `git status --short`, distinguish task-owned files from unrelated pre-existing work, and pass the same file inventory and captured diff/content to both reviewers. Include new task support/tests even if still untracked; do not ingest unrelated secrets, ignored data, or another owner's files merely to broaden coverage. Report exclusions explicitly. Do not stage, stash, reset or clean anything to obtain a diff.
+
+Validate the ref and the **whole selected input**, not only the committed diff. A dirty-only or untracked-only implementation is not empty. If all selected inputs are empty, report no changes. If files change while collecting/reviewing, recapture the affected input and re-review it before claiming coverage.
 
 ### 2. Identify the spec source
 
@@ -57,17 +62,17 @@ Each smell reads *what it is* → *how to fix*; match it against the diff:
 
 ### 4. Spawn both sub-agents in parallel
 
-Send a single message with two `Agent` tool calls. Use the `general-purpose` subagent for both.
+Use two native Pi read-only review runs on Pi, or two `general-purpose` `Agent` calls on Claude Code, subject to the authorization and availability rules above. Give each reviewer the captured input rather than assuming a child checkout includes uncommitted or untracked work. Wait for completed reports; a launch receipt is not a review.
 
 **Standards sub-agent prompt** — include:
 
-- The full diff command and commit list.
+- The pinned base/HEAD, review mode, captured committed/staged/unstaged diffs, relevant untracked contents, file inventory, exclusions, and commit list.
 - The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full — the sub-agent has no other access to it.
 - The brief: "Report — per file/hunk where relevant — (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls — documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
 
 **Spec sub-agent prompt** — include:
 
-- The diff command and commit list.
+- The same pinned review input and inventory supplied to the Standards reviewer.
 - The path or fetched contents of the spec.
 - The brief: "Report: (a) requirements the spec asked for that are missing or partial; (b) behaviour in the diff that wasn't asked for (scope creep); (c) requirements that look implemented but where the implementation looks wrong. Quote the spec line for each finding. Under 400 words."
 

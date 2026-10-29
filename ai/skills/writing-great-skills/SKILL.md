@@ -6,16 +6,22 @@ disable-model-invocation: true
 
 A skill exists to wrangle determinism out of a stochastic system. **Predictability** — the agent taking the same _process_ every run, not producing the same output — is the root virtue; every lever below serves it.
 
+This retained name and manual-invocation policy are deliberate local curation, not the current upstream `writing-for-agents` identity. Do not rename, restore omitted workflows or change invocation policy during an upstream refresh without approval. For consumer domain docs, discover established `GLOSSARY`/`CONTEXT` conventions and documented authority before writing; do not impose this skill's filenames on them.
+
 **Bold terms** are defined in [`GLOSSARY.md`](GLOSSARY.md); look them up there for the full meaning.
 
 ## Invocation
 
-Two choices, trading different costs:
+Keep `name` and a non-empty `description`; match the directory name for portable packaging. Description is discovery metadata, **not invocation authority**. These are separate host controls:
 
-- A **model-invoked** skill keeps a **description**, so the agent can fire it autonomously _and_ other skills can reach it (you can still type its name too). It contributes to **context load** — the description sits in the window every turn. Mechanics: omit `disable-model-invocation`, and write a model-facing description with rich trigger phrasing ("Use when the user wants…, mentions…").
-- A **user-invoked** skill strips the description from the agent's reach: only you, typing its name, can invoke it — and no other skill can. Zero context load, but it spends **cognitive load**: _you_ are the index that must remember it exists. Mechanics: set `disable-model-invocation: true`; the `description` becomes human-facing — a one-line summary, trigger lists stripped.
+- **Claude Code**: `disable-model-invocation: true` prevents Claude from invoking the skill; explicit user invocation remains. `user-invocable: false` hides it from the user menu while allowing model invocation — a model-only state exists. These flags have different purposes.
+- **Codex CLI/IDE**: `name` and `description` remain required. In `agents/openai.yaml`, `policy.allow_implicit_invocation: false` suppresses implicit selection; explicit `$skill` remains available. Do not assume Claude frontmatter controls Codex.
+- **Pi**: the inspected 1.4.0 host documents `disable-model-invocation: true` for explicit `/skill:name` use and loads skills by reading their bodies. Do not invent a Claude `Skill`/`Agent` tool on Pi. Its native subagent extension has its own authorization, tools and artifact contract.
+- **OMP is a different host**, not a Pi fallback: v18.13.3 documents `hide: true` as removing prompt exposure while retaining `skill://name` and `/skill:name` reachability. Check the actual host/version; storage in `.omp` does not authorize an OMP runner.
 
-Pick model-invocation only when the agent must reach the skill on its own, or another skill must. If it only ever fires by hand, make it user-invoked and pay no context load.
+Choose automatic discovery only where needed, and use the target host's explicit controls for manual-only workflows. Prompt exposure, body loading, explicit commands and cross-skill reachability are distinct: hiding a description is not a portable access-control boundary or a promise of zero context cost. A skill reference never grants operational or delegation authority.
+
+Sources: [Agent Skills specification](https://agentskills.io/specification), [Claude skills](https://code.claude.com/docs/en/skills), [Codex skills](https://learn.chatgpt.com/docs/build-skills.md), Pi's installed `docs/skills.md` (1.4.0), and [OMP v18.13.3 skills](https://github.com/can1357/oh-my-pi/blob/v18.13.3/docs/skills.md). Host extensions such as `agents/openai.yaml` are not universal specification fields.
 
 When user-invoked skills multiply past what you can remember, that piled-up cognitive load is cured by a **router skill**: one user-invoked skill that names the others and when to reach for each.
 
@@ -25,7 +31,7 @@ A model-invoked **description** does two jobs — state what the skill is, and l
 
 - **Front-load the skill's leading word** — the description is where it does its invocation work.
 - **One trigger per branch.** Synonyms that rename a single branch are **duplication** — "build features using TDD … asks for test-first development" is one branch written twice. Collapse them; keep only genuinely distinct branches.
-- **Cut identity that's already in the body.** Keep the description to triggers, plus any "when another skill needs…" reach clause.
+- **Cut identity that's already in the body.** Keep what the skill does and the conditions for use; body detail is not a substitute for a valid, informative description. Host invocation controls still decide whether automatic selection is permitted.
 
 ## Information hierarchy
 
@@ -47,7 +53,7 @@ Where the ladder decides _how far down_ a piece sits, **co-location** decides _w
 
 **Granularity** is how finely you divide skills, and each cut spends one of the two loads, so split only when the cut earns it. Two cuts:
 
-- **By invocation** — split off a **model-invoked** skill when you have a distinct **leading word** that should trigger it on its own, or another skill must reach it. You pay **context load** for the new always-loaded **description**, so that independent reach has to be worth it.
+- **By invocation** — split off a **model-invoked** skill when you have a distinct **leading word** that should trigger it on its own, or another skill must reach it. You may pay **context load** for another advertised **description**, depending on the host, so that independent reach has to be worth it.
 - **By sequence** — split a run of **steps** when the steps still ahead (a step's **post-completion steps**) tempt the agent to rush the one in front of it (**premature completion**). Keeping them out of view encourages the agent to do more **legwork** on the current task.
 
 ## Pruning
@@ -80,4 +86,4 @@ Use these to diagnose issues the user may be having with the skill.
 - **Sediment** — stale layers that settle because adding feels safe and removing feels risky. The default fate of any skill without a pruning discipline.
 - **Sprawl** — a skill simply too long, even when every line is live and unique. Hurts readability and maintainability and wastes tokens. The cure is the ladder: disclose **reference** behind pointers, and split by **branch** or sequence so each path carries only what it needs.
 - **No-op** — a line the model already obeys by default, so you pay load to say nothing. The test: does it change behaviour versus the default? A weak leading word (_be thorough_ when the agent is already thorough-ish) is a no-op; the fix is a stronger word (_relentless_), not a different technique.
-- **Negation** — steering by prohibition backfires: _don't think of an elephant_ names the elephant and makes it more available, not less. Prompt the **positive** — state the target behaviour so the banned one is never spoken; keep a prohibition only as a hard guardrail you can't phrase positively, and even then pair it with what to do instead.
+- **Negation** — prohibitions can be ambiguous or draw attention away from the target. Prefer a clear positive action and test the result; retain explicit safety/authorization prohibitions rather than deleting guardrails on an unverified universal theory.

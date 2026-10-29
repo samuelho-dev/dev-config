@@ -5,11 +5,15 @@ description: Build and sharpen a project's domain model. Use when the user wants
 
 # Domain Modeling
 
-Actively build and sharpen the project's domain model as you design. This is the *active* discipline — challenging terms, inventing edge-case scenarios, and writing the glossary and decisions down the moment they crystallise. (Merely *reading* `CONTEXT.md` for vocabulary is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
+Actively build and sharpen the project's domain model as you design. This is the *active* discipline — challenging terms, inventing edge-case scenarios, and writing the glossary and decisions down the moment they crystallise. (Merely *reading* the canonical domain glossary for vocabulary is not this skill — that's a one-line habit any skill can do. This skill is for when you're changing the model, not just consuming it.)
 
 ## File structure
 
-Most repos have a single context:
+First inspect project instructions and existing domain documents, including `GLOSSARY.md`/`GLOSSARY-MAP.md`, `CONTEXT.md`/`CONTEXT-MAP.md` and the documented ADR directory. Follow the established canonical documents and their links; these filenames are conventions, not portable Agent Skills requirements. If both forms exist, use documented authority; if authority is unclear, ask before writing. Never create a second competing glossary/map or rename consumer files as an implicit migration.
+
+The `CONTEXT` names below are this curated collection's fallback only when the project has no established convention. Current upstream uses `GLOSSARY` names; retaining this local default does not claim upstream identity. Use the selected canonical glossary throughout the session, not the fallback filename.
+
+A single-context fallback looks like:
 
 ```
 /
@@ -21,7 +25,7 @@ Most repos have a single context:
 └── src/
 ```
 
-If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The map points to where each one lives:
+For multiple contexts, follow the canonical map's links. The curated fallback map is `CONTEXT-MAP.md`, which points to each context's glossary:
 
 ```
 /
@@ -37,13 +41,13 @@ If a `CONTEXT-MAP.md` exists at the root, the repo has multiple contexts. The ma
 │       └── docs/adr/
 ```
 
-Create files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If no `docs/adr/` exists, create it when the first ADR is needed.
+Create files lazily, only after resolving canonical ownership. When no domain convention exists, create the fallback `CONTEXT.md` for the first resolved term. Follow the established ADR directory; `docs/adr/` is only the fallback when the first ADR is needed.
 
 ## During the session
 
 ### Challenge against the glossary
 
-When the user uses a term that conflicts with the existing language in `CONTEXT.md`, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y — which is it?"
+When the user uses a term that conflicts with the existing language in the canonical glossary, call it out immediately. "Your glossary defines 'cancellation' as X, but you seem to mean Y — which is it?"
 
 ### Sharpen fuzzy language
 
@@ -57,11 +61,11 @@ When domain relationships are being discussed, stress-test them with specific sc
 
 When the user states how something works, check whether the code agrees. If you find a contradiction, surface it: "Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"
 
-### Update CONTEXT.md inline
+### Update the canonical glossary inline
 
-When a term is resolved, update `CONTEXT.md` right there. Don't batch these up — capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
+When a term is resolved, update the selected canonical glossary right there. Don't batch these up — capture them as they happen. Use the format in [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
 
-`CONTEXT.md` should be totally devoid of implementation details. Do not treat `CONTEXT.md` as a spec, a scratch pad, or a repository for implementation decisions. It is a glossary and nothing else.
+Keep new glossary entries focused on domain language; record implementation decisions in the project's ADRs/specs. An existing `CONTEXT.md` may serve a broader project purpose: preserve that content and follow the project's actual glossary location rather than deleting non-glossary material to impose this collection's format.
 
 ### Offer ADRs sparingly
 

@@ -31,6 +31,12 @@ Before committing to sub-shape B, sanity-check: is there really no existing page
 
 In both sub-shapes the floating bottom bar is identical.
 
+### Isolation before wiring
+
+Use an explicitly authorized local/development environment with fixture or sanitized data. Keeping the app's real layout/auth does not authorize production backend, payment, email or other provider access; a preview URL is not proof of isolation. Stub mutation handlers and verify data bindings before rendering variants.
+
+Gate the **entire prototype path** with the project's server/build-side development-only mechanism: variant selection, components/imports, prototype-only fetching and the switcher. A query parameter is not authorization. In production an existing page must use its original rendering even with `?variant=`, and a throwaway route must be absent or return not-found. Hiding only the bar leaves variants reachable. Check those production paths with the project's isolated build/tests; do not probe a live deployment.
+
 ## Process
 
 ### 1. State the question and pick N
@@ -59,7 +65,9 @@ Create a single switcher component on the route:
 
 ```tsx
 // pseudo-code — adapt to the project's framework
-const variant = searchParams.get('variant') ?? 'A';
+// This branch is behind the project's development-only gate; production renders the original page.
+const requestedVariant = searchParams.get('variant') ?? 'A';
+const variant = ['A', 'B', 'C'].includes(requestedVariant) ? requestedVariant : 'A';
 return (
   <>
     {variant === 'A' && <VariantA {...data} />}
@@ -70,7 +78,7 @@ return (
 );
 ```
 
-For sub-shape A (existing page): keep all the existing data fetching above the switcher; only the rendered subtree changes per variant.
+For sub-shape A (existing page): preserve the page's params/auth and use its authorized development data fetching above the switcher; only the rendered subtree changes per variant. Keep production rendering and data bindings unchanged.
 
 For sub-shape B (new page): the throwaway route under `/prototype/<name>` mounts the same switcher.
 
@@ -84,10 +92,10 @@ A small fixed-position bar at the bottom-centre of the screen with three pieces:
 
 Behaviour:
 
-- Clicking an arrow updates the URL search param (use the framework's router — `router.replace` on Next, `navigate` on React Router, etc) so the variant is shareable and reload-stable.
+- Clicking an arrow updates only the `variant` search param (use the framework's router — `router.replace` on Next, `navigate` on React Router, etc), preserving unrelated query parameters and the fragment. Build a URL for the current local route from an allowlisted variant key, never from an arbitrary navigation URL.
 - Keyboard: `←` and `→` arrow keys also cycle. Don't intercept arrow keys when an `<input>`, `<textarea>`, or `[contenteditable]` is focused.
 - Visually distinct from the page (e.g. high-contrast pill, subtle shadow) so it's obviously not part of the design being evaluated.
-- Hidden in production builds — gate on `process.env.NODE_ENV !== 'production'` or an equivalent check, so a stray prototype merge can't ship the bar to users.
+- The bar shares the entire prototype's development-only gate above. Verify the gate actually excludes variant selection and prototype routes in the project's production build; `NODE_ENV` hiding the bar alone is insufficient.
 
 Put the switcher in a single shared component so both sub-shapes can reuse it. Locate it wherever shared UI lives in the project.
 
@@ -108,5 +116,5 @@ The full set of variants is the primary source, so it lands on the throwaway bra
 
 - **Variants that differ only in colour or copy.** That's a tweak, not a prototype. Real variants disagree about structure.
 - **Sharing too much code between variants.** A shared `<Header>` is fine; a shared `<Layout>` defeats the point. Each variant should be free to throw out the layout.
-- **Wiring variants to real mutations.** Read-only prototypes are fine. If a variant needs to mutate, point it at a stub — the question is "what should this look like", not "does the backend work".
-- **Promoting the prototype directly to production.** The variant code was written under prototype constraints (no tests, minimal error handling). Rewrite it properly when you fold it in.
+- **Wiring variants to real mutations or unapproved live reads.** Use authorized development/fixture data and stub mutations — the question is "what should this look like", not "does the backend work".
+- **Promoting the prototype directly to production.** The variant code was written under prototype constraints (minimal checks and error handling). Rewrite it properly when you fold it in.

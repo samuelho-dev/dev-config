@@ -12,7 +12,7 @@ Pure computation, in-memory state, no I/O. Always deepenable — merge the modul
 
 ### 2. Local-substitutable
 
-Dependencies that have local test stand-ins (PGLite for Postgres, in-memory filesystem). Deepenable if the stand-in exists. The deepened module is tested with the stand-in running in the test suite. The seam is internal; no port at the module's external interface.
+Dependencies that have suitable local test stand-ins (PGlite for Postgres, in-memory filesystem). Verify required SQL features/extensions and filesystem semantics before choosing one. PGlite has one exclusive connection, so it cannot establish production multi-connection concurrency, locking or pool behaviour; use isolated real Postgres for those requirements. The deepened module can use a stand-in at an internal seam; no port at its external interface is required solely for testing.
 
 ### 3. Remote but owned (Ports & Adapters)
 
@@ -31,7 +31,7 @@ Third-party services (Stripe, Twilio, etc.) you don't control. The deepened modu
 
 ## Testing strategy: replace, don't layer
 
-- Old unit tests on shallow modules become waste once tests at the deepened module's interface exist — delete them.
+- Replace old shallow-module tests only after the new interface tests preserve their required behavioural and failure coverage; do not delete unique regression proof merely because a module moved.
 - Write new tests at the deepened module's interface. The **interface is the test surface**.
 - Tests assert on observable outcomes through the interface, not internal state.
 - Tests should survive internal refactors — they describe behaviour, not implementation. If a test has to change when the implementation changes, it's testing past the interface.

@@ -1,8 +1,8 @@
 # ADR Format
 
-ADRs live in `docs/adr/` and use sequential numbering: `0001-slug.md`, `0002-slug.md`, etc.
+Follow the project's established ADR directory, format and numbering first. If none exists, this collection defaults to `docs/adr/` and sequential names: `0001-slug.md`, `0002-slug.md`, etc.
 
-Create the `docs/adr/` directory lazily — only when the first ADR is needed.
+Create the selected ADR directory lazily — only when the first ADR is needed.
 
 ## Template
 
@@ -24,7 +24,7 @@ Only include these when they add genuine value. Most ADRs won't need them.
 
 ## Numbering
 
-Scan `docs/adr/` for the highest existing number and increment by one.
+In the selected ADR directory, follow existing numbering. For the sequential fallback, scan for the highest number and increment; coordinate concurrent writers and recheck availability before writing so another decision is not overwritten.
 
 ## When to offer an ADR
 

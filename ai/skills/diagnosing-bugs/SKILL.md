@@ -7,11 +7,11 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when 
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring the codebase, read `CONTEXT.md` (if it exists) to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
+When exploring, discover the project's canonical domain glossary/map first (including `GLOSSARY.md`/`GLOSSARY-MAP.md` or the curated `CONTEXT.md`/`CONTEXT-MAP.md` convention). Follow project authority if both exist; ask if it is unresolved, and do not create a competing glossary. Read the relevant glossary and ADRs for the area you're touching.
 
 ## Phase 1 — Build a feedback loop
 
-**This is the skill.** Everything else is mechanical. If you have a **tight** pass/fail signal for the bug — one that goes red on _this_ bug — you will find the cause; bisection, hypothesis-testing, and instrumentation all just consume it. If you don't have one, no amount of staring at code will save you.
+**This is the skill.** Everything else is mechanical. If you have a **tight** pass/fail signal for the bug — one that goes red on _this_ bug — you can test causal hypotheses; bisection, hypothesis-testing, and instrumentation all consume it, but a repro is not itself proof of the cause. If you don't have one, no amount of staring at code will save you.
 
 Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give up.**
 
@@ -24,11 +24,11 @@ Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give
 5. **Replay a captured trace.** Save a real network request / payload / event log to disk; replay it through the code path in isolation.
 6. **Throwaway harness.** Spin up a minimal subset of the system (one service, mocked deps) that exercises the bug code path with a single function call.
 7. **Property / fuzz loop.** If the bug is "sometimes wrong output", run 1000 random inputs and look for the failure mode.
-8. **Bisection harness.** If the bug appeared between two known states (commit, dataset, version), automate "boot at state X, check, repeat" so you can `git bisect run` it.
+8. **Bisection harness.** If the bug appeared between two known states (commit, dataset, version), automate "boot at state X, check, repeat" for `git bisect run`: exit 0 = good, 1–127 except 125 = bad, 125 = untestable/skip, and other exit codes = abort. Do not classify missing dependencies/build failures as the target regression. Use an authorized isolated checkout, not a shared dirty tree.
 9. **Differential loop.** Run the same input through old-version vs new-version (or two configs) and diff outputs.
 10. **HITL bash script.** Last resort. If a human must click, drive _them_ with `scripts/hitl-loop.template.sh` so the loop is still structured. Captured output feeds back to you.
 
-Build the right feedback loop, and the bug is 90% fixed.
+A focused feedback loop narrows the investigation; it does not measure how much of the fix is complete.
 
 ### Tighten the loop
 
@@ -42,7 +42,7 @@ A 30-second flaky loop is barely better than no loop; a 2-second deterministic o
 
 ### Non-deterministic bugs
 
-The goal is not a clean repro but a **higher reproduction rate**. Loop the trigger 100×, parallelise, add stress, narrow timing windows, inject sleeps. A 50%-flake bug is debuggable; 1% is not — keep raising the rate until it's debuggable.
+The goal is not a clean repro but a **higher reproduction rate**. In an authorized isolated environment, repeat the trigger, add bounded stress, narrow timing windows or inject sleeps. Record attempts and failures; even a low reproduction rate can be useful evidence, not proof that debugging is impossible. Do not parallelise money paths or load shared/live systems without explicit approval.
 
 ### When you genuinely cannot build a loop
 

@@ -1,5 +1,7 @@
 # CONTEXT.md Format
 
+This filename is the curated fallback, not a required project or current-upstream convention. Before using the template, inspect project instructions and existing `GLOSSARY.md`/`GLOSSARY-MAP.md`, `CONTEXT.md`/`CONTEXT-MAP.md` or documented alternatives. Follow the canonical glossary and map links. If documents compete and authority is unresolved, ask; do not create a second glossary/map or rename existing files. Adapt the template to the established location and preserve existing content.
+
 ## Structure
 
 ```md
@@ -31,9 +33,9 @@ _Avoid_: Client, buyer, account
 
 ## Single vs multi-context repos
 
-**Single context (most repos):** One `CONTEXT.md` at the repo root.
+**Single-context fallback:** One `CONTEXT.md` at the repo root.
 
-**Multiple contexts:** A `CONTEXT-MAP.md` at the repo root lists the contexts, where they live, and how they relate to each other:
+**Multiple-context fallback:** A `CONTEXT-MAP.md` at the repo root lists the contexts, where they live, and how they relate to each other:
 
 ```md
 # Context Map
@@ -51,10 +53,10 @@ _Avoid_: Client, buyer, account
 - **Ordering ↔ Billing**: Shared types for `CustomerId` and `Money`
 ```
 
-The skill infers which structure applies:
+Use the project's canonical structure first. Only if none is established:
 
-- If `CONTEXT-MAP.md` exists, read it to find contexts
-- If only a root `CONTEXT.md` exists, single context
-- If neither exists, create a root `CONTEXT.md` lazily when the first term is resolved
+- Follow an existing fallback `CONTEXT-MAP.md` to its context glossaries.
+- Use a root `CONTEXT.md` as a glossary only if that is its actual role.
+- With no domain documents or convention, create a root `CONTEXT.md` lazily for the first resolved term; do not infer absence from just one missing filename.
 
 When multiple contexts exist, infer which one the current topic relates to. If unclear, ask.

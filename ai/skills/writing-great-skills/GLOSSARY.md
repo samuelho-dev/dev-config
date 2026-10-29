@@ -18,19 +18,19 @@ How a skill is reached — and the two loads you pay for the choice.
 
 ### Model-Invoked
 
-A skill that keeps its **description** field, so the agent can see it and fire it autonomously — and the human can still type its name, so model-invocation always _includes_ user reach. There is no model-only state: a description only ever _adds_ agent discovery, never removes the human's. Pays a permanent **context load** on every turn in exchange for that discoverability. Reachable by other skills, because the description that makes it agent-discoverable makes it invocable. A model-invoked skill whose content is all **reference** is also one home for shared reference: another skill can invoke it, so reference needed by several skills lives in one place. Pick model-invocation only when the agent must reach the skill on its own; if it never fires except by hand, drop the description and pay no context load.
+A skill the current host permits the model to select automatically. Its **description** guides discovery but does not grant permission: host controls decide invocation and user reach. Claude Code supports a model-only state via `user-invocable: false`; Codex and Pi have their own controls (see [Invocation](SKILL.md#invocation)). Advertised metadata can add **context load**, but its exposure/lifetime is host-dependent. Shared **reference** can live in a skill when its invocation contract permits that use, or in linked files.
 
 _Avoid_: ability, tool, capability
 
 ### User-Invoked
 
-A skill with its **description** stripped — invisible to the agent and reachable only by the human typing its name (user-_only_, where **model-invoked** is user-_and-agent_). Trades agent-discoverability for zero **context load**. Because it has no description, nothing but the human can reach it: no other skill can fire it.
+A skill reached by explicit user request. It may also permit model invocation unless the host disables that separately. Manual-only policy uses the host's invocation controls, not deletion of **description**; keep required metadata. Explicit command syntax and cross-skill loading differ by host, so neither zero **context load** nor universal inaccessibility follows.
 
 _Avoid_: procedure, workflow, command
 
 ### Description
 
-The skill's machine-readable trigger, and the one **context pointer** a **model-invoked** skill is forced to keep loaded at all times. Its mere presence _is_ the invocation axis: keep it and the skill is model-invoked (and reachable by other skills); delete it and the skill is **user-invoked**, reachable only by the human. The source of a model-invoked skill's **context load**.
+Required discovery metadata stating what the skill does and when to use it. It is a top-level **context pointer**, not an invocation switch or access-control boundary. Keep it non-empty even for manual-only skills; separately configure the target host's model/user invocation controls and verify their behaviour.
 
 _Avoid_: frontmatter, summary
 
@@ -42,7 +42,7 @@ _Avoid_: link, reference, import
 
 ### Context Load
 
-The cost a **model-invoked** skill imposes on the agent's context window — its **description**, always loaded, spending both tokens and attention. What **user-invoked** skills escape by having no description, and the brake on splitting into more model-invoked skills.
+The tokens and attention spent on advertised metadata and any loaded skill/reference bodies. Hosts differ in discovery exposure, caching and compaction; manual invocation does not imply zero cost, and a description is not necessarily present every turn. Measure the target host before claiming savings.
 
 _Avoid_: token cost, context bloat
 
@@ -54,7 +54,7 @@ _Avoid_: human index, burden, overhead
 
 ### Router Skill
 
-A **user-invoked** skill whose job is to point at your other user-invoked skills — naming each and when to reach for it — so the human has one skill to remember instead of many. It can only hint, never fire them: user-invoked skills have no **description**, so nothing but the human can reach them. The cure for **cognitive load** when user-invoked skills multiply.
+A **user-invoked** skill whose job is to point at your other user-invoked skills — naming each and when to reach for it — so the human has one skill to remember instead of many. Whether it can load another skill depends on that host's invocation policy; a link or description does not override a manual-only restriction. Keep referenced skills' descriptions intact. The cure for **cognitive load** when user-invoked skills multiply.
 
 _Avoid_: dispatcher, menu, registry, index, router procedure
 
@@ -94,7 +94,7 @@ _Avoid_: supporting material, docs, background
 
 ### External Reference
 
-**Reference** that lives outside the skill system — a plain file, no **description**, no **steps**, not invocable — that any skill can point at. The home for shared reference that needn't fire on its own, and the only shared home two **user-invoked** skills can use, since neither has a description and so neither can fire the other.
+**Reference** in a plain linked file outside the skill system, not independently invocable. Useful for shared material without another discoverable skill. It is not the only possible shared home: cross-skill reachability depends on host policy, not description deletion.
 
 _Avoid_: doc, resource, knowledge base
 
@@ -160,7 +160,7 @@ _Avoid_: premature closure, the rush, rushing, shortcutting
 
 ### Negation
 
-_Failure mode._ Steering by prohibition — telling the agent what _not_ to do — which drags the forbidden behaviour into context and makes it _more_ available, not less. _Don't think of an elephant_, and the elephant is all there is; _never write verbose comments_, and verbosity is the pattern the agent has just read. The negation is a weak modifier the strongly-activated concept overruns, so the ban half-reads as an instruction to do the thing. Its **leading word** is the _elephant_: whatever a prohibition names into the frame. Cure: prompt the **positive** — describe the target behaviour ("write one-line comments") so the banned one is never spoken. A prohibition earns its place only as a hard guardrail on a behaviour you cannot phrase positively; even then, pair it with the positive target so attention lands on what to do.
+_Failure mode._ Steering only by prohibition can obscure what to do instead. Prefer an explicit positive target and evaluate it on the intended model/host; this is a prompting heuristic, not a universal causal law. Keep necessary safety, security and authorization prohibitions, paired with safe alternatives when useful.
 
 _Avoid_: ironic rebound, don't-prompting, the pink elephant
 

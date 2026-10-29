@@ -19,6 +19,7 @@ Catalog of documentation in the dev-config repository. Each top-level component 
 | [LINTING_POLICY](./LINTING_POLICY.md) | Type-safety and linting rules (authoritative) |
 | [KEYBINDINGS_NEOVIM](./KEYBINDINGS_NEOVIM.md) | Neovim key mappings |
 | [KEYBINDINGS_TMUX](./KEYBINDINGS_TMUX.md) | Tmux key mappings |
+| [Skills correction coverage](./research/SKILLS_CORRECTION_COVERAGE.md) | Frozen-inventory corrections, native review coverage, preservation and deferred ownership/evidence |
 
 ## Nix Guides (`docs/nix/`)
 
