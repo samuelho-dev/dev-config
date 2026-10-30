@@ -1,8 +1,11 @@
 # Installation Guide
 
-dev-config is bootstrapped with **Nix + Home Manager**. There is no symlink/backup
-installer and no per-tool dependency install — Home Manager declaratively provisions
-every package and dotfile from `flake.nix`.
+dev-config bootstraps **Nix + Home Manager** for system tools and dotfiles.
+The selected profile also installs only missing enabled writable native OMP,
+Pi, Claude, OpenCode, Codex and Vercel CLIs through `ai/bootstrap.sh`; these
+native binaries are not compiled into the Nix store. `pkgs/tool-checks.json`
+lists shared Darwin/Linux command checks. Mac-only extras in `pkgs/Brewfile`
+are opt-in; held third-party sources are not installed without a trust decision.
 
 ## Prerequisites
 
@@ -23,37 +26,53 @@ cp user.nix.example user.nix
 $EDITOR user.nix          # set username + homeDirectory
 git add -f user.nix
 
-# 3. Bootstrap (installs Nix if missing, enables flakes, runs home-manager switch)
+# 3. Bootstrap Nix and activate the selected Home Manager profile
 bash scripts/install.sh
 ```
 
-`scripts/install.sh` is idempotent and runs `home-manager switch --flake .` for you.
-On subsequent changes you can re-apply directly:
+`scripts/install.sh` uses the Home Manager app from this flake's locked input
+(`nix run .#home-manager -- switch --flake .`) rather than a separately installed
+Home Manager. An activation selects native tools in
+`~/.config/dev-config/native-tools` and installs missing ones, but does not
+upgrade working CLIs or enroll provider OAuth. After a reviewed configuration
+change, re-apply deliberately:
 
 ```bash
-home-manager switch --flake .
+nix run .#home-manager -- switch --flake .
 ```
 
 First run takes ~10-15 minutes (Home Manager builds/downloads everything); later runs
 are 1-2 minutes.
 
-## Verify
+## Verify without activation
+
+From a clean Git-backed checkout, evaluate and build the selected Home Manager
+derivation without switching or running activation hooks:
 
 ```bash
-exec zsh                  # pick up the new shell config
-nvim --version            # provided by Home Manager
-tmux -V
-home-manager generations  # shows the active generation
+nix eval --raw .#homeConfigurations.$(whoami).activationPackage.drvPath
+nix build --no-link .#homeConfigurations.$(whoami).activationPackage
 ```
 
-Open Neovim and tmux — plugins, LSP servers, and formatters are already present (all
-Nix-managed; no Mason bootstrap, no TPM).
+For an untracked source checkout use `path:.` only after reviewing what that
+filesystem path contains; a plain Git-backed `.` excludes untracked files.
+On an activated machine, `bash ai/bootstrap.sh check` checks enabled native
+executables, not OAuth, MCP credentials or project authorization. Enroll
+services separately and check their intended identities/targets before
+claiming access. `flake.lock` pins Nix source revisions, not native CLI/MCP
+package versions; explicit `bash ai/bootstrap.sh update` upgrades native CLIs.
+
+Open Neovim and tmux — Nix supplies editor tools through Neovim's wrapper and
+tmux plugins through Home Manager; Lazy.nvim installs Neovim plugins on first
+launch. No Mason bootstrap or TPM is needed.
 
 ## Additional Machines
 
-Repeat the same three steps. Because everything is declared in the flake, every
-machine converges to an identical environment. Create a fresh `user.nix` per machine
-(username/homeDirectory differ).
+The Nix package set follows the locked flake inputs. Native tools are
+installed only when missing and may have different locally installed versions;
+create a fresh `user.nix` for each machine (username/homeDirectory differ).
+An existing `helm@3` is preserved, not a desired-state version pin for new
+machines.
 
 ## 1Password SSH & Commit Signing
 
@@ -83,6 +102,6 @@ config itself. Tmux DevPod helpers live in `tmux/scripts/`; see `tmux/README.md`
 See **[docs/nix/03-troubleshooting.md](nix/03-troubleshooting.md)**. Quick checks:
 
 ```bash
-nix flake check                          # validate the flake
-home-manager switch --flake . --show-trace   # detailed activation errors
+nix eval --raw .#homeConfigurations.$(whoami).activationPackage.drvPath  # no activation
+nix run .#home-manager -- switch --flake . --show-trace  # intentional activation only
 ```

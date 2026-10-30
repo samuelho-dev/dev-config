@@ -18,6 +18,7 @@ repos:
         language: system
         files: \.nix$
         pass_filenames: true
+        require_serial: true
         description: Check Nix file formatting with alejandra
 
       # Nix flake validation

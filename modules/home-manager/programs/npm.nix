@@ -88,10 +88,13 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = {
+    # Global npm packages must never try to write into the Nix store;
+    # prefix ownership is independent of optional npm token management.
+    home.sessionVariables.NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.local";
     # Generate .npmrc at activation time with sops-managed tokens
     # Run after sops-nix to ensure secrets are decrypted
-    home.activation.generateNpmrc = lib.mkIf (npmToken != null) (
+    home.activation.generateNpmrc = lib.mkIf (cfg.enable && npmToken != null) (
       lib.hm.dag.entryAfter ["sops-nix"] generateNpmrcScript
     );
 

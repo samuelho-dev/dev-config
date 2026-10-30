@@ -16,7 +16,8 @@ For more information, see:
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
-  local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
+  local out =
+    vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
   if vim.v.shell_error ~= 0 then
     error('Error cloning lazy.nvim:\n' .. out)
   end
@@ -42,31 +43,22 @@ require 'config'
 --
 -- Plugins are organized into separate files in lua/plugins/
 -- Each file returns a table of plugin specifications
--- lazy-lock.json normally lives in the nvim config dir, which dev-config ships
--- as a read-only Nix-store symlink (recursive xdg.configFile). lazy.nvim must
--- write the lockfile, so redirect it to a writable state dir. Seed it from the
--- committed lockfile on first run to preserve the pinned plugin versions.
-local lockfile = vim.fn.stdpath('state') .. '/lazy-lock.json'
-do
-  local committed = vim.fn.stdpath('config') .. '/lazy-lock.json'
-  if vim.fn.filereadable(lockfile) == 0 and vim.fn.filereadable(committed) == 1 then
-    vim.fn.mkdir(vim.fn.stdpath('state'), 'p')
-    vim.fn.writefile(vim.fn.readfile(committed), lockfile)
-  end
-end
+-- Keep the lockfile local and writable: existing installations retain their
+-- current plugins; only an explicit :Lazy update advances them.
+local lockfile = vim.fn.stdpath 'state' .. '/lazy-lock.json'
 
 require('lazy').setup({
   -- Import all plugin modules
-  { import = 'plugins.editor' },     -- File explorer, fuzzy finder, search/replace
-  { import = 'plugins.lsp' },        -- LSP configuration and formatting
+  { import = 'plugins.editor' }, -- File explorer, fuzzy finder, search/replace
+  { import = 'plugins.lsp' }, -- LSP configuration and formatting
   { import = 'plugins.completion' }, -- Autocompletion (blink.cmp, LuaSnip)
-  { import = 'plugins.ai' },         -- AI assistance (minuet, codecompanion, yarepl)
-  { import = 'plugins.git' },        -- Git integration
-  { import = 'plugins.markdown' },   -- Markdown and Obsidian
-  { import = 'plugins.ui' },         -- UI enhancements
+  { import = 'plugins.ai' }, -- AI assistance (minuet, codecompanion, yarepl)
+  { import = 'plugins.git' }, -- Git integration
+  { import = 'plugins.markdown' }, -- Markdown and Obsidian
+  { import = 'plugins.ui' }, -- UI enhancements
   { import = 'plugins.treesitter' }, -- Syntax highlighting
-  { import = 'plugins.tools' },      -- Utility tools (CSV viewer)
-  { import = 'plugins.training' },   -- Vim training games
+  { import = 'plugins.tools' }, -- Utility tools (CSV viewer)
+  { import = 'plugins.training' }, -- Vim training games
 }, {
   lockfile = lockfile,
   ui = {

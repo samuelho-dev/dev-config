@@ -1,45 +1,7 @@
 # Package definitions for dev-config
 # Single source of truth for all development packages
 # Used by both devShells and Home Manager modules
-{pkgs}: let
-  vercelVersion = "57.0.0";
-  vercelPlatform =
-    {
-      "aarch64-darwin" = {
-        npmArch = "darwin-arm64";
-        hash = "sha512-1yXaFv7H5/b/VhphpiXrfGezkDAsA/NKUR1iujx2k43WP+Il+HiLvcFI1ONkogjtkYfZt6JWlhjIXgcXduSqaA==";
-      };
-      "x86_64-darwin" = {
-        npmArch = "darwin-x64";
-        hash = "sha512-jhvTu/LcEjECbBpsk62+g8H99YnB8iLNw8MTwBizDPUZdSIqbH1PmjF8JztfbB7Ke+pBTC1zSwmpsLq76zQ/9g==";
-      };
-      "aarch64-linux" = {
-        npmArch = "linux-arm64";
-        hash = "sha512-qw5m+B6ev9sZpmRGdZDLSnvo27XdS2oWHKEDfbof5oxTWEK6/uHYd26eDX94d1GFTrMsFtuzKuNjFPBy5QOUcQ==";
-      };
-      "x86_64-linux" = {
-        npmArch = "linux-x64";
-        hash = "sha512-72JG1hqCs/jub3oofI6bIaqGox7P6qurj8XCvRyLCeXdiyNxwzGoo80e2jZ4FWjl9sbvG8EhGJ1oW1BObMpFtA==";
-      };
-    }.${
-      pkgs.stdenv.hostPlatform.system
-    };
-  vercel-cli = pkgs.stdenvNoCC.mkDerivation {
-    pname = "vercel-cli";
-    version = vercelVersion;
-    src = pkgs.fetchurl {
-      url = "https://registry.npmjs.org/@vercel/vc-native-${vercelPlatform.npmArch}/-/vc-native-${vercelPlatform.npmArch}-${vercelVersion}.tgz";
-      inherit (vercelPlatform) hash;
-    };
-    sourceRoot = "package";
-    installPhase = ''
-      runHook preInstall
-      install -Dm755 bin/vercel "$out/bin/vercel"
-      ln -s vercel "$out/bin/vc"
-      runHook postInstall
-    '';
-  };
-in {
+{pkgs}: {
   # Core development tools
   core = [
     pkgs.git
@@ -51,12 +13,14 @@ in {
     pkgs.fd
     pkgs.bat
     pkgs.lazygit
+    pkgs.gitmux # tmux pane Git status
   ];
 
   # Development utilities
   utilities = [
     pkgs.direnv
     pkgs.nix-direnv
+    pkgs.zoxide # Yazi directory-jump keybinding
     pkgs.jq
     pkgs.yq-go
     pkgs.gnumake
@@ -73,8 +37,8 @@ in {
   # JavaScript/TypeScript runtimes + package managers
   # On PATH for every dev surface (devShell + Home Manager + DevPod image).
   runtimes = [
-    pkgs.nodejs_26 # Node.js 26 (latest stable) - also provides npm + corepack
-    pkgs.pnpm # repo pins packageManager: pnpm@10.x
+    pkgs.nodejs # Node.js also supplies npm and npx (not Corepack).
+    pkgs.pnpm # Flake-locked shared CLI; projects declare their own packageManager.
     pkgs.bun
   ];
 
@@ -84,7 +48,6 @@ in {
     pkgs.terraform # IaC (unfree BSL; allowUnfree set in flake.nix)
     pkgs._1password-cli
     pkgs.stripe-cli
-    vercel-cli
     pkgs.awscli2 # AWS CLI v2
     pkgs.cloudflared # Cloudflare Tunnel daemon
     pkgs.kubectl

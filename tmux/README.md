@@ -125,9 +125,11 @@ To add one: append it to the `plugins` list in `tmux.nix` and run
 
 ## Per-Pane Git Status (gitmux)
 
-Each pane border shows its own git branch + status via gitmux — so in
-multi-worktree setups you always see which branch a pane is on. Configured in
-`tmux/gitmux.conf` (Catppuccin Mocha palette), symlinked to `~/.gitmux.conf`.
+`gitmux` is a required shared CLI supplied by `pkgs/default.nix` when this
+Home Manager tmux configuration enables per-pane git status. Each pane border
+shows its own branch and status. `tmux/gitmux.conf` (Catppuccin Mocha palette)
+is symlinked to `~/.gitmux.conf`; without that configured source, borders show
+the pane title without calling gitmux.
 
 Symbols: `⎇ branch` · `↑n` ahead · `↓n` behind · `●n` staged · `✚n` modified ·
 `…n` untracked · `⚑n` stashed · `✖n` conflicts · `✔` clean.
@@ -138,8 +140,8 @@ Enabled with `dev-config.tmux.devpodConnect.enable = true`. Tailscale-based:
 
 - `Prefix + D` — fzf picker of online DevPods → SSH session
 - On tmux start, online pods get `devpod_<project>` sessions auto-created
-- Mutagen file sync auto-starts (via the `session-created` hook) when the
-  project has a `mutagen.yml`
+- Mutagen file sync is optional: the `session-created` hook runs its guarded
+  helper only when the project has `mutagen.yml` and `mutagen` is on `PATH`.
 
 
 ## Configuration Tips
@@ -166,7 +168,7 @@ set -g @catppuccin_flavor 'latte'  # latte | frappe | macchiato | mocha
 | Colors wrong | `echo $TERM` → should be `tmux-256color`. |
 | Navigation broken | Confirm Neovim has matching `C-h/j/k/l` binds; `tmux kill-server && tmux`. |
 | Session not restoring | `ls ~/.tmux/resurrect/`; `Prefix + Ctrl+r`. |
-| Git status blank | `which gitmux`; check `~/.gitmux.conf`; `gitmux -cfg ~/.gitmux.conf $(pwd)`. |
+| Git status blank | Check `command -v gitmux`, `~/.gitmux.conf`, then `gitmux -cfg ~/.gitmux.conf "$PWD"` inside a git repository. |
 
 ## Tips & Tricks
 

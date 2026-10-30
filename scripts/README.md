@@ -11,21 +11,24 @@ cd ~/Projects/dev-config
 bash scripts/install.sh
 ```
 
-This installs Nix, Home Manager, and applies all configurations.
+This uses the flake-selected Home Manager app to provision Nix packages and
+dotfiles and install missing enabled native CLIs. It does not upgrade existing
+native CLIs, authenticate providers or install Mac-only `pkgs/Brewfile` extras.
 
 ### Apply Configuration Changes
 
 After editing Nix files:
 
 ```bash
-home-manager switch --flake .
+nix run .#home-manager -- switch --flake .
 ```
 
 ## Available Scripts
 
 | Script | Purpose | Duration |
 |--------|---------|----------|
-| `install.sh` | Full bootstrap from scratch | 10-15 min |
+| `install.sh` | Bootstrap Nix and activate selected Home Manager profile | First run varies |
+| `ai/bootstrap.sh` | Install missing, explicitly update, or check native CLIs | Varies |
 | `validate-linting-config.sh` | Pre-commit linting guard | Automatic |
 
 ## Script Details
@@ -35,10 +38,12 @@ home-manager switch --flake .
 **Primary bootstrap script** for new machines or fresh installs.
 
 **What it does:**
-1. Installs Nix via Determinate Systems installer
+1. Installs Nix via the Determinate Systems installer if missing
 2. Enables flakes in `~/.config/nix/nix.conf`
-3. Runs `home-manager switch --flake .`
+3. Invokes the Home Manager app locked by this flake (`nix run .#home-manager -- switch --flake .`)
 4. Handles container environments (DevPod, Docker)
+5. Activation selects missing writable native tools via `ai/bootstrap.sh install`;
+   no separate per-agent startup installer upgrades working tools
 
 **Usage:**
 ```bash
@@ -50,6 +55,27 @@ bash scripts/install.sh
 - `bash` and `curl` (pre-installed on most systems)
 - Internet connection
 - ~2GB disk space
+
+### ai/bootstrap.sh
+
+The single native tool owner supports `install|update|check` and optional tool
+names from `omp pi claude opencode codex vercel`. Without names it reads
+`~/.config/dev-config/native-tools`, written by the selected Home Manager
+profile; without that manifest it selects all six. It works with stock macOS
+Bash and uses writable `~/.local`. `install` preserves working versions;
+`update` is deliberate; `check` proves executables only, not account OAuth,
+MCP credentials or team/project authorization.
+
+```bash
+bash ai/bootstrap.sh install
+bash ai/bootstrap.sh check
+bash ai/bootstrap.sh update
+```
+
+System/Nix command checks are enumerated in `pkgs/tool-checks.json`. Nix
+sources follow `flake.lock`, while native CLI and MCP stdio package versions
+are not locked by it. `pkgs/Brewfile` is an opt-in Mac host extras list, not
+an automatically applied toolchain.
 
 ### validate-linting-config.sh
 
@@ -85,7 +111,7 @@ cd ~/Projects/dev-config
 git pull
 
 # 2. Apply configuration
-home-manager switch --flake .
+nix run .#home-manager -- switch --flake .
 
 # 3. (Optional) Restart affected applications
 # - Neovim: :qa and reopen
@@ -95,14 +121,12 @@ home-manager switch --flake .
 ### Test Configuration Changes
 
 ```bash
-# Validate flake syntax
-nix flake check
+# Evaluate and build the selected derivation without activation
+nix eval --raw .#homeConfigurations.$(whoami).activationPackage.drvPath
+nix build --no-link .#homeConfigurations.$(whoami).activationPackage
 
-# Build without applying (dry run)
-home-manager build --flake .
-
-# Apply if build succeeds
-home-manager switch --flake .
+# Switch only when activation is intended
+nix run .#home-manager -- switch --flake .
 ```
 
 ## File Structure

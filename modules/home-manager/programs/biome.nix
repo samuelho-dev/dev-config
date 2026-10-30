@@ -1,5 +1,4 @@
-# Biome - Fast formatter and linter for JS/TS/JSON
-# Config lives in repo root biome.json; this module just installs the package
+# Biome - shared global defaults for project presets
 {
   config,
   lib,
@@ -7,6 +6,7 @@
   ...
 }: let
   cfg = config.dev-config.biome;
+  projectBiome = builtins.fromJSON (builtins.readFile ../../../biome.json);
 in {
   options.dev-config.biome = {
     enable = lib.mkEnableOption "Biome linter and formatter";
@@ -20,5 +20,9 @@ in {
 
   config = lib.mkIf cfg.enable {
     home.packages = [cfg.package];
+    # Share portable rules without project-relative plugins, VCS and file scopes.
+    home.file.".config/biome/biome.json".text = builtins.toJSON {
+      inherit (projectBiome) formatter linter javascript json;
+    };
   };
 }

@@ -1,6 +1,6 @@
 # Dev Config
 
-Centralized development tool configurations for Neovim, tmux, and Ghostty terminal, managed via Git and symlinks. Now powered by Nix for reproducible, declarative package management.
+Centralized development tool configurations for Neovim, tmux and Ghostty, with Nix/Home Manager for shared system packages and dotfiles and one writable native owner for coding CLIs.
 
 ## Overview
 
@@ -37,7 +37,7 @@ This repository contains the **actual configuration files** for Neovim, tmux, an
 
 ### System Requirements
 - **Operating System:** macOS (Intel/ARM), Linux (Debian, Ubuntu, Fedora, Arch, openSUSE)
-- **Shell:** Bash or Zsh (will auto-switch to Zsh during installation)
+- **Shell:** Bash (stock macOS Bash supports native bootstrap) or Zsh; changing the login shell is opt-in
 - **Build Tools:** C compiler (for Treesitter parsers and blink.cmp)
   - macOS: Xcode Command Line Tools (`xcode-select --install`)
   - Linux: `build-essential` (Debian/Ubuntu) or equivalent
@@ -45,11 +45,16 @@ This repository contains the **actual configuration files** for Neovim, tmux, an
 ### Required (Minimum)
 These are the bare minimum to run the installer:
 - **Git** - Version control (for cloning repository)
-- **curl** - For downloading Homebrew and Oh My Zsh installers
+- **curl** - For the Nix installer and missing native CLIs
 
-### Auto-Installed by `install.sh`
+### Provisioned by Nix and Home Manager
 
-The installer automatically installs all required dependencies with zero manual intervention:
+Shared Darwin/Linux system tools come from `pkgs/default.nix`; their executable
+checks are enumerated in `pkgs/tool-checks.json`. Nix source revisions are
+locked by `flake.lock`; Mac host extras in `pkgs/Brewfile` are opt-in, not part
+of automatic activation. Held third-party sources need an explicit trust
+decision before installation. An existing `helm@3` is preserved, not the
+fresh-host Helm pin.
 
 **Core Tools:**
 - **Docker** (≥ 20.10) - Container platform
@@ -69,9 +74,9 @@ The installer automatically installs all required dependencies with zero manual 
 - **Powerlevel10k** - Modern Zsh theme
 - **zsh-autosuggestions** - Fish-like autosuggestions
 
-**Mason-Installed Tools (via Neovim):**
-- **LSP Servers:** ts_ls (TypeScript), pyright (Python), lua_ls (Lua)
-- **Formatters:** stylua (Lua), prettier (JS/TS/JSON/YAML/Markdown), ruff (Python)
+**Neovim editor tools (via Nix/Home Manager):**
+- **LSP servers:** TypeScript (`ts_ls`), Python (`pyright`), Lua (`lua_ls`), Biome and Nix (`nixd`)
+- **Formatters:** stylua, prettier, ruff, Biome and alejandra
 
 **Plugin Managers:**
 - **Lazy.nvim** - Neovim plugin manager (auto-configured)
@@ -79,7 +84,7 @@ The installer automatically installs all required dependencies with zero manual 
 
 **Neovim Plugins (60+ plugins via Lazy.nvim):**
 All Neovim plugins are auto-installed on first run, including:
-- LSP support (Mason, nvim-lspconfig)
+- LSP support (nvim-lspconfig)
 - Completion (blink.cmp with 2ms latency)
 - Telescope (fuzzy finder)
 - Treesitter (syntax highlighting)
@@ -99,19 +104,13 @@ All tmux plugins are installed declaratively (no TPM), including:
 - `tmux-yank` - Enhanced clipboard integration
 - `tmux-battery` + `tmux-cpu` - Status bar info
 
-**LSP Servers (via Mason):**
-Auto-installed language servers:
-- `ts_ls` - TypeScript/JavaScript
-- `pyright` - Python
-- `lua_ls` - Lua (for Neovim config editing)
-
-Install additional LSP servers with `:Mason` in Neovim.
-
-**Formatters/Linters (via Mason):**
-Auto-installed formatters:
-- `stylua` - Lua formatter
-- `prettier` - JavaScript/TypeScript/JSON/YAML/Markdown
-- `ruff` - Python formatter + linter
+**LSP servers and formatters:**
+Home Manager declares editor executables once and supplies them through Neovim's
+wrapper, independently of the launching shell's PATH. The same tools remain
+available to the user's shell. Neovim enables configured LSP servers directly;
+Conform runs the declared formatters. Lazy.nvim manages plugins, not tool binaries.
+The shared flake supplies these tools on Mac, headless Linux and Rex profiles.
+Standalone Neovim users must provide the executables themselves.
 
 **Treesitter Parsers:**
 Auto-installed syntax parsers for:
@@ -119,8 +118,8 @@ Auto-installed syntax parsers for:
 
 Install additional parsers with `:TSInstall <language>` in Neovim.
 
-**Platform-Specific:**
-- **Homebrew** (macOS only, if not already installed)
+**Platform-specific extras:** Homebrew and `pkgs/Brewfile` are opt-in on macOS;
+they are not run by `scripts/install.sh`.
 
 ### Optional Dependencies
 
@@ -151,7 +150,7 @@ These provide enhanced features but are not required:
   # Linux (Debian/Ubuntu)
   sudo apt install imagemagick
   ```
-  Auto-installed by `install.sh` if package manager supports it.
+  Use the shared Nix package set when available; these commands are manual alternatives.
 
 **For Mermaid Diagrams (render-markdown.nvim):**
 - **npm** - Node.js package manager
@@ -159,7 +158,7 @@ These provide enhanced features but are not required:
   ```bash
   npm add -g @mermaid-js/mermaid-cli
   ```
-  Auto-installed by `install.sh` if npm is available.
+  This npm command is optional and is not run by `scripts/install.sh`.
 
 **For AI Features (Optional):**
 - **ZHIPUAI_API_KEY** environment variable
@@ -266,12 +265,12 @@ Quick reference for all dependencies and their purposes:
 | **zsh-autosuggestions** | ✅ Yes | Zsh plugin | Shell autosuggestions |
 | **tmux plugins** | ✅ Yes | via Home Manager (Nix store) | Tmux plugins (no TPM) |
 | **Lazy.nvim** | ✅ Yes | Neovim plugin manager | Neovim plugin management |
-| **Mason** | ✅ Yes | LSP/tool installer | LSP servers, formatters, linters |
+| **Home Manager** | ✅ Yes | Editor tool binaries | LSP servers, formatters, build tools |
 
 \* C compiler required for Treesitter. On macOS: `xcode-select --install`. On Linux: `build-essential` package.
 
 **Legend:**
-- ✅ **Yes** - Automatically installed by `install.sh`
+- ✅ **Yes** - Provisioned by the selected Home Manager profile, where enabled
 - ⚠️ **Optional** - Enhances features but not required
 - ⚠️ **Required*** - Must be present on system (not auto-installed)
 
@@ -285,10 +284,11 @@ Quick reference for all dependencies and their purposes:
 
 ```bash
 cd ~/Projects/dev-config
-bash scripts/install.sh  # Installs Nix + all dependencies + creates symlinks
+bash scripts/install.sh  # Nix + selected Home Manager profile
 ```
 
-Then restart your terminal. All tools and plugins are auto-installed!
+Then restart your terminal. Home Manager installs missing enabled native CLIs,
+not provider OAuth or upgrades to working CLIs.
 
 **See:** [Nix Quick Start Guide](docs/nix/00-quickstart.md) for detailed instructions.
 
@@ -302,12 +302,13 @@ Then restart your terminal. All tools and plugins are auto-installed!
 2. Run the Nix installer:
    ```bash
    cd ~/Projects/dev-config
-   bash scripts/install.sh  # One command installs everything
+   bash scripts/install.sh  # Nix + selected Home Manager profile
    ```
 
 3. Restart your terminal
 
-That's it! With Nix, all packages use exact versions from `flake.lock`, so you get identical environments across all machines.
+Nix package source revisions follow `flake.lock`; writable native CLIs and MCP
+stdio packages are not pinned by that file or guaranteed to be latest.
 
 ---
 
@@ -321,21 +322,22 @@ bash scripts/install.sh
 ```
 
 **What this does:**
-1. Installs Nix package manager via Determinate Systems installer
-2. Enables flakes and configures direnv
-3. Installs all development tools (Neovim, tmux, zsh, Docker, sops)
-4. Creates symlinks using battle-tested logic from shared libraries
-5. Sets up Oh My Zsh and Powerlevel10k
-6. Installs Neovim plugins (Lazy.nvim) and tmux plugins (Nix store, no TPM)
+1. Installs Nix (if absent) and enables flakes
+2. Runs this flake's selected Home Manager app (`nix run .#home-manager -- switch --flake .`)
+3. Provisions shared system packages and dotfiles; the selected profile writes
+   `~/.config/dev-config/native-tools` and installs missing writable OMP, Pi,
+   Claude, OpenCode, Codex and Vercel CLIs through `ai/bootstrap.sh`
+4. Links missing curated skills without replacing physical user directories,
+   edits or unmanaged symlinks; tracked links advance only while still owned
 
 **Benefits:**
-- ✅ **Reproducible**: Exact package versions across all machines (via `flake.lock`)
-- ✅ **Declarative**: All packages defined in one place (`flake.nix`)
-- ✅ **Rollback**: Instant rollback to any previous environment state
+- ✅ **Reproducible Nix sources**: `flake.lock` locks flake inputs, not native CLI releases
+- ✅ **Declarative selection**: Profile enables system packages, native tools and MCP targets
+- ✅ **Nix rollback**: Previous Home Manager generations do not roll back writable native CLIs
 - ✅ **Isolated**: Per-project environments with zero conflicts
 - ✅ **Cross-platform**: Works on macOS (Intel/ARM) and Linux
 - ✅ **Binary cache**: 20x faster builds with Cachix (10 minutes → 30 seconds)
-- ✅ **AI integration**: Writable native Claude Code bootstrap (preserves existing installs) + Neovim (avante.nvim), with sops-nix encrypted API keys and optional LiteLLM routing
+- ✅ **AI integration**: Writable native coding CLIs, separately configured MCP and existing account credentials
 
 **After installation:**
 ```bash
@@ -346,8 +348,8 @@ nvim  # Editor: `:AvanteAsk` for Cursor-like AI coding assistant
 ```
 
 **Documentation:**
-- [Native Claude bootstrap](ai/claude/README.md) - Floating CLI install only when absent; settings and skills untouched
-- [Quick Start Guide](docs/nix/00-quickstart.md) - 5-minute setup
+- [Native tool provisioning and auth](docs/CONFIGURATION.md#native-tools-versions-and-skills)
+- [Quick Start Guide](docs/nix/00-quickstart.md) - Setup and non-activating checks
 - [Nix Concepts](docs/nix/01-concepts.md) - Understanding Nix
 - [Daily Usage](docs/nix/02-daily-usage.md) - Common workflows
 - [Troubleshooting](docs/nix/03-troubleshooting.md) - Fix issues
@@ -674,69 +676,37 @@ All shell configurations are version controlled and sync across machines!
 
 ## What Gets Installed
 
-### Automatic Installation Summary
+`bash scripts/install.sh` installs Nix if absent, enables flakes, and invokes
+the Home Manager app selected by this flake. The profile provisions shared
+Darwin/Linux system commands (see `pkgs/tool-checks.json`), dotfiles and
+Nix-managed tmux plugins. It writes `~/.config/dev-config/native-tools` and
+calls `ai/bootstrap.sh install` for enabled OMP, Pi, Claude, OpenCode, Codex
+and Vercel only when missing. The native launchers remain writable in
+`~/.local`; stock macOS Bash suffices. Existing installs and their native
+settings/OAuth are preserved. Skill sync fills individual links while
+preserving entire physical user skill directories, edited skills and unmanaged
+links; only recorded owned links still pointing at their previous target can
+advance.
 
-When you run `bash scripts/install.sh`, here's what happens:
+```bash
+bash ai/bootstrap.sh check    # selected executables, not provider authorization
+bash ai/bootstrap.sh update   # deliberate native upgrades, not a startup hook
+```
 
-**Phase 1: Core Dependencies (5-10 minutes)**
-- Homebrew (macOS only, if missing)
-- git, zsh, tmux, neovim
-- fzf, ripgrep, lazygit
-- imagemagick (best effort)
-- Version checks (Neovim ≥ 0.9.0, tmux ≥ 1.9)
+With no local enabled-tools manifest the bootstrap selects all six; explicit
+tool names override that selection. Native OAuth enrollment and MCP child
+credentials are separate steps. `flake.lock` governs Nix source revisions;
+it does not version-pin native CLIs or MCP stdio packages. Plugin source
+updates and system flake updates are deliberate, distinct changes.
 
-**Phase 2: Shell Setup**
-- Oh My Zsh framework
-- Powerlevel10k theme
-- zsh-autosuggestions plugin
-- Sets zsh as default login shell
-- Creates `~/.zshrc.local` for machine-specific config
-
-**Phase 3: Tmux Setup**
-- 9 tmux plugins installed from the Nix store by Home Manager (no TPM)
-- Config generated to `~/.config/tmux/tmux.conf` (from `modules/home-manager/programs/tmux.nix`)
-
-**Phase 4: Symlinks**
-- Backs up existing configs (timestamped: `~/.config/nvim.backup.20241008_120000`)
-- Creates symlinks from home directory → repository
-- Configs: nvim, tmux, ghostty, zsh (.zshrc, .zprofile, .p10k.zsh)
-
-**Phase 5: Neovim Setup (2-5 minutes)**
-- 60+ Neovim plugins installed via Lazy.nvim (headless)
-- 3 LSP servers: ts_ls, pyright, lua_ls
-- 3 formatters: stylua, prettier, ruff
-- 15+ Treesitter parsers compiled (requires C compiler)
-- Optional: Mermaid CLI via npm (if available)
-
-**Phase 6: Verification**
-- Symlinks verified
-- Oh My Zsh verified
-- tmux plugins verified (Nix store)
-- Default shell verified (zsh)
-- Reports any issues with actionable fixes
-
-**Total time:** 10-15 minutes on first install (varies by platform and internet speed).
-
-**Bandwidth usage:** ~500MB (Neovim plugins, Treesitter parsers, LSP servers).
-
-**Disk space:** ~2GB after installation (Neovim plugins, Mason tools, Treesitter parsers).
-
-### What Requires Internet
-
-- Initial `git clone` of this repository
-- Homebrew installation (macOS)
-- Package installation (apt/dnf/pacman/brew)
-- Oh My Zsh, Powerlevel10k, zsh-autosuggestions (git clone)
-- tmux plugins (fetched into the Nix store by Home Manager)
-- Neovim plugins (60+ via Lazy.nvim)
-- Mason LSP servers/formatters
-- Treesitter parsers (git clone)
-- Optional: Mermaid CLI (npm)
-
-**Offline mode:** Once installed, everything works offline except:
-- Plugin updates (`:Lazy update`, `Prefix + U` in tmux)
-- New LSP server installations (`:Mason`)
-- GitHub integration (requires `gh auth login` and internet)
+Mac host extras are opt-in via `pkgs/Brewfile`, not installed by Nix
+activation. Existing `helm@3` is left in place, not a fresh-host version pin.
+Held third-party package sources are not automatically trusted or installed.
+The installer does not silently switch the default shell, install Homebrew,
+or overwrite existing conflicting dotfiles. Do not treat package presence
+as proof of authorization; verify the intended account/team/project
+separately. See [Configuration](docs/CONFIGURATION.md) for explicit MCP
+credential sources and native Vercel versus MCP identities.
 
 ---
 
@@ -775,44 +745,33 @@ git push origin main
 
 ### Update Other Machines
 
-On any machine with this repo installed:
+On a machine with this repo installed, pull reviewed source changes, then
+deliberately activate the selected profile:
 
 ```bash
 cd ~/Projects/dev-config
-bash scripts/update.sh
+git pull
+nix run .#home-manager -- switch --flake .
 ```
 
-This will:
-1. Pull latest changes from Git
-2. Reload tmux config (if running)
-3. Prompt you to restart Neovim
+Upgrade native CLIs separately with `bash ai/bootstrap.sh update`. Neither
+command supplies provider OAuth or MCP child credentials.
 
 ---
 
 ## Scripts
 
-All scripts are located in `scripts/` directory:
-
-### `install.sh`
-Creates symlinks from home directory to repository files. Backs up existing configs with timestamp.
+`scripts/install.sh` bootstraps Nix and activates the flake-selected Home
+Manager profile; it is not a standalone symlink/backup installer.
 
 ```bash
 bash scripts/install.sh
 ```
 
-### `uninstall.sh`
-Removes symlinks and restores most recent backups (if any).
-
-```bash
-bash scripts/uninstall.sh
-```
-
-### `update.sh`
-Pulls latest changes from Git and reloads configs. Stashes uncommitted changes if necessary.
-
-```bash
-bash scripts/update.sh
-```
+`ai/bootstrap.sh install|update|check [tool ...]` owns writable native CLI
+provisioning. `scripts/README.md` documents the installer and safe
+non-activating verification commands. Do not run old symlink
+`uninstall.sh`/`update.sh` procedures for Home Manager profiles.
 
 ---
 
@@ -914,12 +873,11 @@ This checks:
 Check LSP server status:
 ```vim
 :LspInfo          " Show connected LSP servers
-:Mason            " Install/manage LSP servers
 :checkhealth      " Full diagnostic check
 ```
 
 Common issues:
-- **LSP server missing:** Open `:Mason` and install the server
+- **LSP server missing:** Check the Home Manager Neovim wrapper's PATH and the package declaration in `modules/home-manager/programs/neovim.nix`; standalone users must install the executable themselves.
 - **Node.js required:** Some LSP servers need Node.js (install with `brew install node` or `apt install nodejs`)
 - **Python required:** `pyright` needs Python (usually pre-installed)
 

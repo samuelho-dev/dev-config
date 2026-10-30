@@ -17,6 +17,7 @@ fi
 
 while IFS= read -r plugin; do
   [ -n "$plugin" ] || continue
+  [ "$plugin" != pi-obsidian ] || [ "${OMP_OBSIDIAN_ENABLED:-true}" = true ] || continue
   plugin_name=${plugin%@*}
   [ ! -d "$PLUGIN_DIR/$plugin_name" ] || continue
 

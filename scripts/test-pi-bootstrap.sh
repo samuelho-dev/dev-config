@@ -40,7 +40,7 @@ cat > "$tmp/bin/npm" <<'MOCK'
 const fs = require('node:fs');
 const path = require('node:path');
 const args = process.argv.slice(2);
-if (JSON.stringify(args) !== JSON.stringify(['install', '--global', '--prefix', `${process.env.HOME}/.local`, '@earendil-works/pi-coding-agent'])) process.exit(91);
+if (JSON.stringify(args) !== JSON.stringify(['install', '--global', '--prefix', `${process.env.HOME}/.local`, '@earendil-works/pi-coding-agent@latest'])) process.exit(91);
 fs.appendFileSync(process.env.NPM_TEST_LOG, `${args.join(' ')}\n`);
 if (process.env.NPM_TEST_FAIL) process.exit(43);
 const bin = path.join(process.env.HOME, '.local/bin');
@@ -87,7 +87,7 @@ for invalid in '{"secret":"TEST_SECRET_DO_NOT_PRINT",' 'null' '[]' '{"packages":
   printf '%s\n' "$invalid" > "$settings"
   cp "$settings" "$tmp/invalid-before"
   if bootstrap > "$tmp/error" 2>&1; then echo 'invalid settings accepted' >&2; exit 1; fi
-  ! grep -q TEST_SECRET_DO_NOT_PRINT "$tmp/error"
+  if grep -q TEST_SECRET_DO_NOT_PRINT "$tmp/error"; then echo 'invalid settings leaked' >&2; exit 1; fi
   cmp "$settings" "$tmp/invalid-before"
   cmp "$profile" "$tmp/profile-before"
   cmp "$PI_TEST_LOG" "$tmp/log-before"
@@ -96,13 +96,13 @@ printf '{}\n' > "$settings"
 printf '{"secret":"TEST_SECRET_DO_NOT_PRINT",\n' > "$profile"
 cp "$profile" "$tmp/invalid-before"
 if bootstrap > "$tmp/error" 2>&1; then echo 'invalid profile accepted' >&2; exit 1; fi
-! grep -q TEST_SECRET_DO_NOT_PRINT "$tmp/error"
+if grep -q TEST_SECRET_DO_NOT_PRINT "$tmp/error"; then echo 'invalid profile leaked' >&2; exit 1; fi
 cmp "$profile" "$tmp/invalid-before"
 cmp "$PI_TEST_LOG" "$tmp/log-before"
 
 # Dry-run must not invoke either package manager or touch invalid configuration.
-DRY_RUN_CMD=echo bootstrap
-DRY_RUN_CMD=echo PATH="$tmp/bin" bash "$root/ai/pi/apply-plugins.sh"
+DRY_RUN_CMD='echo' bootstrap
+DRY_RUN_CMD='echo' PATH="$tmp/bin" bash "$root/ai/pi/apply-plugins.sh"
 cmp "$profile" "$tmp/invalid-before"
 cmp "$PI_TEST_LOG" "$tmp/log-before"
 rm "$settings" "$profile"
@@ -113,7 +113,7 @@ if PI_TEST_FAIL=1 bootstrap > "$tmp/error" 2>&1; then echo 'Pi failure swallowed
 rm "$tmp/bin/pi" "$HOME/.local/bin/pi"
 : > "$PI_TEST_LOG"
 # A dry-run with Pi absent must not install it.
-DRY_RUN_CMD=echo bootstrap
+DRY_RUN_CMD='echo' bootstrap
 [[ ! -s "$NPM_TEST_LOG" && ! -e "$HOME/.local/bin/pi" ]]
 if NPM_TEST_FAIL=1 bootstrap > "$tmp/error" 2>&1; then echo 'npm failure swallowed' >&2; exit 1; fi
 [[ ! -e "$HOME/.local/bin/pi" && ! -s "$PI_TEST_LOG" ]]
@@ -142,7 +142,8 @@ cmp "$NPM_TEST_LOG" "$tmp/npm-before"
 # Quoted tilde overrides must resolve like Pi, independent of activation cwd.
 cp "$PI_TEST_MOCK" "$tmp/bin/pi"
 mkdir -p "$tmp/tilde-cwd"
-for override in '~/.pi/tilde-agent' '~'; do
+tilde=$(printf '\176')
+for override in "$tilde/.pi/tilde-agent" "$tilde"; do
   if [[ "$override" == '~' ]]; then agent_dir="$HOME"; else agent_dir="$HOME/.pi/tilde-agent"; fi
   mkdir -p "$agent_dir/extensions/subagent"
   printf '{"custom":true}\n' > "$agent_dir/extensions/subagent/config.json"

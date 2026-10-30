@@ -11,6 +11,7 @@ nvim/.netrwhist
 nvim/*.shada
 
 # Neovim plugin data (managed by lazy.nvim)
+nvim/lazy-lock.json
 nvim/lazy-lock.json.backup
 nvim/plugin/
 nvim/.luarc.json

@@ -18,6 +18,9 @@
     ./programs/opencode.nix
     ./programs/omp.nix
     ./programs/pi.nix
+    ./programs/codex.nix
+    ./programs/vercel.nix
+    ./programs/native-tools.nix
     ./programs/mcp.nix
     ./programs/biome.nix
     ./programs/python.nix

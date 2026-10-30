@@ -6,7 +6,7 @@
   # Import dev-config Home Manager module
   imports = [./modules/home-manager];
 
-  # DevPod user configuration (admin user (uid 1000) in Kubernetes container)
+  # Shared headless profile for DevPod and Rex; workload UID is deployment-owned.
   home = {
     username = "admin";
     homeDirectory = "/home/admin";
@@ -18,6 +18,7 @@
     EDITOR = "nvim";
     VISUAL = "nvim";
     CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
+    DISABLE_AUTOUPDATER = "1"; # Keep existing Claude versions until explicit update.
   };
 
   # Enable dev-config with DevPod-appropriate modules
@@ -31,6 +32,8 @@
       userName = "samuelho-dev";
       userEmail = "samuelho343@gmail.com";
       signing.enable = false; # No 1Password SSH agent in containers
+      preferSSH = false; # Headless GitHub access uses the projected token, not a Mac SSH agent.
+      extraConfig.credential."https://github.com".helper = "!gh auth git-credential";
     };
     zsh = {
       enable = true;
@@ -47,6 +50,9 @@
     omp.enable = true;
     pi.enable = true;
     claude-code.enable = true;
+    opencode.enable = true;
+    codex.enable = true;
+    vercel.enable = true;
 
     # Disabled: macOS-specific or not needed in DevPods
     ghostty.enable = false;

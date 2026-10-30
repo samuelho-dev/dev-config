@@ -224,7 +224,7 @@ def main():
     # MCP probes below perform provider reads and assert the expected project/team.
     print(check(["node", "--input-type=module", "-e", HTTP_MCP_CHECK]))
     check_vercel_access()
-    print("Kubernetes, Argo, AWS, Supabase, PostgreSQL: identities and permissions verified")
+    print("Kubernetes, Argo, AWS, Supabase: access checked; PostgreSQL: identity checked (elevated owner grants verified separately)")
 
 
 if __name__ == "__main__":

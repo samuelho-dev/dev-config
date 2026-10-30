@@ -15,8 +15,8 @@ in {
 
     version = lib.mkOption {
       type = lib.types.str;
-      default = "python313";
-      description = "Python version to use (python311, python312, python313, etc.)";
+      default = "python3";
+      description = "Python package attribute (override only for project compatibility)";
     };
   };
 

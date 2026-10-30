@@ -27,6 +27,7 @@
     EDITOR = "nvim";
     VISUAL = "nvim";
     CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
+    DISABLE_AUTOUPDATER = "1"; # Native Claude upgrades only via explicit bootstrap update.
   };
 
   dev-config = {
@@ -58,6 +59,8 @@
     omp.enable = lib.mkDefault true;
     pi.enable = lib.mkDefault true;
     claude-code.enable = lib.mkDefault true;
+    codex.enable = lib.mkDefault true;
+    vercel.enable = lib.mkDefault true;
     neovim.enable = lib.mkDefault true;
   };
 

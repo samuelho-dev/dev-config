@@ -21,6 +21,8 @@
     "includes": [
       "biome/**/*.ts",
       "biome/**/*.json",
+      "ai/mcp/servers.json",
+      "pkgs/tool-checks.json",
       "zed/**/*.json",
       "test-patterns/**/*.ts",
       "test-patterns/**/*.json",

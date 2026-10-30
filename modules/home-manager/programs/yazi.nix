@@ -14,7 +14,7 @@ in {
       default = [
         # File previews
         pkgs.ffmpegthumbnailer # Video thumbnails and previews
-        pkgs.poppler # PDF previews
+        pkgs.poppler-utils # PDF previews
         pkgs.imagemagick # Image processing/conversion
 
         # Archive support
@@ -78,6 +78,9 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    # Keep the declared preview/archive CLIs available to shells as well as Yazi's wrapper.
+    home.packages = cfg.extraPackages;
+
     programs.yazi = {
       enable = true;
 

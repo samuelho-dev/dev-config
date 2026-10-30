@@ -223,20 +223,29 @@
           # Left: session module
           set -g status-left "#{E:@catppuccin_status_session}"
 
-          # Right: devpod session count (custom) + directory, host, clock.
-          # devpod-status.sh emits its own #[fg=...] colours, so reset to the
-          # palette afterward before the catppuccin modules render.
-          set -g status-right "#(~/.local/bin/devpod-status.sh)"
+          # Right: optional DevPod count + directory, host, clock.
+          set -g status-right ""
+        ''
+        + lib.optionalString (config.dev-config.tmux.devpodConnect.enable && config.dev-config.tmux.devpodConnect.statusScriptSource != null) ''
+          set -ga status-right "#(~/.local/bin/devpod-status.sh)"
+        ''
+        + ''
+          # Reset the palette before catppuccin modules render.
           set -ga status-right "#[fg=#{@thm_fg},bg=#{@thm_bg}]"
           set -gaF status-right "#{E:@catppuccin_status_directory}"
           set -gaF status-right "#{E:@catppuccin_status_host}"
           set -gaF status-right "#{E:@catppuccin_status_date_time}"
 
-          # Pane borders: keep per-pane gitmux (critical for worktree workflows)
+          # Pane borders: per-pane gitmux is supplied by the shared toolset.
           set -g pane-border-status top
           set -gF pane-border-style "fg=#{@thm_surface_0}"
           set -gF pane-active-border-style "fg=#{@thm_blue}"
+          set -gF pane-border-format "#[fg=#{@thm_surface_2}]#P: #{pane_title}"
+        ''
+        + lib.optionalString (config.dev-config.tmux.gitmuxConfigSource != null) ''
           set -gF pane-border-format "#[fg=#{@thm_surface_2}]#P: #{pane_title} #(env -u DIRENV_DIR -u DIRENV_WATCHES gitmux -cfg ~/.gitmux.conf '#{pane_current_path}')"
+        ''
+        + ''
 
           # -------------------------------------------------------------------
           # Popup Windows
@@ -275,19 +284,20 @@
           # Uses fzf-tmux -p for popup (creates its own tmux popup)
           # Note: Cannot use run-shell -b because fzf-tmux needs TTY context
           # Scripts are symlinked to ~/.local/bin/ by home-manager
-          if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
-            bind D run-shell "$HOME/.local/bin/devpod-connect.sh"
-          }
+          ${lib.optionalString (config.dev-config.tmux.devpodConnect.connectScriptSource != null) ''
+            if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
+              bind D run-shell "$HOME/.local/bin/devpod-connect.sh"
+            }
+          ''}
 
-          # Single mutagen entry point: start sync whenever a devpod_* session is
-          # created (by either devpod-connect.sh or devpod-bootstrap.sh). The
-          # hook script no-ops for non-devpod sessions and when sync is already
-          # running, so it is safe to fire on every session.
-          set-hook -g session-created 'run-shell "$HOME/.local/bin/devpod-mutagen-hook.sh #{hook_session_name}"'
+          # Optional Mutagen: the hook itself checks for mutagen and mutagen.yml.
+          ${lib.optionalString (config.dev-config.tmux.devpodConnect.mutagenHookScriptSource != null) ''
+            set-hook -g session-created 'run-shell "$HOME/.local/bin/devpod-mutagen-hook.sh #{hook_session_name}"'
+          ''}
 
-          # Bootstrap: auto-create devpod sessions for online DevPods on server start
-          # Run synchronously so sessions are ready before user interaction
-          run-shell "bash $HOME/.local/bin/devpod-bootstrap.sh"
+          ${lib.optionalString (config.dev-config.tmux.devpodConnect.bootstrapScriptSource != null) ''
+            run-shell "bash $HOME/.local/bin/devpod-bootstrap.sh"
+          ''}
         '';
     };
 
