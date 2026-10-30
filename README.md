@@ -74,9 +74,9 @@ fresh-host Helm pin.
 - **Powerlevel10k** - Modern Zsh theme
 - **zsh-autosuggestions** - Fish-like autosuggestions
 
-**Mason-Installed Tools (via Neovim):**
-- **LSP Servers:** ts_ls (TypeScript), pyright (Python), lua_ls (Lua)
-- **Formatters:** stylua (Lua), prettier (JS/TS/JSON/YAML/Markdown), ruff (Python)
+**Neovim editor tools (via Nix/Home Manager):**
+- **LSP servers:** TypeScript (`ts_ls`), Python (`pyright`), Lua (`lua_ls`), Biome and Nix (`nixd`)
+- **Formatters:** stylua, prettier, ruff, Biome and alejandra
 
 **Plugin Managers:**
 - **Lazy.nvim** - Neovim plugin manager (auto-configured)
@@ -84,7 +84,7 @@ fresh-host Helm pin.
 
 **Neovim Plugins (60+ plugins via Lazy.nvim):**
 All Neovim plugins are auto-installed on first run, including:
-- LSP support (Mason, nvim-lspconfig)
+- LSP support (nvim-lspconfig)
 - Completion (blink.cmp with 2ms latency)
 - Telescope (fuzzy finder)
 - Treesitter (syntax highlighting)
@@ -104,19 +104,13 @@ All tmux plugins are installed declaratively (no TPM), including:
 - `tmux-yank` - Enhanced clipboard integration
 - `tmux-battery` + `tmux-cpu` - Status bar info
 
-**LSP Servers (via Mason):**
-Auto-installed language servers:
-- `ts_ls` - TypeScript/JavaScript
-- `pyright` - Python
-- `lua_ls` - Lua (for Neovim config editing)
-
-Install additional LSP servers with `:Mason` in Neovim.
-
-**Formatters/Linters (via Mason):**
-Auto-installed formatters:
-- `stylua` - Lua formatter
-- `prettier` - JavaScript/TypeScript/JSON/YAML/Markdown
-- `ruff` - Python formatter + linter
+**LSP servers and formatters:**
+Home Manager declares editor executables once and supplies them through Neovim's
+wrapper, independently of the launching shell's PATH. The same tools remain
+available to the user's shell. Neovim enables configured LSP servers directly;
+Conform runs the declared formatters. Lazy.nvim manages plugins, not tool binaries.
+The shared flake supplies these tools on Mac, headless Linux and Rex profiles.
+Standalone Neovim users must provide the executables themselves.
 
 **Treesitter Parsers:**
 Auto-installed syntax parsers for:
@@ -271,7 +265,7 @@ Quick reference for all dependencies and their purposes:
 | **zsh-autosuggestions** | ✅ Yes | Zsh plugin | Shell autosuggestions |
 | **tmux plugins** | ✅ Yes | via Home Manager (Nix store) | Tmux plugins (no TPM) |
 | **Lazy.nvim** | ✅ Yes | Neovim plugin manager | Neovim plugin management |
-| **Mason** | ✅ Yes | LSP/tool installer | LSP servers, formatters, linters |
+| **Home Manager** | ✅ Yes | Editor tool binaries | LSP servers, formatters, build tools |
 
 \* C compiler required for Treesitter. On macOS: `xcode-select --install`. On Linux: `build-essential` package.
 
@@ -879,12 +873,11 @@ This checks:
 Check LSP server status:
 ```vim
 :LspInfo          " Show connected LSP servers
-:Mason            " Install/manage LSP servers
 :checkhealth      " Full diagnostic check
 ```
 
 Common issues:
-- **LSP server missing:** Open `:Mason` and install the server
+- **LSP server missing:** Check the Home Manager Neovim wrapper's PATH and the package declaration in `modules/home-manager/programs/neovim.nix`; standalone users must install the executable themselves.
 - **Node.js required:** Some LSP servers need Node.js (install with `brew install node` or `apt install nodejs`)
 - **Python required:** `pyright` needs Python (usually pre-installed)
 

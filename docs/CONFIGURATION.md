@@ -212,15 +212,18 @@ unchanged on startup; run `:Lazy update` deliberately to upgrade them.
 
 ### Adding an LSP Server
 
-LSP servers and formatters are Nix-managed (declared in
-`modules/home-manager/programs/neovim.nix`) and wired in `nvim/lua/plugins/lsp.lua`.
-To add one: add the package in `neovim.nix`, then register it in the `servers` table
-in `lsp.lua`, and run `home-manager switch --flake .`.
+LSP servers and formatters are Nix-managed (declared once in
+`modules/home-manager/programs/neovim.nix`) and supplied through Neovim's
+wrapper independently of the launching shell's PATH. The same packages remain
+available in the shell. To add one: add the package in `neovim.nix`, then
+register the server in the `servers` table in `nvim/lua/plugins/lsp.lua`,
+and activate the relevant shared flake profile. Standalone users must provide
+their own executables.
 
 ## Tools: LSP, Formatters, Colorscheme
 
 Tmux plugins and Neovim LSPs/formatters are **not** installed by Mason or TPM at
-runtime — they are provisioned by Nix.
+runtime — Nix provisions the binaries; Lazy.nvim manages Neovim plugins.
 
 Neovim uses the Rex Cathode Amber palette through existing Kanagawa Dragon
 highlighting; no extra plugin is needed. After `home-manager switch --flake .`,

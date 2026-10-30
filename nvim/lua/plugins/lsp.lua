@@ -18,12 +18,6 @@ return {
   {
     'neovim/nvim-lspconfig',
     dependencies = {
-      -- Automatically install LSPs and related tools to stdpath for Neovim
-      -- Mason must be loaded before its dependents so we need to set it up here.
-      { 'mason-org/mason.nvim', opts = {} },
-      'mason-org/mason-lspconfig.nvim',
-      'WhoIsSethDaniel/mason-tool-installer.nvim',
-
       -- Useful status updates for LSP.
       { 'j-hui/fidget.nvim', opts = {} },
 
@@ -31,16 +25,6 @@ return {
       'saghen/blink.cmp',
     },
     config = function()
-      -- Detect Nix environment by checking for Nix-managed binaries
-      -- Check .nix-profile (Home Manager symlinks to Nix store) rather than exepath
-      -- because Mason may shadow Nix binaries in Neovim's PATH
-      local function is_nix_managed()
-        local nix_profile_bin = vim.fn.expand '~/.nix-profile/bin/typescript-language-server'
-        return vim.fn.executable(nix_profile_bin) == 1
-      end
-
-      local use_nix = is_nix_managed()
-
       --  This function gets run when an LSP attaches to a particular buffer.
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('kickstart-lsp-attach', { clear = true }),
@@ -190,9 +174,7 @@ return {
           },
         },
 
-        -- Nix LSP (eval-based: diagnostics, completion, go-to-def).
-        -- Binary provided by Nix (pkgs.nixd in pkgs/default.nix linting category).
-        -- Uses alejandra for formatting to match `nix fmt` in this repo.
+        -- Nix supplies nixd; alejandra formats to match `nix fmt` in this repo.
         nixd = {
           settings = {
             nixd = {
@@ -202,45 +184,13 @@ return {
         },
       }
 
-      -- Setup LSP servers using Neovim 0.11+ native API
-      -- vim.lsp.config() for configuration, vim.lsp.enable() for activation
-      -- On Nix: binaries come from ~/.nix-profile/bin (Home Manager)
-      -- On other systems: Mason installs and manages binaries
-
-      -- Configure all servers with capabilities (Neovim 0.11+ API)
+      -- Configure servers with capabilities using Neovim 0.11+ native API.
       for server_name, server_config in pairs(servers) do
         local config = vim.deepcopy(server_config) or {}
         config.capabilities = vim.tbl_deep_extend('force', {}, capabilities, config.capabilities or {})
         vim.lsp.config(server_name, config)
       end
-
-      if use_nix then
-        -- On Nix: Enable servers directly (binaries managed by Home Manager)
-        vim.lsp.enable(vim.tbl_keys(servers))
-
-        -- Mason available for manual installs but doesn't auto-enable
-        require('mason-lspconfig').setup {
-          ensure_installed = {},
-          automatic_enable = false,
-        }
-      else
-        -- On non-Nix: Mason manages installation, auto-enables servers
-        local ensure_installed = vim.tbl_keys(servers or {})
-        vim.list_extend(ensure_installed, {
-          'stylua', -- Used to format Lua code
-          'prettier', -- YAML/Markdown formatter (Biome doesn't support these yet)
-          'ruff', -- Python formatter and linter
-          'biome', -- JavaScript/TypeScript/JSON linter and formatter
-          'alejandra', -- Nix formatter (used by nixd LSP + conform)
-        })
-        require('mason-tool-installer').setup { ensure_installed = ensure_installed }
-
-        -- mason-lspconfig v2.0+ auto-enables installed servers
-        require('mason-lspconfig').setup {
-          ensure_installed = {},
-          automatic_enable = true,
-        }
-      end
+      vim.lsp.enable(vim.tbl_keys(servers))
     end,
   },
 

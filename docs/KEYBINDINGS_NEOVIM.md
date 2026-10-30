@@ -498,9 +498,10 @@ This configuration includes LSP support for:
 - **Lua:** `lua_ls`
 - **Nix:** `nixd`
 
-Servers are configured in `nvim/lua/plugins/lsp.lua` (the `servers` table). On
-Nix machines the binaries come from `~/.nix-profile/bin` and Mason auto-enable is
-off; Mason only installs servers on the non-Nix fallback path.
+Servers are configured in `nvim/lua/plugins/lsp.lua` (the `servers` table).
+Home Manager supplies their executables through the Neovim wrapper for the
+shared Mac, headless Linux and Rex profiles; standalone users provide their
+own executables. Lazy.nvim only installs plugins.
 
 ---
 
@@ -509,7 +510,6 @@ off; Mason only installs servers on the non-Nix fallback path.
 ### LSP
 - `:LspInfo` - Show LSP client info
 - `:LspRestart` - Restart LSP server
-- `:Mason` - Open Mason UI (only relevant on the non-Nix fallback path; LSP binaries are Nix-managed)
 
 ### Diagnostics
 - `:checkhealth` - Check Neovim health

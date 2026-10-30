@@ -62,8 +62,9 @@ services separately and check their intended identities/targets before
 claiming access. `flake.lock` pins Nix source revisions, not native CLI/MCP
 package versions; explicit `bash ai/bootstrap.sh update` upgrades native CLIs.
 
-Open Neovim and tmux — plugins, LSP servers, and formatters are already present (all
-Nix-managed; no Mason bootstrap, no TPM).
+Open Neovim and tmux — Nix supplies editor tools through Neovim's wrapper and
+tmux plugins through Home Manager; Lazy.nvim installs Neovim plugins on first
+launch. No Mason bootstrap or TPM is needed.
 
 ## Additional Machines
 

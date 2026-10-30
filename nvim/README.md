@@ -12,7 +12,6 @@ Plugins install automatically when Neovim first loads the configuration. Manual 
 | Command | Purpose |
 |---------|---------|
 | `:Lazy` | Manage plugins |
-| `:Mason` | Manage LSP servers/formatters (non-Nix machines) |
 | `:checkhealth` | Diagnose issues |
 | `:LspInfo` | Check LSP status |
 
@@ -30,7 +29,7 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 - **harpoon** (harpoon2) — mark/jump to frequent files
 
 ### lsp.lua — language servers + formatting
-- **nvim-lspconfig** with **mason.nvim**, **mason-lspconfig.nvim**, **mason-tool-installer.nvim**, **fidget.nvim**
+- **nvim-lspconfig** with **fidget.nvim**; Neovim's native LSP API enables servers
 - **conform.nvim** — formatter runner
 - **lazydev.nvim** — Neovim Lua API completion (ft=lua)
 - Servers: `ts_ls`, `biome`, `pyright`, `lua_ls`, `nixd`
@@ -128,8 +127,8 @@ Each tool activates only when its API key/env var is exported before launching N
 
 ## Configuration
 
-- **Add an LSP server:** `lua/plugins/lsp.lua:159` (`servers` table), then `:Mason` (non-Nix machines).
-- **Add a formatter:** `lua/plugins/lsp.lua:277` (`formatters_by_ft`).
+- **Add an LSP server:** add its package to `modules/home-manager/programs/neovim.nix` and register it in `lua/plugins/lsp.lua` (`servers` table).
+- **Add a formatter:** add its package to `neovim.nix` and configure `formatters_by_ft` in `lua/plugins/lsp.lua`.
 - **Add a plugin:** append to the relevant `lua/plugins/*.lua`, or create a new category file and import it at `init.lua:46-57`.
 
 ## Maintenance
@@ -143,9 +142,12 @@ lazy.nvim keeps each installation's plugin lockfile in Neovim's writable state d
 
 Plugin specs follow upstream by default; plugins using `version = '*'` follow the latest stable release without a major-version constraint. Blink also uses its Lua fuzzy matcher, so it does not require a native build. Branch choices such as `harpoon2` and `v3.x` select compatible plugin APIs, not repository-imposed commit pins. Do not commit `lazy-lock.json`.
 
-**Troubleshooting:** `:LspInfo` / `:Mason` / `:checkhealth lsp` for LSP; `:checkhealth blink` for
-completion. The `blink_cmp_fuzzy lib is not downloaded/built` warning is expected (Lua fuzzy
-matcher is intentional). For auto-reload, confirm `:set autoread?` shows `autoread`.
+**Troubleshooting:** `:LspInfo` / `:checkhealth lsp` for LSP; check the wrapped Neovim's
+PATH for missing executables. The shared flake provides editor tools on Mac, headless
+Linux and Rex; standalone users supply their own binaries. Lazy.nvim manages plugins.
+Use `:checkhealth blink` for completion. The `blink_cmp_fuzzy lib is not downloaded/built`
+warning is expected (Lua fuzzy matcher is intentional). For auto-reload, confirm
+`:set autoread?` shows `autoread`.
 
 ## Resources
 

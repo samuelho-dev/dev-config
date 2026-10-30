@@ -64,9 +64,8 @@
       plugins = [];
     };
 
-    # Install LSP servers, formatters, and build tools via Nix
-    # On Nix systems, lsp.lua detects ~/.nix-profile/bin binaries and skips Mason auto-install
-    home.packages = [
+    # Expose editor tools inside Neovim's wrapper, independent of the shell PATH.
+    programs.neovim.extraPackages = [
       # LSP servers
       pkgs.typescript-language-server # TypeScript/JavaScript
       pkgs.pyright # Python
@@ -91,6 +90,9 @@
       # Mermaid CLI (for mermaid diagram rendering)
       pkgs.mermaid-cli
     ];
+
+    # Also expose the same editor tools to the user's shell.
+    home.packages = config.programs.neovim.extraPackages;
 
     # Symlink Neovim configuration if source is provided
     xdg.configFile."nvim" = lib.mkIf (config.dev-config.neovim.configSource != null) {
