@@ -78,6 +78,9 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    # Keep the declared preview/archive CLIs available to shells as well as Yazi's wrapper.
+    home.packages = cfg.extraPackages;
+
     programs.yazi = {
       enable = true;
 
