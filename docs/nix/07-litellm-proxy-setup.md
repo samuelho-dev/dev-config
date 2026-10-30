@@ -28,40 +28,32 @@ LiteLLM Proxy is a unified API gateway for multiple LLM providers (Anthropic, Op
 - User-based access control
 - Audit logs for compliance
 
-## Architecture (Default: Team Gateway)
+## Architecture
 
-dev-config talks to a hosted LiteLLM gateway over HTTPS. There is **no
-port-forward** in the default setup — the gateway has a stable public ingress.
-
-```
-┌──────────────┐                          ┌─────────────────────────────┐
-│ Claude Code  │ ──── HTTPS ────────────> │ LiteLLM Gateway             │
-│              │  litellm.infra...space   │ (homelab, Tailscale ingress)│
-└──────────────┘                          └──────────────┬──────────────┘
-                                                          │
-┌──────────────┐                                          ├──> Anthropic API
-│   Neovim     │ ──── HTTPS ───────────────────────────>  ├──> OpenAI API
-│ (avante.nvim)│                                          └──> Google AI API
-└──────────────┘
-```
-
-**Request Flow:**
-1. Claude Code / Neovim sends an Anthropic-format request to
-   `https://litellm.infra.samuelho.space/anthropic`.
-2. The gateway authenticates the request using the `LITELLM_MASTER_KEY` env var.
-3. LiteLLM routes to the appropriate provider (Anthropic, OpenAI, etc.).
-4. The response flows back over HTTPS.
+Local OMP and Neovim Avante use the hosted LiteLLM HTTPS endpoint
+`https://litellm.samuelho.space/v1`; no port-forward is needed. OMP consumes
+`LITELLM_BASE_URL` and `LITELLM_API_KEY` using its built-in LiteLLM provider.
+Avante inherits its native OpenAI Responses implementation and defaults to
+the `coding-default` alias. An explicit proxy model can be selected for the
+current Neovim session using Avante's provider object (below); its selector
+does not dynamically discover inherited-provider models. LiteLLM centrally
+routes `coding-default` to `openai-codex/gpt-6.1-sol`.
+This does not replace the shared Rex OMP auth gateway/OAuth broker and does
+not change OMP's global `openai-codex/gpt-6.1-sol:high` default. Claude Code
+keeps its native authentication; an explicit per-command override is separate.
 
 ## Credentials (1Password-First)
 
-The LiteLLM key lives in **1Password**, not in the Nix store and not in a
-`secrets/ai.yaml` file. The `sops-env` Home Manager module fetches it at
-activation and writes mode-0600 `~/.config/sops-nix/load-env.sh` on disk;
-shells only source that generated file.
+The application client key lives in **1Password**, not in the Nix store or a
+`secrets/ai.yaml` file. Home Manager fetches it at activation and writes a
+mode-0600 `~/.config/sops-nix/load-env.sh`; shells only source that generated
+file. The existing master key remains an administrative credential, not client
+authentication. The base URL is a nonsecret Home Manager session variable.
 
 | 1Password field (item `ai` in vault `Dev`) | Exported shell var |
 |---|---|
-| `LITELLM_KEY` | `LITELLM_MASTER_KEY` |
+| `LITELLM_KEY` | `LITELLM_MASTER_KEY` (admin only) |
+| `LITELLM_CLIENT_KEY` | `LITELLM_API_KEY` (OMP and Avante) |
 | `ANTHROPIC_API_KEY` | `ANTHROPIC_API_KEY` |
 | `OPENAI_API_KEY` | `OPENAI_API_KEY` |
 | `GOOGLE_AI_STUDIO_KEY` | `GOOGLE_AI_API_KEY` |
@@ -74,24 +66,13 @@ shells only source that generated file.
 
 ## Setup Instructions
 
-### Step 1: Store the LiteLLM Key in 1Password
+### Step 1: Provision a scoped client key
 
-Add (or update) the `LITELLM_KEY` field on item `ai` in vault `Dev`:
-
-```bash
-op item edit ai --vault Dev "LITELLM_KEY[password]=sk-..."
-
-# Verify:
-op item get ai --vault Dev --fields label=LITELLM_KEY --reveal
-```
-
-If you are self-hosting LiteLLM in a cluster, you can read the master key from
-the cluster secret first:
-
-```bash
-kubectl get secret litellm-secrets -n litellm \
-  -o jsonpath='{.data.LITELLM_MASTER_KEY}' | base64 -d
-```
+Provision `LITELLM_CLIENT_KEY` on item `ai` in 1Password vault `Dev`, with
+the correct proxy model permissions. Do not put the LiteLLM administrative
+`LITELLM_KEY` into the application field or a tracked file. Provisioning,
+authorization and key rotation are owner-operated; no credentials are
+committed by this repository.
 
 ### Step 2: Apply Home Manager Configuration
 
@@ -100,93 +81,46 @@ cd ~/Projects/dev-config
 home-manager switch --flake .
 ```
 
-This regenerates `~/.config/sops-nix/load-env.sh`. Open a new shell (or
-`source ~/.config/sops-nix/load-env.sh`) and verify:
+Activation regenerates `~/.config/sops-nix/load-env.sh`. Open a fresh login
+shell and restart OMP/Neovim so their processes inherit both variables.
+Check without printing the secret:
 
 ```bash
-echo $LITELLM_MASTER_KEY    # Should output: sk-...
+test -n "$LITELLM_API_KEY" && printf 'client key loaded\n'
+printf '%s\n' "$LITELLM_BASE_URL"
 ```
 
-### Step 3: Verify Claude Code Environment
+### Step 3: Use native OMP and Avante
 
-Home Manager no longer configures Claude Code proxy routing. If the gateway is
-configured to support your authentication method, opt in for a single command:
+OMP's native `litellm` provider sees the proxy through the standard variables;
+no `models.yml` registration or default-role rewrite is needed. In Neovim,
+Avante uses `coding-default` through `/v1/responses`. Its inherited-provider
+selector does not dynamically list proxy models; set an explicit ID for the
+current session with `:lua require('avante.providers').litellm.model = 'MODEL_ID'`.
+The master key is never used for these application requests. Native Claude
+Code authentication stays independent; Home Manager does not set its proxy.
+
+### Step 4: Read-only connectivity smoke
 
 ```bash
-ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space/anthropic claude
+/usr/bin/curl -fsS -o /dev/null -w '%{http_code}\n' \
+  -H "Authorization: Bearer $LITELLM_API_KEY" \
+  "$LITELLM_BASE_URL/models"
 ```
 
-To inspect an explicitly configured shell override without printing credentials:
-
-```bash
-printf '%s\n' "${ANTHROPIC_BASE_URL:-not set}"
-```
-
-For an explicit shell override, the output is the configured URL:
-
-```
-https://litellm.infra.samuelho.space/anthropic
-```
-
-A per-command override does not change the parent shell's environment.
-
-An unset `ANTHROPIC_BASE_URL` is normal for native Claude Code access. Running
-`home-manager switch --flake .` does not enable proxy routing.
-
-### Step 4: Test the Integration
-
-```bash
-# Health check against the gateway
-curl https://litellm.infra.samuelho.space/health
-
-# Claude Code query (explicit gateway opt-in)
-ANTHROPIC_BASE_URL=https://litellm.infra.samuelho.space/anthropic claude "What is 2+2?"
-```
-
-## Self-Hosting Locally (Optional)
-
-> **Only follow this section if you run LiteLLM yourself in Kubernetes.**
-> The default team setup uses the HTTPS gateway above and needs none of this.
-
-If you run LiteLLM in a local cluster, expose it on `localhost:4000` and use
-an explicit per-command URL override.
-
-**Port-forward the service:**
-
-```bash
-kubectl port-forward -n litellm svc/litellm 4000:4000 &
-echo $! > ~/.litellm-port-forward.pid   # save PID for cleanup
-# Stop later: kill $(cat ~/.litellm-port-forward.pid) && rm ~/.litellm-port-forward.pid
-```
-
-**Persistent auto-restarting port-forward** (`~/bin/litellm-port-forward.sh`):
-
-```bash
-#!/bin/bash
-while true; do
-  echo "Starting LiteLLM port-forward..."
-  kubectl port-forward -n litellm svc/litellm 4000:4000
-  echo "Connection lost. Restarting in 5 seconds..."
-  sleep 5
-done
-```
-
-**Point Claude Code at localhost** for one invocation:
-
-```bash
-ANTHROPIC_BASE_URL=http://localhost:4000/anthropic claude
-```
-
-No Home Manager option or activation is required.
+Run only with the application key, and never log the Authorization header.
+Successful authorized responses return HTTP 200. Local Python urllib may
+receive Cloudflare 403; use the native curl check, not a DNS/TLS bypass.
 
 ## Neovim Integration (avante.nvim)
 
-**avante.nvim** provides a Cursor-like AI coding assistant in Neovim, powered by
-the same gateway. It reads `LITELLM_MASTER_KEY` from the environment, so no
-extra setup is needed once the key is loaded.
-
-1. Confirm the key is loaded: `echo $LITELLM_MASTER_KEY`
-2. Launch `nvim`.
+**avante.nvim** uses `LITELLM_API_KEY` (the client key), `LITELLM_BASE_URL`,
+and the native OpenAI Responses API body/stream/tool implementation. The
+`coding-default` alias omits unsupported sampling parameters inherited from
+Avante's OpenAI defaults. Launch Neovim from a fresh login shell after
+activation. To switch to an explicit proxy model for the current session use
+`:lua require('avante.providers').litellm.model = 'MODEL_ID'` (not a static
+editor catalog); the selector does not fetch the gateway's model list.
 
 **Available Commands:**
 
@@ -196,14 +130,10 @@ extra setup is needed once the key is loaded.
 | `:AvanteEdit` | Request AI code edits (applies changes directly) |
 | `:AvanteToggle` | Toggle Avante chat window |
 
-**Keybindings (if configured in `nvim/lua/config/keymaps.lua`):**
-
-- `<leader>aa` - Quick ask (`:AvanteAsk`)
-- `<leader>ae` - Quick edit (`:AvanteEdit`)
-- `<leader>ar` - Toggle chat window (`:AvanteToggle`)
-
-All avante.nvim requests go through the gateway, so usage is tracked alongside
-Claude CLI usage.
+**Keybindings (Avante defaults):** `<leader>aa` asks, `<leader>ae` edits,
+`<leader>at` toggles the sidebar. `<leader>a?` selects only models already
+configured/selected in Avante. Proxy requests are tracked at the gateway;
+native Claude Code is independent.
 
 ## Checking Cost / Usage
 
@@ -215,63 +145,33 @@ distribution, and error rates.
 
 ## Troubleshooting
 
-### "LITELLM_MASTER_KEY not set"
+### "LITELLM_API_KEY not set"
 
-**Cause:** Keys not loaded from 1Password.
-
-**Solution:**
+Confirm the 1Password `Dev/ai` item has an authorized
+`LITELLM_CLIENT_KEY`, then activate Home Manager and start a fresh login shell:
 
 ```bash
-# Confirm the service-account token is present
-echo $OP_SERVICE_ACCOUNT_TOKEN
-
-# Confirm op can read the item
-op item get ai --vault Dev --fields label=LITELLM_KEY --reveal
-
-# Re-source the loader, then re-check
-source ~/.config/sops-nix/load-env.sh
-echo $LITELLM_MASTER_KEY
+test -n "$LITELLM_API_KEY" && printf 'client key loaded\n'
+printf '%s\n' "$LITELLM_BASE_URL"
 ```
 
-If `load-env.sh` is missing or stale, run `home-manager switch --flake .`.
+The generated loader is refreshed at activation, not each shell start. Do
+not print or copy the client key into a repo file.
 
 ### "Invalid API key" / "Authentication failed"
 
-**Cause:** Wrong `LITELLM_KEY` value in 1Password.
+An invalid application key or ungranted model requires an owner to inspect
+LiteLLM's client-key authorization and the `Dev/ai/LITELLM_CLIENT_KEY`
+1Password field. Re-activate Home Manager after authorized key rotation,
+open a fresh login shell, then restart the clients. Do not use
+`LITELLM_MASTER_KEY` as a fallback.
 
-**Solution:** Update the field, re-run Home Manager to regenerate the loader,
-then open a new shell (or source the regenerated file):
+### Network or model errors
 
-```bash
-op item edit ai --vault Dev "LITELLM_KEY[password]=sk-..."
-home-manager switch --flake .
-source ~/.config/sops-nix/load-env.sh
-echo $LITELLM_MASTER_KEY
-```
-
-### "Connection refused" / timeout
-
-**Default (team gateway):** check connectivity to the ingress —
-`curl https://litellm.infra.samuelho.space/health`. If you rely on Tailscale
-ingress, confirm you are connected to the tailnet.
-
-**Self-hosting:** the port-forward likely dropped. Restart it:
-
-```bash
-ps aux | grep "port-forward.*litellm"
-kubectl port-forward -n litellm svc/litellm 4000:4000 &
-```
-
-### "Model not found"
-
-**Cause:** The gateway doesn't have that model enabled.
-
-```bash
-# List models exposed by the gateway (default)
-curl https://litellm.infra.samuelho.space/v1/models
-```
-
-Enable the model via the LiteLLM dashboard (Model Registry → Enable Model).
+Use the authenticated native `/usr/bin/curl` `/v1/models` smoke above. HTTP
+403 from Python urllib alone is not proof of a proxy outage. A missing model
+must be enabled and granted to the application key in LiteLLM; model routing
+is centrally administered. No local OMP `models.yml` registration is needed.
 
 ## Model Management
 
@@ -281,8 +181,8 @@ dashboard UI:
 - Create virtual keys scoped to specific model groups
 - Set per-user budgets, rate limits, or fallback chains
 
-No local config edits are required — dev-config only supplies the base URL and
-authentication so Claude Code always talks to the gateway.
+dev-config supplies OMP and Avante client credentials and base URL. Claude Code
+does not always talk to the gateway.
 
 ## Security Best Practices
 
@@ -291,8 +191,8 @@ authentication so Claude Code always talks to the gateway.
    mode-0600 `~/.config/sops-nix/load-env.sh` on disk, not the Nix store.
 2. **Rotate keys regularly.** After updating the 1Password field, run
    `home-manager switch --flake .`, then open a new shell or source the loader.
-3. **Use minimal permissions.** Virtual/master keys should be scoped to the
-   models you actually use.
+3. **Use least privilege.** Client keys should be scoped to required models;
+   retain the master key for administrative operations only.
 4. **Monitor usage.** Review the LiteLLM dashboard and set budget alerts.
 
 ## Next Steps

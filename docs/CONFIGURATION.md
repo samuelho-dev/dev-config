@@ -37,7 +37,8 @@ Do **not** put real secrets in `.zshrc.local`. AI service keys are 1Password-fir
 Home Manager retrieves them from the `Dev` vault during activation and writes
 mode-0600 `~/.config/sops-nix/load-env.sh` on disk. Shells source that file
 without querying 1Password (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
-`GOOGLE_AI_API_KEY`, `LITELLM_MASTER_KEY`, `OPENROUTER_API_KEY`). See the root
+`GOOGLE_AI_API_KEY`, `LITELLM_MASTER_KEY` (admin only), `LITELLM_API_KEY`
+(application client), `OPENROUTER_API_KEY`). See the root
 `CLAUDE.md` "Secrets Management" section and `docs/nix/07-litellm-proxy-setup.md`.
 
 ### Native tools, versions and skills
@@ -166,6 +167,15 @@ calls, and invalid MCP credentials. Missing required credentials/targets fail
 the check. Do not report enrollment complete from package presence or an MCP
 tools list alone; optional profile integrations may remain unconfigured.
 
+Local OMP uses its built-in LiteLLM provider with `LITELLM_API_KEY` from
+1Password `Dev/ai/LITELLM_CLIENT_KEY` and static
+`LITELLM_BASE_URL=https://litellm.samuelho.space/v1`; this does not change
+OMP's `openai-codex/gpt-6.1-sol:high` global default or enroll new OAuth.
+After Home Manager activation, open a fresh login shell and restart OMP and
+Neovim so their processes inherit the new environment. The installed native
+`~/.local/bin/omp` binary reports `omp/18.14.0`; the separate Bun global
+`@oh-my-pi/pi-coding-agent@17.1.3` is not the standalone executable.
+
 ## Editing Configs
 
 | Config | Path | Reload |
@@ -175,9 +185,25 @@ tools list alone; optional profile integrations may remain unconfigured.
 | Zsh | `zsh/.zshrc`, `zsh/.zprofile` | `source ~/.zshrc` or `exec zsh` |
 | Ghostty | `ghostty/config` | Immediate |
 | Yazi | `yazi/` | Restart Yazi |
+| Hunk | `hunk/config.toml` (all profiles), `hunk/extensions/copy-notes.ts` (macOS only) | `home-manager switch`, then reopen Hunk |
 
 After editing tracked files, commit and push, then `home-manager switch --flake .` on
 other machines.
+
+## Hunk Review Notes
+
+`dev-config.hunk.enable` defaults to true. Home Manager links
+`hunk/config.toml` as `~/.config/hunk/config.toml` (terminal theme), and on
+macOS recursively links `hunk/extensions/` into `~/.config/hunk/extensions/`,
+preserving unrelated files there. Press `c` and `Ctrl+S` to save a note;
+`Ctrl+Y` or **Extensions → Copy my notes** copies saved *user* notes with file
+paths, line ranges, resolution status and old-side markers via `/usr/bin/pbcopy`.
+Export notes before closing Hunk; source edits require `home-manager switch`
+and reopening Hunk. Self-check: `bun hunk/extensions/copy-notes.ts`.
+
+Before first activation, preserve existing `~/.config/hunk` files using a
+unique Home Manager backup suffix. Untracked new files require a deliberately
+reviewed `--flake path:.` activation; ordinary `--flake .` uses tracked files.
 
 ## Neovim Customization
 
@@ -203,12 +229,14 @@ return {
 }
 ```
 
-Restart Neovim; lazy.nvim auto-installs missing plugins and keeps its local
-writable lock at `stdpath('state')/lazy-lock.json`. No plugin commit lock is
-committed in the repository. Plugin specs using `version = '*'` select the
-latest stable release when explicitly updated; API-specific branches remain
-branch selections, not fixed commits. Existing plugins and local locks remain
-unchanged on startup; run `:Lazy update` deliberately to upgrade them.
+Restart Neovim; lazy.nvim auto-installs missing plugins. Home Manager runs daily
+plugin updates on macOS and Linux; `update-neovim-plugins` runs them manually.
+The writable local lock is `$XDG_STATE_HOME/nvim/lazy-lock.json` (normally
+`~/.local/state/nvim/lazy-lock.json`), not in Git. Updates are logged to
+`$XDG_STATE_HOME/nvim/update-plugins.log`; configured version and branch bounds
+still apply. The updater does not activate Home Manager or update Nix tools.
+Linux scheduling requires a running user systemd manager; run manually in
+headless containers without one.
 
 ### Adding an LSP Server
 

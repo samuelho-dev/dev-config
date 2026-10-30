@@ -125,8 +125,8 @@ Cursor-like AI coding assistant powered by LiteLLM proxy for team AI management.
 | `<leader>at` | Toggle Chat | Toggle the Avante sidebar |
 
 **Prerequisites:**
-- Plugin loads only when `LITELLM_MASTER_KEY` is set (`nvim/lua/plugins/ai.lua`)
-- Points at the LiteLLM proxy endpoint `http://localhost:4000/v1`
+- Plugin loads only when the application `LITELLM_API_KEY` is set (`nvim/lua/plugins/ai.lua`).
+- Uses `LITELLM_BASE_URL` (`https://litellm.samuelho.space/v1`) and defaults to the `coding-default` Responses alias. To switch a proxy model for this session: `:lua require('avante.providers').litellm.model = 'MODEL_ID'`. Avante's selector does not dynamically list proxy models.
 
 **Example Workflow:**
 1. Open file to modify: `:e src/components/UserProfile.tsx`
@@ -135,7 +135,7 @@ Cursor-like AI coding assistant powered by LiteLLM proxy for team AI management.
 4. Review and accept/reject changes in diff view
 
 **Cost Tracking:**
-All requests go through LiteLLM proxy and are tracked in the dashboard alongside Claude Code usage.
+Avante proxy requests are tracked in LiteLLM; native Claude Code routing is independent.
 
 **Documentation:**
 See [LiteLLM Proxy Setup](nix/07-litellm-proxy-setup.md) for full configuration details.

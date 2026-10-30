@@ -51,12 +51,12 @@
       printf '%s\n' ""
     } > "$TMP"
 
-    # Resolve all five keys in ONE op call and append only non-empty, non-placeholder exports.
+    # Resolve AI keys in ONE op call and append only non-empty, non-placeholder exports.
     KEYS_OK=0
     if [ -n "$OP_BIN" ] && [ -f "${opServiceAccountTokenPath}" ]; then
       if OP_SERVICE_ACCOUNT_TOKEN="$(cat ${opServiceAccountTokenPath})" \
          "$OP_BIN" item get ${lib.escapeShellArg onePassAiItemId} --vault ${lib.escapeShellArg onePassAiVault} --format json \
-           --fields label=ANTHROPIC_API_KEY,label=OPENAI_API_KEY,label=GOOGLE_AI_STUDIO_KEY,label=LITELLM_KEY,label=OPENROUTER_API_KEY \
+           --fields label=ANTHROPIC_API_KEY,label=OPENAI_API_KEY,label=GOOGLE_AI_STUDIO_KEY,label=LITELLM_KEY,label=LITELLM_CLIENT_KEY,label=OPENROUTER_API_KEY \
            --reveal 2>/dev/null \
          | ${pkgs.jq}/bin/jq -r '
              def field($label): first(.[] | select(.label == $label).value) // "";
@@ -68,6 +68,7 @@
              export("OPENAI_API_KEY"; "OPENAI_API_KEY"),
              export("GOOGLE_AI_API_KEY"; "GOOGLE_AI_STUDIO_KEY"),
              export("LITELLM_MASTER_KEY"; "LITELLM_KEY"),
+             export("LITELLM_API_KEY"; "LITELLM_CLIENT_KEY"),
              export("OPENROUTER_API_KEY"; "OPENROUTER_API_KEY")
            ' >> "$TMP" 2>/dev/null \
          && grep -q '^export ANTHROPIC_API_KEY=' "$TMP"; then
@@ -103,6 +104,7 @@ in {
         - OPENAI_API_KEY (from 1Password vault)
         - GOOGLE_AI_API_KEY (from 1Password vault)
         - LITELLM_MASTER_KEY (from 1Password vault)
+        - LITELLM_API_KEY (1Password LITELLM_CLIENT_KEY, application client credential)
         - OPENROUTER_API_KEY (from 1Password vault)
       '';
     };
@@ -124,6 +126,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    home.sessionVariables.LITELLM_BASE_URL = "https://litellm.samuelho.space/v1";
     # Generate load-env.sh at activation time (after sops-nix decrypts secrets)
     home.activation.generateLoadEnv = lib.hm.dag.entryAfter ["sops-nix"] generateLoadEnvScript;
 

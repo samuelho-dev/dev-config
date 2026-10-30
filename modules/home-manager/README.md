@@ -23,6 +23,7 @@ dev-config.tmux.enable = false;  # Disable tmux
 | **git** | Git with 1Password SSH commit signing |
 | **ssh** | SSH with 1Password agent integration |
 | **ghostty** | Ghostty terminal configuration |
+| **hunk** | Shared terminal theme; macOS review-note clipboard extension |
 | **yazi** | Terminal file manager |
 | **native-tools** | Enabled OMP, Pi, Claude, OpenCode, Codex and Vercel manifest plus missing-only writable native install |
 | **mcp** | Shared MCP configuration with profile-selected Claude/OMP/Codex targets |
@@ -54,6 +55,16 @@ Vercel OAuth does not supply the community MCP: the `env` input is
 `VERCEL_MCP_TOKEN`, rendered as child-only `VERCEL_TOKEN`. No global skills
 directory is replaced, no skip-permissions alias or proxy is set.
 
+`dev-config.hunk.enable` defaults to true. Home Manager links
+`hunk/config.toml` to `~/.config/hunk/config.toml` and recursively links
+`hunk/extensions/` on macOS, preserving unrelated extension files. Save a note
+with `c`, then `Ctrl+S`; `Ctrl+Y` or **Extensions → Copy my notes** exports
+saved user notes to `/usr/bin/pbcopy` before they are lost on close. Reopen
+Hunk after switching; run `bun hunk/extensions/copy-notes.ts` for its self-check.
+Preserve existing target files on first activation with a unique Home Manager
+backup suffix. New files must be tracked for `--flake .` or deliberately
+reviewed with `--flake path:.`.
+
 ### Disable a Program
 
 ```nix
@@ -68,6 +79,14 @@ For tools managed by Chezmoi or other dotfile managers:
 ```nix
 dev-config.neovim.configSource = null;  # Don't symlink config
 ```
+
+When Neovim is enabled with non-null `configSource`, Home Manager provides
+`update-neovim-plugins` and schedules it daily (launchd on macOS, user systemd
+timer on Linux). Logs and Lazy's writable lock are under
+`$XDG_STATE_HOME/nvim/`. The updater honors configured plugin branch/version
+bounds but does not activate Home Manager or upgrade Nix-managed tools. A
+headless Linux container without user systemd needs a manual run or its own
+scheduler.
 
 ### Custom Packages
 

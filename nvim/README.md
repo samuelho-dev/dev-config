@@ -42,7 +42,7 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 ### ai.lua — AI assistance
 - **minuet-ai.nvim** — inline completion (requires a configured provider key)
 - **codecompanion.nvim** — chat/inline (requires a configured provider key)
-- **avante.nvim** — Cursor-like assistant via LiteLLM proxy (`LITELLM_MASTER_KEY`)
+- **avante.nvim** — Cursor-like assistant via LiteLLM Responses API (`LITELLM_API_KEY`)
 - **yarepl.nvim** — manually selected REPL integration; external commands are optional
 
 ### git.lua — git integration
@@ -114,7 +114,7 @@ zero hardcoded paths). `<leader>ch` toggle checkbox in notes, `<leader>mp` brows
 Each tool activates only when its API key/env var is exported before launching Neovim:
 - **minuet** — streaming inline completions (`OPENROUTER_API_KEY`/`ZHIPUAI_API_KEY`/`OPENAI_API_KEY`); accept with super-tab `<Tab>`/`<S-Tab>`.
 - **codecompanion** — `:CodeCompanionChat` and visual-select `:CodeCompanion` (above keys or `ANTHROPIC_API_KEY`).
-- **avante** — `:AvanteAsk` / `:AvanteEdit` / `:AvanteToggle` via a LiteLLM proxy; export `LITELLM_MASTER_KEY` and forward the proxy to `localhost:4000`.
+- **avante** — `:AvanteAsk` / `:AvanteEdit` / `:AvanteToggle` via `LITELLM_BASE_URL` (`https://litellm.samuelho.space/v1`) and application `LITELLM_API_KEY`; default `coding-default`. To use an explicit proxy model for this Neovim session: `:lua require('avante.providers').litellm.model = 'MODEL_ID'`. Avante's selector does not dynamically list inherited-provider models.
 - **yarepl** — `:REPLStart claude` (or `aider`, `aichat`, `observability`, `ipython`, `radian`, `python`, `R`, `bash`, `zsh`); `:REPLSendLine` / `:REPLSendVisual`, `:REPLFocus` / `:REPLHide`. The selected command must already be on `PATH`; `claude` is supplied by the native CLI bootstrap, while `aider`, `aichat`, `ipython`, `radian`, and `R` are optional external tools. `claude`, `aider`, and `observability` also require `CLAUDE_AGENT_ROOT` (default `~/Projects/claude-code-agent`) to exist; `observability` executes that project's `scripts/start-system.sh`. None starts until explicitly selected.
 
 ### Productivity utilities
@@ -133,14 +133,21 @@ Each tool activates only when its API key/env var is exported before launching N
 
 ## Maintenance
 
-lazy.nvim keeps each installation's plugin lockfile in Neovim's writable state directory (`:echo stdpath('state')`), not in the repository. Existing installed plugins and local locks are preserved; opening Neovim does not update them.
+After Home Manager activation, `update-neovim-plugins` updates all configured
+plugins manually. The `update-neovim-plugins` launchd agent on macOS or user
+systemd timer on Linux runs it daily; logs go to
+`$XDG_STATE_HOME/nvim/update-plugins.log`. Lazy keeps its writable local lock
+at `$XDG_STATE_HOME/nvim/lazy-lock.json`, not in Git. Credential-gated plugins
+also update without their keys; update/build failures exit nonzero, and plugin
+branch/version constraints still apply. `:Lazy update` remains available
+interactively; `:Lazy restore` restores the local lock, not a shared baseline.
 
-```vim
-:Lazy update     " deliberately fetch and update plugins and the local lock
-:Lazy restore    " reconcile installed plugins to the current local lock
-```
-
-Plugin specs follow upstream by default; plugins using `version = '*'` follow the latest stable release without a major-version constraint. Blink also uses its Lua fuzzy matcher, so it does not require a native build. Branch choices such as `harpoon2` and `v3.x` select compatible plugin APIs, not repository-imposed commit pins. Do not commit `lazy-lock.json`.
+The updater does not activate Home Manager or update Nix-managed Neovim, LSPs
+or formatters. Run `home-manager switch --flake .` after changing managed source.
+Headless Linux containers without a user systemd manager need a manual run or
+their own scheduler. Plugin specs follow upstream by default; `version = '*'`
+selects the latest stable release when updated; branch choices such as
+`harpoon2` and `v3.x` select compatible APIs. Blink uses its Lua fuzzy matcher.
 
 **Troubleshooting:** `:LspInfo` / `:checkhealth lsp` for LSP; check the wrapped Neovim's
 PATH for missing executables. The shared flake provides editor tools on Mac, headless

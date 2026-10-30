@@ -147,21 +147,27 @@ return {
     event = 'VeryLazy',
     build = 'make',
     version = false,
-    -- Load only if LiteLLM master key is available
+    -- The client key is separate from LiteLLM's administrative master key.
     cond = function()
-      return vim.env.LITELLM_MASTER_KEY ~= nil
+      return vim.env.LITELLM_API_KEY ~= nil and vim.env.LITELLM_API_KEY ~= ''
     end,
     opts = {
       provider = 'litellm',
       providers = {
         litellm = {
           __inherited_from = 'openai',
-          endpoint = 'http://localhost:4000/v1',
-          model = 'claude-sonnet-4', -- Configure in LiteLLM config
-          api_key_name = 'LITELLM_MASTER_KEY',
+          endpoint = vim.env.LITELLM_BASE_URL or 'https://litellm.samuelho.space/v1',
+          model = 'coding-default',
+          api_key_name = 'LITELLM_API_KEY',
+          use_response_api = true,
           timeout = 30000,
+          -- ponytail: retain Avante's native Responses builder, omit sampling
+          -- inherited from OpenAI for proxy aliases that conceal reasoning models.
+          set_allowed_params = function(provider_conf, body)
+            require('avante.providers.openai').set_allowed_params(provider_conf, body)
+            body.temperature = nil
+          end,
           extra_request_body = {
-            temperature = 0.7,
             max_tokens = 4096,
           },
         },
