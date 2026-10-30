@@ -162,9 +162,13 @@ credentials are enrolled. Supply expected nonsecret
 `REX_EXPECTED_VERCEL_MCP_TEAM` (configured community MCP integration), and the
 PostHog MCP's accepted `REX_POSTHOG_MODEL` identifier (the observed
 `project-get` proof used `openai-codex/gpt-6-sol`). It checks actual CLI
-identities, an anonymous Kubernetes secret denial, MCP read-only project/team
-calls, and invalid MCP credentials. Missing required credentials/targets fail
-the check. Do not report enrollment complete from package presence or an MCP
+identities, an anonymous Kubernetes secret denial via an owner-submitted
+SubjectAccessReview for `system:anonymous` in `system:unauthenticated`, MCP
+read-only project/team calls, and invalid MCP credentials. The access review
+fails closed on API errors or an allowed decision; it does not require the
+anonymous identity to create an access review or the owner to impersonate it.
+Missing required credentials/targets fail the check. Do not report enrollment
+complete from package presence or an MCP
 tools list alone; optional profile integrations may remain unconfigured.
 
 Local OMP uses its built-in LiteLLM provider with `LITELLM_API_KEY` from

@@ -1,6 +1,7 @@
 [
   { "command": "git", "args": ["--version"] },
   { "command": "gh", "args": ["--version"] },
+  { "command": "ssh", "args": ["-V"] },
   { "command": "nix", "args": ["--version"] },
   { "command": "home-manager", "args": ["--version"] },
   { "command": "zsh", "args": ["--version"] },
