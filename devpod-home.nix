@@ -6,7 +6,7 @@
   # Import dev-config Home Manager module
   imports = [./modules/home-manager];
 
-  # DevPod runs admin with uid 0 for Tailscale; keep the existing name and home.
+  # Shared headless profile for DevPod and Rex; workload UID is deployment-owned.
   home = {
     username = "admin";
     homeDirectory = "/home/admin";
@@ -32,6 +32,8 @@
       userName = "samuelho-dev";
       userEmail = "samuelho343@gmail.com";
       signing.enable = false; # No 1Password SSH agent in containers
+      preferSSH = false; # Headless GitHub access uses the projected token, not a Mac SSH agent.
+      extraConfig.credential."https://github.com".helper = "!gh auth git-credential";
     };
     zsh = {
       enable = true;
