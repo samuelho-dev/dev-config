@@ -95,8 +95,8 @@ in {
   config = lib.mkIf cfg.enable {
     # Render after secrets are available. A failure must fail activation rather
     # than clearing any previously working MCP configuration.
-    home.activation.configureMcpServers = lib.hm.dag.entryAfter ["writeBoundary" "sops-nix"] ''
-      export PATH="${pkgs.python3}/bin:${lib.optionalString (cfg.authSource == "op") "${pkgs._1password-cli}/bin:"}$PATH"
+    home.activation.configureMcpServers = lib.hm.dag.entryAfter ["writeBoundary" "sops-nix" "bootstrapNativeTools"] ''
+      export PATH="${pkgs.python3}/bin:$HOME/.local/bin:${config.home.profileDirectory}/bin:${lib.optionalString (cfg.authSource == "op") "${pkgs._1password-cli}/bin:"}$PATH"
       DEV_CONFIG_MCP_AUTH_SOURCE="''${DEV_CONFIG_MCP_AUTH_SOURCE:-${cfg.authSource}}" \
       MCP_SERVERS_FILE=${serversJson} \
       MCP_ENABLE_PROJECT=${lib.boolToString cfg.enableProjectServers} \
