@@ -199,15 +199,28 @@ def main():
         raise RuntimeError("unexpected Kubernetes identity")
     if check(["kubectl", "--kubeconfig", kube, "auth", "can-i", "get", "applications.argoproj.io", "-n", "argocd"]) != "yes":
         raise RuntimeError("Argo read permission denied")
-    # The named owner cluster-admin profile legitimately has no namespace-level denial.
+    # Review the actual anonymous user and unauthenticated group explicitly;
+    # kubectl auth can-i --as does not model that group without --as-group.
+    review = {
+        "apiVersion": "authorization.k8s.io/v1",
+        "kind": "SubjectAccessReview",
+        "spec": {
+            "user": "system:anonymous",
+            "groups": ["system:unauthenticated"],
+            "resourceAttributes": {"namespace": "argocd", "verb": "get", "resource": "secrets"},
+        },
+    }
     try:
-        denied = subprocess.run(
-            ["kubectl", "--kubeconfig", kube, "auth", "can-i", "get", "secrets", "--as=system:anonymous", "-n", "argocd"],
-            text=True, capture_output=True, timeout=40,
+        result = subprocess.run(
+            ["kubectl", "--kubeconfig", kube, "create", "-f", "-", "-o", "json"],
+            input=json.dumps(review), text=True, capture_output=True, timeout=40,
         )
     except subprocess.TimeoutExpired as error:
         raise RuntimeError("anonymous Kubernetes denial timed out") from error
-    if denied.returncode not in (0, 1) or denied.stdout.strip() != "no":
+    if result.returncode:
+        raise RuntimeError(f"anonymous Kubernetes access review failed (exit {result.returncode})")
+    status = json.loads(result.stdout).get("status", {})
+    if not isinstance(status, dict) or status.get("evaluationError") or status.get("allowed") is not False:
         raise RuntimeError("anonymous Kubernetes secret denial not verified")
     check(["argocd-core.sh", "--in-cluster", "app", "list", "-o", "json"])
     aws = json.loads(check(["aws", "--profile", profile, "sts", "get-caller-identity", "--output", "json"], env=env))

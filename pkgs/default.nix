@@ -6,6 +6,7 @@
   core = [
     pkgs.git
     pkgs.gh
+    pkgs.openssh # Shared SSH client, including non-login headless profiles.
     pkgs.zsh
     pkgs.tmux
     pkgs.fzf

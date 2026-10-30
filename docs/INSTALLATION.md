@@ -76,9 +76,15 @@ machines.
 
 ## 1Password SSH & Commit Signing
 
-SSH authentication and Git commit signing use the 1Password SSH agent (keys live in
-your 1Password vault, never on disk; commits signed via `op-ssh-sign`). Git identity
-and signing key are set declaratively in `home.nix` — there is no `secrets.nix`.
+On macOS, SSH authentication and Git commit signing use the 1Password SSH
+agent (keys live in your 1Password vault, never on disk; commits signed via
+`op-ssh-sign`). Git identity and signing key are set declaratively in
+`home.nix` — there is no `secrets.nix`.
+
+The OpenSSH client comes from the shared Nix package list on macOS and Linux,
+including headless profiles without a host-provided `ssh` on `PATH`. macOS
+can use the configured 1Password agent; the headless Linux profile uses HTTPS
+with the GitHub CLI credential helper and does not require a Mac agent.
 
 See **[docs/nix/09-1password-ssh.md](nix/09-1password-ssh.md)** for the full setup
 (enable agent, add key to GitHub, verify auth/signing, `op` CLI).
