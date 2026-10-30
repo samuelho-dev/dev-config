@@ -13,6 +13,7 @@
     ./programs/npm.nix
     ./programs/ssh.nix
     ./programs/ghostty.nix
+    ./programs/hunk.nix
     ./programs/yazi.nix
     ./programs/claude-code.nix
     ./programs/opencode.nix

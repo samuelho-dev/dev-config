@@ -27,9 +27,11 @@ end
 local rtp = vim.opt.rtp
 rtp:prepend(lazypath)
 
--- [[ Load core configuration ]]
--- This loads options, autocommands, and keymaps
-require 'config'
+-- The scheduled updater needs specs, not interactive options or callbacks.
+local updating = vim.g.dev_config_plugin_update == true
+if not updating then
+  require 'config'
+end
 
 -- [[ Configure and install plugins ]]
 --
@@ -43,11 +45,12 @@ require 'config'
 --
 -- Plugins are organized into separate files in lua/plugins/
 -- Each file returns a table of plugin specifications
--- Keep the lockfile local and writable: existing installations retain their
--- current plugins; only an explicit :Lazy update advances them.
-local lockfile = vim.fn.stdpath 'state' .. '/lazy-lock.json'
+-- The Nix-store config is read-only; keep Lazy's lockfile in writable local state.
+local state = vim.fn.stdpath 'state'
+vim.fn.mkdir(state, 'p')
+local lockfile = state .. '/lazy-lock.json'
 
-require('lazy').setup({
+local specs = {
   -- Import all plugin modules
   { import = 'plugins.editor' }, -- File explorer, fuzzy finder, search/replace
   { import = 'plugins.lsp' }, -- LSP configuration and formatting
@@ -59,7 +62,43 @@ require('lazy').setup({
   { import = 'plugins.treesitter' }, -- Syntax highlighting
   { import = 'plugins.tools' }, -- Utility tools (CSV viewer)
   { import = 'plugins.training' }, -- Vim training games
-}, {
+}
+
+if updating then
+  -- Retain update/build/version constraints without loading plugin runtime setup.
+  local function prepare(plugin)
+    if type(plugin) == 'table' then
+      plugin.cond = true
+      plugin.lazy = true
+      plugin.init = nil
+      plugin.config = nil
+      plugin.opts = nil
+      plugin.event = nil
+      plugin.ft = nil
+      plugin.cmd = nil
+      plugin.keys = nil
+      for _, dependency in ipairs(plugin.dependencies or {}) do
+        prepare(dependency)
+      end
+      for _, child in ipairs(plugin.specs or {}) do
+        prepare(child)
+      end
+    end
+    return plugin
+  end
+
+  local resolved = {}
+  for _, category in ipairs(specs) do
+    for _, plugin in ipairs(require(category.import)) do
+      resolved[#resolved + 1] = prepare(plugin)
+    end
+  end
+  specs = resolved
+end
+
+require('lazy').setup(specs, {
+  performance = updating and { rtp = { reset = false } } or nil,
+  local_spec = not updating,
   lockfile = lockfile,
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the

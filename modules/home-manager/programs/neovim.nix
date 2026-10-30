@@ -4,7 +4,29 @@
   pkgs,
   inputs ? {},
   ...
-}: {
+}: let
+  cfg = config.dev-config.neovim;
+  updater = pkgs.writeShellApplication {
+    name = "update-neovim-plugins";
+    runtimeInputs = [pkgs.git pkgs.coreutils];
+    text = ''
+      export HOME=${lib.escapeShellArg config.home.homeDirectory}
+      export XDG_CONFIG_HOME=${lib.escapeShellArg config.xdg.configHome}
+      export XDG_DATA_HOME=${lib.escapeShellArg config.xdg.dataHome}
+      export XDG_STATE_HOME=${lib.escapeShellArg config.xdg.stateHome}
+      export XDG_CACHE_HOME=${lib.escapeShellArg config.xdg.cacheHome}
+      export PATH=${lib.escapeShellArg "${config.home.profileDirectory}/bin:${config.home.homeDirectory}/.local/bin:${lib.makeBinPath [pkgs.git pkgs.coreutils]}"}:/usr/bin:/bin
+
+      mkdir -p "$XDG_STATE_HOME/nvim"
+      exec ${lib.escapeShellArg "${config.programs.neovim.finalPackage}/bin/nvim"} --headless -i NONE \
+        --cmd ${lib.escapeShellArg "lua vim.opt.rtp:prepend(${builtins.toJSON (toString cfg.configSource)})"} \
+        --cmd 'lua vim.g.dev_config_plugin_update = true' \
+        -u ${lib.escapeShellArg "${cfg.configSource}/init.lua"} \
+        -c ${lib.escapeShellArg "luafile ${cfg.configSource}/update-plugins.lua"} \
+        >> "$XDG_STATE_HOME/nvim/update-plugins.log" 2>&1
+    '';
+  };
+in {
   options.dev-config.neovim = {
     enable = lib.mkEnableOption "dev-config Neovim setup";
 
@@ -92,12 +114,42 @@
     ];
 
     # Also expose the same editor tools to the user's shell.
-    home.packages = config.programs.neovim.extraPackages;
+    home.packages = config.programs.neovim.extraPackages ++ lib.optional (cfg.configSource != null) updater;
 
     # Symlink Neovim configuration if source is provided
     xdg.configFile."nvim" = lib.mkIf (config.dev-config.neovim.configSource != null) {
       source = config.dev-config.neovim.configSource;
       recursive = true;
+    };
+
+    launchd.agents.update-neovim-plugins = lib.mkIf (pkgs.stdenv.isDarwin && cfg.configSource != null) {
+      enable = true;
+      config = {
+        ProgramArguments = ["${updater}/bin/update-neovim-plugins"];
+        RunAtLoad = true;
+        StartCalendarInterval = [
+          {
+            Hour = 3;
+            Minute = 0;
+          }
+        ];
+      };
+    };
+
+    systemd.user.services.update-neovim-plugins = lib.mkIf (pkgs.stdenv.isLinux && cfg.configSource != null) {
+      Unit.Description = "Update Neovim plugins";
+      Service = {
+        Type = "oneshot";
+        ExecStart = "${updater}/bin/update-neovim-plugins";
+      };
+    };
+    systemd.user.timers.update-neovim-plugins = lib.mkIf (pkgs.stdenv.isLinux && cfg.configSource != null) {
+      Unit.Description = "Update Neovim plugins daily";
+      Timer = {
+        OnCalendar = "daily";
+        Persistent = true;
+      };
+      Install.WantedBy = ["timers.target"];
     };
   };
 }

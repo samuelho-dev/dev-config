@@ -773,6 +773,16 @@ provisioning. `scripts/README.md` documents the installer and safe
 non-activating verification commands. Do not run old symlink
 `uninstall.sh`/`update.sh` procedures for Home Manager profiles.
 
+### Neovim plugin updates
+
+After Home Manager activation, `update-neovim-plugins` updates configured
+plugins manually; launchd on macOS and a systemd user timer on Linux run it
+daily. Lazy writes the local lock to `$XDG_STATE_HOME/nvim/lazy-lock.json`
+(normally `~/.local/state/nvim/lazy-lock.json`), not this repository. Plugin
+branch/version bounds still apply. The updater does not activate Home Manager
+or update Nix-managed tools. Headless Linux containers without a user systemd
+manager need a manual run or their own scheduler.
+
 ---
 
 ## Directory Structure
@@ -788,7 +798,7 @@ dev-config/
 │   │   │   └── plugins/
 │   │   │       └── diagnostics-copy.lua  # Diagnostic clipboard feature
 │   │   └── kickstart/        # Kickstart.nvim modules
-│   ├── lazy-lock.json        # Plugin versions (committed)
+│   ├── update-plugins.lua     # Headless Lazy updater (local lock in XDG state)
 │   └── .stylua.toml          # Lua formatter config
 ├── tmux/
 │   └── tmux.conf             # Tmux configuration
