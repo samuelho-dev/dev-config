@@ -42,14 +42,9 @@ EOF
   log_success "Nix flakes enabled"
 fi
 
-# Step 3: Install Home Manager if not present
-if ! command -v home-manager &>/dev/null; then
-  log_info "Installing Home Manager..."
-  nix run home-manager/master -- --version
-  log_success "Home Manager installed"
-else
-  log_success "Home Manager already installed"
-fi
+# Step 3: Use Home Manager from this flake's locked input, not a moving branch.
+log_info "Checking this flake's Home Manager..."
+nix run .#home-manager -- --version
 
 # Step 4: Activate Home Manager configuration
 log_info "Activating Home Manager (this may take 10-15 minutes on first run)..."
@@ -61,7 +56,7 @@ log_info "  - Install tmux plugins"
 log_info "  - Configure everything declaratively"
 echo ""
 
-nix run home-manager/master -- switch --flake .
+nix run .#home-manager -- switch --flake .
 
 log_success "Home Manager activation complete!"
 

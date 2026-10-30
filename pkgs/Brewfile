@@ -1,0 +1,57 @@
+# Mac host extras selected independently of the cross-platform Nix CLI set
+# in default.nix and the native coding CLIs in ai/bootstrap.sh. Many of these
+# also support Linux; this file is the opt-in Mac host owner, not an OS filter.
+# Apply manually with brew bundle; no new third-party taps are trusted here.
+brew "act"
+brew "actionlint"
+brew "b2-tools"
+brew "block-goose-cli"
+brew "boost" # Selected development library, not a command launcher.
+brew "chezmoi"
+brew "cloc"
+brew "cmake"
+brew "dep-tree"
+brew "dnsmasq"
+brew "docker-compose"
+brew "ffmpeg"
+brew "gitleaks"
+brew "hadolint"
+brew "heatshrink"
+brew "herdr"
+brew "ipmitool"
+brew "k3d"
+brew "kind"
+brew "kyverno"
+brew "libvirt"
+brew "mkcert"
+brew "nx" # Optional host-wide launcher; projects still use their own Nx.
+brew "pre-commit"
+brew "rclone"
+brew "shfmt"
+brew "skaffold"
+brew "sshpass"
+brew "tailscale" # Selected CLI; separate from the GUI cask below.
+brew "tflint"
+brew "tfsec"
+brew "trivy"
+brew "uv"
+brew "velero"
+brew "websocat"
+brew "yamllint"
+brew "zlib" # Selected development library, not a command launcher.
+
+# An existing helm@3 installation is preserved, not provisioned here: the
+# unversioned shared Nix Helm CLI owns fresh hosts. No brew uninstall is implied.
+# Previously selected e1s (keidarcy/tap) and taws (huseyinbabal/tap) are
+# held external: receipts identify third-party taps, not a trusted provisioning
+# source. Do not add or run those taps without a separate trust decision.
+
+# GUI apps are intentionally absent from Linux/container provisioning.
+cask "1password"
+cask "docker-desktop"
+cask "ghostty"
+cask "ngrok"
+cask "visual-studio-code"
+cask "tailscale"
+# hashicorp-vagrant is likewise held external until its cask/tap is trusted;
+# listing it here would make brew bundle install from an unreviewed source.

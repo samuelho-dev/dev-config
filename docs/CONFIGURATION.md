@@ -2,9 +2,12 @@
 
 How to customize and extend your dev-config setup. Dotfiles in `nvim/`, `tmux/`,
 `zsh/`, `ghostty/`, `yazi/` are version-controlled and symlinked by Home Manager —
-edit them directly and reload the app (no rebuild needed). Package/LSP/formatter
-provisioning is declarative and lives in `pkgs/default.nix` and the program modules
-under `modules/home-manager/programs/`.
+edit them directly and reload the app (no rebuild needed). Shared system commands
+come from `pkgs/default.nix` and are enumerated for checks in
+`pkgs/tool-checks.json`; profile-selected writable native coding CLIs come from
+`ai/bootstrap.sh`, not Nix packages. `pkgs/Brewfile` holds opt-in Mac host extras
+only. Existing `helm@3` may remain installed but is not the fresh-host Helm pin;
+held third-party taps/casks require an explicit source-trust decision.
 
 ## Machine-Specific Configuration
 
@@ -37,6 +40,34 @@ without querying 1Password (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
 `GOOGLE_AI_API_KEY`, `LITELLM_MASTER_KEY`, `OPENROUTER_API_KEY`). See the root
 `CLAUDE.md` "Secrets Management" section and `docs/nix/07-litellm-proxy-setup.md`.
 
+### Native tools, versions and skills
+
+Enabled Home Manager profile options for OMP, Pi, Claude, OpenCode, Codex and
+Vercel generate `~/.config/dev-config/native-tools`. Run from the repo:
+
+```bash
+bash ai/bootstrap.sh install  # missing enabled CLIs only
+bash ai/bootstrap.sh check    # executable availability; not authentication
+bash ai/bootstrap.sh update   # deliberate native CLI upgrades
+```
+
+Pass tool names to target only those tools (for example,
+`bash ai/bootstrap.sh check vercel`). On a fresh home without a manifest all
+six are selected; with a manifest its enabled subset is authoritative. Native
+CLIs are writable under `~/.local`, OMP must be a standalone binary, and the
+bootstrap supports stock macOS Bash. Home Manager activation installs missing
+enabled CLIs and reconciles curated skill links, but does not upgrade existing
+CLIs or plugin packages on startup. `ai/sync-skills.sh` fills missing individual
+links in physical user skill directories; it never replaces those directories,
+edited skills or unmanaged links. It advances only owned links still pointing
+to their recorded previous source.
+
+`flake.lock` locks Nix input revisions, not direct native CLI versions or
+MCP stdio packages. Explicitly update native CLIs via `ai/bootstrap.sh update`,
+plugin sources via their own updater, and system packages via a reviewed
+flake/input update; no universal automatic-latest guarantee. Availability from
+`check` is not provider sign-in or project authorization.
+
 ### Rex homelab access (separate identity)
 
 The shared Nix toolchain includes `supabase`, `psql`, `kubectl`, and `argocd`
@@ -61,16 +92,20 @@ memory, the unmodified HTTP MCP smoke authenticated Sentry `find_projects`
 denials. These prove the source protocol/auth contract, not Rex's as-yet-
 undeployed credential projections or Kubernetes authorization.
 
-Canonical MCP definitions in `ai/mcp/servers.json` fan out to Claude Code,
-OMP and Codex. Fresh installations use pinned `effect-mcp@0.1.16` and the
-`pi-ponytail@0.1.2` plugin; this does not disable a user's later explicit
-`omp update`. Resolve these **dedicated** credential sources during activation
-(`op` on Mac, environment projection in Rex):
+Canonical MCP definitions in `ai/mcp/servers.json` fan out only to enabled
+Claude Code, OMP and Codex CLI profiles. The renderer accepts
+`DEV_CONFIG_MCP_AUTH_SOURCE=op|env`: macOS Home Manager defaults to `op`,
+Linux Home Manager defaults to `env`, and containers explicitly select `env`.
+`env` never queries 1Password, even if `op` is installed. Override the
+Home Manager `dev-config.mcp.authSource` option or set the environment variable
+for a deliberate alternate source; do not rely on PATH-dependent fallback.
+The MCP stdio launchers are unversioned; existing working CLIs and auth are
+not upgraded at activation. Credential sources are:
 
 | Server | 1Password reference | Rex environment | Required authorization |
 |--------|---------------------|-----------------|------------------------|
 | Linear | `op://Dev/Linear/MCP_API_KEY` | `LINEAR_API_KEY` | Approved Linear MCP account |
-| Vercel community | `op://Dev/Vercel/TOKEN` | `VERCEL_MCP_TOKEN`, exposed as `VERCEL_TOKEN` only to `apply-mcp.sh` | Existing Creativetoolkits MCP account; pinned stdio package, no second official-MCP OAuth grant required |
+| Vercel community | `op://Dev/Vercel/TOKEN` | `VERCEL_MCP_TOKEN`, rendered as child `VERCEL_TOKEN` | Existing Creativetoolkits MCP account; stdio package, no second official-MCP OAuth grant required |
 | Sentry | `op://Dev/creativetoolkits/SENTRY_MCP_TOKEN` | `SENTRY_MCP_KEY` | `Sentry-Bearer` access to the intended project |
 | PostHog | `op://Dev/creativetoolkits/POSTHOG_MCP_TOKEN` | `POSTHOG_MCP_KEY` | Bearer access to the intended project; tools mode, **not** globally read-only |
 
@@ -79,25 +114,34 @@ Vercel has **two deliberate identities**: the existing
 (`samuelho-dev`, team `samuelho-dev`); Rex's native Vercel CLI is the owner's
 `samuelho` account scoped to team `samuelho`. Enroll that CLI with native
 Vercel OAuth in Rex's own persisted private home; it does not consume the
-Creativetoolkits MCP token. Rex projects the existing MCP token separately as
-`VERCEL_MCP_TOKEN`; the runtime exposes it as `VERCEL_TOKEN` **only while
-rendering** the MCP configuration, not globally. No new token or official
-Vercel MCP OAuth grant is required, and neither Mac identity is overwritten.
+Creativetoolkits MCP token separately as `VERCEL_MCP_TOKEN`; the renderer
+injects `VERCEL_TOKEN` only into the MCP child environment, never globally
+and never from native Vercel OAuth. No new token or official Vercel MCP OAuth
+grant is required, and neither Mac identity is overwritten.
 The doctor reads the actual rendered `~/.omp/agent/mcp.json` stdio command,
 arguments and child environment rather than assuming its launcher/token.
 
-The renderer omits an unresolved authenticated MCP server instead of publishing
-an unauthenticated/stale entry and writes all managed credential-bearing configs
-mode 0600 without passing resolved secrets as subprocess arguments; an omitted
-**required** server is an enrollment failure, not a healthy integration.
+The renderer fails visibly if a required credential, launcher or enabled CLI
+target is missing. It validates all targets before replacing configuration;
+failed validation leaves existing working configuration intact. An intentionally
+empty server list (`mcpServers: {}`) is valid, and a disabled CLI target is not
+written. Managed credential-bearing files are mode 0600; unrelated user
+configuration is preserved and resolved secrets are not subprocess arguments.
 These references are credential *sources*, not credentials to commit. Supabase
-CLI needs a **valid Management API PAT**
-through its native `SUPABASE_ACCESS_TOKEN` environment source (or the user's
-authorized CLI keychain enrollment on macOS). The existing legacy Mac
+CLI needs a **valid Management API PAT** via its native
+`SUPABASE_ACCESS_TOKEN` environment source (or the user's authorized CLI
+keychain enrollment on macOS). The existing legacy Mac
 `Supabase CLI/access-token` value was rejected by the API; do not reuse it.
-Rex PostgreSQL access needs an approved DB principal via `PGHOST`, `PGDATABASE`,
-`PGUSER`, `PGPASSWORD` (prefer a scoped role rather than an application owner).
-Never put either password in a command argument or tracked config.
+Rex currently projects `PGUSER=postgres` against database `supabase` with
+the existing owner-operated PostgreSQL profile. A read-only capability probe
+confirmed `current_user=session_user=postgres`, with superuser, role/database
+creation, replication and BYPASSRLS authority, plus CONNECT and public
+schema USAGE/CREATE. This is **elevated owner authority**, not a scoped role
+and not a credential to share. `check-rex-access.py` checks current
+user/database identity but does not repeat those capability checks.
+Keep this distinct from Supabase Management API access; do not infer a
+least-privilege guarantee, invent roles/grants, or change credentials here.
+Never put the password in a command argument or tracked config.
 
 For AWS select a named project profile explicitly, e.g.
 `aws --profile ctk-operator sts get-caller-identity` in Rex (the existing Mac
@@ -159,8 +203,12 @@ return {
 }
 ```
 
-Restart Neovim; lazy.nvim auto-installs. Versions are locked in `nvim/lazy-lock.json`
-(commit changes to keep machines consistent; `:Lazy update` / `:Lazy restore`).
+Restart Neovim; lazy.nvim auto-installs missing plugins and keeps its local
+writable lock at `stdpath('state')/lazy-lock.json`. No plugin commit lock is
+committed in the repository. Plugin specs using `version = '*'` select the
+latest stable release when explicitly updated; API-specific branches remain
+branch selections, not fixed commits. Existing plugins and local locks remain
+unchanged on startup; run `:Lazy update` deliberately to upgrade them.
 
 ### Adding an LSP Server
 

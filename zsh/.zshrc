@@ -82,6 +82,9 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(git zsh-autosuggestions)
 
+if [[ "$OSTYPE" == darwin* && -d "$HOME/.docker/completions" ]]; then
+  fpath=("$HOME/.docker/completions" $fpath)
+fi
 source $ZSH/oh-my-zsh.sh
 
 # direnv integration - MOVED to zsh.nix with TTY checks
@@ -127,9 +130,11 @@ export VISUAL='nvim'
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Home Manager normally supplies this session path; keep standalone DevPod and
-# Orca shells working when activation does not run.
-[[ ":$PATH:" == *":$HOME/.local/bin:"* ]] || export PATH="$HOME/.local/bin:$PATH"
+# Home Manager supplies this path; standalone container shells need it too.
+path=("$HOME/.local/bin" $path)
+typeset -U path
+export PATH
+export NPM_CONFIG_PREFIX="$HOME/.local"
 
 # Bun environment (packages are not exposed globally on PATH).
 if [ -d "$HOME/.bun" ]; then
@@ -157,19 +162,12 @@ export CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1
 
 # Claude Code multi-profile aliases managed by Home Manager (see modules/home-manager/programs/claude-code.nix)
 
-# Source machine-specific configuration (gitignored)
+# Keep Mac-only GUI additions outside Linux; user overrides remain last.
+if [[ "$OSTYPE" == darwin* ]]; then
+  # GUI app helpers are host-only and must not outrank Home Manager tools.
+  for app_bin in "$HOME/.codeium/windsurf/bin" "$HOME/.antigravity/antigravity/bin"; do
+    [[ -d "$app_bin" ]] && path+=("$app_bin")
+  done
+  export PATH
+fi
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/samuelho/.docker/completions $fpath)
-autoload -Uz compinit
-compinit
-# End of Docker CLI completions
-
-autoload -U +X bashcompinit && bashcompinit
-complete -o nospace -C /opt/homebrew/bin/terraform terraform
-
-# Added by Windsurf
-export PATH="/Users/samuelho/.codeium/windsurf/bin:$PATH"
-
-# Added by Antigravity
-export PATH="/Users/samuelho/.antigravity/antigravity/bin:$PATH"

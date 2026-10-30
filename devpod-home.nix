@@ -6,7 +6,7 @@
   # Import dev-config Home Manager module
   imports = [./modules/home-manager];
 
-  # DevPod user configuration (admin user (uid 1000) in Kubernetes container)
+  # DevPod runs admin with uid 0 for Tailscale; keep the existing name and home.
   home = {
     username = "admin";
     homeDirectory = "/home/admin";
@@ -18,6 +18,7 @@
     EDITOR = "nvim";
     VISUAL = "nvim";
     CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
+    DISABLE_AUTOUPDATER = "1"; # Keep existing Claude versions until explicit update.
   };
 
   # Enable dev-config with DevPod-appropriate modules
@@ -47,6 +48,9 @@
     omp.enable = true;
     pi.enable = true;
     claude-code.enable = true;
+    opencode.enable = true;
+    codex.enable = true;
+    vercel.enable = true;
 
     # Disabled: macOS-specific or not needed in DevPods
     ghostty.enable = false;

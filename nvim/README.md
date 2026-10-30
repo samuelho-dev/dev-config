@@ -7,7 +7,7 @@ with LSP, completion, git tooling, markdown/Obsidian support, and AI assistance.
 
 ## Quick start
 
-Plugins install automatically during `scripts/install.sh`. Manual install: `:Lazy sync`.
+Plugins install automatically when Neovim first loads the configuration. Manual install: `:Lazy install`.
 
 | Command | Purpose |
 |---------|---------|
@@ -40,11 +40,11 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 - **blink.cmp** — completion engine (super-tab preset, Lua fuzzy matcher)
 - **LuaSnip** — snippet engine
 
-### ai.lua — AI assistance (all gated on env vars)
-- **minuet-ai.nvim** — inline completion (OpenRouter / ZhipuAI / OpenAI)
-- **codecompanion.nvim** — chat/inline (above + Anthropic)
+### ai.lua — AI assistance
+- **minuet-ai.nvim** — inline completion (requires a configured provider key)
+- **codecompanion.nvim** — chat/inline (requires a configured provider key)
 - **avante.nvim** — Cursor-like assistant via LiteLLM proxy (`LITELLM_MASTER_KEY`)
-- **yarepl.nvim** — REPL integration (claude/aider/aichat + language REPLs)
+- **yarepl.nvim** — manually selected REPL integration; external commands are optional
 
 ### git.lua — git integration
 - **gitsigns.nvim** — gutter signs
@@ -116,7 +116,7 @@ Each tool activates only when its API key/env var is exported before launching N
 - **minuet** — streaming inline completions (`OPENROUTER_API_KEY`/`ZHIPUAI_API_KEY`/`OPENAI_API_KEY`); accept with super-tab `<Tab>`/`<S-Tab>`.
 - **codecompanion** — `:CodeCompanionChat` and visual-select `:CodeCompanion` (above keys or `ANTHROPIC_API_KEY`).
 - **avante** — `:AvanteAsk` / `:AvanteEdit` / `:AvanteToggle` via a LiteLLM proxy; export `LITELLM_MASTER_KEY` and forward the proxy to `localhost:4000`.
-- **yarepl** — `:REPLStart claude` (or `aider`, `aichat`, `observability`, `python`, `R`, `bash`, `zsh`); `:REPLSendLine` / `:REPLSendVisual`, `:REPLFocus` / `:REPLHide`. Agent dir from `CLAUDE_AGENT_ROOT` (default `~/Projects/claude-code-agent`).
+- **yarepl** — `:REPLStart claude` (or `aider`, `aichat`, `observability`, `ipython`, `radian`, `python`, `R`, `bash`, `zsh`); `:REPLSendLine` / `:REPLSendVisual`, `:REPLFocus` / `:REPLHide`. The selected command must already be on `PATH`; `claude` is supplied by the native CLI bootstrap, while `aider`, `aichat`, `ipython`, `radian`, and `R` are optional external tools. `claude`, `aider`, and `observability` also require `CLAUDE_AGENT_ROOT` (default `~/Projects/claude-code-agent`) to exist; `observability` executes that project's `scripts/start-system.sh`. None starts until explicitly selected.
 
 ### Productivity utilities
 - **Diagnostic copy** (Claude Code) — `<leader>ce` errors only, `<leader>cd` all diagnostics; output has file paths, line numbers, severity grouping.
@@ -134,12 +134,14 @@ Each tool activates only when its API key/env var is exported before launching N
 
 ## Maintenance
 
+lazy.nvim keeps each installation's plugin lockfile in Neovim's writable state directory (`:echo stdpath('state')`), not in the repository. Existing installed plugins and local locks are preserved; opening Neovim does not update them.
+
 ```vim
-:Lazy update     " update plugins
-:Lazy restore    " restore locked versions
+:Lazy update     " deliberately fetch and update plugins and the local lock
+:Lazy restore    " reconcile installed plugins to the current local lock
 ```
 
-Commit `lazy-lock.json` after updating to keep versions consistent across machines.
+Plugin specs follow upstream by default; plugins using `version = '*'` follow the latest stable release without a major-version constraint. Blink also uses its Lua fuzzy matcher, so it does not require a native build. Branch choices such as `harpoon2` and `v3.x` select compatible plugin APIs, not repository-imposed commit pins. Do not commit `lazy-lock.json`.
 
 **Troubleshooting:** `:LspInfo` / `:Mason` / `:checkhealth lsp` for LSP; `:checkhealth blink` for
 completion. The `blink_cmp_fuzzy lib is not downloaded/built` warning is expected (Lua fuzzy

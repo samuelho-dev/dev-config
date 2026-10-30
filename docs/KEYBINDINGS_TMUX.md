@@ -187,13 +187,13 @@ edit `tmux.nix` and run `home-manager switch --flake .`.
 - **Update interval:** 15 seconds
 - **Theme:** catppuccin/tmux (mocha flavor)
 - **Left side:** Session module
-- **Right side:** DevPod session count (custom), directory, host, date/time
+- **Right side:** Optional DevPod session count (when its helper is configured), directory, host, date/time
 
 ### Pane Border
 - **Status:** Top (shows pane number, title, and git status)
 - **Active border:** Catppuccin blue (`@thm_blue`)
 - **Inactive border:** Catppuccin surface (`@thm_surface_0`)
-- **Git status:** Shows branch, ahead/behind, staged, modified files (via gitmux)
+- **Git status:** Shows branch, ahead/behind, staged, modified files via shared Nix-managed `gitmux` when `gitmuxConfigSource` is configured
   - Example: `1: editor ⎇ feature-x ↑2 ●3 ✚1`
   - Symbols: ⎇ (branch), ↑ (ahead), ↓ (behind), ● (staged), ✖ (conflict), ✚ (modified), … (untracked), ⚑ (stash)
   - Only shows when in a git repository
@@ -276,31 +276,13 @@ tmux kill-server
 Set pane title manually: `Prefix + t` and enter a title
 
 ### Git Status Not Showing in Pane Borders
-1. Check if gitmux is installed:
-   ```bash
-   which gitmux
-   # Should return: /usr/local/bin/gitmux or /opt/homebrew/bin/gitmux
-   ```
-
-2. Install if missing:
-   ```bash
-   brew install gitmux  # macOS
-   ```
-
-3. Check gitmux config symlink:
-   ```bash
-   ls -la ~/.gitmux.conf
-   # Should point to ~/Projects/dev-config/tmux/gitmux.conf
-   ```
-
-4. Test gitmux manually:
-   ```bash
-   cd ~/your-git-repo
-   gitmux -cfg ~/.gitmux.conf $(pwd)
-   # Should output: ⎇ branch-name ...
-   ```
-
-5. Reload tmux: `Prefix + r`
+1. Confirm `gitmux` is supplied by the shared CLI package list in `pkgs/default.nix`
+   and available on the tmux server's `PATH`: `command -v gitmux`.
+2. Confirm `~/.gitmux.conf` points to `tmux/gitmux.conf`. If
+   `dev-config.tmux.gitmuxConfigSource = null`, the border intentionally omits
+   gitmux and displays just the pane title.
+3. Inside a git repository, check `gitmux -cfg ~/.gitmux.conf "$PWD"`.
+4. Reload tmux with `Prefix + r`.
 
 **Note:** Git status only shows when the pane's current directory is inside a git repository.
 

@@ -79,6 +79,14 @@
       autosuggestion.enable = config.dev-config.zsh.enableAutosuggestions;
       syntaxHighlighting.enable = config.dev-config.zsh.enableSyntaxHighlighting;
 
+      # Login shells can run Homebrew's path_helper after sessionPath. Reassert
+      # the native/Home Manager launchers in generated .zprofile too.
+      profileExtra = lib.mkIf (config.dev-config.zsh.zprofileSource == null) ''
+        path=("$HOME/.local/bin" "$HOME/.nix-profile/bin" "/etc/profiles/per-user/$USER/bin" $path)
+        typeset -U path
+        export PATH
+      '';
+
       # Initialization content with proper ordering for optimal shell startup
       initContent = lib.mkMerge [
         # Powerlevel10k instant prompt - MUST be first (mkOrder 100)
@@ -149,6 +157,14 @@
           # Home Manager activation generates the mode-0600 AI key loader;
           # .zshenv sources it without any per-shell 1Password queries.
         ''
+
+        # Non-login shells and later startup hooks need the same precedence;
+        # .zshrc.local remains last so intentional local overrides still win.
+        (lib.mkIf (config.dev-config.zsh.zshrcSource == null) (lib.mkOrder 1400 ''
+          path=("$HOME/.local/bin" "$HOME/.nix-profile/bin" "/etc/profiles/per-user/$USER/bin" $path)
+          typeset -U path
+          export PATH
+        ''))
 
         # Late init - source machine-specific config (mkOrder 1500)
         # This runs after everything else, allowing local overrides

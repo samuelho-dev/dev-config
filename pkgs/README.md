@@ -2,9 +2,10 @@
 
 Centralized Nix package management for the dev-config ecosystem.
 
-`pkgs/default.nix` is the single source of truth for development packages. It is
-consumed by both the flake's devShells and the Home Manager modules, so package
-versions stay consistent across environments.
+`pkgs/default.nix` owns the cross-platform Nix CLI set consumed by devShells
+and Home Manager. `Brewfile` is the opt-in Mac host-extras inventory, not a
+Linux incompatibility list; selected third-party-tap tools are held external
+until their source is trusted. Native coding CLIs use `ai/bootstrap.sh`.
 
 ## Quick Start
 
@@ -27,11 +28,11 @@ There are exactly five categories. Each is a plain list of packages.
 
 | Category | Packages |
 |----------|----------|
-| **core** | git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit |
-| **runtimes** | nodejs_26, pnpm, bun |
-| **utilities** | direnv, nix-direnv, jq, yq-go, gnumake, pkg-config, tree-sitter |
+| **core** | git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit, gitmux |
+| **runtimes** | nodejs, pnpm, bun |
+| **utilities** | direnv, nix-direnv, zoxide, jq, yq-go, gnumake, pkg-config, tree-sitter |
 | **linting** | biome |
-| **cloud** | terraform, awscli2, cloudflared, kubectl, helm, k9s, argocd, supabase-cli, postgresql (`psql`), talosctl, doctl, hcloud, kubeseal, kubeconform, kustomize, sops, age, cilium-cli |
+| **cloud** | docker-client, terraform, 1password-cli, stripe-cli, awscli2, cloudflared, kubectl, kubernetes-helm, k9s, argocd, supabase-cli, postgresql (`psql`), talosctl, doctl, hcloud, kubeseal, kubeconform, kustomize, sops, age, cilium-cli |
 
 Notes:
 - Editor LSPs (`nixd`, `pyright`, `ts_ls`, `lua_ls`, ...) are **not** here — they
@@ -41,6 +42,21 @@ Notes:
 - `omp` is deliberately **not** packaged here: a `/nix/store` copy cannot run
   `omp update`. The shared `ai/omp/install.sh` installs the standalone binary
   into `~/.local/bin` for both Home Manager and the Rex container bootstrap.
+- `tool-checks.json` executes the declared shared Nix and enabled Home Manager
+  launchers, including Python/pip and Nix/Home Manager; native coding CLIs use
+  `ai/bootstrap.sh check`. GUI apps, optional host extras and external auth are
+  not implied by this inventory or the historical 84-command runtime sample.
+
+## Mac host ownership
+
+`Brewfile` is the complete opt-in direct Homebrew inventory: listed formulas
+are Mac host extras (including the selected development libraries `boost` and
+`zlib`), and listed casks are GUI apps. `tailscale` is deliberately both a CLI
+formula and a GUI cask; `nx` is an optional host-wide launcher, not the
+project-local Nx version. The shared Nix set owns unversioned `helm`; an
+existing Mac `helm@3` installation is preserved but superseded, not installed
+on fresh hosts or removed from this one. `e1s`, `taws`, and
+`hashicorp-vagrant` remain held external rather than trusted Brewfile entries.
 
 ## Usage
 

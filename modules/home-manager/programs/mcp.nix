@@ -27,12 +27,9 @@ in {
   options.dev-config.mcp = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = config.dev-config.omp.enable or false;
-      defaultText = lib.literalExpression "omp.enable";
-      description = ''
-        Render the canonical MCP server list into every agent CLI config
-        (Claude Code, OMP, Codex). Single source of truth: ai/mcp/servers.json.
-      '';
+      default = (config.dev-config.claude-code.enable or false) || (config.dev-config.omp.enable or false) || (config.dev-config.codex.enable or false);
+      defaultText = lib.literalExpression "claude-code.enable || omp.enable || codex.enable";
+      description = "Render shared MCP servers for enabled agent CLIs.";
     };
 
     servers = lib.mkOption {
@@ -46,9 +43,8 @@ in {
         Entries may carry an `auth` object instead of a literal header so the
         same definition works across secret backends:
           auth = { header = "Authorization"; prefix = "Bearer "; op = "op://…"; env = "LINEAR_API_KEY"; };
-        On nix machines the `op` reference is resolved via 1Password; in
-        containers the `env` var (K8s-injected) is used. Project-specific
-        servers belong in each project's .mcp.json, not here.
+        DEV_CONFIG_MCP_AUTH_SOURCE=op selects 1Password references; env selects
+        only environment variables. Project-specific servers belong in projects.
       '';
     };
 
@@ -56,6 +52,15 @@ in {
       type = lib.types.attrs;
       default = {};
       description = "Additional MCP servers merged over `servers` for this machine.";
+    };
+
+    authSource = lib.mkOption {
+      type = lib.types.enum ["env" "op"];
+      default =
+        if pkgs.stdenv.isDarwin
+        then "op"
+        else "env";
+      description = "Credential source for MCP rendering (environment may override DEV_CONFIG_MCP_AUTH_SOURCE).";
     };
 
     enableProjectServers = lib.mkOption {
@@ -70,8 +75,8 @@ in {
     targets = {
       claude = lib.mkOption {
         type = lib.types.bool;
-        default = false;
-        description = "Render MCP servers into ~/.claude.json.";
+        default = config.dev-config.claude-code.enable or false;
+        description = "Render MCP servers into ~/.claude.json when Claude Code is enabled.";
       };
       omp = lib.mkOption {
         type = lib.types.bool;
@@ -81,35 +86,36 @@ in {
       };
       codex = lib.mkOption {
         type = lib.types.bool;
-        default = true;
-        description = "Render MCP servers into ~/.codex/config.toml (managed block).";
+        default = config.dev-config.codex.enable or false;
+        description = "Render MCP servers into ~/.codex/config.toml when Codex is enabled.";
       };
     };
   };
 
   config = lib.mkIf cfg.enable {
-    # Fan the canonical list out to every enabled CLI. Runs after sops-nix so
-    # 1Password/secret resolution inside apply-mcp.sh has credentials available.
+    # Render after secrets are available. A failure must fail activation rather
+    # than clearing any previously working MCP configuration.
     home.activation.configureMcpServers = lib.hm.dag.entryAfter ["writeBoundary" "sops-nix"] ''
-      export PATH="${pkgs.jq}/bin:${pkgs.python3}/bin:${pkgs._1password-cli}/bin:$PATH"
+      export PATH="${pkgs.python3}/bin:${lib.optionalString (cfg.authSource == "op") "${pkgs._1password-cli}/bin:"}$PATH"
+      DEV_CONFIG_MCP_AUTH_SOURCE="''${DEV_CONFIG_MCP_AUTH_SOURCE:-${cfg.authSource}}" \
       MCP_SERVERS_FILE=${serversJson} \
       MCP_ENABLE_PROJECT=${lib.boolToString cfg.enableProjectServers} \
       MCP_TARGET_CLAUDE=${
-        if cfg.targets.claude
+        if cfg.targets.claude && (config.dev-config.claude-code.enable or false)
         then "1"
         else "0"
       } \
       MCP_TARGET_OMP=${
-        if cfg.targets.omp
+        if cfg.targets.omp && (config.dev-config.omp.enable or false)
         then "1"
         else "0"
       } \
       MCP_TARGET_CODEX=${
-        if cfg.targets.codex
+        if cfg.targets.codex && (config.dev-config.codex.enable or false)
         then "1"
         else "0"
       } \
-      $DRY_RUN_CMD ${pkgs.bash}/bin/bash ${applyScriptSrc} || true
+      $DRY_RUN_CMD ${pkgs.bash}/bin/bash ${applyScriptSrc}
     '';
   };
 }

@@ -13,9 +13,9 @@ Catalog of documentation in the dev-config repository. Each top-level component 
 
 | Guide | Description |
 |-------|-------------|
-| [INSTALLATION](./INSTALLATION.md) | Nix + Home Manager bootstrap |
-| [CONFIGURATION](./CONFIGURATION.md) | Customization and machine-specific config |
-| [ARCHITECTURE](./ARCHITECTURE.md) | Flake composition and project linkage |
+| [INSTALLATION](./INSTALLATION.md) | Nix + flake-selected Home Manager bootstrap; safe no-activation verification |
+| [CONFIGURATION](./CONFIGURATION.md) | Native CLI manifest, explicit MCP auth, user skills and machine-specific settings |
+| [ARCHITECTURE](./ARCHITECTURE.md) | Native/Nix ownership, project linkage and update boundaries |
 | [LINTING_POLICY](./LINTING_POLICY.md) | Type-safety and linting rules (authoritative) |
 | [KEYBINDINGS_NEOVIM](./KEYBINDINGS_NEOVIM.md) | Neovim key mappings |
 | [KEYBINDINGS_TMUX](./KEYBINDINGS_TMUX.md) | Tmux key mappings |
@@ -25,7 +25,7 @@ Catalog of documentation in the dev-config repository. Each top-level component 
 
 | Guide | Description |
 |-------|-------------|
-| [00-quickstart](./nix/00-quickstart.md) | 5-minute setup |
+| [00-quickstart](./nix/00-quickstart.md) | Selected profile setup, native checks and explicit upgrades |
 | [01-concepts](./nix/01-concepts.md) | dev-config flake/devShell model |
 | [02-daily-usage](./nix/02-daily-usage.md) | Common workflows |
 | [03-troubleshooting](./nix/03-troubleshooting.md) | Common issues |
@@ -51,9 +51,17 @@ Catalog of documentation in the dev-config repository. Each top-level component 
 | modules/nixos | - | NixOS system-level modules |
 | modules/home-manager | [README](../modules/home-manager/README.md) | Home Manager modules (programs + services) |
 | pkgs | [README](../pkgs/README.md) | Centralized package definitions |
-| scripts | [README](../scripts/README.md) | Installation and utility scripts |
+| scripts | [README](../scripts/README.md) | Installer, native bootstrap and non-activating checks |
+| ai/bootstrap.sh | [CONFIGURATION](./CONFIGURATION.md#native-tools-versions-and-skills) | One owner for writable OMP/Pi/Claude/OpenCode/Codex/Vercel |
 | ai/hooks | - | Claude Code linting/type-safety hooks |
 
 ## AI Tooling (`ai/`)
 
-Functional config sources. [`ai/claude/`](../ai/claude/README.md) bootstraps the floating native CLI only when absent, preserving existing installs and user configuration. `ai/skills/` contains the curated upstream-derived skill set; Home Manager no longer installs or retires skill copies. `ai/mcp/` owns shared MCP configuration and fan-out; `ai/hooks/` contains Biome/type-safety hook scripts.
+`ai/bootstrap.sh install|update|check` owns writable OMP, Pi, Claude,
+OpenCode, Codex and Vercel CLIs for the enabled profile manifest; no
+independent per-agent startup installer upgrades them. `ai/sync-skills.sh`
+reconciles individual curated links without replacing physical user
+directories or unmanaged edits. `ai/mcp/` fans out profile-selected
+Claude/OMP/Codex targets with explicit `op` or `env` auth and preserves
+working config on missing required input. [Configuration](./CONFIGURATION.md)
+distinguishes native Vercel OAuth from the MCP child's token.

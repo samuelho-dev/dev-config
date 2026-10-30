@@ -20,17 +20,20 @@ Restart your terminal and you're done.
 
 ## What Just Happened?
 
-`scripts/install.sh`:
+`scripts/install.sh` installs Nix if missing, enables flakes, then invokes
+the Home Manager app from this flake's locked input
+(`nix run .#home-manager -- switch --flake .`). The selected profile provisions
+shared system commands and dotfiles and writes
+`~/.config/dev-config/native-tools` for enabled OMP, Pi, Claude, OpenCode,
+Codex and Vercel. `ai/bootstrap.sh install` fills missing writable CLIs in
+`~/.local` without upgrading existing installations on shell startup or
+Home Manager activation. Curated skills are reconciled per link, preserving
+physical user directories and unmanaged/edited skills.
 
-1. ✅ **Installs Nix** (Determinate Systems installer) if not present
-2. ✅ **Enables flakes** in `~/.config/nix/nix.conf`
-3. ✅ **Installs Home Manager** if not present
-4. ✅ **Runs `home-manager switch --flake .`**, which:
-   - Installs all packages (Neovim, tmux, zsh, fzf, ripgrep, LSP servers, etc.)
-   - Symlinks dotfiles (`nvim/`, `tmux/`, `zsh/`, `ghostty/`, `yazi/`)
-   - Installs Oh My Zsh + Powerlevel10k and tmux plugins (Nix-managed, no TPM)
-
-All package versions are pinned in `flake.lock` for reproducibility.
+`flake.lock` pins Nix source revisions, not native CLI versions, MCP stdio
+packages or plugin updates. Mac extras in `pkgs/Brewfile` are opt-in, held
+third-party sources need explicit trust, and `pkgs/tool-checks.json` records
+shared Darwin/Linux system command checks.
 
 ## Common Tasks
 
@@ -38,23 +41,30 @@ All package versions are pinned in `flake.lock` for reproducibility.
 
 ```bash
 cd ~/Projects/dev-config
-home-manager switch --flake .
+nix run .#home-manager -- switch --flake .
 ```
 
 ### Test Before Applying
 
 ```bash
-home-manager build --flake .        # Build without activating
-home-manager switch --flake . --dry-run   # Preview changes
+nix eval --raw .#homeConfigurations.$(whoami).activationPackage.drvPath
+nix build --no-link .#homeConfigurations.$(whoami).activationPackage
 ```
 
-### Update All Packages
+### Update Packages and Native CLIs Deliberately
+
+Update `flake.lock` only after reviewing Nix input changes; then activate
+the selected Home Manager profile. Update native CLIs separately:
 
 ```bash
-nix flake update                    # Updates flake.lock with latest versions
-git commit flake.lock -m "chore: update dependencies"
-home-manager switch --flake .
+bash ai/bootstrap.sh check   # enabled executables, not OAuth or MCP auth
+bash ai/bootstrap.sh update  # enabled native CLIs
 ```
+
+Provider login, intended team/project authorization and the separate MCP
+credential source still need explicit enrollment. Native Vercel owner OAuth
+is not the community MCP child's token (`VERCEL_MCP_TOKEN` becomes only the
+child's `VERCEL_TOKEN`). See [Configuration](../CONFIGURATION.md).
 
 ### Rollback to Previous Version
 
@@ -71,14 +81,14 @@ nix develop                         # Enter a temporary shell with all packages
 exit                                # Leave temporary shell
 ```
 
-## Claude Code + Optional LiteLLM Integration
+## Native Coding CLIs + Optional LiteLLM Integration
 
-The personal/work and DevPod profiles enable `dev-config.claude-code.enable`.
-Activation preserves any existing executable Claude; only when absent does it
-run the official native installer for floating latest. The CLI stays writable
-and native installs self-update. Settings, OAuth, plugins and skills are not
-managed by this bootstrap. See [native bootstrap details](../../ai/claude/README.md).
-MCP targeting is configured separately through `dev-config.mcp.targets.claude`.
+Selected personal/work and DevPod profiles enable native coding CLIs. The
+single `ai/bootstrap.sh` owner installs missing enabled OMP, Pi, Claude,
+OpenCode, Codex and Vercel CLIs; it does not update working CLIs or configure
+their settings/OAuth. Explicit `bash ai/bootstrap.sh update` is the upgrade
+path. MCP targeting is separate and selected per Claude/OMP/Codex profile.
+Use explicit `op` or `env` credential resolution, never implicit fallback.
 
 AI service keys live in **1Password** (not in the Nix store). The `sops-env`
 Home Manager module fetches them during activation and writes mode-0600
@@ -130,12 +140,12 @@ dev-config/
 ├── user.nix            # Machine-specific values (GITIGNORED, must `git add -f`)
 │
 ├── scripts/
-│   ├── install.sh                  # Nix + Home Manager bootstrap
+│   ├── install.sh                  # Nix + flake-selected Home Manager app
 │   └── validate-linting-config.sh  # Pre-commit linting guardrail
 │
 ├── modules/home-manager/   # Program + service modules
 ├── pkgs/default.nix        # Centralized package definitions
-├── ai/                     # CLI bootstraps, MCP, curated skills and hooks
+├── ai/                     # One native CLI owner, MCP, curated skills and hooks
 │
 ├── nvim/               # Neovim config (symlinked to ~/.config/nvim)
 ├── tmux/               # Tmux config
@@ -168,7 +178,10 @@ git add -f user.nix
 
 ### Config changes not applied
 
-Run `home-manager switch --flake .` (not just `build`), then restart your terminal.
+After reviewing activation effects, run
+`nix run .#home-manager -- switch --flake .`; `nix build --no-link
+.#homeConfigurations.$(whoami).activationPackage` only builds, then restart
+your terminal.
 
 ## Next Steps
 

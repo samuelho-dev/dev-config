@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
-  "_comment": "Canonical MCP server list. Single source of truth fanned out to Claude Code (~/.claude.json), OMP (~/.omp/agent/mcp.json), and Codex (~/.codex/config.toml) by ai/mcp/apply-mcp.sh. Secrets in `auth` resolve via 1Password (auth.op) on nix machines and via the env var (auth.env) in containers. op:// references use named Dev vault items and exact field labels. Project-specific servers belong in each project's .mcp.json, not here.",
+  "_comment": "Canonical MCP servers for enabled Claude Code, OMP and Codex targets. DEV_CONFIG_MCP_AUTH_SOURCE=op reads 1Password; env uses only environment credentials. Project-specific servers belong in each project's .mcp.json.",
   "mcpServers": {
     "linear-server": {
       "type": "http",
@@ -15,18 +15,15 @@
     "effect-docs": {
       "type": "stdio",
       "command": "bunx",
-      "args": ["--bun", "effect-mcp@0.1.16"]
+      "args": ["--bun", "effect-mcp"]
     },
     "vercel": {
       "type": "stdio",
       "command": "sh",
-      "args": [
-        "-c",
-        "cd /tmp && exec npx -y @robinson_ai_systems/vercel-mcp@1.0.1"
-      ],
+      "args": ["-c", "cd /tmp && exec npx -y @robinson_ai_systems/vercel-mcp"],
       "auth": {
         "op": "op://Dev/Vercel/TOKEN",
-        "env": "VERCEL_TOKEN",
+        "env": "VERCEL_MCP_TOKEN",
         "envKey": "VERCEL_TOKEN"
       }
     },

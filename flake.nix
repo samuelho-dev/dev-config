@@ -104,9 +104,9 @@
       # ====== Extend Configs (biome) ======
 
       # Biome (create extends file if missing)
-      if [ ! -f biome.json ]; then
-        printf '%s\n' '{' '  "$schema": "https://biomejs.dev/schemas/2.0.6/schema.json",' '  "extends": ["~/.config/biome/biome.json"]' '}' > biome.json
-        printf "✓ Created biome.json (extends ~/.config/biome/)\n"
+      if [ ! -f biome.json ] && [ -f "$HOME/.config/biome/biome.json" ]; then
+        jq -n --arg config "$HOME/.config/biome/biome.json" '{extends: [$config]}' > biome.json
+        printf "✓ Created biome.json (extends Home Manager's global config)\n"
       fi
     '';
 
@@ -183,6 +183,11 @@
       system,
       ...
     }: {
+      home-manager = {
+        type = "app";
+        meta.description = "Home Manager CLI from this flake's selected input";
+        program = "${home-manager.packages.${system}.default}/bin/home-manager";
+      };
       set-shell = {
         type = "app";
         meta.description = "Set the user's default shell to this flake's zsh";

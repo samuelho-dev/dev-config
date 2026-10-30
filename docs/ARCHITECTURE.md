@@ -2,16 +2,18 @@
 
 ## Overview
 
-dev-config is the single source of truth for shared developer resources (curated AI
-skills, MCP configuration, editor configs, linting). Home Manager deploys tool
-configuration; agent skills are installed separately. The flake's `devShellHook`
-links per-project editor settings.
+dev-config owns shared developer resources: curated AI skills, MCP configuration,
+editor configs and linting. Home Manager selects enabled native tools, provisions
+system packages and configures MCP targets; `ai/bootstrap.sh` installs missing
+writable native CLIs in `~/.local`, and `ai/sync-skills.sh` adds curated skills
+without owning whole user skill directories. The flake's `devShellHook` links
+per-project editor settings.
 
 1. **Source** (`dev-config/`): canonical resources, Git-tracked.
-2. **Global deployment**: Home Manager configures enabled MCP targets and linting.
-   Agent skill installation is separate from Home Manager.
-3. **Project linkage** (`project-repo/`): `lib.devShellHook` runs on `nix develop` and
-   wires per-project editor config.
+2. **Global deployment**: Home Manager provisions packages and selects native CLI
+   and MCP targets; native CLIs are not compiled into Nix packages.
+3. **Project linkage** (`project-repo/`): `lib.devShellHook` runs on `nix develop`
+   and wires per-project editor config.
 
 ## Source Layout
 
@@ -19,29 +21,30 @@ links per-project editor settings.
 - `skills/` — curated skills derived from `mattpocock/skills`.
   OMP autolearn skills stay machine-local in `~/.omp/agent/managed-skills`.
 - `hooks/` — Biome / type-safety hooks (referenced in-repo by `.claude/settings.json`)
-- `mcp/` — canonical MCP server list and cross-agent fan-out script
-- `omp/` — canonical OMP plugin list and idempotent installer
-- `claude/` — [native Claude CLI bootstrap](../ai/claude/README.md), only when absent
+- `mcp/` — canonical MCP server list and profile-based Claude/OMP/Codex fan-out
+- `omp/`, `pi/`, `claude/` — native bootstrap helpers and plugin sources
+- `bootstrap.sh` — single owner for native `install|update|check` across OMP,
+  Pi, Claude, OpenCode, Codex and Vercel
+- `sync-skills.sh` — curated skill link reconciliation
 
-`claude-code.nix` is a minimal writable CLI bootstrap, enabled in personal/work
-and DevPod profiles. It preserves existing CLIs; otherwise it runs the official
-native installer for floating latest. Native installs own their launcher and
-updates. It does not manage settings, OAuth, plugins, skills or proxy routing.
-Home Manager no longer copies or retires agent skills or cleans up global
-agents/commands. Existing installed resources are left intact; changes to
-`ai/skills` require a separate installation step. MCP fan-out remains in
-`mcp.nix`; profiles explicitly opt into the Claude target.
+With `dev-config.enable`, `native-tools.nix` writes the selected tools to
+`~/.config/dev-config/native-tools` and invokes `ai/bootstrap.sh install` after
+package installation; startup never upgrades an already working CLI. Explicit
+`bash ai/bootstrap.sh update` upgrades selected tools, and `check` verifies
+executables, not auth. The standalone OMP binary must be writable in
+`~/.local/bin` (not a Bun shim). The official Claude installer and native npm
+packages likewise remain writable in `~/.local`; Nix owns neither their binaries
+nor their native settings/OAuth. This works with stock macOS Bash.
 
-`omp.nix` and the DevPod/Orca entrypoints run `ai/omp/apply-plugins.sh`, so
-workstations and container runtimes install the same plugins from
-`ai/omp/plugins.txt`.
-
-`omp` itself is not a Nix package (a read-only `/nix/store` install cannot
-self-update). Everywhere — `omp.nix` on workstations, the DevPod/Orca
-entrypoints in containers — it is the same prebuilt standalone binary from
-`https://omp.sh/install --binary`, which self-updates via `omp update`.
-It is deliberately *not* installed with `bun add -g`: that yields a shim that
-runs on bun, pinning omp to whatever bun the image baked.
+Skill reconciliation fills missing links inside each existing physical user
+directory and leaves existing directories, edited skills and unmanaged symlinks
+alone. It advances a tracked link only if it still points to its recorded
+previous target; it never replaces a whole skills directory. OMP and Pi plugin
+sources are separate from CLI binary versions: update plugin sources deliberately
+and apply them explicitly; do not expect activation or shell startup to upgrade
+existing plugins. MCP uses explicit `op` or `env` credential selection and
+profile-enabled Claude/OMP/Codex targets; it preserves working config if a
+required credential or launcher is unavailable.
 
 ### `.claude/` — Project-level Claude Code config (this repo)
 - `settings.json` — project hooks (reference `ai/hooks/`)
@@ -62,32 +65,38 @@ and the symlink strategy. Treat that table as authoritative.
 
 ```
 dev-config/                         [Source, Git]
-   ├── ai/  (skills, hooks, MCP servers, OMP plugins)
+   ├── ai/  (native bootstrap, skills, hooks, MCP servers, plugin sources)
    ├── zed/
    └── biome/
 
-      │ Home Manager switch (MCP, Biome and OMP modules)
+      │ Home Manager switch (packages, selected native install, MCP, Biome)
       ▼
 
-~/.config/biome/  ← linting config
-~/.omp/plugins  ← ai/omp/plugins.txt
+~/.config/biome/                   ← linting config
+~/.config/dev-config/native-tools ← enabled native CLI manifest
+~/.local/bin/                     ← writable native CLI launchers
+~/.agents/skills/ etc.            ← individual curated links, user entries intact
 
-      │ nix develop  →  lib.devShellHook
+      │ nix develop → lib.devShellHook
       ▼
 
-my-project/                          [Project Link]
-   ├── .zed     -> ${dev-config}/zed   (full-dir symlink)
-   └── biome.json                       (generated; extends ~/.config/biome/)
+my-project/                       [Project Link]
+   ├── .zed     -> ${dev-config}/zed
+   └── biome.json                 (extends ~/.config/biome/)
 ```
 
 ## Maintenance
 
-**Update MCP resources:** edit `ai/mcp/`, then run
-`home-manager switch --flake .` in this repo. Skill source changes under
-`ai/skills/` are not installed by that command.
+**Update native CLIs:** `bash ai/bootstrap.sh update` uses the enabled
+manifest (or pass explicit names). Run `bash ai/bootstrap.sh check` to verify
+availability; authenticate each service separately. Updating `flake.lock`
+updates locked Nix source revisions, not native CLIs; updating a plugin source
+is a separate explicit action. MCP stdio launchers are not Nix-version-pinned.
 
-**Update global OMP plugins:** edit `ai/omp/plugins.txt`, then run
-`home-manager switch --flake .`; DevPod/Orca images consume the same list on boot.
+**Update MCP resources:** edit `ai/mcp/`, then apply Home Manager for the
+selected profile. Required auth/launcher failures preserve working config.
+Skill changes under `ai/skills/` are linked by `ai/sync-skills.sh`, which
+does not overwrite physical user skills or unmanaged links.
 
 **Re-initialize a project's editor config:**
 ```bash

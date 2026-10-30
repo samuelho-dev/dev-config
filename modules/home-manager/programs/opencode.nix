@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  inputs ? {},
   ...
 }: let
   cfg = config.dev-config.opencode;
@@ -24,31 +23,15 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    # Install opencode CLI when bun is already available outside Nix.
-    home.activation.installOpencodeCli = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
-      if command -v bun &>/dev/null; then
-        if ! command -v opencode &>/dev/null || ! opencode --version &>/dev/null 2>&1; then
-          $DRY_RUN_CMD bun add -g opencode-ai 2>/dev/null || true
-        fi
-      fi
-    '';
-
-    # Generate ~/.config/opencode/opencode.json with plugin configuration
+    # Keep a user-owned configuration intact; seed only when absent.
     home.activation.configureOpencode = lib.hm.dag.entryAfter ["writeBoundary"] (let
-      opencodeConfig =
-        {
-          plugin = cfg.plugins;
-        }
-        // cfg.extraConfig;
+      opencodeConfig = {plugin = cfg.plugins;} // cfg.extraConfig;
+      seed = pkgs.writeText "opencode-default.json" (builtins.toJSON opencodeConfig);
     in ''
-      OPENCODE_DIR="$HOME/.config/opencode"
-      OPENCODE_JSON="$OPENCODE_DIR/opencode.json"
-
-      $DRY_RUN_CMD mkdir -p "$OPENCODE_DIR"
-
-      # Write config using jq for pretty-printing
-      echo '${builtins.toJSON opencodeConfig}' | ${pkgs.jq}/bin/jq '.' > "$OPENCODE_JSON.tmp" && \
-      $DRY_RUN_CMD mv "$OPENCODE_JSON.tmp" "$OPENCODE_JSON"
+      if [ -z "''${DRY_RUN_CMD:-}" ] && [ ! -e "$HOME/.config/opencode/opencode.json" ]; then
+        mkdir -p "$HOME/.config/opencode"
+        cp -n ${seed} "$HOME/.config/opencode/opencode.json"
+      fi
     '');
   };
 }

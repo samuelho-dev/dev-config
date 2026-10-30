@@ -1,182 +1,196 @@
 #!/usr/bin/env sh
-# Fan out the canonical MCP server list to every agent CLI that speaks .mcp.json:
-#   - Claude Code : ~/.claude.json          (.mcpServers, .enableAllProjectMcpServers)
-#   - OMP         : ~/.omp/agent/mcp.json    (.mcpServers)   + `omp config set mcp.enableProjectConfig`
-#   - Codex       : ~/.codex/config.toml     ([mcp_servers.*] managed block)
-#
-# Single source of truth: ai/mcp/servers.json (this dir). Called from BOTH the
-# home-manager activation (real nix machines) and the devpod/orca container
-# entrypoints, so all environments render the SAME servers with no drift.
-#
-# Secret resolution per environment: 1Password (auth.op) when `op` is on PATH,
-# otherwise the env var named by auth.env (K8s-injected in containers).
-#
-# Env knobs (all optional):
-#   MCP_SERVERS_FILE   path to servers.json         (default: alongside this script)
-#   MCP_ENABLE_PROJECT true|false                   (default: true)
-#   MCP_TARGET_CLAUDE  1|0                           (default: 1)
-#   MCP_TARGET_OMP     1|0                           (default: 1)
-#   MCP_TARGET_CODEX   1|0                           (default: 1)
+# Render the shared MCP definitions into enabled agent CLI configurations.
 set -eu
 umask 077
 
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-SERVERS_FILE="${MCP_SERVERS_FILE:-$SCRIPT_DIR/servers.json}"
-ENABLE_PROJECT="${MCP_ENABLE_PROJECT:-true}"
-DO_CLAUDE="${MCP_TARGET_CLAUDE:-1}"
-DO_OMP="${MCP_TARGET_OMP:-1}"
-DO_CODEX="${MCP_TARGET_CODEX:-1}"
-
-if ! command -v jq >/dev/null 2>&1; then
-  echo "mcp: jq not found; skipping MCP config" >&2
-  exit 0
+if ! command -v python3 >/dev/null 2>&1; then
+  echo 'mcp: python3 is required' >&2
+  exit 1
 fi
-if [ ! -f "$SERVERS_FILE" ]; then
-  echo "mcp: no servers file at $SERVERS_FILE; skipping" >&2
-  exit 0
-fi
-
-# Resolve every server's `auth` hint into a concrete header, then drop the hint
-# so the output is a clean .mcp.json shape the CLIs understand.
-RESOLVED=$(jq -c '.mcpServers // {}' "$SERVERS_FILE")
-MANAGED_KEYS=$(printf '%s' "$RESOLVED" | jq -c 'keys')
-for name in $(printf '%s' "$RESOLVED" | jq -r 'keys[]'); do
-  auth=$(printf '%s' "$RESOLVED" | jq -c --arg n "$name" '.[$n].auth // empty')
-  [ -n "$auth" ] || continue
-  header=$(printf '%s' "$auth" | jq -r '.header')
-  prefix=$(printf '%s' "$auth" | jq -r '.prefix // ""')
-  opref=$(printf '%s' "$auth" | jq -r '.op // ""')
-  envname=$(printf '%s' "$auth" | jq -r '.env // ""')
-  envkey=$(printf '%s' "$auth" | jq -r '.envKey // ""')
-
-  secret=""
-  if [ -n "$opref" ] && command -v op >/dev/null 2>&1; then
-    secret=$(op read "$opref" 2>/dev/null || echo "")
-  fi
-  if [ -z "$secret" ] && [ -n "$envname" ]; then
-    secret=$(printenv "$envname" 2>/dev/null || echo "")
-  fi
-
-  if [ -n "$secret" ]; then
-    if [ -n "$envkey" ]; then
-      # stdio server: inject the resolved secret into the child process env
-      # (envKey) instead of an HTTP header — the CLIs pass .env to the subprocess.
-      RESOLVED=$(printf '%s' "$RESOLVED" | SECRET="$secret" jq -c \
-        --arg n "$name" --arg k "$envkey" \
-        '.[$n].env[$k] = env.SECRET | del(.[$n].auth)')
-    else
-      RESOLVED=$(printf '%s' "$RESOLVED" | SECRET="$prefix$secret" jq -c \
-        --arg n "$name" --arg h "$header" \
-        '.[$n].headers[$h] = env.SECRET | del(.[$n].auth)')
-    fi
-  else
-    echo "mcp: WARN no secret for '$name' (op:$opref env:$envname); omitting server" >&2
-    RESOLVED=$(printf '%s' "$RESOLVED" | jq -c --arg n "$name" 'del(.[$n])')
-  fi
-done
-
-# ── Claude Code ────────────────────────────────────────────────────────────
-if [ "$DO_CLAUDE" = "1" ]; then
-  CJSON="$HOME/.claude.json"
-  [ -f "$CJSON" ] || printf '{}\n' > "$CJSON"
-  chmod 600 "$CJSON"
-  tmp=$(mktemp)
-  RESOLVED="$RESOLVED" MANAGED_KEYS="$MANAGED_KEYS" ENABLE_PROJECT="$ENABLE_PROJECT" \
-    jq -n --slurpfile original "$CJSON" \
-    '($ENV.RESOLVED | fromjson) as $servers | ($ENV.MANAGED_KEYS | fromjson) as $managed |
-     ($ENV.ENABLE_PROJECT | fromjson) as $proj |
-     $original[0] | .mcpServers = ((.mcpServers // {} | with_entries(select(.key as $key | $managed | index($key) | not))) + $servers)
-     | .enableAllProjectMcpServers = $proj' \
-    > "$tmp" && mv "$tmp" "$CJSON"
-  echo "mcp: wrote $CJSON"
-fi
-
-# ── OMP ────────────────────────────────────────────────────────────────────
-if [ "$DO_OMP" = "1" ]; then
-  OMP_DIR="$HOME/.omp/agent"
-  mkdir -p "$OMP_DIR"
-  OJSON="$OMP_DIR/mcp.json"
-  [ -f "$OJSON" ] || printf '{}\n' > "$OJSON"
-  chmod 600 "$OJSON"
-  tmp=$(mktemp)
-  RESOLVED="$RESOLVED" MANAGED_KEYS="$MANAGED_KEYS" \
-    jq -n --slurpfile original "$OJSON" \
-    '($ENV.RESOLVED | fromjson) as $servers | ($ENV.MANAGED_KEYS | fromjson) as $managed |
-     $original[0] | .["$schema"] = (.["$schema"] // "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json")
-     | .mcpServers = ((.mcpServers // {} | with_entries(select(.key as $key | $managed | index($key) | not))) + $servers)' \
-    > "$tmp" && mv "$tmp" "$OJSON"
-  echo "mcp: wrote $OJSON"
-  if command -v omp >/dev/null 2>&1; then
-    omp config set mcp.enableProjectConfig "$ENABLE_PROJECT" >/dev/null 2>&1 || true
-  fi
-fi
-
-# ── Codex ──────────────────────────────────────────────────────────────────
-# Codex config.toml is hand/tool-maintained, so only rewrite our marked block
-# and preserve everything else (model, profiles, etc.).
-if [ "$DO_CODEX" = "1" ] && command -v python3 >/dev/null 2>&1; then
-  CODEX_DIR="$HOME/.codex"
-  mkdir -p "$CODEX_DIR"
-  CODEX_TOML="$CODEX_DIR/config.toml"
-  [ -f "$CODEX_TOML" ] || : > "$CODEX_TOML"
-  chmod 600 "$CODEX_TOML"
-  RESOLVED="$RESOLVED" CODEX_TOML="$CODEX_TOML" python3 - <<'PY'
-import json, os, re
-
-BEGIN = "# >>> dev-config managed mcp servers >>>"
-END = "# <<< dev-config managed mcp servers <<<"
-
-servers = json.loads(os.environ["RESOLVED"])
-path = os.environ["CODEX_TOML"]
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+export MCP_SERVERS_FILE="${MCP_SERVERS_FILE:-$SCRIPT_DIR/servers.json}"
+export MCP_CANONICAL_SERVERS_FILE="$SCRIPT_DIR/servers.json"
+exec python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
 
 
-def toml_str(value):
-    # JSON string escapes are a valid subset of TOML basic-string escapes.
-    return json.dumps(str(value))
+def fail(message):
+    raise RuntimeError(message)
 
 
-def toml_arr(values):
-    return "[" + ", ".join(toml_str(v) for v in values) + "]"
+def enabled(name):
+    value = os.environ.get("MCP_TARGET_" + name, "1")
+    if value not in ("0", "1"):
+        fail("MCP_TARGET_" + name + " must be 0 or 1")
+    return value == "1"
 
 
-lines = []
-for name, cfg in servers.items():
-    lines.append(f"[mcp_servers.{name}]")
-    if cfg.get("command"):
-        lines.append(f"command = {toml_str(cfg['command'])}")
-        if cfg.get("args"):
-            lines.append(f"args = {toml_arr(cfg['args'])}")
-        env = cfg.get("env") or {}
-        if env:
-            lines.append(f"[mcp_servers.{name}.env]")
-            for k, v in env.items():
-                lines.append(f"{k} = {toml_str(v)}")
-    elif cfg.get("url"):
-        lines.append(f"url = {toml_str(cfg['url'])}")
-        headers = cfg.get("headers") or {}
-        if headers:
-            lines.append(f"[mcp_servers.{name}.http_headers]")
-            for k, v in headers.items():
-                lines.append(f"{k} = {toml_str(v)}")
-    lines.append("")
+def toml_string(value):
+    return json.dumps(str(value), ensure_ascii=False)
 
-block = BEGIN + "\n" + "\n".join(lines).rstrip("\n") + "\n" + END + "\n"
 
-existing = ""
-if os.path.exists(path):
-    with open(path) as f:
-        existing = f.read()
+def toml_block(servers):
+    lines = []
+    for name, server in servers.items():
+        # Quoted TOML keys support server names containing punctuation.
+        key = toml_string(name)
+        lines.append(f"[mcp_servers.{key}]")
+        if "command" in server:
+            lines.append("command = " + toml_string(server["command"]))
+            if server.get("args"):
+                lines.append("args = [" + ", ".join(map(toml_string, server["args"])) + "]")
+            if server.get("env"):
+                lines.append(f"[mcp_servers.{key}.env]")
+                lines.extend(toml_string(k) + " = " + toml_string(v) for k, v in server["env"].items())
+        else:
+            lines.append("url = " + toml_string(server["url"]))
+            if server.get("headers"):
+                lines.append(f"[mcp_servers.{key}.http_headers]")
+                lines.extend(toml_string(k) + " = " + toml_string(v) for k, v in server["headers"].items())
+        lines.append("")
+    return "\n".join(lines).rstrip()
 
-pattern = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n?", re.DOTALL)
-if pattern.search(existing):
-    updated = pattern.sub(block, existing)
-else:
-    sep = "" if existing == "" or existing.endswith("\n") else "\n"
-    updated = existing + sep + ("\n" if existing.strip() else "") + block
 
-with open(path, "w") as f:
-    f.write(updated)
-os.chmod(path, 0o600)
-print(f"mcp: wrote {path}")
+def read_text(path):
+    return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def merge_json(path, servers, managed, project=None):
+    original = json.loads(read_text(path) or "{}")
+    if not isinstance(original, dict) or not isinstance(original.get("mcpServers", {}), dict):
+        fail("invalid existing MCP JSON: " + str(path))
+    original["mcpServers"] = {**{k: v for k, v in original.get("mcpServers", {}).items() if k not in managed}, **servers}
+    if project is not None:
+        original["enableAllProjectMcpServers"] = project
+    else:
+        original.setdefault("$schema", "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json")
+    return json.dumps(original, indent=2, ensure_ascii=False) + "\n"
+
+
+def merge_codex(path, servers):
+    begin = "# >>> dev-config managed mcp servers >>>"
+    end = "# <<< dev-config managed mcp servers <<<"
+    original = read_text(path)
+    if original.count(begin) != original.count(end) or original.count(begin) > 1:
+        fail("invalid existing Codex managed block: " + str(path))
+    block = begin + "\n" + toml_block(servers) + "\n" + end + "\n"
+    if begin in original:
+        start = original.index(begin)
+        finish = original.index(end, start) + len(end)
+        if finish < len(original) and original[finish] == "\n":
+            finish += 1
+        updated = original[:start] + block + original[finish:]
+    else:
+        updated = original + ("" if not original or original.endswith("\n") else "\n") + ("\n" if original.strip() else "") + block
+    try:
+        import tomllib
+        tomllib.loads(updated)
+    except ImportError:
+        fail("Python 3.11 or newer is required for the Codex MCP target")
+    except ValueError:
+        fail("invalid or conflicting existing Codex TOML: " + str(path))
+    return updated
+
+
+def main():
+    targets = {name: enabled(name) for name in ("CLAUDE", "OMP", "CODEX")}
+    if not any(targets.values()):
+        return
+    source = os.environ.get("DEV_CONFIG_MCP_AUTH_SOURCE")
+    if source not in ("env", "op"):
+        fail("DEV_CONFIG_MCP_AUTH_SOURCE must be env or op")
+    project = os.environ.get("MCP_ENABLE_PROJECT", "true")
+    if project not in ("true", "false"):
+        fail("MCP_ENABLE_PROJECT must be true or false")
+    path = Path(os.environ["MCP_SERVERS_FILE"])
+    try:
+        servers = json.loads(path.read_text(encoding="utf-8"))["mcpServers"]
+    except (OSError, ValueError, KeyError) as error:
+        fail("invalid or missing MCP server list: " + str(path))
+    if not isinstance(servers, dict):
+        fail("MCP server list must be an object")
+    # The canonical names remain owned even when a profile intentionally disables
+    # every server, so stale managed entries cannot survive that cutover.
+    managed = set(servers) | set(json.loads(Path(os.environ["MCP_CANONICAL_SERVERS_FILE"]).read_text(encoding="utf-8"))["mcpServers"])
+    resolved = {}
+    for name, value in servers.items():
+        if not isinstance(value, dict):
+            fail("invalid MCP server: " + name)
+        server = value.copy()
+        auth = server.pop("auth", None)
+        if auth is not None:
+            if not isinstance(auth, dict) or not isinstance(auth.get(source), str) or not auth[source]:
+                fail("missing " + source + " credential source for " + name)
+            if source == "op":
+                if shutil.which("op") is None:
+                    fail("op is required for MCP authentication")
+                result = subprocess.run(["op", "read", auth["op"]], capture_output=True, text=True)
+                secret = result.stdout.rstrip("\n") if result.returncode == 0 else ""
+            else:
+                secret = os.environ.get(auth["env"], "")
+            if not secret:
+                fail("missing required MCP credential for " + name + " (" + source + ")")
+            if auth.get("envKey"):
+                server["env"] = {**server.get("env", {}), auth["envKey"]: secret}
+            else:
+                if not auth.get("header"):
+                    fail("missing MCP auth header for " + name)
+                server["headers"] = {**server.get("headers", {}), auth["header"]: auth.get("prefix", "") + secret}
+        if server.get("command"):
+            if shutil.which(server["command"]) is None:
+                fail("missing MCP launcher for " + name + ": " + server["command"])
+            # The community Vercel MCP launches npx through sh; check the actual child dependency too.
+            if name == "vercel" and shutil.which("npx") is None:
+                fail("missing MCP launcher for vercel: npx")
+        elif not server.get("url"):
+            fail("missing MCP transport for " + name)
+        resolved[name] = server
+
+    home = Path.home()
+    outputs = {}
+    if targets["CLAUDE"]:
+        outputs[home / ".claude.json"] = merge_json(home / ".claude.json", resolved, managed, project == "true")
+    if targets["OMP"]:
+        if shutil.which("omp") is None:
+            fail("omp is required for the enabled MCP target")
+        outputs[home / ".omp/agent/mcp.json"] = merge_json(home / ".omp/agent/mcp.json", resolved, managed)
+    if targets["CODEX"]:
+        if shutil.which("codex") is None:
+            fail("codex is required for the enabled MCP target")
+        outputs[home / ".codex/config.toml"] = merge_codex(home / ".codex/config.toml", resolved)
+
+    # Stage every file before publishing any change; missing auth/dependencies or invalid
+    # existing config leave all previously valid configurations untouched.
+    staged = []
+    try:
+        for destination, content in outputs.items():
+            destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            fd, temporary = tempfile.mkstemp(prefix=".mcp-", dir=destination.parent)
+            staged.append((temporary, destination))
+            with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                stream.write(content)
+            os.chmod(temporary, 0o600)
+        if targets["OMP"]:
+            subprocess.run(["omp", "config", "set", "mcp.enableProjectConfig", project], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        for temporary, destination in staged:
+            os.replace(temporary, destination)
+            print("mcp: wrote " + str(destination))
+    finally:
+        for temporary, _ in staged:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+
+
+try:
+    main()
+except (OSError, ValueError, TypeError, KeyError, RuntimeError, subprocess.CalledProcessError) as error:
+    # Do not print provider errors or config payloads: they may contain credentials.
+    print("mcp: " + ("OMP project configuration failed" if isinstance(error, subprocess.CalledProcessError) else str(error)), file=sys.stderr)
+    sys.exit(1)
 PY
-fi
