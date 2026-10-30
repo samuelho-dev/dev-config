@@ -8,7 +8,7 @@
 - The shared headless profile uses HTTPS with the existing GitHub CLI credential helper rather than assuming a Mac SSH agent; Rex can activate this same flake directly at startup without rebuilding a tooling image.
 - Home Manager configures MCP after native bootstrap and resolves launchers from its activated package profile, including non-login headless starts without an inherited developer-shell PATH.
 - Yazi's declared preview and archive dependencies are exposed in the user profile as well as its private wrapper; PDF previews select `poppler-utils`, not the Poppler GLib library without CLI tools.
-- The existing Rex PostgreSQL `postgres` owner profile was confirmed elevated superuser, not a least-privilege or collaborator credential; no roles, grants, or credentials were changed. Source regressions for native/Pi/Claude/MCP and 22 DevPod Helm credential-isolation checks passed; all-system flake and Mac/headless Home Manager derivations evaluated. Fresh Linux native installation and image promotion are not claimed complete; deployment templates remain unmerged to preserve active sessions.
+- The existing Rex PostgreSQL `postgres` owner profile was confirmed elevated superuser, not a least-privilege or collaborator credential; no roles, grants, or credentials were changed. Native/Pi/Claude/MCP regressions and 22 DevPod Helm credential-isolation checks passed. Mac/headless Home Manager derivations evaluated; Linux private-home activation, all 72 shared command contracts, six fresh native installations, private MCP files and real isolated Rex RPC passed against source `59ef5d1988a37007f7bdd03dc23c96dd437ed57f`. No live profile activation, image promotion or provider-authorization equivalence is claimed.
 
 ## Earlier Rex homelab access investigation
 
