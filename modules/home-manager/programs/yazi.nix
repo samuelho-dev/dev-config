@@ -14,7 +14,7 @@ in {
       default = [
         # File previews
         pkgs.ffmpegthumbnailer # Video thumbnails and previews
-        pkgs.poppler # PDF previews
+        pkgs.poppler-utils # PDF previews
         pkgs.imagemagick # Image processing/conversion
 
         # Archive support

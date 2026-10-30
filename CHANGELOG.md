@@ -7,7 +7,7 @@
 - MCP has profile-selected Claude/OMP/Codex targets and an explicit `op` or `env` credential source, without fallback. Required missing auth or a missing launcher aborts before replacing working configuration. Native Vercel owner OAuth is separate from the community MCP child: the `env` input is `VERCEL_MCP_TOKEN`, rendered only as child `VERCEL_TOKEN`; no identity is inferred from CLI presence.
 - The shared headless profile uses HTTPS with the existing GitHub CLI credential helper rather than assuming a Mac SSH agent; Rex can activate this same flake directly at startup without rebuilding a tooling image.
 - Home Manager configures MCP after native bootstrap and resolves launchers from its activated package profile, including non-login headless starts without an inherited developer-shell PATH.
-- Yazi's already-declared preview and archive dependencies are exposed in the user profile as well as its private wrapper, keeping the shared CLI coverage contract consistent.
+- Yazi's declared preview and archive dependencies are exposed in the user profile as well as its private wrapper; PDF previews select `poppler-utils`, not the Poppler GLib library without CLI tools.
 - The existing Rex PostgreSQL `postgres` owner profile was confirmed elevated superuser, not a least-privilege or collaborator credential; no roles, grants, or credentials were changed. Source regressions for native/Pi/Claude/MCP and 22 DevPod Helm credential-isolation checks passed; all-system flake and Mac/headless Home Manager derivations evaluated. Fresh Linux native installation and image promotion are not claimed complete; deployment templates remain unmerged to preserve active sessions.
 
 ## Earlier Rex homelab access investigation
