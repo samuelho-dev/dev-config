@@ -34,6 +34,7 @@ brew "tailscale" # Selected CLI; separate from the GUI cask below.
 brew "tflint"
 brew "tfsec"
 brew "trivy"
+brew "tuicr"
 brew "uv"
 brew "velero"
 brew "websocat"

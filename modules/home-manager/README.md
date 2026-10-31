@@ -23,7 +23,6 @@ dev-config.tmux.enable = false;  # Disable tmux
 | **git** | Git with 1Password SSH commit signing |
 | **ssh** | SSH with 1Password agent integration |
 | **ghostty** | Ghostty terminal configuration |
-| **hunk** | Shared terminal theme; macOS review-note clipboard extension |
 | **yazi** | Terminal file manager |
 | **native-tools** | Enabled OMP, Pi, Claude, OpenCode, Codex and Vercel manifest plus missing-only writable native install |
 | **mcp** | Shared MCP configuration with profile-selected Claude/OMP/Codex targets |
@@ -55,15 +54,13 @@ Vercel OAuth does not supply the community MCP: the `env` input is
 `VERCEL_MCP_TOKEN`, rendered as child-only `VERCEL_TOKEN`. No global skills
 directory is replaced, no skip-permissions alias or proxy is set.
 
-`dev-config.hunk.enable` defaults to true. Home Manager links
-`hunk/config.toml` to `~/.config/hunk/config.toml` and recursively links
-`hunk/extensions/` on macOS, preserving unrelated extension files. Save a note
-with `c`, then `Ctrl+S`; `Ctrl+Y` or **Extensions → Copy my notes** exports
-saved user notes to `/usr/bin/pbcopy` before they are lost on close. Reopen
-Hunk after switching; run `bun hunk/extensions/copy-notes.ts` for its self-check.
-Preserve existing target files on first activation with a unique Home Manager
-backup suffix. New files must be tracked for `--flake .` or deliberately
-reviewed with `--flake path:.`.
+Review notes use the native `tuicr` app, installed and updated by manually
+applying the opt-in `pkgs/Brewfile` on macOS (not by Home Manager or
+`scripts/install.sh`). Run `tuicr -w` to review working-tree changes. Press
+`c`, type a note and press Enter to save; for a range, select it with `v`
+before pressing `c`. `y` or `:clip` copies the saved review with file/line
+references rather than source excerpts. `:q` exits; reopen to resume saved
+reviews. No tuicr Home Manager module or theme is configured.
 
 ### Disable a Program
 
