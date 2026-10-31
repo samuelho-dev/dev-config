@@ -2,6 +2,8 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Restored the personal Mac Home Manager Rex binding and user-owned init loader, and removed the obsolete Orca Serve sync LaunchAgent declaration. The candidate generation builds and its generated Rex Lua passes `rex config check`; no live activation or Tailscale Serve change is claimed.
+
 - Added `jj` to the shared Darwin/Linux Nix core package set (current lock: `0.42.0`) and linked tracked workspace lifecycle instructions into the default OMP user profile only when enabled. The rules guide ownership, safe reuse, retention and cleanup decisions; they do not convert repositories, change signing, automatically enforce cleanup, alter Rex, or activate Home Manager.
 
 - Replaced the Home Manager Hunk theme and review-note exporter with native `tuicr`, owned by the opt-in, manually applied macOS `pkgs/Brewfile` (not `scripts/install.sh` or Home Manager). Reviews now use tuicr's built-in save, clipboard and resume workflow; existing saved reviews and live apps are untouched.
