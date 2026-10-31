@@ -8,7 +8,7 @@
   imports = [
     ./modules/home-manager
     ./modules/home-manager/profiles/base.nix
-    ./modules/home-manager/services/orca-serve-sync.nix
+    ./modules/home-manager/programs/rex.nix
   ];
 
   # Home Manager needs to know your username and home directory

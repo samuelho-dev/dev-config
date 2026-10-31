@@ -340,20 +340,16 @@ Then use the git plugin keybindings in Neovim (see `docs/KEYBINDINGS_NEOVIM.md`)
 `zsh/.zprofile` detects the OS for Homebrew shellenv (Apple Silicon, Intel, Linuxbrew)
 with no hardcoded paths, so the same config works across machines.
 
-## Mac Orca remote access
+## Mac Rex configuration
 
-The personal Mac profile installs `orca-serve-sync` as a launchd user agent. Desktop
-Orca chooses a WebSocket port on each launch and records it in
-`~/Library/Application Support/Orca/mobile-ws-fallback-port.json`; the agent checks
-that the same port belongs to the live desktop runtime, then keeps Tailscale Serve's
-tailnet-only TCP `:6768` forward aimed at it. It does not start another Orca runtime,
-change the separate `:443` Funnel, or bypass Orca pairing.
+The personal Mac profile manages `~/.config/rex/dev-config.lua`, binding
+`ctrl+alt+w` to the `worktrees_open` action supplied by the separately installed
+`rex-worktrees` plugin. Home Manager adds a loader to Rex's user-owned
+`~/.config/rex/init.lua` only when absent; it does not replace that file or manage
+the plugin. The obsolete Orca Serve sync LaunchAgent is no longer declared.
 
-Check `launchctl print user/$(id -u)/org.nix-community.home.orca-serve-sync`,
-`tailscale serve status --json`, and `orca status --json`. A Home Manager switch
-installs the agent; restarting only this agent with
-`launchctl kickstart -k user/$(id -u)/org.nix-community.home.orca-serve-sync`
-does not restart desktop Orca or Tailscale. To roll back a bad update, boot out
-only this agent and restore the prior TCP route with
-`tailscale serve --bg --tcp=6768 --yes tcp://127.0.0.1:6768`; revert the
-Home Manager change before the next login.
+Before activation, inspect the built generation's
+`home-files/.config/rex/dev-config.lua` and run
+`REX_CONFIG=<generation>/home-files/.config/rex/dev-config.lua rex config check`.
+This checks the generated binding; the plugin actions remain owned by the
+existing Rex init and need separate live verification after activation.
