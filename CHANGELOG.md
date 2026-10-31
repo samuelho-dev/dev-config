@@ -2,6 +2,8 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Home Manager now generates both `.zshrc` and `.zprofile` by default on all profiles, so its configured syntax highlighting, autosuggestions, Oh My Zsh, completions and last `.zshrc.local` hook actually load in Rex as well as macOS. Explicit custom file sources remain opt-in. Added `cargo` and `rustc` to the shared tool checks for the already-declared Neovim build dependencies; no live shell activation or native Avante build is claimed.
+
 - Restored the personal Mac Home Manager Rex binding and user-owned init loader, and removed the obsolete Orca Serve sync LaunchAgent declaration. The candidate generation builds and its generated Rex Lua passes `rex config check`; no live activation or Tailscale Serve change is claimed.
 
 - Added `jj` to the shared Darwin/Linux Nix core package set (current lock: `0.42.0`) and linked tracked workspace lifecycle instructions into the default OMP user profile only when enabled. The rules guide ownership, safe reuse, retention and cleanup decisions; they do not convert repositories, change signing, automatically enforce cleanup, alter Rex, or activate Home Manager.

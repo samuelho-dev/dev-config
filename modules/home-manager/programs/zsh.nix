@@ -20,24 +20,18 @@
 
     zshrcSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default =
-        if inputs ? dev-config
-        then "${inputs.dev-config}/zsh/.zshrc"
-        else null;
+      default = null;
       description = ''
-        Path to .zshrc configuration file.
-        Set to null to manage configuration separately (e.g., via Chezmoi).
+        Optional custom .zshrc source. By default Home Manager generates .zshrc
+        with the configured plugins, completion, and initialization.
       '';
       example = lib.literalExpression ''"''${inputs.dev-config}/zsh/.zshrc"'';
     };
 
     zprofileSource = lib.mkOption {
       type = lib.types.nullOr lib.types.path;
-      default =
-        if inputs ? dev-config
-        then "${inputs.dev-config}/zsh/.zprofile"
-        else null;
-      description = "Path to .zprofile configuration file";
+      default = null;
+      description = "Optional custom .zprofile source; by default Home Manager generates it";
       example = lib.literalExpression ''"''${inputs.dev-config}/zsh/.zprofile"'';
     };
 
@@ -207,13 +201,9 @@
       source = "${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k";
     };
 
-    # Symlink zsh-autosuggestions into Oh My Zsh custom plugins.
-    # The committed zsh/.zshrc (the default zshrcSource) lists
-    # `plugins=(git zsh-autosuggestions)`, which oh-my-zsh resolves from
-    # $ZSH_CUSTOM/plugins/. Without this the plugin is "not found" and the
-    # resulting console output trips Powerlevel10k's instant-prompt warning.
-    # (When zshrcSource=null, HM generates .zshrc and autosuggestion.enable
-    # above sources it directly — this symlink is harmless there.)
+    # Keep the custom plugin symlink for an explicitly selected legacy .zshrc
+    # that lists zsh-autosuggestions in its Oh My Zsh plugins. Generated
+    # .zshrc sources the Home Manager plugin directly.
     home.file.".oh-my-zsh/custom/plugins/zsh-autosuggestions" = {
       source = "${pkgs.zsh-autosuggestions}/share/zsh/plugins/zsh-autosuggestions";
     };
