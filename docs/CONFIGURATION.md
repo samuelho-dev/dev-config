@@ -117,6 +117,10 @@ Linux Home Manager defaults to `env`, and containers explicitly select `env`.
 `env` never queries 1Password, even if `op` is installed. Override the
 Home Manager `dev-config.mcp.authSource` option or set the environment variable
 for a deliberate alternate source; do not rely on PATH-dependent fallback.
+Home Manager prepends declared Python, user-local, profile and selected
+1Password executables, then retains native host CLI discovery (including
+`/opt/homebrew/bin` on macOS) even when activation resets inherited PATH.
+Missing required launchers still fail before any managed config replacement.
 The MCP stdio launchers are unversioned; existing working CLIs and auth are
 not upgraded at activation. Credential sources are:
 
