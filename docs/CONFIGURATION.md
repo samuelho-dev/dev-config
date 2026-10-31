@@ -189,25 +189,20 @@ Neovim so their processes inherit the new environment. The installed native
 | Zsh | `zsh/.zshrc`, `zsh/.zprofile` | `source ~/.zshrc` or `exec zsh` |
 | Ghostty | `ghostty/config` | Immediate |
 | Yazi | `yazi/` | Restart Yazi |
-| Hunk | `hunk/config.toml` (all profiles), `hunk/extensions/copy-notes.ts` (macOS only) | `home-manager switch`, then reopen Hunk |
 
 After editing tracked files, commit and push, then `home-manager switch --flake .` on
 other machines.
 
-## Hunk Review Notes
+## Tuicr Review Notes
 
-`dev-config.hunk.enable` defaults to true. Home Manager links
-`hunk/config.toml` as `~/.config/hunk/config.toml` (terminal theme), and on
-macOS recursively links `hunk/extensions/` into `~/.config/hunk/extensions/`,
-preserving unrelated files there. Press `c` and `Ctrl+S` to save a note;
-`Ctrl+Y` or **Extensions → Copy my notes** copies saved *user* notes with file
-paths, line ranges, resolution status and old-side markers via `/usr/bin/pbcopy`.
-Export notes before closing Hunk; source edits require `home-manager switch`
-and reopening Hunk. Self-check: `bun hunk/extensions/copy-notes.ts`.
-
-Before first activation, preserve existing `~/.config/hunk` files using a
-unique Home Manager backup suffix. Untracked new files require a deliberately
-reviewed `--flake path:.` activation; ordinary `--flake .` uses tracked files.
+On macOS, `pkgs/Brewfile` is the opt-in, manually applied Homebrew owner of
+native `tuicr` installation and updates; `scripts/install.sh` and Home Manager
+do not install or configure it. Run `tuicr -w` for working-tree review. Press
+`c`, type a note, then Enter to save; use `v` to select a range before `c`.
+Press `y` or enter `:clip` to copy the review with file and line/range
+references (old-side lines use `~N`), not source excerpts. `:q` exits;
+reopening resumes saved reviews. Native defaults include a transparent
+background; there is no managed theme, extension or exporter.
 
 ## Neovim Customization
 
