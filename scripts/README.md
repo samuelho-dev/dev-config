@@ -41,8 +41,7 @@ nix run .#home-manager -- switch --flake .
 1. Installs Nix via the Determinate Systems installer if missing
 2. Enables flakes in `~/.config/nix/nix.conf`
 3. Invokes the Home Manager app locked by this flake (`nix run .#home-manager -- switch --flake .`)
-4. Handles container environments (DevPod, Docker)
-5. Activation selects missing writable native tools via `ai/bootstrap.sh install`;
+4. Activation selects missing writable native tools via `ai/bootstrap.sh install`;
    no separate per-agent startup installer upgrades working tools
 
 **Usage:**

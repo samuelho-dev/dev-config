@@ -38,7 +38,7 @@
   ];
 
   # JavaScript/TypeScript runtimes + package managers
-  # On PATH for every dev surface (devShell + Home Manager + DevPod image).
+  # On PATH for every dev surface (devShell + Home Manager).
   runtimes = [
     pkgs.nodejs # Node.js also supplies npm and npx (not Corepack).
     pkgs.pnpm # Flake-locked shared CLI; projects declare their own packageManager.

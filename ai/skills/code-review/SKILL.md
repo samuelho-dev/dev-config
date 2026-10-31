@@ -8,7 +8,7 @@ Two-axis review against a fixed point, covering either committed branch changes 
 - **Standards** — does the code conform to this repo's documented coding standards?
 - **Spec** — does the code faithfully implement the originating issue / PRD / spec?
 
-When delegation is authorized, both axes run as **parallel read-only subagents** with separate contexts, then this skill aggregates their findings. On Pi, use native Pi subagents and the installed `pi-subagents` contract; on Claude Code, use its `Agent` tool. Do not substitute OMP, Orca, another agent CLI, or a different model if the requested native runner is unavailable: report the limitation. If delegation is not authorized, review the two axes directly and label the lack of independent contexts.
+When delegation is authorized, both axes run as **parallel read-only subagents** with separate contexts, then this skill aggregates their findings. Use the current host's supported delegation tools and installed contract; if delegation is unavailable, review both axes directly and label the lack of independent contexts.
 
 Use the project's documented issue tracker. If it is unclear, ask the user before fetching issues.
 

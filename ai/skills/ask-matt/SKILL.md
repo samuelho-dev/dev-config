@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 You don't remember every skill, so ask.
 
-This is the repo's **curated upstream-derived collection**, not an exact upstream mirror. Keep the selected names and omissions unless a migration is explicitly approved. Slash names below are workflow shorthand: Claude Code uses its skill commands, Codex CLI/IDE uses `$skill`, and Pi uses `/skill:name` or reads the installed skill as its host supports. A reference is not permission to bypass host invocation restrictions or launch agents. Use native Pi delegation when requested; no automatic OMP/Orca/agent-CLI fallback.
+This is the repo's **curated upstream-derived collection**, not an exact upstream mirror. Keep the selected names and omissions unless a migration is explicitly approved. Slash names below are workflow shorthand: Claude Code uses its skill commands, Codex CLI/IDE uses `$skill`, and Pi uses `/skill:name` or reads the installed skill as its host supports. A reference is not permission to bypass host invocation restrictions or launch agents.
 
 A **flow** is a path through the skills. Most paths run along one **main flow**, and two **on-ramps** merge onto it. Everything else is standalone, or a vocabulary layer that runs underneath.
 

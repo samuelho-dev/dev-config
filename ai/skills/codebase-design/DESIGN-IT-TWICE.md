@@ -18,7 +18,7 @@ Show this to the user, then immediately proceed to Step 2. The user reads and th
 
 ### 2. Spawn sub-agents
 
-When the operator authorizes delegation, use three bounded read-only native Pi subagents on Pi, or Claude Code's `Agent` tool on Claude Code; add a fourth only for a distinct dependency constraint. Follow the installed host contract and available profiles. Each must produce a **radically different** interface, not implementation changes. If native delegation is unavailable, report it rather than launching OMP/Orca/another agent CLI; without delegation authority, compare designs directly and label the loss of independent contexts.
+When the operator authorizes delegation, use three bounded read-only subagents through the current host's supported tools; add a fourth only for a distinct dependency constraint. Follow the installed host contract and available profiles. Each must produce a **radically different** interface, not implementation changes. If delegation is unavailable, compare designs directly and label the loss of independent contexts.
 
 Prompt each sub-agent with a separate technical brief (file paths, coupling details, dependency category from [DEEPENING.md](DEEPENING.md), what sits behind the seam). The brief is independent of the user-facing problem-space explanation in Step 1. Give each agent a different design constraint:
 

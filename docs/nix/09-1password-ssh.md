@@ -398,7 +398,7 @@ Enable biometric unlock for faster re-auth from the 1Password desktop app
 
 ### Service Accounts for CI/CD
 
-For non-interactive environments (trusted CI workflows, containers, DevPod), use a
+For non-interactive environments (trusted CI workflows and containers), use a
 1Password service account instead of interactive sign-in. Give each account only
 its intended vault/item access. Keep its token in designated trusted workflows;
 never copy a vault-wide service token to PR jobs.

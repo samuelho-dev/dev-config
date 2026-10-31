@@ -5,13 +5,6 @@ set -e
 # Colors for output
 log_info() { echo -e "\033[0;36mℹ️  $1\033[0m" >&2; }
 log_success() { echo -e "\033[0;32m✅ $1\033[0m" >&2; }
-log_warn() { echo -e "\033[0;33m⚠️  $1\033[0m" >&2; }
-log_error() { echo -e "\033[0;31m❌ $1\033[0m" >&2; }
-
-# Container detection
-is_container() {
-  [ -f /.dockerenv ] || grep -q 'docker\|lxc\|containerd' /proc/1/cgroup 2>/dev/null
-}
 
 echo ""
 echo "🚀 Installing dev-config (Home Manager)"
@@ -59,29 +52,6 @@ echo ""
 nix run .#home-manager -- switch --flake .
 
 log_success "Home Manager activation complete!"
-
-# Fix ownership if running as root in container (DevPod SSH issue)
-if is_container && [ "$(id -u)" -eq 0 ]; then
-  ACTUAL_USER="${SUDO_USER:-vscode}"
-  log_info "Container detected, fixing ownership for user: $ACTUAL_USER"
-
-  # Track failures explicitly instead of swallowing all chown errors
-  chown_failures=0
-  for path in "$HOME" "$HOME/.config" "$HOME/.local"; do
-    if [ -e "$path" ]; then
-      if ! chown -R "$ACTUAL_USER:$ACTUAL_USER" "$path" 2>/dev/null; then
-        log_warn "chown failed for $path (non-fatal; permissions may need manual fix)"
-        chown_failures=$((chown_failures + 1))
-      fi
-    fi
-  done
-
-  if [ "$chown_failures" -eq 0 ]; then
-    log_success "Ownership fixed"
-  else
-    log_warn "Ownership fix partial: $chown_failures path(s) failed. Run manually: sudo chown -R $ACTUAL_USER:$ACTUAL_USER \$HOME"
-  fi
-fi
 
 echo ""
 echo "Next steps:"

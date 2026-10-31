@@ -21,17 +21,10 @@
     # Work machine has no 1Password — disable git signing and SSH agent
     git.signing.enable = false;
 
-    # Tmux: enabled, but no DevPod jump-box behavior at work
-    tmux = {
-      enable = true;
-      devpodConnect.enable = false;
-    };
-
-    # SSH: no 1Password agent at work, no DevPod proxy
+    # SSH without a 1Password agent at work
     ssh = {
       enable = true;
       onePasswordAgent.enable = false;
-      devpods.enable = false;
     };
 
     # Work machine has no 1Password/sops, so skip the shared global MCP servers
