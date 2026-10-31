@@ -28,7 +28,7 @@ There are exactly five categories. Each is a plain list of packages.
 
 | Category | Packages |
 |----------|----------|
-| **core** | git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit, gitmux |
+| **core** | git, gh, jujutsu (`jj`), zsh, tmux, fzf, ripgrep, fd, bat, lazygit, gitmux |
 | **runtimes** | nodejs, pnpm, bun |
 | **utilities** | direnv, nix-direnv, zoxide, jq, yq-go, gnumake, pkg-config, tree-sitter |
 | **linting** | biome |

@@ -69,6 +69,23 @@ plugin sources via their own updater, and system packages via a reviewed
 flake/input update; no universal automatic-latest guarantee. Availability from
 `check` is not provider sign-in or project authorization.
 
+### Shared jj and OMP workspace guidance
+
+The shared Nix `core` package set includes `jj` on Darwin and Linux; the
+current pinned nixpkgs resolves `jj 0.42.0`. This provisions a command, not
+a repository conversion, author/signing configuration, or Home Manager
+activation. Respect each project's VCS policy.
+
+When `dev-config.omp.enable` is selected, Home Manager links the tracked
+`ai/omp/RULES.md` to `~/.omp/agent/RULES.md` for OMP's default user profile.
+Standalone and composed imports use the same source. Disabled OMP does not
+project this file; custom OMP profile directories must opt in separately.
+The rules direct agents to record ownership in existing task/session records,
+isolate writers, preserve work before releasing workspaces, and distinguish
+completion from release and cleanup. They are instructions, not automatic
+workspace cleanup, a new registry, or native jj access control. No Rex or
+other agent runtime configuration is changed.
+
 ### Rex homelab access (separate identity)
 
 The shared Nix toolchain includes `supabase`, `psql`, `kubectl`, and `argocd`

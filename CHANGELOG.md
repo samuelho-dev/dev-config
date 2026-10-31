@@ -2,6 +2,8 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Added `jj` to the shared Darwin/Linux Nix core package set (current lock: `0.42.0`) and linked tracked workspace lifecycle instructions into the default OMP user profile only when enabled. The rules guide ownership, safe reuse, retention and cleanup decisions; they do not convert repositories, change signing, automatically enforce cleanup, alter Rex, or activate Home Manager.
+
 - Replaced the Home Manager Hunk theme and review-note exporter with native `tuicr`, owned by the opt-in, manually applied macOS `pkgs/Brewfile` (not `scripts/install.sh` or Home Manager). Reviews now use tuicr's built-in save, clipboard and resume workflow; existing saved reviews and live apps are untouched.
 - The shared Nix profile now includes the OpenSSH client and its command check on macOS and Linux, so non-login headless starts do not depend on the host providing `ssh`. This does not change the headless profile's HTTPS Git authentication or provision an SSH agent.
 - The Rex access smoke now requests a Kubernetes SubjectAccessReview for `system:anonymous` with the `system:unauthenticated` group, instead of using impersonating `kubectl auth can-i` and treating its output as an anonymous denial. API errors or an allowed decision still fail closed.

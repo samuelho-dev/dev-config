@@ -23,6 +23,9 @@ per-project editor settings.
 - `hooks/` — Biome / type-safety hooks (referenced in-repo by `.claude/settings.json`)
 - `mcp/` — canonical MCP server list and profile-based Claude/OMP/Codex fan-out
 - `omp/`, `pi/`, `claude/` — native bootstrap helpers and plugin sources
+- `omp/RULES.md` — shared instructions linked by the enabled OMP Home Manager
+  module into the default user profile (`~/.omp/agent/RULES.md`); alternate
+  profile directories opt in separately
 - `bootstrap.sh` — single owner for native `install|update|check` across OMP,
   Pi, Claude, OpenCode, Codex and Vercel
 - `sync-skills.sh` — curated skill link reconciliation
@@ -45,6 +48,14 @@ and apply them explicitly; do not expect activation or shell startup to upgrade
 existing plugins. MCP uses explicit `op` or `env` credential selection and
 profile-enabled Claude/OMP/Codex targets; it preserves working config if a
 required credential or launcher is unavailable.
+
+The shared Nix core package set provisions `jj` alongside Git (currently
+`0.42.0` from the pinned nixpkgs); it neither converts repositories nor
+changes signing or authoring configuration. OMP's user-profile rules guide
+workspace ownership and retention using existing task/session records. This
+source link applies only when OMP is enabled; it does not install a janitor,
+enforce agent ACLs, or alter other runtimes. Agents must reconcile ownership,
+writers, and files before any explicitly authorized release/removal.
 
 ### `.claude/` — Project-level Claude Code config (this repo)
 - `settings.json` — project hooks (reference `ai/hooks/`)
