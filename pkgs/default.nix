@@ -5,6 +5,7 @@
   # Core development tools
   core = [
     pkgs.git
+    pkgs.jujutsu
     pkgs.gh
     pkgs.openssh # Shared SSH client, including non-login headless profiles.
     pkgs.zsh

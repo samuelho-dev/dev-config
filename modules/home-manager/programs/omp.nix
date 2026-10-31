@@ -10,6 +10,10 @@
     if inputs ? dev-config
     then "${inputs.dev-config}/ai/omp/plugins.txt"
     else ../../../ai/omp/plugins.txt;
+  rulesFileSrc =
+    if inputs ? dev-config
+    then "${inputs.dev-config}/ai/omp/RULES.md"
+    else ../../../ai/omp/RULES.md;
   applyPluginsScriptSrc =
     if inputs ? dev-config
     then "${inputs.dev-config}/ai/omp/apply-plugins.sh"
@@ -34,6 +38,8 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
+    home.file.".omp/agent/RULES.md".source = rulesFileSrc;
+
     # The shared bootstrap owns the standalone CLI; plugins follow only after it succeeds.
     home.activation.installOmpPlugins = lib.hm.dag.entryAfter ["bootstrapNativeTools"] ''
       if [ -z "''${DRY_RUN_CMD:-}" ]; then

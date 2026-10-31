@@ -157,7 +157,7 @@
               echo "📦 Dev-config development environment"
               echo ""
               echo "Tool categories loaded:"
-              echo "  • Core: git, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit"
+              echo "  • Core: git, jj, gh, zsh, tmux, fzf, ripgrep, fd, bat, lazygit"
               echo "  • Linting: biome (with GritQL patterns)"
               echo "  • Utilities: direnv, jq, yq, gnumake"
               echo ""

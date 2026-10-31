@@ -1,5 +1,6 @@
 [
   { "command": "git", "args": ["--version"] },
+  { "command": "jj", "args": ["--version"] },
   { "command": "gh", "args": ["--version"] },
   { "command": "ssh", "args": ["-V"] },
   { "command": "nix", "args": ["--version"] },
