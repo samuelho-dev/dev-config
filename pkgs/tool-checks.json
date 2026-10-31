@@ -68,6 +68,8 @@
   { "command": "alejandra", "args": ["--version"] },
   { "command": "nixd", "args": ["--version"] },
   { "command": "gcc", "args": ["--version"] },
+  { "command": "cargo", "args": ["--version"] },
+  { "command": "rustc", "args": ["--version"] },
   { "command": "magick", "args": ["--version"] },
   { "command": "mmdc", "args": ["--version"] },
   { "command": "ffmpegthumbnailer", "args": ["-h"] },
