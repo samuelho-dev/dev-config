@@ -100,6 +100,8 @@ require('lazy').setup(specs, {
   performance = updating and { rtp = { reset = false } } or nil,
   local_spec = not updating,
   lockfile = lockfile,
+  -- Lazy also applies this Git timeout to plugin build subprocesses; cold Rust builds need longer.
+  git = { timeout = 600 },
   ui = {
     -- If you are using a Nerd Font: set icons to an empty table which will use the
     -- default lazy.nvim defined Nerd Font icons, otherwise define a unicode icons table

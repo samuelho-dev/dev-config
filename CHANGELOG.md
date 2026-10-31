@@ -2,6 +2,8 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Raised Lazy.nvim's shared Git/build subprocess deadline from two to ten minutes so a fresh Avante Rust build can finish instead of being killed at 120 seconds. This does not change plugin versions or provide proof of a successful cold build; the fresh-target Rex smoke remains required.
+
 - Home Manager now generates both `.zshrc` and `.zprofile` by default on all profiles, so its configured syntax highlighting, autosuggestions, Oh My Zsh, completions and last `.zshrc.local` hook actually load in Rex as well as macOS. Explicit custom file sources remain opt-in. Added `cargo` and `rustc` to the shared tool checks for the already-declared Neovim build dependencies; no live shell activation or native Avante build is claimed.
 
 - Restored the personal Mac Home Manager Rex binding and user-owned init loader, and removed the obsolete Orca Serve sync LaunchAgent declaration. The candidate generation builds and its generated Rex Lua passes `rex config check`; no live activation or Tailscale Serve change is claimed.
