@@ -142,6 +142,15 @@ also update without their keys; update/build failures exit nonzero, and plugin
 branch/version constraints still apply. `:Lazy update` remains available
 interactively; `:Lazy restore` restores the local lock, not a shared baseline.
 
+Avante tracks upstream `main`; its `make` build compiles native libraries with
+Cargo and the platform's C/C++ compiler. Home Manager supplies Cargo, Rust,
+and the native compiler through Neovim's wrapper for both interactive Lazy
+builds and scheduled headless updates. On Darwin the wrapper prepends Nix
+libiconv to `LIBRARY_PATH` without replacing existing library paths. The Avante
+build alone sets `CARGO_NET_GIT_FETCH_WITH_CLI=true` so Cargo's Git dependencies
+use the existing SSH-authenticated Git client. The upstream `build.sh` downloads
+the latest tagged release, not libraries for the checked-out `main` revision.
+
 The updater does not activate Home Manager or update Nix-managed Neovim, LSPs
 or formatters. Run `home-manager switch --flake .` after changing managed source.
 Headless Linux containers without a user systemd manager need a manual run or

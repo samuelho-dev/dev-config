@@ -145,7 +145,7 @@ return {
   {
     'yetone/avante.nvim',
     event = 'VeryLazy',
-    build = 'make',
+    build = 'CARGO_NET_GIT_FETCH_WITH_CLI=true make',
     version = false,
     -- The client key is separate from LiteLLM's administrative master key.
     cond = function()
