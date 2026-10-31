@@ -81,6 +81,14 @@ in {
       withPython3 = false;
       withRuby = false;
 
+      # Cargo's native libraries need Darwin libiconv when linking through Nix cc.
+      extraWrapperArgs = lib.optionals pkgs.stdenv.isDarwin [
+        "--prefix"
+        "LIBRARY_PATH"
+        ":"
+        "${lib.getLib pkgs.libiconv}/lib"
+      ];
+
       # Plugins managed by lazy.nvim in nvim/lua/plugins/
       # Nix only provides LSP servers/formatters as binaries
       plugins = [];
@@ -105,8 +113,10 @@ in {
 
       # Build tools for Neovim plugins
       pkgs.gnumake
-      pkgs.gcc
+      pkgs.stdenv.cc # Use the native compiler (Clang on Darwin, GCC on Linux)
       pkgs.pkg-config
+      pkgs.cargo # Avante native libraries (latest main builds from source)
+      pkgs.rustc
       pkgs.imagemagick
 
       # Mermaid CLI (for mermaid diagram rendering)

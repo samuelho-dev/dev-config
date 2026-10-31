@@ -145,7 +145,7 @@ return {
   {
     'yetone/avante.nvim',
     event = 'VeryLazy',
-    build = 'make',
+    build = 'CARGO_NET_GIT_FETCH_WITH_CLI=true make',
     version = false,
     -- The client key is separate from LiteLLM's administrative master key.
     cond = function()
@@ -178,6 +178,7 @@ return {
       'stevearc/dressing.nvim',
       'nvim-lua/plenary.nvim',
       'MunifTanjim/nui.nvim',
+      { 'ColinKennedy/mega.cmdparse', dependencies = { 'ColinKennedy/mega.logging' } },
       'nvim-tree/nvim-web-devicons',
       -- Optional: Markdown rendering in chat
       {
