@@ -14,6 +14,7 @@
   { "command": "bat", "args": ["--version"] },
   { "command": "lazygit", "args": ["--version"] },
   { "command": "gitmux", "args": ["-V"] },
+  { "command": "tuicr", "args": ["--version"] },
   { "command": "direnv", "args": ["version"] },
   { "command": "zoxide", "args": ["--version"] },
   { "command": "jq", "args": ["--version"] },
