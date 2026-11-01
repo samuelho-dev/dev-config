@@ -20,6 +20,7 @@
     ./programs/pi.nix
     ./programs/codex.nix
     ./programs/vercel.nix
+    ./programs/rex.nix
     ./programs/native-tools.nix
     ./programs/mcp.nix
     ./programs/biome.nix

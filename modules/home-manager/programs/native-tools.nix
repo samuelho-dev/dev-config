@@ -19,7 +19,8 @@
     ++ lib.optional config.dev-config.claude-code.enable "claude"
     ++ lib.optional config.dev-config.opencode.enable "opencode"
     ++ lib.optional config.dev-config.codex.enable "codex"
-    ++ lib.optional config.dev-config.vercel.enable "vercel";
+    ++ lib.optional config.dev-config.vercel.enable "vercel"
+    ++ lib.optional config.dev-config.rex-worktrees.enable "rex-worktrees";
 in {
   config = lib.mkIf config.dev-config.enable {
     home.sessionPath = ["$HOME/.local/bin"];

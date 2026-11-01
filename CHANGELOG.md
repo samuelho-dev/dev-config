@@ -2,6 +2,8 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Added opt-in Rex Worktrees to the existing native bootstrap on personal Mac and headless Rex profiles. The installer verifies the platform's latest GitHub release archive with its published SHA256SUMS, preserves its JS bundle and notices, and refuses unmanaged launchers. Offline upstream setup registers the Lua module before the exact-once binding loader without starting or reloading Rex; no personal Mac activation or live pod rollout is claimed. Optional JJ workspaces still require JJ >= 0.46 (current lock: 0.42).
+
 - Raised Lazy.nvim's shared Git/build subprocess deadline from two to ten minutes so a fresh Avante Rust build can finish instead of being killed at 120 seconds. This does not change plugin versions or provide proof of a successful cold build; the fresh-target Rex smoke remains required.
 
 - Retired the DevPod-only SSH/Tmux options and remote-session scripts; renamed the shared headless Home Manager profile from `devpod` to `rex` while preserving its native tools and headless authentication. Personal and work SSH/Tmux stay configured without the wildcard, hooks or helper links. No Home Manager activation or live-file cleanup is claimed.

@@ -27,7 +27,7 @@ per-project editor settings.
   module into the default user profile (`~/.omp/agent/RULES.md`); alternate
   profile directories opt in separately
 - `bootstrap.sh` — single owner for native `install|update|check` across OMP,
-  Pi, Claude, OpenCode, Codex and Vercel
+  Pi, Claude, OpenCode, Codex, Vercel and optional Rex Worktrees
 - `sync-skills.sh` — curated skill link reconciliation
 
 With `dev-config.enable`, `native-tools.nix` writes the selected tools to

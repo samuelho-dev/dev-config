@@ -58,12 +58,16 @@ bash scripts/install.sh
 ### ai/bootstrap.sh
 
 The single native tool owner supports `install|update|check` and optional tool
-names from `omp pi claude opencode codex vercel`. Without names it reads
-`~/.config/dev-config/native-tools`, written by the selected Home Manager
-profile; without that manifest it selects all six. It works with stock macOS
-Bash and uses writable `~/.local`. `install` preserves working versions;
-`update` is deliberate; `check` proves executables only, not account OAuth,
-MCP credentials or team/project authorization.
+names from `omp pi claude opencode codex vercel rex-worktrees`. Without names
+it reads `~/.config/dev-config/native-tools`, written by the selected Home
+Manager profile; without that manifest it selects the original six. Stock
+macOS Bash is supported. `install` preserves working versions; `update` is
+deliberate; `check` proves executables only, not account authorization.
+Rex Worktrees downloads the latest published macOS arm64 or Linux x64 archive
+and shared `SHA256SUMS`, verifies the selected archive, and keeps its bundle
+and license notices under `~/.local/share/dev-config/rex-worktrees`. Only its
+owned `~/.local/bin/rex-worktrees` symlink is managed; an unrelated or broken
+launcher is not overwritten on install.
 
 ```bash
 bash ai/bootstrap.sh install
