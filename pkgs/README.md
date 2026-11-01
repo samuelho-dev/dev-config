@@ -28,7 +28,7 @@ There are exactly five categories. Each is a plain list of packages.
 
 | Category | Packages |
 |----------|----------|
-| **core** | git, gh, jujutsu (`jj`), zsh, tmux, fzf, ripgrep, fd, bat, lazygit, gitmux |
+| **core** | git, gh, jujutsu (`jj`), zsh, tmux, fzf, ripgrep, fd, bat, lazygit, tuicr, gitmux |
 | **runtimes** | nodejs, pnpm, bun |
 | **utilities** | direnv, nix-direnv, zoxide, jq, yq-go, gnumake, pkg-config, tree-sitter |
 | **linting** | biome |
@@ -55,7 +55,9 @@ are Mac host extras (including the selected development libraries `boost` and
 formula and a GUI cask; `nx` is an optional host-wide launcher, not the
 project-local Nx version. The shared Nix set owns unversioned `helm`; an
 existing Mac `helm@3` installation is preserved but superseded, not installed
-on fresh hosts or removed from this one. `e1s`, `taws`, and
+on fresh hosts or removed from this one. The shared Nix set also owns `tuicr`
+on macOS and Linux; it needs no Brewfile entry or uninstall of an existing
+Mac Homebrew binary. `e1s`, `taws`, and
 `hashicorp-vagrant` remain held external rather than trusted Brewfile entries.
 
 ## Usage
