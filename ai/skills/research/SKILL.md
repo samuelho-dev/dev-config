@@ -3,7 +3,7 @@ name: research
 description: Investigate a question against high-trust primary sources and capture the findings as a Markdown file in the repo. Use when the user wants a topic researched, docs or API facts gathered, or reading legwork delegated to a background agent.
 ---
 
-If the user/project authorizes delegation, use a **background native Pi research subagent** on Pi or a Claude Code background subagent on Claude Code, following the installed host contract and available tools. If the requested native runner is unavailable, report that limit; do not fall back to OMP, Orca or another agent CLI. Without delegation authority, do the research directly and say so.
+If the user/project authorizes delegation, use a **background research subagent** through the current host's supported tools, following the installed host contract and available tools. If delegation is unavailable, do the research directly and say so.
 
 Its job:
 

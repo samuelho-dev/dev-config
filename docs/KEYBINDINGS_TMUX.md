@@ -187,7 +187,7 @@ edit `tmux.nix` and run `home-manager switch --flake .`.
 - **Update interval:** 15 seconds
 - **Theme:** catppuccin/tmux (mocha flavor)
 - **Left side:** Session module
-- **Right side:** Optional DevPod session count (when its helper is configured), directory, host, date/time
+- **Right side:** Directory, host, date/time
 
 ### Pane Border
 - **Status:** Top (shows pane number, title, and git status)

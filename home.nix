@@ -72,10 +72,8 @@
     # mcp module (ai/mcp/servers.json) and fanned out to Claude, OMP, and Codex.
     # Add machine-specific servers with `dev-config.mcp.extraServers`.
 
-    # SSH configuration with 1Password agent + DevPod Tailscale proxy
+    # SSH configuration with 1Password agent
     ssh.enable = true;
-    ssh.devpods.enable = true;
-    tmux.devpodConnect.enable = true;
 
     # Optional: Disable specific programs
     # tmux.enable = false;

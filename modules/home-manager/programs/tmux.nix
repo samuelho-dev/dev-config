@@ -32,46 +32,6 @@
       example = lib.literalExpression ''"''${inputs.dev-config}/tmux/gitmux.conf"'';
     };
 
-    devpodConnect = {
-      enable = lib.mkEnableOption "DevPod tmux integration (Tailscale-based)";
-
-      connectScriptSource = lib.mkOption {
-        type = lib.types.nullOr lib.types.path;
-        default =
-          if inputs ? dev-config
-          then "${inputs.dev-config}/tmux/scripts/devpod-connect.sh"
-          else null;
-        description = "Path to DevPod connect script";
-      };
-
-      statusScriptSource = lib.mkOption {
-        type = lib.types.nullOr lib.types.path;
-        default =
-          if inputs ? dev-config
-          then "${inputs.dev-config}/tmux/scripts/devpod-status.sh"
-          else null;
-        description = "Path to DevPod status bar script";
-      };
-
-      mutagenHookScriptSource = lib.mkOption {
-        type = lib.types.nullOr lib.types.path;
-        default =
-          if inputs ? dev-config
-          then "${inputs.dev-config}/tmux/scripts/devpod-mutagen-hook.sh"
-          else null;
-        description = "Path to Mutagen auto-sync hook script for DevPod sessions";
-      };
-
-      bootstrapScriptSource = lib.mkOption {
-        type = lib.types.nullOr lib.types.path;
-        default =
-          if inputs ? dev-config
-          then "${inputs.dev-config}/tmux/scripts/devpod-bootstrap.sh"
-          else null;
-        description = "Path to DevPod bootstrap script that auto-creates sessions on tmux start";
-      };
-    };
-
     # Declarative options mirrored into programs.tmux below
     prefix = lib.mkOption {
       type = lib.types.str;
@@ -223,13 +183,8 @@
           # Left: session module
           set -g status-left "#{E:@catppuccin_status_session}"
 
-          # Right: optional DevPod count + directory, host, clock.
+          # Right: directory, host, clock.
           set -g status-right ""
-        ''
-        + lib.optionalString (config.dev-config.tmux.devpodConnect.enable && config.dev-config.tmux.devpodConnect.statusScriptSource != null) ''
-          set -ga status-right "#(~/.local/bin/devpod-status.sh)"
-        ''
-        + ''
           # Reset the palette before catppuccin modules render.
           set -ga status-right "#[fg=#{@thm_fg},bg=#{@thm_bg}]"
           set -gaF status-right "#{E:@catppuccin_status_directory}"
@@ -275,29 +230,6 @@
           set -g @continuum-save-interval '60'
           # Catppuccin options moved to the plugin's extraConfig (must precede
           # the plugin's run-shell). See the plugins list above.
-        ''
-        + lib.optionalString config.dev-config.tmux.devpodConnect.enable ''
-
-          # -------------------------------------------------------------------
-          # DevPod Integration (Tailscale SSH sessions)
-          # -------------------------------------------------------------------
-          # Uses fzf-tmux -p for popup (creates its own tmux popup)
-          # Note: Cannot use run-shell -b because fzf-tmux needs TTY context
-          # Scripts are symlinked to ~/.local/bin/ by home-manager
-          ${lib.optionalString (config.dev-config.tmux.devpodConnect.connectScriptSource != null) ''
-            if-shell "command -v tailscale || [ -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]" {
-              bind D run-shell "$HOME/.local/bin/devpod-connect.sh"
-            }
-          ''}
-
-          # Optional Mutagen: the hook itself checks for mutagen and mutagen.yml.
-          ${lib.optionalString (config.dev-config.tmux.devpodConnect.mutagenHookScriptSource != null) ''
-            set-hook -g session-created 'run-shell "$HOME/.local/bin/devpod-mutagen-hook.sh #{hook_session_name}"'
-          ''}
-
-          ${lib.optionalString (config.dev-config.tmux.devpodConnect.bootstrapScriptSource != null) ''
-            run-shell "bash $HOME/.local/bin/devpod-bootstrap.sh"
-          ''}
         '';
     };
 
@@ -305,42 +237,5 @@
     home.file.".gitmux.conf" = lib.mkIf (config.dev-config.tmux.gitmuxConfigSource != null) {
       source = config.dev-config.tmux.gitmuxConfigSource;
     };
-
-    # DevPod integration scripts (symlinked to ~/.local/bin/)
-    home.file.".local/bin/devpod-connect.sh" =
-      lib.mkIf (
-        config.dev-config.tmux.devpodConnect.enable
-        && config.dev-config.tmux.devpodConnect.connectScriptSource != null
-      ) {
-        source = config.dev-config.tmux.devpodConnect.connectScriptSource;
-        executable = true;
-      };
-
-    home.file.".local/bin/devpod-status.sh" =
-      lib.mkIf (
-        config.dev-config.tmux.devpodConnect.enable
-        && config.dev-config.tmux.devpodConnect.statusScriptSource != null
-      ) {
-        source = config.dev-config.tmux.devpodConnect.statusScriptSource;
-        executable = true;
-      };
-
-    home.file.".local/bin/devpod-mutagen-hook.sh" =
-      lib.mkIf (
-        config.dev-config.tmux.devpodConnect.enable
-        && config.dev-config.tmux.devpodConnect.mutagenHookScriptSource != null
-      ) {
-        source = config.dev-config.tmux.devpodConnect.mutagenHookScriptSource;
-        executable = true;
-      };
-
-    home.file.".local/bin/devpod-bootstrap.sh" =
-      lib.mkIf (
-        config.dev-config.tmux.devpodConnect.enable
-        && config.dev-config.tmux.devpodConnect.bootstrapScriptSource != null
-      ) {
-        source = config.dev-config.tmux.devpodConnect.bootstrapScriptSource;
-        executable = true;
-      };
   };
 }

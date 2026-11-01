@@ -1,8 +1,7 @@
 # Shared base profile for all dev-config Home Manager configurations.
 #
-# Holds values duplicated by every wrapper config (home.nix, work-home.nix,
-# devpod-home.nix). Wrappers import this file alongside ../default.nix and
-# layer machine-specific or sops-bound config on top.
+# Holds values duplicated by the personal and work configurations. Wrappers
+# import this file alongside ../default.nix and layer machine-specific config.
 #
 # What lives here:
 #   - Common session PATH and editor variables

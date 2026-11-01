@@ -97,12 +97,6 @@ See **[docs/nix/09-1password-ssh.md](nix/09-1password-ssh.md)** for the full set
 | **Linux** | Ghostty config: `~/.config/ghostty/config` |
 | **WSL** | Treat as Linux; not officially tested |
 
-## Containers / DevPod
-
-`scripts/install.sh` detects container environments (`/.dockerenv` or cgroup) and
-fixes ownership when running as root. No separate Docker setup is required for the
-config itself. Tmux DevPod helpers live in `tmux/scripts/`; see `tmux/README.md`.
-
 ## Troubleshooting
 
 See **[docs/nix/03-troubleshooting.md](nix/03-troubleshooting.md)**. Quick checks:

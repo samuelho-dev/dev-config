@@ -88,12 +88,15 @@ other agent runtime configuration is changed.
 
 ### Rex homelab access (separate identity)
 
+The headless Home Manager output is `homeConfigurations.rex` (`rex-home.nix`);
+the runtime selects `#rex` at startup. It retains the existing native tools
+and HTTPS Git credential helper without provisioning service credentials.
+
 The shared Nix toolchain includes `supabase`, `psql`, `kubectl`, and `argocd`
 on Darwin and Linux. Rex must use its own projected Kubernetes ServiceAccount
 token and CA, with an explicit kubeconfig context in namespace `argocd`;
-`KUBECONFIG` points at that config. The operator grant belongs only to this Rex
-profile, not every DevPod. Do not copy an Orca/Mac home, admin kubeconfig, or
-broker credential into Rex. On the Mac, `argocd-core.sh --tailnet
+`KUBECONFIG` points at that config. Do not copy an admin kubeconfig or broker
+credential into Rex. On the Mac, `argocd-core.sh --tailnet
 https://<kubernetes-proxy> app list -o json` creates private throwaway
 Kubernetes/Argo configs with a **nonsecret** bearer placeholder solely to
 prevent the tailnet proxy's Basic prompt; it does not grant Kubernetes access.
@@ -104,11 +107,6 @@ Inside Rex, `argocd-core.sh --in-cluster app list -o json` uses the projected
 Source validation: the Mac tailnet core helper listed 64 Argo applications,
 all Synced. The shared Nix cloud package set evaluated with `supabase-cli` and
 `postgresql` on aarch64-darwin and x86_64-linux, without building them.
-Using existing approved Orca development provider tokens only in process
-memory, the unmodified HTTP MCP smoke authenticated Sentry `find_projects`
-(`api`) and PostHog `project-get` (`112088`) and observed invalid-token
-denials. These prove the source protocol/auth contract, not Rex's as-yet-
-undeployed credential projections or Kubernetes authorization.
 
 Canonical MCP definitions in `ai/mcp/servers.json` fan out only to enabled
 Claude Code, OMP and Codex CLI profiles. The renderer accepts
@@ -350,7 +348,7 @@ The personal Mac profile manages `~/.config/rex/dev-config.lua`, binding
 `ctrl+alt+w` to the `worktrees_open` action supplied by the separately installed
 `rex-worktrees` plugin. Home Manager adds a loader to Rex's user-owned
 `~/.config/rex/init.lua` only when absent; it does not replace that file or manage
-the plugin. The obsolete Orca Serve sync LaunchAgent is no longer declared.
+the plugin.
 
 Before activation, inspect the built generation's
 `home-files/.config/rex/dev-config.lua` and run

@@ -361,38 +361,6 @@ nvim  # Editor: `:AvanteAsk` for Cursor-like AI coding assistant
 
 ---
 
-## Remote Development with DevPod
-
-This repository supports remote development environments via [DevPod](https://devpod.sh/) and VS Code Remote Containers.
-
-**Quick Start:**
-```bash
-# Install DevPod
-brew install devpod
-
-# Create workspace
-devpod up . --ide vscode
-```
-
-**What happens:**
-1. Container starts with Nix environment
-2. Dotfiles installed automatically via DevPod dotfiles feature
-3. All configs (Neovim, tmux, zsh) available immediately
-4. AI credentials available via sops-nix encrypted secrets
-
-**First run:** 30-60 minutes (Nix evaluation + packages)
-**Cached runs:** 2-5 minutes (Nix cache hit)
-**Subsequent starts:** 10-30 seconds
-
-**Compatibility:**
-- ✅ DevPod (docker, SSH, Kubernetes backends)
-- ✅ VS Code Remote Containers
-- ✅ GitHub Codespaces
-
-DevPod connect/bootstrap scripts live in `tmux/scripts/`; the tmux integration is configured in `modules/home-manager/programs/tmux.nix` (`dev-config.tmux.devpodConnect`).
-
----
-
 ## SSH Authentication with 1Password
 
 Secure GitHub authentication and Git commit signing using **1Password SSH Agent**. This approach stores SSH private keys in your encrypted 1Password vault instead of on disk.

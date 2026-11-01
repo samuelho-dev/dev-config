@@ -83,7 +83,7 @@ exit                                # Leave temporary shell
 
 ## Native Coding CLIs + Optional LiteLLM Integration
 
-Selected personal/work and DevPod profiles enable native coding CLIs. The
+Selected personal and work profiles enable native coding CLIs. The
 single `ai/bootstrap.sh` owner installs missing enabled OMP, Pi, Claude,
 OpenCode, Codex and Vercel CLIs; it does not update working CLIs or configure
 their settings/OAuth. Explicit `bash ai/bootstrap.sh update` is the upgrade

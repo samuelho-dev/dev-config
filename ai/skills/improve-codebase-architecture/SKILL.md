@@ -24,7 +24,7 @@ This command is _informed_ by the project's domain model and built on a shared d
 
 Discover the project's canonical glossary/map and ADR convention first: honor established `GLOSSARY.md`/`GLOSSARY-MAP.md`, `CONTEXT.md`/`CONTEXT-MAP.md` or documented alternatives. If both exist, follow documented authority; ask if unresolved rather than creating a competing model. Read the relevant glossary and ADRs.
 
-When delegation is authorized, use a read-only native Pi scout on Pi or Claude Code's `Agent` with `subagent_type=Explore` on Claude Code. Follow the installed host contract; if the native runner is unavailable, report it rather than falling back to OMP/Orca/another agent CLI. Otherwise explore directly and label that limit. Don't follow rigid heuristics — explore organically and note where you experience friction:
+When delegation is authorized, use the current host's supported read-only exploration agent. Follow the installed host contract; if delegation is unavailable, explore directly and label that limit. Don't follow rigid heuristics — explore organically and note where you experience friction:
 
 - Where does understanding one concept require bouncing between many small modules?
 - Where are modules **shallow** — interface nearly as complex as the implementation?

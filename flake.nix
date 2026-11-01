@@ -232,15 +232,14 @@
         "samuelho-macbook" = mkHomeConfig "aarch64-darwin";
         "samuelho-linux" = mkHomeConfig "x86_64-linux";
 
-        # DevPod configuration (headless Linux container)
-        # Usage: home-manager switch --flake github:samuelho-dev/dev-config#devpod
-        "devpod" = home-manager.lib.homeManagerConfiguration {
+        # Headless Rex configuration
+        "rex" = home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             system = "x86_64-linux";
             config.allowUnfree = true;
           };
           modules = [
-            ./devpod-home.nix
+            ./rex-home.nix
           ];
           extraSpecialArgs = {
             inherit self;

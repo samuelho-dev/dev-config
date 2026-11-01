@@ -10,7 +10,6 @@ Terminal multiplexer configuration, managed declaratively by Nix Home Manager.
 - **Popup windows:** quick shell, lazygit, fzf session switcher
 - **Catppuccin Mocha** theme (v2 status modules)
 - **Per-pane git status** via gitmux (great for worktrees)
-- **DevPod integration:** Tailscale-based remote sessions (optional)
 
 ## How It's Managed
 
@@ -33,6 +32,12 @@ home-manager switch --flake .
 # 3. Reload the running session:
 #    prefix + r
 ```
+
+For an already-running server upgraded from the retired DevPod config, reloading
+does not clear old bindings or hooks. Inspect `tmux list-keys -T prefix D` and
+`tmux show-hooks -g session-created`; unbind `D` only if it runs the removed
+connect helper, and unset only the hook array entry running the removed Mutagen
+helper (not unrelated entries), then reload the current config.
 
 There is **no** `prefix + I` plugin-install step — plugins are added in
 `tmux.nix` and installed on `home-manager switch`.
@@ -103,7 +108,7 @@ Popups use `display-popup -E` and close when the command exits.
 
 - Auto-save every 60 min, auto-restore on tmux start (continuum)
 - Manual: `Prefix + Ctrl+s` save, `Prefix + Ctrl+r` restore
-- SSH sessions (DevPod) preserved via `@resurrect-processes 'ssh'`
+- SSH sessions preserved via `@resurrect-processes 'ssh'`
 - State: `~/.tmux/resurrect/`
 
 ## Plugins
@@ -133,16 +138,6 @@ the pane title without calling gitmux.
 
 Symbols: `⎇ branch` · `↑n` ahead · `↓n` behind · `●n` staged · `✚n` modified ·
 `…n` untracked · `⚑n` stashed · `✖n` conflicts · `✔` clean.
-
-## DevPod Integration (optional)
-
-Enabled with `dev-config.tmux.devpodConnect.enable = true`. Tailscale-based:
-
-- `Prefix + D` — fzf picker of online DevPods → SSH session
-- On tmux start, online pods get `devpod_<project>` sessions auto-created
-- Mutagen file sync is optional: the `session-created` hook runs its guarded
-  helper only when the project has `mutagen.yml` and `mutagen` is on `PATH`.
-
 
 ## Configuration Tips
 
