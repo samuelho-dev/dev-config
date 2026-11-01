@@ -8,7 +8,6 @@
   imports = [
     ./modules/home-manager
     ./modules/home-manager/profiles/base.nix
-    ./modules/home-manager/programs/rex.nix
   ];
 
   # Home Manager needs to know your username and home directory
@@ -62,6 +61,7 @@
 
     # Enable yazi terminal file manager (with full preview support)
     yazi.enable = true;
+    rex-worktrees.enable = true;
 
     mcp = {
       enable = true;

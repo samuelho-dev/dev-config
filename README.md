@@ -648,12 +648,14 @@ All shell configurations are version controlled and sync across machines!
 the Home Manager app selected by this flake. The profile provisions shared
 Darwin/Linux system commands (see `pkgs/tool-checks.json`), dotfiles and
 Nix-managed tmux plugins. It writes `~/.config/dev-config/native-tools` and
-calls `ai/bootstrap.sh install` for enabled OMP, Pi, Claude, OpenCode, Codex
-and Vercel only when missing. The native launchers remain writable in
-`~/.local`; stock macOS Bash suffices. Existing installs and their native
-settings/OAuth are preserved. Skill sync fills individual links while
-preserving entire physical user skill directories, edited skills and unmanaged
-links; only recorded owned links still pointing at their previous target can
+calls `ai/bootstrap.sh install` for enabled native CLIs, including Rex Worktrees
+on the personal Mac and headless Rex profiles. Existing working installations
+are preserved; Rex Worktrees uses verified GitHub release archives for
+macOS arm64 and Linux x64, not npm or a Nix-built binary. Its managed launcher
+is `~/.local/bin/rex-worktrees`; native settings/OAuth remain separate. Skill
+sync fills individual links while preserving entire physical user skill
+directories, edited skills and unmanaged links; only recorded owned links
+still pointing at their previous target can
 advance.
 
 ```bash
@@ -661,11 +663,11 @@ bash ai/bootstrap.sh check    # selected executables, not provider authorization
 bash ai/bootstrap.sh update   # deliberate native upgrades, not a startup hook
 ```
 
-With no local enabled-tools manifest the bootstrap selects all six; explicit
-tool names override that selection. Native OAuth enrollment and MCP child
-credentials are separate steps. `flake.lock` governs Nix source revisions;
-it does not version-pin native CLIs or MCP stdio packages. Plugin source
-updates and system flake updates are deliberate, distinct changes.
+With no local enabled-tools manifest the bootstrap selects the original six;
+explicit tool names override that selection. Rex Worktrees is opt-in and the
+selected profiles add it as a seventh tool. Native OAuth enrollment and MCP
+child credentials are separate steps. `flake.lock` governs Nix sources, not
+the latest native release; plugin and system flake updates are deliberate.
 
 Mac host extras are opt-in via `pkgs/Brewfile`, not installed by Nix
 activation. Existing `helm@3` is left in place, not a fresh-host version pin.

@@ -43,8 +43,9 @@ without querying 1Password (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
 
 ### Native tools, versions and skills
 
-Enabled Home Manager profile options for OMP, Pi, Claude, OpenCode, Codex and
-Vercel generate `~/.config/dev-config/native-tools`. Run from the repo:
+Enabled Home Manager profile options for OMP, Pi, Claude, OpenCode, Codex,
+Vercel and opt-in Rex Worktrees generate `~/.config/dev-config/native-tools`.
+Run from the repo:
 
 ```bash
 bash ai/bootstrap.sh install  # missing enabled CLIs only
@@ -53,12 +54,15 @@ bash ai/bootstrap.sh update   # deliberate native CLI upgrades
 ```
 
 Pass tool names to target only those tools (for example,
-`bash ai/bootstrap.sh check vercel`). On a fresh home without a manifest all
-six are selected; with a manifest its enabled subset is authoritative. Native
-CLIs are writable under `~/.local`, OMP must be a standalone binary, and the
-bootstrap supports stock macOS Bash. Home Manager activation installs missing
-enabled CLIs and reconciles curated skill links, but does not upgrade existing
-CLIs or plugin packages on startup. `ai/sync-skills.sh` fills missing individual
+`bash ai/bootstrap.sh check rex-worktrees`). Without a manifest the original
+six are selected; the personal Mac and Rex profiles explicitly enable the
+seventh. Native CLIs are writable under `~/.local`; Rex Worktrees uses a
+SHA256-verified latest release archive for macOS arm64 or Linux x64, keeps its
+bundle and notices in `~/.local/share/dev-config/rex-worktrees`, and exposes
+only its owned launcher at `~/.local/bin/rex-worktrees`. Stock macOS Bash
+works. Home Manager installs missing selected CLIs and reconciles skill links,
+without upgrading working CLIs or plugin packages on startup.
+`ai/sync-skills.sh` fills missing individual
 links in physical user skill directories; it never replaces those directories,
 edited skills or unmanaged links. It advances only owned links still pointing
 to their recorded previous source.
@@ -342,16 +346,18 @@ Then use the git plugin keybindings in Neovim (see `docs/KEYBINDINGS_NEOVIM.md`)
 `zsh/.zprofile` detects the OS for Homebrew shellenv (Apple Silicon, Intel, Linuxbrew)
 with no hardcoded paths, so the same config works across machines.
 
-## Mac Rex configuration
+## Rex Worktrees configuration
 
-The personal Mac profile manages `~/.config/rex/dev-config.lua`, binding
-`ctrl+alt+w` to the `worktrees_open` action supplied by the separately installed
-`rex-worktrees` plugin. Home Manager adds a loader to Rex's user-owned
-`~/.config/rex/init.lua` only when absent; it does not replace that file or manage
-the plugin.
+The personal Mac and headless Rex profiles enable `dev-config.rex-worktrees`.
+After native installation, Home Manager runs the upstream offline setup with
+`REX_CONFIG` (or the profile's XDG Rex `init.lua`) and the managed absolute
+`~/.local/bin/rex-worktrees` path. Upstream setup adds its marked registration
+and Lua module without polling, starting or reloading Rex. Home Manager then
+adds an exact-once loader for `~/.config/rex/dev-config.lua`, which binds
+`ctrl+alt+w` to `worktrees_open`. Both steps preserve unrelated init entries
+and refuse symlink or non-regular init files. A new Rex pod loads the actions
+at startup; this change does not activate the personal Mac profile.
 
-Before activation, inspect the built generation's
-`home-files/.config/rex/dev-config.lua` and run
-`REX_CONFIG=<generation>/home-files/.config/rex/dev-config.lua rex config check`.
-This checks the generated binding; the plugin actions remain owned by the
-existing Rex init and need separate live verification after activation.
+The upstream Git flow requires Git >= 2.42; JJ workspaces additionally need
+JJ >= 0.46. Current locked nixpkgs provides JJ 0.42, so do not claim the
+optional headless JJ flow works until its prerequisite is separately resolved.

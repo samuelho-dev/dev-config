@@ -24,7 +24,7 @@ dev-config.tmux.enable = false;  # Disable tmux
 | **ssh** | SSH with 1Password agent integration |
 | **ghostty** | Ghostty terminal configuration |
 | **yazi** | Terminal file manager |
-| **native-tools** | Enabled OMP, Pi, Claude, OpenCode, Codex and Vercel manifest plus missing-only writable native install |
+| **native-tools** | Enabled OMP, Pi, Claude, OpenCode, Codex, Vercel and optional Rex Worktrees manifest plus missing-only writable native install |
 | **mcp** | Shared MCP configuration with profile-selected Claude/OMP/Codex targets |
 | **biome** | Linting/formatting configuration |
 | **direnv** | Per-project environments with nix-direnv |
@@ -32,18 +32,19 @@ dev-config.tmux.enable = false;  # Disable tmux
 
 ## Configuration
 
-Each `dev-config.omp`, `pi`, `claude-code`, `opencode`, `codex` and `vercel`
-enable option selects that native tool in
+Each `dev-config.omp`, `pi`, `claude-code`, `opencode`, `codex`, `vercel`
+and `rex-worktrees` enable option selects that native tool in
 `~/.config/dev-config/native-tools`. `native-tools.nix` invokes the one
 `ai/bootstrap.sh install` owner after Nix package installation and
 `ai/sync-skills.sh` for curated per-tool skill links. The CLIs live in writable
 `~/.local`, not Nix packages: activation only fills missing tools, never
 upgrades existing ones or enrolls OAuth. Explicit `bash ai/bootstrap.sh
-update` upgrades the enabled native set; `bash ai/bootstrap.sh check`
-verifies executable availability, not account authorization. The native
-bootstrap supports stock macOS Bash. Skill sync preserves physical user
-directories, edited skills and unmanaged links, advancing only links that
-still point to their recorded previous source.
+update` upgrades the selected native set; `bash ai/bootstrap.sh check`
+verifies executable availability, not account authorization. Rex Worktrees
+registers its Lua module offline before the binding loader is appended to
+the user-owned Rex init; it neither starts Rex nor reloads a running server.
+Skill sync preserves physical directories, edited skills and unmanaged links,
+advancing only links still pointing to their recorded previous source.
 
 MCP is independent: `dev-config.mcp.enable` and the enabled
 `dev-config.mcp.targets.{claude,omp,codex}` determine render targets. Select
