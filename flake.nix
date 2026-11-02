@@ -237,6 +237,33 @@
           pkgs = import nixpkgs {
             system = "x86_64-linux";
             config.allowUnfree = true;
+            overlays = [
+              (_final: prev: {
+                # Rex Worktrees needs jj >= 0.46; leave the shared nixpkgs lock untouched.
+                jujutsu = prev.stdenvNoCC.mkDerivation {
+                  pname = "jujutsu";
+                  version = "0.46.0";
+                  src = prev.fetchurl {
+                    url = "https://github.com/jj-vcs/jj/releases/download/v0.46.0/jj-v0.46.0-x86_64-unknown-linux-musl.tar.gz";
+                    hash = "sha256-/OAnEVjmZc64LcZsXrlbFyhkkJTpEzB087W67ONF/Ag=";
+                  };
+                  sourceRoot = ".";
+                  nativeBuildInputs = [prev.installShellFiles];
+                  installPhase = ''
+                    runHook preInstall
+                    install -Dm755 jj "$out/bin/jj"
+                    install -Dm644 LICENSE "$out/share/licenses/jujutsu/LICENSE"
+                    COMPLETE=bash "$out/bin/jj" > jj.bash
+                    COMPLETE=zsh "$out/bin/jj" > jj.zsh
+                    COMPLETE=fish "$out/bin/jj" > jj.fish
+                    installShellCompletion --cmd jj --bash jj.bash --zsh jj.zsh --fish jj.fish
+                    ./jj util install-man-pages "$out/share/man"
+                    runHook postInstall
+                  '';
+                  meta = prev.jujutsu.meta;
+                };
+              })
+            ];
           };
           modules = [
             ./rex-home.nix
