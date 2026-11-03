@@ -40,6 +40,7 @@ _: {
     npm.enable = true;
     yazi.enable = true;
     omp.enable = true;
+    omp.hindsight.enable = true;
     pi.enable = true;
     claude-code.enable = true;
     opencode.enable = true;

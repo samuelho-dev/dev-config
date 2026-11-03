@@ -2,6 +2,7 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Personal Mac and headless Rex profiles now opt in to setting only OMP's writable `memory.backend` to `hindsight` after native CLI bootstrap; model settings remain user-editable. The existing Rex persistent config was corrected without restarting Rex. Its running image and immutable flake pin are unchanged; this activation takes effect at the next approved profile update.
 - The personal Mac profile now declares Rex's `rex.server.tailnet-allow-tailnet-members` preference through Home Manager, allowing tagged Hermes access under the existing Tailnet ACL. Every ACL-admitted caller has full Rex account access; operator/development grants are intentionally trusted. Linux/headless and work profiles are unchanged.
 
 - Added homelab-only `hermes_open` / **Open Hermes** in the canonical Rex Home Manager fragment. It requires the existing exact `AI DEV ENV` session, reuses its persistent `HERMES` tab (including after exit), rejects duplicate matches, and selects exact IDs in the invoking native client. A new tab directly runs Nix-resolved kubectl into the deployed Hermes default-profile CLI as UID/GID 10000; no gateway or isolation is added. Candidate Lua/native-client smoke proved creation and repeat-focus with unchanged window/block/process IDs. Apply through Home Manager and reload Rex to register the palette action.
