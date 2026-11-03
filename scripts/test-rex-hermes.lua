@@ -12,7 +12,6 @@ local fake = {
     return { sessions = sessions }
   end,
   session = {
-    attach = function() return {} end,
     view = function() return { windows = windows } end,
     new_window = function() error("Unexpected terminal creation", 0) end,
   },

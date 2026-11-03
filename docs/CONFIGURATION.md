@@ -144,11 +144,14 @@ nvim --headless -u NONE -l scripts/test-rex-hermes.lua "$candidate"
 rex -C Macbook do "$candidate" --action hermes_open --json
 ```
 
-Verified against Rex `0.1.0-preview.12`: the generated action opened the
-deployed Hermes CLI as UID/GID 10000, and repeat navigation from another tab
-selected the same window/block and CLI process without a model prompt.
-These candidate checks do not install the palette action: an approved Home
-Manager activation followed by `rex config reload` is still required.
+Verified against Rex `0.1.0-preview.12`: both the generated script and installed
+config action opened the deployed Hermes CLI as UID/GID 10000. Repeat native
+navigation selected the same window/block and CLI process without a model
+prompt. Use `rex.call("session.attach", ...)`: this version exposes the
+`rex.session.attach` helper to scripts, but not installed config actions.
+Candidate checks do not install the palette action. After Home Manager
+activation and `rex config reload`, verify the installed path with
+`rex -C Macbook do hermes_open --json`, not just `do "$candidate" --action ...`.
 
 Source validation: the Mac tailnet core helper listed 64 Argo applications,
 all Synced. The shared Nix cloud package set evaluated with `supabase-cli` and

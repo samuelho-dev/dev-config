@@ -31,7 +31,7 @@ in {
               end
             end
             if not session_id then error("AI DEV ENV session not found on homelab", 0) end
-            local _, attach_err = rex.session.attach{ session_id = session_id }
+            local _, attach_err = rex.call("session.attach", { session_id = session_id })
             if attach_err then error(attach_err, 0) end
             local view, view_err = rex.session.view{ session_id = session_id }
             if view_err then error(view_err, 0) end
