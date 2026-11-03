@@ -67,6 +67,7 @@
     # Enable yazi terminal file manager (with full preview support)
     yazi.enable = true;
     rex-worktrees.enable = true;
+    omp.hindsight.enable = true;
 
     mcp = {
       enable = true;

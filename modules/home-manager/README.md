@@ -46,6 +46,11 @@ the user-owned Rex init; it neither starts Rex nor reloads a running server.
 Skill sync preserves physical directories, edited skills and unmanaged links,
 advancing only links still pointing to their recorded previous source.
 
+Personal Mac and headless Rex also select `dev-config.omp.hindsight.enable`.
+After native bootstrap, activation sets only the writable OMP
+`memory.backend` to `hindsight`; model settings remain user-editable. Other
+profiles leave the memory backend alone.
+
 MCP is independent: `dev-config.mcp.enable` and the enabled
 `dev-config.mcp.targets.{claude,omp,codex}` determine render targets. Select
 `dev-config.mcp.authSource = "op"` or `"env"` explicitly (macOS defaults

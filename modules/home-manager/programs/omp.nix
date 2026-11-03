@@ -22,6 +22,8 @@ in {
   options.dev-config.omp = {
     enable = lib.mkEnableOption "Oh My Pi (omp) coding-agent CLI";
 
+    hindsight.enable = lib.mkEnableOption "Set the writable OMP memory backend to Hindsight at activation";
+
     obsidian = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -53,6 +55,15 @@ in {
           ${pkgs.bash}/bin/bash ${applyPluginsScriptSrc}
       fi
     '';
+
+    home.activation.configureOmpHindsight = lib.mkIf cfg.hindsight.enable (
+      lib.hm.dag.entryAfter ["bootstrapNativeTools"] ''
+        if [ -z "''${DRY_RUN_CMD:-}" ]; then
+          PATH="$HOME/.local/bin:${config.home.path}/bin:$PATH" \
+            omp config set memory.backend hindsight
+        fi
+      ''
+    );
 
     home.activation.configureObsidianVault = lib.mkIf cfg.obsidian.enable (
       lib.hm.dag.entryAfter ["writeBoundary"] ''
