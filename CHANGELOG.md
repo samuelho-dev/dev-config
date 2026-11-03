@@ -4,6 +4,8 @@
 
 - Added homelab-only `hermes_open` / **Open Hermes** in the canonical Rex Home Manager fragment. It requires the existing exact `AI DEV ENV` session, reuses its persistent `HERMES` tab (including after exit), rejects duplicate matches, and selects exact IDs in the invoking native client. A new tab directly runs Nix-resolved kubectl into the deployed Hermes default-profile CLI as UID/GID 10000; no gateway or isolation is added. Candidate Lua/native-client smoke proved creation and repeat-focus with unchanged window/block/process IDs. Apply through Home Manager and reload Rex to register the palette action.
 
+- Verified the installed Hermes palette action after homelab Home Manager activation. Cross-session attachment uses generic `rex.call("session.attach", ...)` because Rex preview.12 exposes `rex.session.attach` only in scripts. The installed-action native smoke preserves the exact HERMES window/block and CLI process on repeat invocation.
+
 - Added opt-in Rex Worktrees to the existing native bootstrap on personal Mac and headless Rex profiles. The installer verifies the platform's latest GitHub release archive with its published SHA256SUMS, preserves its JS bundle and notices, and refuses unmanaged launchers. Offline upstream setup registers the Lua module before the exact-once binding loader without starting or reloading Rex; no personal Mac activation or live pod rollout is claimed. Optional JJ workspaces require JJ >= 0.46; the shared lock still selects 0.42.
 
 - Pin JJ 0.46.0 from the upstream Linux x86-64 musl release only in the Rex Home Manager package set, to meet the Rex Worktrees JJ minimum. Other profiles and the shared nixpkgs lock keep their existing versions. This source change does not activate a profile or restart Rex by itself.
