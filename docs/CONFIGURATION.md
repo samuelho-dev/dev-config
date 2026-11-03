@@ -110,6 +110,46 @@ Inside Rex, `argocd-core.sh --in-cluster app list -o json` uses the projected
 `tokenFile` and creates only the private Argo core config. Neither mode edits
 `~/.argocd/config` or other kube contexts, and neither logs into Argo API mode.
 
+**Persistent Hermes tab (homelab only).**
+
+`rex-home.nix` enables `dev-config.rex-hermes.enable`; personal Mac profiles
+leave it disabled. `modules/home-manager/programs/rex.nix` adds **Open Hermes**
+(`hermes_open`, category **Homelab**) to the homelab palette, with no key binding
+or startup window. The existing Worktrees shortcut and registration remain.
+
+The action requires exactly one local session labelled `AI DEV ENV`. It
+attaches to that session, reads its persistent window labels, and selects the
+single `HERMES` tab in the invoking native client. Missing/ambiguous sessions
+or duplicate `HERMES` tabs fail instead of creating another session or CLI.
+An exited `HERMES` tab is still selected; close that tab explicitly before
+opening a fresh CLI.
+
+When absent, the tab runs Nix-resolved `kubectl` directly (`shell = "none"`),
+inheriting the homelab Rex server's `KUBECONFIG` (`/etc/rex/kubeconfig` in the
+deployed runtime). It uses context `rex-owner@homelab`, namespace `hermes`,
+`exec -it deployment/hermes -c hermes`, then `/command/s6-setuidgid hermes env
+HOME=/opt/data/home HERMES_HOME=/opt/data /opt/hermes/bin/hermes -p default --cli`.
+The terminal stays visible after exit. No gateway, restart loop, profile,
+credential copy, port exposure, or automatic conversation resume is added.
+This is a separate CLI conversation, not the gateway's stdin; the default
+profile shares writable memory and does **not** isolate concurrent agents.
+
+Scoped pre-activation check (does not change the live config):
+
+```bash
+candidate=$(nix build --no-link --print-out-paths '.#homeConfigurations.rex.config.xdg.configFile."rex/dev-config.lua".source')
+rex config check "$candidate"
+nvim --headless -u NONE -l scripts/test-rex-hermes.lua "$candidate"
+# Really opens/focuses Hermes; run on homelab, with the intended native client:
+rex -C Macbook do "$candidate" --action hermes_open --json
+```
+
+Verified against Rex `0.1.0-preview.12`: the generated action opened the
+deployed Hermes CLI as UID/GID 10000, and repeat navigation from another tab
+selected the same window/block and CLI process without a model prompt.
+These candidate checks do not install the palette action: an approved Home
+Manager activation followed by `rex config reload` is still required.
+
 Source validation: the Mac tailnet core helper listed 64 Argo applications,
 all Synced. The shared Nix cloud package set evaluated with `supabase-cli` and
 `postgresql` on aarch64-darwin and x86_64-linux, without building them.

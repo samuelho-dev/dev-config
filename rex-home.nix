@@ -46,6 +46,7 @@ _: {
     codex.enable = true;
     vercel.enable = true;
     rex-worktrees.enable = true;
+    rex-hermes.enable = true;
 
     ghostty.enable = false;
     ssh.enable = false; # No 1Password agent in Rex
