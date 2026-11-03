@@ -26,6 +26,7 @@ _: {
       signing.enable = false; # No 1Password SSH agent in Rex
       preferSSH = false; # Headless GitHub access uses the projected token.
       extraConfig.credential."https://github.com".helper = "!gh auth git-credential";
+      extraConfig.url."https://github.com/".insteadOf = ["git@github.com:" "ssh://git@github.com/"];
     };
     zsh = {
       enable = true;

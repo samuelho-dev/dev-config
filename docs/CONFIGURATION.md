@@ -94,7 +94,9 @@ other agent runtime configuration is changed.
 
 The headless Home Manager output is `homeConfigurations.rex` (`rex-home.nix`);
 the runtime selects `#rex` at startup. It retains the existing native tools
-and HTTPS Git credential helper without provisioning service credentials.
+and rewrites both `git@github.com:` and `ssh://git@github.com/` URLs to HTTPS,
+using the existing GitHub-scoped `gh auth git-credential` helper without
+provisioning service credentials.
 
 The shared Nix toolchain includes `supabase`, `psql`, `kubectl`, and `argocd`
 on Darwin and Linux. Rex must use its own projected Kubernetes ServiceAccount
