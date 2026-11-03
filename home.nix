@@ -51,6 +51,11 @@
     SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
   };
 
+  # Hermes is tagged; Rex must trust callers admitted by the Tailnet ACL.
+  targets.darwin.defaults = pkgs.lib.mkIf pkgs.stdenv.isDarwin {
+    "com.superlogical.rex"."rex.server.tailnet-allow-tailnet-members" = true;
+  };
+
   # Personal-profile dev-config overrides (base.nix handles common enables)
   dev-config = {
     # Enable ghostty (package installed via Homebrew on macOS)
