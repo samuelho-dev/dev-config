@@ -157,6 +157,23 @@ Source validation: the Mac tailnet core helper listed 64 Argo applications,
 all Synced. The shared Nix cloud package set evaluated with `supabase-cli` and
 `postgresql` on aarch64-darwin and x86_64-linux, without building them.
 
+**Hermes → personal Mac Rex.**
+
+The personal Mac profile manages
+`com.superlogical.rex` → `rex.server.tailnet-allow-tailnet-members = true`
+through Home Manager's Darwin defaults. Hermes uses `tag:hermes`, not the
+owner's Tailscale user, so owner-only Rex rejects it even when DNS and TCP work.
+The Tailnet ACL is the authorization boundary: every admitted caller has full
+Rex access, including programs running as the Mac account. This explicitly
+trusts the existing operator/development grants as well as Hermes.
+
+Apply the reviewed Git revision through Home Manager. A running Rex app may
+retain its previous preference until it reloads; verify the server's actual
+`tailscale.allow_tailnet_members` and a Hermes-originated `rex -S
+https://macbook.taile99f5b.ts.net whoami --json`, not just `defaults read`.
+The older Mac's port 8443 is not the Rex endpoint. Linux/headless and work
+profiles do not receive this personal Mac preference.
+
 Canonical MCP definitions in `ai/mcp/servers.json` fan out only to enabled
 Claude Code, OMP and Codex CLI profiles. The renderer accepts
 `DEV_CONFIG_MCP_AUTH_SOURCE=op|env`: macOS Home Manager defaults to `op`,
