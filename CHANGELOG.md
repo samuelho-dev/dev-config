@@ -2,12 +2,20 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Keep the existing nixpkgs/Home Manager pins: the attempted update drops this flake's supported `x86_64-darwin` target. No live profile rollback is performed.
+
+- Add review.nvim with CodeDiff for local line/range annotations and Markdown feedback export to agent sessions. `<leader>gr` opens review, `<leader>gn` adds a note, and `<leader>gx` exports; existing Diffview history and Spectre shortcuts remain unchanged. The review uses the existing Neovim theme.
+
+- Fix obsidian.nvim startup for Diffview Markdown and files with missing parent directories: resolve real buffer directories before vault discovery and use Neovim's working directory when no valid parent exists. No vault directories are created by discovery.
+
+- Fix **Open Hermes** navigation being queued on the Mac's home server with a homelab session ID. The destination CLI now targets the existing `Macbook` native client explicitly and performs navigation through homelab; existing tabs and CLI processes are retained.
+
 - Personal Mac and headless Rex profiles now opt in to setting only OMP's writable `memory.backend` to `hindsight` after native CLI bootstrap; model settings remain user-editable. The existing Rex persistent config was corrected without restarting Rex. Its running image and immutable flake pin are unchanged; this activation takes effect at the next approved profile update.
 - The personal Mac profile now declares Rex's `rex.server.tailnet-allow-tailnet-members` preference through Home Manager, allowing tagged Hermes access under the existing Tailnet ACL. Every ACL-admitted caller has full Rex account access; operator/development grants are intentionally trusted. Linux/headless and work profiles are unchanged.
 
-- Added homelab-only `hermes_open` / **Open Hermes** in the canonical Rex Home Manager fragment. It requires the existing exact `AI DEV ENV` session, reuses its persistent `HERMES` tab (including after exit), rejects duplicate matches, and selects exact IDs in the invoking native client. A new tab directly runs Nix-resolved kubectl into the deployed Hermes default-profile CLI as UID/GID 10000; no gateway or isolation is added. Candidate Lua/native-client smoke proved creation and repeat-focus with unchanged window/block/process IDs. Apply through Home Manager and reload Rex to register the palette action.
+- Corrected **Open Hermes** ownership: the personal Mac palette action targets the existing native `Homelab` host; the headless profile no longer registers a palette action. The bundled Mac Rex CLI resolves destination routing even when action requests omit remote-server metadata. Session/tab ambiguity checks and retained exited-tab behavior remain; new terminals run homelab's managed kubectl into the existing default-profile CLI as UID/GID 10000. No second gateway, host registry, keyboard binding, or automatic resume is added.
 
-- Verified the installed Hermes palette action after homelab Home Manager activation. Cross-session attachment uses generic `rex.call("session.attach", ...)` because Rex preview.12 exposes `rex.session.attach` only in scripts. The installed-action native smoke preserves the exact HERMES window/block and CLI process on repeat invocation.
+- Migrate the managed Rex fragment loader from `dofile(...)` to tracked `require("dev-config")`. Reloads then invalidate the native client's cached palette when the generated action fragment changes, while preserving unrelated init settings.
 
 - Added opt-in Rex Worktrees to the existing native bootstrap on personal Mac and headless Rex profiles. The installer verifies the platform's latest GitHub release archive with its published SHA256SUMS, preserves its JS bundle and notices, and refuses unmanaged launchers. Offline upstream setup registers the Lua module before the exact-once binding loader without starting or reloading Rex; no personal Mac activation or live pod rollout is claimed. Optional JJ workspaces require JJ >= 0.46; the shared lock still selects 0.42.
 

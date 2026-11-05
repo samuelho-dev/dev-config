@@ -17,10 +17,14 @@ return {
         {
           name = 'detected-vault',
           path = function()
-            -- Search upward from current buffer for .obsidian directory
+            -- Virtual buffers (e.g. Diffview) have no filesystem parent.
+            local dir = vim.uv.fs_realpath(vim.fs.dirname(vim.api.nvim_buf_get_name(0)))
+            if not dir or vim.fn.isdirectory(dir) == 0 then
+              dir = vim.fn.getcwd()
+            end
             local obsidian_dirs = vim.fs.find('.obsidian', {
               upward = true,
-              path = vim.api.nvim_buf_get_name(0),
+              path = dir,
               type = 'directory',
             })
 
@@ -29,8 +33,8 @@ return {
               return vim.fs.dirname(obsidian_dirs[1])
             end
 
-            -- Fallback: use buffer's parent directory (for non-vault markdown)
-            return vim.fs.dirname(vim.api.nvim_buf_get_name(0))
+            -- Non-vault Markdown uses the real buffer directory, or cwd.
+            return dir
           end,
           overrides = {
             notes_subdir = vim.NIL,

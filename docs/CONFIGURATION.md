@@ -110,22 +110,33 @@ Inside Rex, `argocd-core.sh --in-cluster app list -o json` uses the projected
 `tokenFile` and creates only the private Argo core config. Neither mode edits
 `~/.argocd/config` or other kube contexts, and neither logs into Argo API mode.
 
-**Persistent Hermes tab (homelab only).**
+**Persistent Hermes tab (Mac launcher, homelab execution).**
 
-`rex-home.nix` enables `dev-config.rex-hermes.enable`; personal Mac profiles
-leave it disabled. `modules/home-manager/programs/rex.nix` adds **Open Hermes**
-(`hermes_open`, category **Homelab**) to the homelab palette, with no key binding
-or startup window. The existing Worktrees shortcut and registration remain.
+The personal Mac profile enables `dev-config.rex-hermes.enable`; the headless
+Rex profile leaves it disabled. `modules/home-manager/programs/rex.nix` adds
+**Open Hermes** (`hermes_open`, category **Homelab**) to the Mac's home-server
+palette, with no key binding or startup window. The existing Worktrees shortcut
+and registration remain. `rex hosts` must already contain the native `Homelab`
+host; the launcher does not change the home server or create another host entry.
 
-The action requires exactly one local session labelled `AI DEV ENV`. It
-attaches to that session, reads its persistent window labels, and selects the
-single `HERMES` tab in the invoking native client. Missing/ambiguous sessions
-or duplicate `HERMES` tabs fail instead of creating another session or CLI.
+The action uses the bundled Mac Rex CLI with `--server Homelab` to run a short
+Lua script against the destination. This resolves the existing host registry
+even when an installed action request does not supply `rex.server` metadata.
+The CLI targets the personal Mac's existing native client with `--client Macbook`.
+That label must be unique on homelab. It does not infer the app's label from
+`ctx.client_id`, which can identify the CLI connection for an installed action.
+It requires exactly one destination session labelled `AI DEV ENV`, attaches to
+it, and selects its single `HERMES` tab through the destination connection.
+Selection must run inside that CLI script: queuing `session.select` on the Mac
+home server instead reports that the homelab session ID was not found.
+Missing/ambiguous sessions, clients, or duplicate tabs fail instead of creating
+another session or CLI.
 An exited `HERMES` tab is still selected; close that tab explicitly before
 opening a fresh CLI.
 
-When absent, the tab runs Nix-resolved `kubectl` directly (`shell = "none"`),
-inheriting the homelab Rex server's `KUBECONFIG` (`/etc/rex/kubeconfig` in the
+When absent, the tab runs homelab's managed
+`/home/admin/.nix-profile/bin/kubectl` directly (`shell = "none"`),
+inheriting the destination server's `KUBECONFIG` (`/etc/rex/kubeconfig` in the
 deployed runtime). It uses context `rex-owner@homelab`, namespace `hermes`,
 `exec -it deployment/hermes -c hermes`, then `/command/s6-setuidgid hermes env
 HOME=/opt/data/home HERMES_HOME=/opt/data /opt/hermes/bin/hermes -p default --cli`.
@@ -137,21 +148,24 @@ profile shares writable memory and does **not** isolate concurrent agents.
 Scoped pre-activation check (does not change the live config):
 
 ```bash
-candidate=$(nix build --no-link --print-out-paths '.#homeConfigurations.rex.config.xdg.configFile."rex/dev-config.lua".source')
+candidate=$(nix build --no-link --print-out-paths '.#homeConfigurations.samuelho-macbook.config.xdg.configFile."rex/dev-config.lua".source')
 rex config check "$candidate"
 nvim --headless -u NONE -l scripts/test-rex-hermes.lua "$candidate"
-# Really opens/focuses Hermes; run on homelab, with the intended native client:
+# Run on the Mac; this really opens/focuses the homelab Hermes tab:
 rex -C Macbook do "$candidate" --action hermes_open --json
 ```
 
-Verified against Rex `0.1.0-preview.12`: both the generated script and installed
-config action opened the deployed Hermes CLI as UID/GID 10000. Repeat native
-navigation selected the same window/block and CLI process without a model
-prompt. Use `rex.call("session.attach", ...)`: this version exposes the
-`rex.session.attach` helper to scripts, but not installed config actions.
-Candidate checks do not install the palette action. After Home Manager
-activation and `rex config reload`, verify the installed path with
-`rex -C Macbook do hermes_open --json`, not just `do "$candidate" --action ...`.
+Activate the Mac Home Manager source and run `rex config reload` on the Mac,
+not on homelab. Then check the actual Mac command palette (`Cmd+Shift+P`) for
+**Open Hermes**. An action registered only on homelab is not evidence that the
+Mac's home-server palette contains it. `rex -C Macbook do hermes_open --json`
+checks the installed Mac action's routing; repeat invocation must preserve the
+same destination window/block and CLI process. This does not send a model prompt.
+
+The activation hook migrates its exact legacy `dofile(...)` line to
+`require("dev-config")`, preserving unrelated init configuration. Rex tracks
+required modules in its configuration hash; `dofile` changes can otherwise
+leave the hash unchanged and the native palette using a cached action list.
 
 Source validation: the Mac tailnet core helper listed 64 Argo applications,
 all Synced. The shared Nix cloud package set evaluated with `supabase-cli` and

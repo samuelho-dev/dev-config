@@ -50,6 +50,7 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 - **lazygit.nvim** — lazygit TUI (`<leader>gg`, `<leader>gf`)
 - **octo.nvim** — GitHub PRs/issues (`<leader>gp`, `<leader>gi`; needs `gh`)
 - **diffview.nvim** — diffs & history (`<leader>gd`, `<leader>gh`, `<leader>gH`)
+- **review.nvim** + **codediff.nvim** — local diff annotations and Markdown export for agent feedback (`<leader>gr`, `<leader>gn`, `<leader>gx`); reuses **nui.nvim**
 - **git-conflict.nvim** — merge conflict resolution (`<leader>gc*`)
 
 ### markdown.lua — markdown & notes
@@ -96,10 +97,29 @@ In the Spectre UI: `dd` toggle a match, `<leader>R` replace all, `ti`/`th` toggl
 `<leader>gd`/`<leader>gh`/`<leader>gH` diff/file/branch history ·
 `<leader>gco/gct/gcb/gc0` conflict choose · `<leader>gcn`/`<leader>gcp` next/prev conflict.
 
+#### Local review notes
+`<leader>gr` opens a review of local changes. `<leader>gn` adds a note to the current
+line or visual selection, even outside a diff. `<leader>gx` exports feedback to the
+clipboard. `<leader>rr` remains Spectre search/replace.
+
+In a review's code pane: `i` adds a comment, `e` edits it, `d` deletes it, `t` switches
+inline/side-by-side, and `C` copies Markdown with file paths and line ranges. Use
+`:Review branch` for a branch comparison or `:Review commits` for specific commits.
+`:Review preview` shows the Markdown in a split; `:write /path/to/feedback.md` there
+saves it for an agent when terminal clipboard access is unavailable.
+
+Notes live in Neovim's data directory, not source files or GitHub. Closing with `q`
+exports, archives and clears the current review; exporting alone keeps the notes.
+CodeDiff inherits the existing theme and downloads its native diff library/watcher
+on first use (network access required).
+
 ### Markdown & Obsidian
 Vault auto-detection works from any directory (searches upward for `.obsidian`, handles symlinks,
 zero hardcoded paths). `<leader>ch` toggle checkbox in notes, `<leader>mp` browser preview,
 `<leader>o` outline. In-buffer rendering via render-markdown.nvim.
+Non-vault Markdown uses its real parent directory; virtual buffers (including Diffview) and
+files without an existing parent use Neovim's working directory. Symlinks resolve before vault discovery.
+Check workspace detection with `nvim --headless -u NONE -l scripts/test-neovim-obsidian.lua` from the repo root.
 
 ### File navigation
 - Neo-tree: `\` or `<leader>e` toggle.

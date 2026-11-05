@@ -1,4 +1,4 @@
--- Git integration plugins: gitsigns, lazygit, octo, diffview, git-conflict
+-- Git integration plugins: gitsigns, lazygit, octo, diffview, review, git-conflict
 
 return {
   -- Adds git related signs to the gutter, as well as utilities for managing changes
@@ -61,6 +61,23 @@ return {
       { '<leader>gd', '<cmd>DiffviewOpen<cr>', desc = 'Diffview Open' },
       { '<leader>gh', '<cmd>DiffviewFileHistory %<cr>', desc = 'File History' },
       { '<leader>gH', '<cmd>DiffviewFileHistory<cr>', desc = 'Branch History' },
+    },
+    opts = {},
+  },
+
+  -- Local review annotations exported as Markdown for agent sessions
+  {
+    'georgeguimaraes/review.nvim',
+    version = '*',
+    event = 'VeryLazy',
+    dependencies = {
+      { 'esmuellert/codediff.nvim', opts = {} },
+      'MunifTanjim/nui.nvim',
+    },
+    keys = {
+      { '<leader>gr', '<cmd>Review<cr>', desc = 'Review Local Changes' },
+      { '<leader>gn', ':Review note<cr>', mode = { 'n', 'v' }, desc = 'Review Note' },
+      { '<leader>gx', '<cmd>Review export<cr>', desc = 'Export Review Feedback' },
     },
     opts = {},
   },

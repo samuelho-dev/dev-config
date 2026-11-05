@@ -68,6 +68,7 @@
     yazi.enable = true;
     rex-worktrees.enable = true;
     omp.hindsight.enable = true;
+    rex-hermes.enable = pkgs.stdenv.isDarwin;
 
     mcp = {
       enable = true;

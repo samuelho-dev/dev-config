@@ -420,6 +420,22 @@ Enhanced text objects for better selection:
 | `<leader>gh` | File History | Show git history for current file |
 | `<leader>gH` | Branch History | Show full branch history |
 
+### Local Review Notes (review.nvim + codediff.nvim)
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `<leader>gr` | Review Local Changes | Open a diff with local annotations |
+| `<leader>gn` | Review Note | Annotate the current line or visual selection, including outside diffs |
+| `<leader>gx` | Export Review Feedback | Copy annotations as Markdown for an agent session |
+
+Inside a review's code pane: `i` adds a comment (also on visual selections), `e`
+edits, `d` deletes, `t` toggles inline/side-by-side, and `C` exports with a preview.
+`q` exports, archives and clears the comments, then closes the review.
+
+Use `:Review branch` for branch review and `:Review commits` for commit review.
+Notes persist locally in Neovim's data directory; nothing is posted to GitHub or
+inserted into source files. If clipboard access is unavailable, use `:Review preview`
+and `:write /path/to/feedback.md` in the preview split.
+
 ### Merge Conflicts (Git-conflict.nvim)
 | Keybinding | Action | Description |
 |------------|--------|-------------|
