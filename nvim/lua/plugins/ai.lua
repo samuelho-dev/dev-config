@@ -153,6 +153,9 @@ return {
     end,
     opts = {
       provider = 'litellm',
+      behaviour = {
+        auto_apply_diff_after_generation = true,
+      },
       providers = {
         litellm = {
           __inherited_from = 'openai',
@@ -160,16 +163,15 @@ return {
           model = 'coding-default',
           api_key_name = 'LITELLM_API_KEY',
           use_response_api = true,
+          support_previous_response_id = false,
           timeout = 30000,
-          -- ponytail: retain Avante's native Responses builder, omit sampling
-          -- inherited from OpenAI for proxy aliases that conceal reasoning models.
+          -- ponytail: retain the native Responses builder; omit inherited sampling
+          -- and output limits for proxy aliases that conceal reasoning models.
           set_allowed_params = function(provider_conf, body)
             require('avante.providers.openai').set_allowed_params(provider_conf, body)
             body.temperature = nil
+            body.max_completion_tokens = nil
           end,
-          extra_request_body = {
-            max_tokens = 4096,
-          },
         },
       },
     },

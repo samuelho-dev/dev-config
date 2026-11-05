@@ -2,6 +2,10 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Make Diffview honor the existing Nerd Font preference, avoiding missing nvim-web-devicons warnings when icons are disabled.
+
+- Fix Avante tool continuations by replaying full conversation history, remove its explicit and inherited output-token caps, and enable automatic application of generated diffs.
+
 - Keep the existing nixpkgs/Home Manager pins: the attempted update drops this flake's supported `x86_64-darwin` target. No live profile rollback is performed.
 
 - Add review.nvim with CodeDiff for local line/range annotations and Markdown feedback export to agent sessions. `<leader>gr` opens review, `<leader>gn` adds a note, and `<leader>gx` exports; existing Diffview history and Spectre shortcuts remain unchanged. The review uses the existing Neovim theme.

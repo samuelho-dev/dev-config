@@ -121,6 +121,10 @@ Avante's OpenAI defaults. Launch Neovim from a fresh login shell after
 activation. To switch to an explicit proxy model for the current session use
 `:lua require('avante.providers').litellm.model = 'MODEL_ID'` (not a static
 editor catalog); the selector does not fetch the gateway's model list.
+Tool continuations resend the full conversation instead of relying on
+`previous_response_id` storage at the gateway. Avante sends no output-token cap
+(including the inherited OpenAI cap); upstream model and gateway limits still
+apply. Generated diffs apply automatically after a response finishes.
 
 **Available Commands:**
 

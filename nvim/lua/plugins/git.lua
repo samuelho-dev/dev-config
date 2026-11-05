@@ -62,7 +62,7 @@ return {
       { '<leader>gh', '<cmd>DiffviewFileHistory %<cr>', desc = 'File History' },
       { '<leader>gH', '<cmd>DiffviewFileHistory<cr>', desc = 'Branch History' },
     },
-    opts = {},
+    opts = { use_icons = vim.g.have_nerd_font },
   },
 
   -- Local review annotations exported as Markdown for agent sessions
