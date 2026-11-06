@@ -52,9 +52,9 @@ After native bootstrap, activation sets only the writable OMP
 profiles leave the memory backend alone.
 
 The OMP plugin manifest also pins Coordinator at
-`@samuelho-dev/coordinator@0.3.0-beta.10`. Activation installs missing plugins
+`@samuelho-dev/coordinator@0.3.0-beta.11`. Activation installs missing plugins
 only; an existing Coordinator installation needs an explicit
-`omp plugin install @samuelho-dev/coordinator@0.3.0-beta.10`. Keep its endpoint
+`omp plugin install @samuelho-dev/coordinator@0.3.0-beta.11`. Keep its endpoint
 and token in the runtime environment or private
 `~/.config/coordinator/inspector.json` (owner-only directories and 0600 file),
 never in the Nix store.
