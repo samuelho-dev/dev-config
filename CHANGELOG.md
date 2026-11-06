@@ -2,6 +2,8 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Tighten shared OMP cleanup rules for parallel sessions, subagent handoffs, loose worktrees and local/remote task refs; no automatic cleanup or profile activation.
+
 - Make Diffview honor the existing Nerd Font preference, avoiding missing nvim-web-devicons warnings when icons are disabled.
 
 - Fix Avante tool continuations by replaying full conversation history, remove its explicit and inherited output-token caps, and enable automatic application of generated diffs.
