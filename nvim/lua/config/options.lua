@@ -16,7 +16,7 @@ vim.g.loaded_ruby_provider = 0 -- Ruby provider not needed (treesitter uses Ruby
 local function set_project_python()
   local cwd = vim.fn.expand '%:p:h'
   local venv_python = vim.fn.findfile('.venv/bin/python', cwd .. ';')
-  if venv_python ~= '' then
+  if type(venv_python) == 'string' and venv_python ~= '' then
     vim.g.python3_host_prog = vim.fn.fnamemodify(venv_python, ':p')
   end
 end
@@ -45,7 +45,17 @@ vim.o.showmode = false
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
 vim.schedule(function()
-  vim.o.clipboard = 'unnamedplus'
+  -- Remote sessions (e.g. Rex) have no clipboard tool, so yank never reaches
+  -- the local machine. Opt in to the terminal's OSC 52 clipboard explicitly:
+  -- auto-detection is skipped when 'clipboard' is set, and keeping it empty
+  -- means reads never query the terminal (only "+y / setreg write out).
+  -- See `:help g:clipboard` and provider#clipboard#Executable()
+  local remote = not (vim.env.DISPLAY or vim.env.WAYLAND_DISPLAY or vim.env.TMUX or vim.fn.executable 'pbcopy' == 1)
+  if remote then
+    vim.g.clipboard = 'osc52'
+  else
+    vim.o.clipboard = 'unnamedplus'
+  end
 end)
 
 -- Enable break indent

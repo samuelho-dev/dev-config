@@ -2,6 +2,7 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Fix Neovim clipboard on headless Rex: sessions with no clipboard tool now opt in to the terminal's native OSC 52 clipboard (`g:clipboard = 'osc52'`), so `<leader>cd`/`<leader>ce` and yanks reach the local Mac clipboard via the Rex terminal. Local sessions keep `clipboard=unnamedplus` unchanged; OSC 52 auto-detection remains disabled by design when 'clipboard' is set, so the remote branch keeps 'clipboard' empty and only writes out.
 - Tighten shared OMP cleanup rules for parallel sessions, subagent handoffs, loose worktrees and local/remote task refs; no automatic cleanup or profile activation.
 
 - Make Diffview honor the existing Nerd Font preference, avoiding missing nvim-web-devicons warnings when icons are disabled.
