@@ -141,8 +141,49 @@ return {
 
       -- Enable the following language servers
       local servers = {
-        -- TypeScript/JavaScript LSP
-        ts_ls = {},
+        -- TypeScript 7 (tsgo) has no tsserver.js, so ts_ls cannot drive it.
+        -- Projects shipping @effect/tsgo (or plain tsgo) get the native LSP;
+        -- classic-TS projects keep ts_ls. Only one attaches (root_dir gates).
+        tsgo = {
+          cmd = function(dispatchers, config)
+            local dir = vim.fs.joinpath(config.root_dir, 'node_modules/.bin')
+            if vim.fn.executable(vim.fs.joinpath(dir, 'effect-tsgo')) == 1 then
+              -- Shim is a CLI; the native LSP ELF it prints is the server.
+              local exe = vim.fn.system({ vim.fs.joinpath(dir, 'effect-tsgo'), 'get-exe-path' }):gsub('%s+$', '')
+              if vim.v.shell_error == 0 and vim.fn.executable(exe) == 1 then
+                return vim.lsp.rpc.start({ exe, '--lsp', '--stdio' }, dispatchers)
+              end
+            end
+            return vim.lsp.rpc.start({ vim.fs.joinpath(dir, 'tsgo'), '--lsp', '--stdio' }, dispatchers)
+          end,
+          root_dir = function(bufnr, on_dir)
+            local root = vim.fs.root(bufnr, { 'pnpm-lock.yaml', 'package-lock.json', 'yarn.lock' })
+            if not root then
+              return
+            end
+            local bin = vim.fs.joinpath(root, 'node_modules/.bin')
+            if vim.fn.executable(vim.fs.joinpath(bin, 'effect-tsgo')) == 1 or vim.fn.executable(vim.fs.joinpath(bin, 'tsgo')) == 1 then
+              on_dir(root)
+            end
+          end,
+        },
+        ts_ls = {
+          root_dir = function(bufnr, on_dir)
+            local root = vim.fs.root(bufnr, { 'pnpm-lock.yaml', 'package-lock.json', 'yarn.lock' })
+            if not root then
+              return
+            end
+            -- tsgo is the sole TS server where installed (upstream:
+            -- duplicate servers duplicate diagnostics).
+            local bin = vim.fs.joinpath(root, 'node_modules/.bin')
+            if vim.fn.executable(vim.fs.joinpath(bin, 'tsgo')) == 1 or vim.fn.executable(vim.fs.joinpath(bin, 'effect-tsgo')) == 1 then
+              return
+            end
+            if vim.fn.filereadable(vim.fs.joinpath(root, 'node_modules/typescript/lib/tsserver.js')) == 1 then
+              on_dir(root)
+            end
+          end,
+        },
 
         -- Biome LSP (linting + formatting for JS/TS/JSON)
         -- single_file_support: attach to files without requiring biome.json in project root
