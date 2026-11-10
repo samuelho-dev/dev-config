@@ -2,6 +2,7 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Fix pnpm delegation on Nix hosts: pnpm 12+ delegates to a project's `packageManager` pin by downloading an `@pnpm/exe` native ELF that links `libatomic.so.1`, which Nix hosts do not expose on any global loader path — every delegated `pnpm` invocation crashed with `libatomic.so.1: cannot open shared object file`. The shared runtime package set now wraps pnpm with `LD_LIBRARY_PATH` pointing at the flake-locked gcc runtime, so delegation works unchanged on macOS, Linux workstations and the Rex container. The wrapper is invisible to projects: pnpm still resolves and runs the pinned `@pnpm/exe` version. (Coordinator `pnpm install`/`check`/`build` verified end-to-end through the wrapper.)
 - Fix Neovim clipboard on headless Rex: sessions with no clipboard tool now opt in to the terminal's native OSC 52 clipboard (`g:clipboard = 'osc52'`), so `<leader>cd`/`<leader>ce` and yanks reach the local Mac clipboard via the Rex terminal. Local sessions keep `clipboard=unnamedplus` unchanged; OSC 52 auto-detection remains disabled by design when 'clipboard' is set, so the remote branch keeps 'clipboard' empty and only writes out.
 - Tighten shared OMP cleanup rules for parallel sessions, subagent handoffs, loose worktrees and local/remote task refs; no automatic cleanup or profile activation.
 
