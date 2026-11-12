@@ -508,7 +508,7 @@ When you press `<leader>`, which-key will show you available key groups:
 ## LSP Servers Configured
 
 This configuration includes LSP support for:
-- **TypeScript/JavaScript:** `ts_ls`
+- **TypeScript/JavaScript:** `tsgo` when the project ships it (TS 7 / `@effect/tsgo` / native-preview), else `ts_ls`
 - **JS/TS/JSON lint + format:** `biome`
 - **Python:** `pyright`
 - **Lua:** `lua_ls`

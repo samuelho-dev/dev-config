@@ -32,7 +32,7 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 - **nvim-lspconfig** with **fidget.nvim**; Neovim's native LSP API enables servers
 - **conform.nvim** — formatter runner
 - **lazydev.nvim** — Neovim Lua API completion (ft=lua)
-- Servers: `ts_ls`, `biome`, `pyright`, `lua_ls`, `nixd`
+- Servers: `tsgo` (project-pinned, else `ts_ls`), `biome`, `pyright`, `lua_ls`, `nixd`
 - Formatters: stylua (lua), ruff (python), **biome** (js/ts/jsx/tsx/json/jsonc), prettier (yaml/markdown), alejandra (nix)
 
 ### completion.lua — autocompletion

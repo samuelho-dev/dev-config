@@ -41,7 +41,17 @@
   # On PATH for every dev surface (devShell + Home Manager).
   runtimes = [
     pkgs.nodejs # Node.js also supplies npm and npx (not Corepack).
-    pkgs.pnpm # Flake-locked shared CLI; projects declare their own packageManager.
+    (pkgs.symlinkJoin {
+      # pnpm 12+ delegates to a project's packageManager pin by downloading an
+      # @pnpm/exe native ELF, which links libatomic.so.1. Nix hosts have no
+      # global loader path, so expose it on pnpm's own wrapper PATH.
+      name = "pnpm";
+      paths = [pkgs.pnpm];
+      buildInputs = [pkgs.makeWrapper];
+      postBuild = ''
+        wrapProgram "$out/bin/pnpm" --prefix LD_LIBRARY_PATH : "${pkgs.stdenv.cc.cc.lib}/lib"
+      '';
+    }) # Flake-locked shared CLI; projects declare their own packageManager.
     pkgs.bun
   ];
 
