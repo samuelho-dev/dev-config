@@ -238,11 +238,14 @@
         "rex" = home-manager.lib.homeManagerConfiguration {
           pkgs = importPkgs "x86_64-linux";
           modules = [
-            ./rex-home.nix
+            ./home.nix
+            inputs.sops-nix.homeManagerModules.sops
           ];
           extraSpecialArgs = {
             inherit self;
             inputs = inputs // {dev-config = self;};
+            username = "admin";
+            homeDirectory = "/home/admin";
           };
         };
       }
