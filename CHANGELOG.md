@@ -2,6 +2,7 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Rex now uses the shared powerline/Nerd Font p10k theme instead of the ASCII variant: Rex terminals render built-in Nerd Font glyphs, so the DevPod-era ASCII variant and its file are removed.
 - Align all home configurations on one nixpkgs import (`importPkgs`): the updated lock ships JJ 0.47.1, satisfying the rex-worktrees JJ >= 0.46 requirement, so the Rex-only 0.46.0 jj overlay is removed. `rex-home.nix` now imports the shared `base.nix` profile instead of duplicating its session variables and default enables.
 - Drop `tuicr` from the shared Nix core set: Neovim's review.nvim already covers local line/range annotations and Markdown feedback export (`<leader>gr`/`<leader>gn`/`<leader>gx`), and tuicr 0.28.0 no longer builds against the updated nixpkgs lock (onig_sys requires system oniguruma via pkg-config). Its tool check and doc sections are removed.
 - Update nixpkgs/Home Manager locks and drop `x86_64-darwin` from the flake's system list: nixpkgs 26.11 no longer supports Intel macOS. The unused `samuelho-linux` and duplicate `samuelho-macbook` configurations are removed; `rex` is the single Linux machine and the personal Mac config keeps its `user.nix`-derived name.
