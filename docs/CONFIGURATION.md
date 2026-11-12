@@ -1,8 +1,9 @@
 # Configuration Guide
 
 How to customize and extend your dev-config setup. Dotfiles in `nvim/`, `tmux/`,
-`zsh/`, `ghostty/`, `yazi/` are version-controlled and symlinked by Home Manager —
-edit them directly and reload the app (no rebuild needed). Shared system commands
+`zsh/`, `yazi/` are version-controlled and symlinked by Home Manager —
+edit them directly and reload the app (no rebuild needed). The `ghostty/`
+config is opt-in (`dev-config.ghostty.enable`, default false). Shared system commands
 come from `pkgs/default.nix` and are enumerated for checks in
 `pkgs/tool-checks.json`; profile-selected writable native coding CLIs come from
 `ai/bootstrap.sh`, not Nix packages. `pkgs/Brewfile` holds opt-in Mac host extras
@@ -287,7 +288,6 @@ Neovim so their processes inherit the new environment. The installed native
 | Neovim | `nvim/lua/config/*.lua`, `nvim/lua/plugins/*.lua` | Restart Neovim |
 | Tmux | `modules/home-manager/programs/tmux.nix` (`extraConfig`) | `home-manager switch`, then `Prefix + r` |
 | Zsh | `zsh/.zshrc`, `zsh/.zprofile` | `source ~/.zshrc` or `exec zsh` |
-| Ghostty | `ghostty/config` | Immediate |
 | Yazi | `yazi/` | Restart Yazi |
 
 After editing tracked files, commit and push, then `home-manager switch --flake .` on

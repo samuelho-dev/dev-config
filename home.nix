@@ -14,8 +14,8 @@ in {
     ./modules/home-manager/profiles/base.nix
   ];
 
-  # Home Manager needs to know your username and home directory
-  # Passed via extraSpecialArgs from flake.nix
+  # Identity comes from the flake attribute (auto-detection only applies
+  # below Home Manager stateVersion 20.09; this repo is 24.05).
   home = {
     username = username;
     homeDirectory = homeDirectory;
@@ -64,12 +64,6 @@ in {
 
   # Machine-specific dev-config overrides (base.nix handles common enables)
   dev-config = {
-    # Ghostty via Homebrew on macOS; not provisioned in the headless pod.
-    ghostty = {
-      enable = isDarwin;
-      package = null;
-    };
-
     git = {
       enable = true;
       # 1Password SSH signing only where the agent exists.

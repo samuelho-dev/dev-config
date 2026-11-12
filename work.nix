@@ -8,6 +8,8 @@
     ./modules/home-manager/profiles/base.nix
   ];
 
+  # Identity comes from the flake attribute (auto-detection only applies
+  # below Home Manager stateVersion 20.09; this repo is 24.05).
   home = {
     username = username;
     homeDirectory = homeDirectory;
@@ -33,12 +35,6 @@
       enable = true;
       targets.claude = true;
       servers = {};
-    };
-
-    # Ghostty installed via Homebrew on macOS (not in nixpkgs)
-    ghostty = {
-      enable = true;
-      package = null;
     };
 
     yazi.enable = true;

@@ -46,10 +46,8 @@ nix develop
 
 ```
 flake.nix                    # Entry point: exports homeManagerModules, nixosModules, devShells
-+-- home.nix                 # Personal Home Manager config with sops-nix secrets
++-- home.nix                 # Personal Mac + Rex (headless Linux) config, one module
 +-- work.nix                 # Work machine config (no sops, lean profile)
-+-- user.nix                 # Machine-specific values (username, homeDirectory) - GITIGNORED
-+-- work-user.nix            # Work machine-specific values - GITIGNORED
 +-- modules/
 |   +-- home-manager/        # User-level configuration modules
 |   |   +-- default.nix      # Module aggregator + global options
@@ -126,18 +124,20 @@ All packages defined centrally in `pkgs/default.nix` by category:
 
 ## Configuration Files (Dotfiles)
 
-Dotfiles in `nvim/`, `tmux/`, `zsh/`, `ghostty/`, `yazi/` are version controlled and symlinked by Home Manager. Edit them directly - no rebuild needed (just reload the application).
+Dotfiles in `nvim/`, `tmux/`, `zsh/`, `yazi/` are version controlled and symlinked by Home Manager. Edit them directly - no rebuild needed (just reload the application). Ghostty config is opt-in (`dev-config.ghostty.enable`, default false).
 
 Reference documentation: `docs/LINTING_POLICY.md`.
 
 ## Machine Setup
 
-1. Clone repository and create `user.nix`:
+1. Clone the repository:
+
    ```bash
-   cp user.nix.example user.nix
-   # Edit with your username and homeDirectory
-   git add -f user.nix  # Required for flake evaluation (gitignored but must be staged)
+   git clone https://github.com/samuelho-dev/dev-config ~/Projects/dev-config
    ```
+
+   Machine identity (username/homeDirectory) lives in `flake.nix` next to each
+   `homeConfigurations` attribute; add your own attribute there if needed.
 
 2. Run installation:
    ```bash
@@ -260,7 +260,6 @@ When working with this repository:
 - [ ] **Follow module patterns** in `modules/home-manager/programs/` for new programs
 - [ ] **Use explicit `lib.` prefixes** - never use `with lib;`
 - [ ] **Add packages** to `pkgs/default.nix` by category, not scattered in modules
-- [ ] **Stage `user.nix`** before flake evaluation: `git add -f user.nix`
 - [ ] **Reference docs/** for user-facing documentation updates
 
 ### AI Guardrails (CRITICAL) ⚠️

@@ -20,30 +20,6 @@
     sops-nix,
     ...
   }: let
-    userConfigPath = ./user.nix;
-    userConfig =
-      if builtins.pathExists userConfigPath
-      then import userConfigPath
-      else
-        throw ''
-          ERROR: user.nix not found!
-
-          This file contains machine-specific configuration (username, home directory).
-
-          Create it from the template:
-            cp user.nix.example user.nix
-            # Edit with your username and home directory
-            git add -f user.nix  # Required for flake evaluation
-
-          See docs/nix/README.md for details.
-        '';
-
-    workUserConfigPath = ./work-user.nix;
-    workUserConfig =
-      if builtins.pathExists workUserConfigPath
-      then import workUserConfigPath
-      else null;
-
     systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
 
     forAllSystems = fn:
@@ -213,7 +189,7 @@
     });
 
     homeConfigurations = let
-      mkHomeConfig = system:
+      mkHomeConfig = system: username: homeDirectory:
         home-manager.lib.homeManagerConfiguration {
           pkgs = importPkgs system;
           modules = [
@@ -221,52 +197,34 @@
             inputs.sops-nix.homeManagerModules.sops
           ];
           extraSpecialArgs = {
-            inherit self;
+            inherit self username homeDirectory;
             inputs = inputs // {dev-config = self;};
-            inherit (userConfig) username homeDirectory;
           };
         };
-    in
-      {
-        # Default configuration (uses username from user.nix)
-        # Usage: home-manager switch --flake .
-        # Defaults to aarch64-darwin (macOS ARM)
-        ${userConfig.username} = mkHomeConfig "aarch64-darwin";
+    in {
+      # Identity lives next to the attribute (Home Manager auto-detection
+      # only applies below stateVersion 20.09; this repo is 24.05).
+      # Usage: home-manager switch --flake .
+      # Defaults to aarch64-darwin (macOS ARM)
+      "samuelho" = mkHomeConfig "aarch64-darwin" "samuelho" "/Users/samuelho";
 
-        # Explicit configurations for specific systems
-        # Headless Rex configuration (the single Linux machine)
-        "rex" = home-manager.lib.homeManagerConfiguration {
-          pkgs = importPkgs "x86_64-linux";
-          modules = [
-            ./home.nix
-            inputs.sops-nix.homeManagerModules.sops
-          ];
-          extraSpecialArgs = {
-            inherit self;
-            inputs = inputs // {dev-config = self;};
-            username = "admin";
-            homeDirectory = "/home/admin";
-          };
+      # Headless Rex configuration (the single Linux machine)
+      "rex" = mkHomeConfig "x86_64-linux" "admin" "/home/admin";
+
+      # Work machine configuration (separate machine, no sops secrets)
+      # Usage: home-manager switch --flake .#work
+      "work" = home-manager.lib.homeManagerConfiguration {
+        pkgs = importPkgs "aarch64-darwin";
+        modules = [
+          ./work.nix
+        ];
+        extraSpecialArgs = {
+          inherit self;
+          inputs = inputs // {dev-config = self;};
+          username = "hos1";
+          homeDirectory = "/Users/hos1";
         };
-      }
-      // (
-        if workUserConfig != null
-        then {
-          # Work machine configuration (separate machine, no sops secrets)
-          # Usage: home-manager switch --flake .#work
-          "work" = home-manager.lib.homeManagerConfiguration {
-            pkgs = importPkgs "aarch64-darwin";
-            modules = [
-              ./work.nix
-            ];
-            extraSpecialArgs = {
-              inherit self;
-              inputs = inputs // {dev-config = self;};
-              inherit (workUserConfig) username homeDirectory;
-            };
-          };
-        }
-        else {}
-      );
+      };
+    };
   };
 }

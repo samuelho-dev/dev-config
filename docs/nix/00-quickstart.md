@@ -7,10 +7,8 @@
 git clone https://github.com/samuelho-dev/dev-config
 cd dev-config
 
-# 2. Create your machine-specific user file
-cp user.nix.example user.nix
-# Edit user.nix with your username + homeDirectory, then:
-git add -f user.nix   # gitignored, but must be staged for flake evaluation
+# 2. Machine identity lives in flake.nix next to each homeConfigurations
+#    attribute (samuelho, rex, work); add yours there if new.
 
 # 3. Run the installer
 bash scripts/install.sh
@@ -135,9 +133,8 @@ See [LiteLLM Proxy Setup](07-litellm-proxy-setup.md) for full details.
 dev-config/
 ├── flake.nix           # Entry point: homeManagerModules, devShells
 ├── flake.lock          # Pinned versions (committed for reproducibility)
-├── home.nix            # Personal Home Manager config (sops-nix secrets)
+├── home.nix            # Personal Mac + Rex (headless Linux) config, one module
 ├── work.nix            # Lean work-machine config
-├── user.nix            # Machine-specific values (GITIGNORED, must `git add -f`)
 │
 ├── scripts/
 │   ├── install.sh                  # Nix + flake-selected Home Manager app
@@ -162,12 +159,10 @@ Restart your terminal or source the Nix daemon:
 source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
 ```
 
-### Flake evaluation fails: "user.nix not found"
+### Flake evaluation fails: "homeConfigurations not found"
 
-`user.nix` is gitignored but must be staged for the flake to see it:
-```bash
-git add -f user.nix
-```
+Add your machine's attribute in `flake.nix` next to the existing
+`homeConfigurations` (each takes system + username + homeDirectory).
 
 ### "1Password credentials not loading"
 

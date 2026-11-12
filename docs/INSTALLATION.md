@@ -21,10 +21,8 @@ are opt-in; held third-party sources are not installed without a trust decision.
 git clone https://github.com/samuelho-dev/dev-config ~/Projects/dev-config
 cd ~/Projects/dev-config
 
-# 2. Create machine-specific config (gitignored, but must be staged for flake eval)
-cp user.nix.example user.nix
-$EDITOR user.nix          # set username + homeDirectory
-git add -f user.nix
+# 2. Machine identity (username/homeDirectory) lives in flake.nix next to each
+#    homeConfigurations attribute (samuelho, rex, work); add yours there if new.
 
 # 3. Bootstrap Nix and activate the selected Home Manager profile
 bash scripts/install.sh
@@ -70,7 +68,8 @@ launch. No Mason bootstrap or TPM is needed.
 
 The Nix package set follows the locked flake inputs. Native tools are
 installed only when missing and may have different locally installed versions;
-create a fresh `user.nix` for each machine (username/homeDirectory differ).
+add a `homeConfigurations` attribute in `flake.nix` for each machine
+(username/homeDirectory differ per attribute).
 An existing `helm@3` is preserved, not a desired-state version pin for new
 machines.
 
