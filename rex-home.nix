@@ -23,7 +23,9 @@ _: {
     };
     zsh = {
       enable = true;
-      p10kSource = ./zsh/.p10k-ascii.zsh;
+      # base.nix nulls the p10k source; opt back in to the repo-managed
+      # Nerd Font theme (Rex terminals render built-in Nerd Font glyphs).
+      p10kSource = ./zsh/.p10k.zsh;
     };
     mcp = {
       enable = true;
