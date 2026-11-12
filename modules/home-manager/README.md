@@ -68,13 +68,9 @@ Vercel OAuth does not supply the community MCP: the `env` input is
 `VERCEL_MCP_TOKEN`, rendered as child-only `VERCEL_TOKEN`. No global skills
 directory is replaced, no skip-permissions alias or proxy is set.
 
-Review notes use the native `tuicr` app, installed and updated by manually
-applying the opt-in `pkgs/Brewfile` on macOS (not by Home Manager or
-`scripts/install.sh`). Run `tuicr -w` to review working-tree changes. Press
-`c`, type a note and press Enter to save; for a range, select it with `v`
-before pressing `c`. `y` or `:clip` copies the saved review with file/line
-references rather than source excerpts. `:q` exits; reopen to resume saved
-reviews. No tuicr Home Manager module or theme is configured.
+Review notes use review.nvim in Neovim: `<leader>gr` opens a review of local
+changes, `<leader>gn` adds a note, `<leader>gx` exports Markdown feedback. See
+`nvim/README.md`. No separate review CLI or Home Manager module is configured.
 
 ### Disable a Program
 

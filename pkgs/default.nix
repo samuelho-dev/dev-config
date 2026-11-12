@@ -15,7 +15,6 @@
     pkgs.fd
     pkgs.bat
     pkgs.lazygit
-    pkgs.tuicr # Terminal code review on macOS and Linux
     pkgs.gitmux # tmux pane Git status
   ];
 

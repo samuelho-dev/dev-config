@@ -44,7 +44,7 @@
       then import workUserConfigPath
       else null;
 
-    systems = ["aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux"];
+    systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
 
     forAllSystems = fn:
       nixpkgs.lib.genAttrs systems (system:
