@@ -60,6 +60,14 @@
       devPkgs = import ./pkgs {inherit pkgs;};
     in
       devPkgs.all devPkgs;
+
+    # Single nixpkgs import for every home configuration: same allowUnfree
+    # setting, per-system instantiation, no per-config overlays.
+    importPkgs = system:
+      import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
   in {
     formatter = forAllSystems ({pkgs, ...}: pkgs.alejandra);
 
@@ -207,10 +215,7 @@
     homeConfigurations = let
       mkHomeConfig = system:
         home-manager.lib.homeManagerConfiguration {
-          pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-          };
+          pkgs = importPkgs system;
           modules = [
             ./home.nix
             inputs.sops-nix.homeManagerModules.sops
@@ -231,37 +236,7 @@
         # Explicit configurations for specific systems
         # Headless Rex configuration (the single Linux machine)
         "rex" = home-manager.lib.homeManagerConfiguration {
-          pkgs = import nixpkgs {
-            system = "x86_64-linux";
-            config.allowUnfree = true;
-            overlays = [
-              (_final: prev: {
-                # Rex Worktrees needs jj >= 0.46; leave the shared nixpkgs lock untouched.
-                jujutsu = prev.stdenvNoCC.mkDerivation {
-                  pname = "jujutsu";
-                  version = "0.46.0";
-                  src = prev.fetchurl {
-                    url = "https://github.com/jj-vcs/jj/releases/download/v0.46.0/jj-v0.46.0-x86_64-unknown-linux-musl.tar.gz";
-                    hash = "sha256-/OAnEVjmZc64LcZsXrlbFyhkkJTpEzB087W67ONF/Ag=";
-                  };
-                  sourceRoot = ".";
-                  nativeBuildInputs = [prev.installShellFiles];
-                  installPhase = ''
-                    runHook preInstall
-                    install -Dm755 jj "$out/bin/jj"
-                    install -Dm644 LICENSE "$out/share/licenses/jujutsu/LICENSE"
-                    COMPLETE=bash "$out/bin/jj" > jj.bash
-                    COMPLETE=zsh "$out/bin/jj" > jj.zsh
-                    COMPLETE=fish "$out/bin/jj" > jj.fish
-                    installShellCompletion --cmd jj --bash jj.bash --zsh jj.zsh --fish jj.fish
-                    ./jj util install-man-pages "$out/share/man"
-                    runHook postInstall
-                  '';
-                  meta = prev.jujutsu.meta;
-                };
-              })
-            ];
-          };
+          pkgs = importPkgs "x86_64-linux";
           modules = [
             ./rex-home.nix
           ];
@@ -277,10 +252,7 @@
           # Work machine configuration (separate machine, no sops secrets)
           # Usage: home-manager switch --flake .#work
           "work" = home-manager.lib.homeManagerConfiguration {
-            pkgs = import nixpkgs {
-              system = "aarch64-darwin";
-              config.allowUnfree = true;
-            };
+            pkgs = importPkgs "aarch64-darwin";
             modules = [
               ./work.nix
             ];
