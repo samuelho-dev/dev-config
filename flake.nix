@@ -44,7 +44,7 @@
       then import workUserConfigPath
       else null;
 
-    systems = ["aarch64-darwin" "x86_64-darwin" "x86_64-linux" "aarch64-linux"];
+    systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
 
     forAllSystems = fn:
       nixpkgs.lib.genAttrs systems (system:
@@ -229,10 +229,7 @@
         ${userConfig.username} = mkHomeConfig "aarch64-darwin";
 
         # Explicit configurations for specific systems
-        "samuelho-macbook" = mkHomeConfig "aarch64-darwin";
-        "samuelho-linux" = mkHomeConfig "x86_64-linux";
-
-        # Headless Rex configuration
+        # Headless Rex configuration (the single Linux machine)
         "rex" = home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             system = "x86_64-linux";

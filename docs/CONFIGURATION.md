@@ -148,7 +148,7 @@ profile shares writable memory and does **not** isolate concurrent agents.
 Scoped pre-activation check (does not change the live config):
 
 ```bash
-candidate=$(nix build --no-link --print-out-paths '.#homeConfigurations.samuelho-macbook.config.xdg.configFile."rex/dev-config.lua".source')
+candidate=$(nix build --no-link --print-out-paths '.#homeConfigurations.samuelho.config.xdg.configFile."rex/dev-config.lua".source')
 rex config check "$candidate"
 nvim --headless -u NONE -l scripts/test-rex-hermes.lua "$candidate"
 # Run on the Mac; this really opens/focuses the homelab Hermes tab:
@@ -292,16 +292,11 @@ Neovim so their processes inherit the new environment. The installed native
 After editing tracked files, commit and push, then `home-manager switch --flake .` on
 other machines.
 
-## Tuicr Review Notes
+## Review Notes (Neovim)
 
-On macOS, `pkgs/Brewfile` is the opt-in, manually applied Homebrew owner of
-native `tuicr` installation and updates; `scripts/install.sh` and Home Manager
-do not install or configure it. Run `tuicr -w` for working-tree review. Press
-`c`, type a note, then Enter to save; use `v` to select a range before `c`.
-Press `y` or enter `:clip` to copy the review with file and line/range
-references (old-side lines use `~N`), not source excerpts. `:q` exits;
-reopening resumes saved reviews. Native defaults include a transparent
-background; there is no managed theme, extension or exporter.
+Local diff review and feedback export live in Neovim via review.nvim:
+`<leader>gr` opens a review, `<leader>gn` adds a note on the current line or
+selection, and `<leader>gx` exports Markdown feedback. See `nvim/README.md`.
 
 ## Neovim Customization
 

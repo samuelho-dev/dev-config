@@ -88,7 +88,6 @@ EOF
 - `system` with your architecture:
   - `x86_64-linux` - Intel/AMD Linux
   - `aarch64-linux` - ARM64 Linux
-  - `x86_64-darwin` - Intel Mac
   - `aarch64-darwin` - M1/M2/M3 Mac
 - `username` and `homeDirectory` with your actual values
 - Git `userName` and `userEmail`
