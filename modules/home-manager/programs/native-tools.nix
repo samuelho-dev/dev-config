@@ -27,7 +27,7 @@ in {
     xdg.configFile."dev-config/native-tools".text = lib.concatMapStringsSep "\n" (tool: tool) enabled + "\n";
     home.activation.bootstrapNativeTools = lib.hm.dag.entryAfter ["writeBoundary" "installPackages"] ''
       if [ -z "''${DRY_RUN_CMD:-}" ]; then
-        PATH="$HOME/.local/bin:${config.home.path}/bin:${lib.makeBinPath [pkgs.curl pkgs.coreutils pkgs.bash]}:$PATH${lib.optionalString pkgs.stdenv.isDarwin ":/opt/homebrew/bin"}:/usr/local/bin:/usr/bin:/bin" \
+        PATH="$HOME/.local/bin:${config.home.path}/bin:${lib.makeBinPath [pkgs.curl pkgs.coreutils pkgs.bash]}:$PATH${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ":/opt/homebrew/bin"}:/usr/local/bin:/usr/bin:/bin" \
           ${pkgs.bash}/bin/bash ${source} install ${lib.escapeShellArgs enabled}
       fi
     '';

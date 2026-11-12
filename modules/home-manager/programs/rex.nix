@@ -12,7 +12,7 @@ in {
   options.dev-config.rex-hermes.enable = lib.mkEnableOption "Mac palette launcher for homelab Hermes";
 
   config = lib.mkIf (config.dev-config.enable && (config.dev-config.rex-worktrees.enable || config.dev-config.rex-hermes.enable)) {
-    home.sessionPath = lib.optionals pkgs.stdenv.isDarwin [rexBinDir];
+    home.sessionPath = lib.optionals pkgs.stdenv.hostPlatform.isDarwin [rexBinDir];
 
     xdg.configFile."rex/dev-config.lua".text = ''
       ${lib.optionalString config.dev-config.rex-worktrees.enable ''rex.bind("ctrl+alt+w", "worktrees_open")''}
@@ -97,7 +97,7 @@ in {
         echo "Would register enabled Rex integrations and add dev-config loader to $init"
       else
         ${lib.optionalString config.dev-config.rex-worktrees.enable ''
-        PATH="$HOME/.local/bin:${config.home.path}/bin:${lib.makeBinPath [pkgs.coreutils pkgs.bash]}:$PATH${lib.optionalString pkgs.stdenv.isDarwin ":${rexBinDir}:/opt/homebrew/bin"}:/usr/local/bin:/usr/bin:/bin" \
+        PATH="$HOME/.local/bin:${config.home.path}/bin:${lib.makeBinPath [pkgs.coreutils pkgs.bash]}:$PATH${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ":${rexBinDir}:/opt/homebrew/bin"}:/usr/local/bin:/usr/bin:/bin" \
           REX_CONFIG="$init" "$HOME/.local/bin/rex-worktrees" setup --config "$init" --bin "$HOME/.local/bin/rex-worktrees"
       ''}
         if [ -f "$init" ]; then

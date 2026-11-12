@@ -970,7 +970,7 @@ Home Manager can manage Homebrew packages on macOS:
   imports = [ dev-config.homeManagerModules.default ];
 
   # macOS-specific PATH
-  home.sessionPath = lib.mkIf pkgs.stdenv.isDarwin [
+  home.sessionPath = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin [
     "/opt/homebrew/bin"  # Apple Silicon Homebrew
     "/usr/local/bin"     # Intel Homebrew
   ];
