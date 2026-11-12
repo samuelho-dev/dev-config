@@ -2,6 +2,7 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Unify the p10k theme across profiles: both the personal Mac and Rex now use the repo-managed powerline/Nerd Font `zsh/.p10k.zsh` (the previous Mac default of no managed source let local `p10k configure` output diverge).
 - Merge `rex-home.nix` into `home.nix`: one module serves the personal Mac and the headless Rex pod via `stdenv.hostPlatform` conditionals (sops, 1Password SSH signing/agent, Ghostty on Darwin; HTTPS git credential helper, Nerd Font p10k on Linux). The `rex` configuration now passes `username`/`homeDirectory` through the same `extraSpecialArgs` and imports the sops-nix module like the Mac (inert with no secrets).
 - Rex now uses the shared powerline/Nerd Font p10k theme instead of the ASCII variant: Rex terminals render built-in Nerd Font glyphs, so the DevPod-era ASCII variant and its file are removed.
 - Align all home configurations on one nixpkgs import (`importPkgs`): the updated lock ships JJ 0.47.1, satisfying the rex-worktrees JJ >= 0.46 requirement, so the Rex-only 0.46.0 jj overlay is removed. `rex-home.nix` now imports the shared `base.nix` profile instead of duplicating its session variables and default enables.
