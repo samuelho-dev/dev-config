@@ -430,5 +430,5 @@ and refuse symlink or non-regular init files. A new Rex pod loads the actions
 at startup; this change does not activate the personal Mac profile.
 
 The upstream Git flow requires Git >= 2.42; JJ workspaces additionally need
-JJ >= 0.46. Current locked nixpkgs provides JJ 0.42, so do not claim the
-optional headless JJ flow works until its prerequisite is separately resolved.
+JJ >= 0.46, which the current locked nixpkgs provides. The optional headless
+JJ flow shares the lock's JJ on every configuration.

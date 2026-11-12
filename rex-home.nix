@@ -1,18 +1,11 @@
 _: {
-  imports = [./modules/home-manager];
+  imports = [./modules/home-manager ./modules/home-manager/profiles/base.nix];
 
   # Headless Rex workload UID is deployment-owned.
   home = {
     username = "admin";
     homeDirectory = "/home/admin";
     stateVersion = "24.05";
-  };
-
-  home.sessionVariables = {
-    EDITOR = "nvim";
-    VISUAL = "nvim";
-    CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR = "1";
-    DISABLE_AUTOUPDATER = "1"; # Keep existing Claude versions until explicit update.
   };
 
   dev-config = {
