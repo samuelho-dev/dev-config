@@ -8,8 +8,8 @@
   options.dev-config.ghostty = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = true;
-      description = "Enable dev-config Ghostty setup";
+      default = false;
+      description = "Enable dev-config Ghostty setup (GUI terminal; opt-in per machine)";
     };
 
     package = lib.mkOption {

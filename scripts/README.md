@@ -94,9 +94,8 @@ Runs automatically via `.pre-commit-config.yaml` on biome/tsconfig/pre-commit co
 git clone https://github.com/samuelho-dev/dev-config ~/Projects/dev-config
 cd ~/Projects/dev-config
 
-# 2. Create user configuration
-cp user.nix.example user.nix
-# Edit user.nix with your username and home directory
+# 2. Machine identity lives in flake.nix next to each homeConfigurations
+#    attribute (samuelho, rex, work); add yours there if new.
 
 # 3. Run installation
 bash scripts/install.sh

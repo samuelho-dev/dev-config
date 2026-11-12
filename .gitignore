@@ -23,10 +23,6 @@ zsh/.zsh_history
 .zshrc.local
 .envrc.local
 
-# Machine-specific user configuration
-user.nix
-work-user.nix
-
 # sops-nix encrypted secrets (stage specific files with git add -f)
 # Stage these for Nix flakes: .sops.yaml, secrets/default.yaml
 secrets/*.yaml
