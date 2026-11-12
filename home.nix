@@ -1,10 +1,14 @@
 {
   config,
+  lib,
   pkgs,
   username,
   homeDirectory,
   ...
-}: {
+}: let
+  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  isLinux = pkgs.stdenv.hostPlatform.isLinux;
+in {
   imports = [
     ./modules/home-manager
     ./modules/home-manager/profiles/base.nix
@@ -18,8 +22,10 @@
     stateVersion = "24.05"; # Don't change this
   };
 
-  # Configure sops-nix for secrets management
-  sops = {
+  # Configure sops-nix for secrets management (personal Mac only: the
+  # headless Rex pod has no 1Password/sops access; the sops-nix module is
+  # imported everywhere but stays inert with no secrets).
+  sops = lib.mkIf isDarwin {
     defaultSopsFile = ./secrets/default.yaml;
     age.keyFile = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
 
@@ -41,52 +47,61 @@
   };
 
   # Sops-only packages (everything else comes via dev-config.packages)
-  home.packages = with pkgs; [
+  home.packages = lib.mkIf isDarwin (with pkgs; [
     sops
     age
-  ];
+  ]);
 
   # SOPS key file is sops-specific, layered on top of base session vars
-  home.sessionVariables = {
+  home.sessionVariables = lib.mkIf isDarwin {
     SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
   };
 
   # Hermes is tagged; Rex must trust callers admitted by the Tailnet ACL.
-  targets.darwin.defaults = pkgs.lib.mkIf pkgs.stdenv.isDarwin {
+  targets.darwin.defaults = lib.mkIf isDarwin {
     "com.superlogical.rex"."rex.server.tailnet-allow-tailnet-members" = true;
   };
 
-  # Personal-profile dev-config overrides (base.nix handles common enables)
+  # Machine-specific dev-config overrides (base.nix handles common enables)
   dev-config = {
-    # Enable ghostty (package installed via Homebrew on macOS)
+    # Ghostty via Homebrew on macOS; not provisioned in the headless pod.
     ghostty = {
-      enable = true;
-      package = null; # Not available in nixpkgs, installed via Homebrew
+      enable = isDarwin;
+      package = null;
     };
 
-    # Enable yazi terminal file manager (with full preview support)
-    yazi.enable = true;
-    rex-worktrees.enable = true;
-    omp.hindsight.enable = true;
-    rex-hermes.enable = pkgs.stdenv.isDarwin;
+    git = {
+      enable = true;
+      # 1Password SSH signing only where the agent exists.
+      signing.enable = isDarwin;
+      # Headless GitHub access uses the projected token, never SSH URLs.
+      preferSSH = isDarwin;
+      extraConfig = lib.mkIf isLinux {
+        credential."https://github.com".helper = "!gh auth git-credential";
+        url."https://github.com/".insteadOf = ["git@github.com:" "ssh://git@github.com/"];
+      };
+    };
+
+    # base.nix nulls the managed p10k source; Rex opts back in to the
+    # repo-managed Nerd Font theme (its terminals render built-in glyphs).
+    zsh = {
+      enable = true;
+      p10kSource = lib.mkIf isLinux ./zsh/.p10k.zsh;
+    };
 
     mcp = {
       enable = true;
       targets.claude = true;
     };
 
-    # Global MCP servers (linear, effect-docs) are centralized in the dev-config
-    # mcp module (ai/mcp/servers.json) and fanned out to Claude, OMP, and Codex.
-    # Add machine-specific servers with `dev-config.mcp.extraServers`.
+    # 1Password-backed SSH agent and sops loading only on the personal Mac.
+    ssh.enable = isDarwin;
+    sops-env.enable = isDarwin;
 
-    # SSH configuration with 1Password agent
-    ssh.enable = true;
-
-    # Optional: Disable specific programs
-    # tmux.enable = false;
-    # ssh.enable = false;
-    # direnv.enable = false;
-    # yazi.enable = false;
+    yazi.enable = true;
+    omp.hindsight.enable = true;
+    rex-worktrees.enable = true;
+    rex-hermes.enable = isDarwin;
 
     # Optional: Add extra packages
     # packages.extraPackages = with pkgs; [ kubectl k9s ];

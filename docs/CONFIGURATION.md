@@ -92,7 +92,8 @@ other agent runtime configuration is changed.
 
 ### Rex homelab access (separate identity)
 
-The headless Home Manager output is `homeConfigurations.rex` (`rex-home.nix`);
+The headless Home Manager output is `homeConfigurations.rex` (the shared
+`home.nix` with Linux overrides via `stdenv.hostPlatform`);
 the runtime selects `#rex` at startup. It retains the existing native tools
 and rewrites both `git@github.com:` and `ssh://git@github.com/` URLs to HTTPS,
 using the existing GitHub-scoped `gh auth git-credential` helper without
