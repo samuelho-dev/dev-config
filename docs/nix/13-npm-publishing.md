@@ -1,28 +1,28 @@
 # NPM Publishing Configuration
 
-This guide covers configuring npm authentication for publishing packages to the
-public npm registry from your local development environment, as implemented by
-`modules/home-manager/programs/npm.nix`.
+This guide covers npm authentication for publishing packages to the public npm
+registry, as implemented by `modules/home-manager/programs/npm.nix`.
 
-> **Scope note:** The npm module today configures **only the public npm registry
-> (`registry.npmjs.org`)**. GitHub Packages dual-registry auth, a 1Password
-> `sync-secrets.sh` script, and a `~/.config/home-manager/secrets.nix` file are
-> **not** implemented in this repo. Where this guide mentions GitHub Packages, it
-> is a manual `package.json` workflow, not something the module wires up.
+> **Scope note:** The npm module manages **only** `~/.npmrc` registry
+> `extraConfig` (generated at activation, `600` permissions). Registry
+> authentication is **not** managed here: publish with npm OIDC tokens
+> (`npm publish --provenance`) or a per-project `.npmrc`. GitHub Packages
+> dual-registry auth and a 1Password `sync-secrets.sh` script are **not**
+> implemented in this repo. Where this guide mentions GitHub Packages, it is a
+> manual `package.json` workflow, not something the module wires up.
 
 ## What the Module Actually Does
 
 `modules/home-manager/programs/npm.nix`:
 
-1. Reads the npm token from the **sops secret `npm/token`** (decrypted at Home
-   Manager activation, never written to the Nix store).
-2. Generates `~/.npmrc` at activation time with
-   `//registry.npmjs.org/:_authToken=<token>` and any `extraConfig`.
-3. Sets `~/.npmrc` to `600` permissions.
-4. Installs `pnpm` (npm ships with `nodejs`).
+1. Generates `~/.npmrc` at activation time from `dev-config.npm.extraConfig`
+   (never written to the Nix store).
+2. Sets `~/.npmrc` to `600` permissions.
+3. Sets `NPM_CONFIG_PREFIX` to `~/.local` so global npm packages never write
+   into the Nix store.
 
-If the `npm/token` secret is absent, the activation step is skipped and no
-`~/.npmrc` is generated.
+There is no token handling: use npm's OIDC-based publishing (GitHub Actions or
+local `npm login` auth) or a per-project `.npmrc` for registry auth.
 
 ## Module Options (`dev-config.npm`)
 
@@ -40,35 +40,21 @@ dev-config.npm = {
 ```
 
 There are **no** `npmToken`, `githubPackagesToken`, or `githubScope` options —
-the token comes solely from the sops secret `npm/token`.
+registry auth is owned by npm OIDC or a per-project `.npmrc`.
 
 ## Setup
 
-### 1. Add the npm token to sops secrets
-
-Generate an **Automation** token at npm (Account → Access Tokens → Generate New
-Token), then add it to the encrypted secrets file:
-
-```bash
-sops secrets/default.yaml
-```
-
-```yaml
-npm:
-  token: npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-
-> Editing `secrets/default.yaml` requires the age key at
-> `~/.config/sops/age/keys.txt`. See [1Password SSH & CLI](09-1password-ssh.md)
-> for the secrets bootstrap.
-
-### 2. Enable the module and apply
+### 1. Configure extraConfig
 
 In your `home.nix`:
 
 ```nix
 dev-config.npm.enable = true;
 ```
+
+Optionally set `dev-config.npm.extraConfig` (see above).
+
+### 2. Apply
 
 ```bash
 cd ~/Projects/dev-config
@@ -81,25 +67,23 @@ home-manager switch --flake .
 cat ~/.npmrc
 ```
 
-Expected output:
+Expected output: your `extraConfig` lines (plus any local auth added outside
+the module).
 
-```ini
-//registry.npmjs.org/:_authToken=npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-```
-
-(plus any `extraConfig` lines you set).
-
-**Security note:** `~/.npmrc` contains the plaintext token and is protected with
-`600` permissions (user read/write only). It is regenerated on every
-`home-manager switch`.
+**Security note:** `~/.npmrc` is generated with `600` permissions (user
+read/write only) and regenerated on every `home-manager switch`.
 
 ## Publishing Packages
 
 ### Publish to the npm Registry
 
+Registry auth is not managed by this module. Use npm's OIDC-based publishing
+(GitHub Actions with `id-token: write` and `npm publish --provenance`, or a
+locally authenticated npm session), or a per-project `.npmrc`:
+
 ```bash
 # From your package directory
-npm publish --access public
+npm publish --access public --provenance
 
 # Or with pnpm
 pnpm publish --access public --no-git-checks
@@ -145,22 +129,19 @@ npm publish
 
 ### "Unauthorized" when publishing
 
-**Cause:** Token expired or invalid.
+**Cause:** Auth missing or expired in the active npm context (OIDC token, local
+`npm login`, or per-project `.npmrc`).
 
-**Solution:**
-1. Regenerate the token on npm.
-2. Update it in `secrets/default.yaml` (`sops secrets/default.yaml`).
-3. Re-run `home-manager switch --flake .` to regenerate `~/.npmrc`.
+**Solution:** Re-authenticate npm in the publishing context; this module adds no
+token handling.
 
 ### `.npmrc` not generated
 
-The activation step only runs when the `npm/token` sops secret exists and
-`dev-config.npm.enable = true`.
+The activation step runs only when `dev-config.npm.enable = true` and
+`extraConfig` is non-empty, so a locally authenticated `~/.npmrc` (e.g. `npm
+login`) is never overwritten.
 
 ```bash
-# Confirm the secret is configured
-grep -A1 '^npm:' <(sops -d secrets/default.yaml)
-
 # Confirm the module is enabled and re-apply
 home-manager switch --flake .
 ```
@@ -172,11 +153,10 @@ accordingly.
 
 ## Security Best Practices
 
-1. **Use Automation tokens** for npm (not Publish tokens).
-2. **Rotate tokens regularly** (every 90 days) and re-apply Home Manager.
+1. Prefer OIDC-based publishing (no long-lived tokens) for npm.
+2. Keep long-lived registry tokens in the publishing context (npm login or
+   per-project `.npmrc`), never in this repo.
 3. **Never commit `~/.npmrc`** to Git.
-4. The npm token is stored encrypted in `secrets/default.yaml` (age) and is never
-   exposed to the Nix store — it is decrypted only at activation time.
 
 ## Related Documentation
 

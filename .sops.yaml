@@ -8,14 +8,11 @@
 # 5. Stage for Nix flakes: git add -f .sops.yaml secrets/default.yaml
 
 keys:
-  # Age public key for samuelho
+  # Age public key for samuelho (the only age recipient)
   - &personal age1y2zrsu82k5fuglxsd7mkkgph682zxfxmzeuprge6sqe8fq8g8ajqcdg988
-  # Workflow public key (using existing personal key as requested)
-  - &workflow age1y2zrsu82k5fuglxsd7mkkgph682zxfxmzeuprge6sqe8fq8g8ajqcdg988
 
 creation_rules:
   - path_regex: secrets/default\.yaml$
     key_groups:
       - age:
           - *personal
-          - *workflow

@@ -2,6 +2,8 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Remove the dead npm/token sops path from the npm module: no `npm/token` secret exists anywhere, so the token-injection branch never ran. The module now generates `~/.npmrc` from `extraConfig` only; registry auth is owned by npm OIDC publishing or per-project `.npmrc`.
+- Remove the duplicate workflow age key from `.sops.yaml`: it aliased the personal key and no workflow consumed it; the personal key is now the only recipient.
 - Remove the `user.nix`/`work-user.nix` machine-identity files: each `homeConfigurations` attribute in `flake.nix` now takes its username/homeDirectory directly (`samuelho`, `rex`, `work`). Home Manager's environment auto-detection no longer applies at stateVersion 24.05, so identity is one plain argument per attribute.
 - Make the Ghostty module opt-in (default false): the Mac profile no longer enables it, so the GUI terminal config is no longer part of any managed profile.
 - Unify the p10k theme across profiles: both the personal Mac and Rex now use the repo-managed powerline/Nerd Font `zsh/.p10k.zsh` (the previous Mac default of no managed source let local `p10k configure` output diverge).

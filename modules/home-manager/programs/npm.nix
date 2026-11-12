@@ -6,50 +6,19 @@
 }: let
   cfg = config.dev-config.npm;
 
-  # Read token from sops secrets at activation time (not evaluation time)
-  # This is secure - tokens are decrypted only during home-manager activation
-  # and never exposed to the Nix store
-  npmToken =
-    if (config ? sops) && (config.sops.secrets ? "npm/token")
-    then config.sops.secrets."npm/token".path
-    else null;
-
-  # Generate .npmrc content template (tokens injected at activation time)
-  # Note: We use placeholder tokens that get replaced by the onChange script
-  npmrcTemplate = lib.concatStringsSep "\n" (
-    lib.filter (x: x != "") [
-      # Public npm registry authentication (if token available)
-      (lib.optionalString (npmToken != null)
-        "//registry.npmjs.org/:_authToken=__NPM_TOKEN__")
-
-      # Additional registry configuration
-      (lib.optionalString (cfg.extraConfig != "") cfg.extraConfig)
-    ]
-  );
-
-  # Shell script to generate .npmrc with actual tokens from sops secrets
+  # Generate .npmrc from extraConfig only; registry auth (npm OIDC or
+  # per-project .npmrc) is owned outside this module.
   generateNpmrcScript = ''
-        # Generate .npmrc file at activation time with real tokens
+        # Generate .npmrc at activation time
         NPMRC="$HOME/.npmrc"
 
         # Remove existing file/symlink
         rm -f "$NPMRC"
 
-        # Create new .npmrc with actual tokens
+        # Create new .npmrc with the configured registry settings
         cat > "$NPMRC" <<'NPMRC_EOF'
-    ${npmrcTemplate}
+    ${cfg.extraConfig}
     NPMRC_EOF
-
-        # Inject real tokens from sops secrets
-        ${lib.optionalString (npmToken != null) ''
-      if [ -f "${npmToken}" ]; then
-        NPM_TOKEN=$(cat "${npmToken}")
-        ${pkgs.gnused}/bin/sed -i.bak "s|__NPM_TOKEN__|$NPM_TOKEN|g" "$NPMRC"
-      fi
-    ''}
-
-        # Clean up backup file
-        rm -f "$NPMRC.bak"
 
         # Set restrictive permissions
         chmod 600 "$NPMRC" 2>/dev/null || true
@@ -57,21 +26,11 @@
 in {
   options.dev-config.npm = {
     enable = lib.mkEnableOption ''
-      npm authentication and registry configuration.
+      npm registry configuration.
 
-      Token is automatically loaded from sops secrets:
-      - npm/token: NPM registry authentication (registry.npmjs.org)
-
-      Configuration:
-      1. Add token to secrets/default.yaml:
-         npm:
-           token: npm_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-      2. Encrypt with sops:
-         sops secrets/default.yaml
-
-      Security: Token is never exposed to Nix store. It is decrypted
-      at Home Manager activation time and injected into ~/.npmrc with 600 permissions
+      Generates ~/.npmrc from extraConfig at activation with 600 permissions.
+      Registry authentication is not managed here: use npm OIDC publishing
+      tokens or a per-project .npmrc.
     '';
 
     extraConfig = lib.mkOption {
@@ -90,13 +49,12 @@ in {
 
   config = {
     # Global npm packages must never try to write into the Nix store;
-    # prefix ownership is independent of optional npm token management.
+    # prefix ownership is independent of registry auth handling.
     home.sessionVariables.NPM_CONFIG_PREFIX = "${config.home.homeDirectory}/.local";
-    # Generate .npmrc at activation time with sops-managed tokens
-    # Run after sops-nix to ensure secrets are decrypted
-    home.activation.generateNpmrc = lib.mkIf (cfg.enable && npmToken != null) (
-      lib.hm.dag.entryAfter ["sops-nix"] generateNpmrcScript
-    );
+    # Generate .npmrc at activation time from extraConfig. Skipped when
+    # extraConfig is empty so a locally authenticated ~/.npmrc (npm login,
+    # per-machine auth) is never overwritten.
+    home.activation.generateNpmrc = lib.mkIf (cfg.enable && cfg.extraConfig != "") generateNpmrcScript;
 
     # Do not install Node/package managers from Nix here. Project repos and
     # user-level installers own those versions; Nix should not shadow them.
