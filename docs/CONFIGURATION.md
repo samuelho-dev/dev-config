@@ -148,7 +148,7 @@ profile shares writable memory and does **not** isolate concurrent agents.
 Scoped pre-activation check (does not change the live config):
 
 ```bash
-candidate=$(nix build --no-link --print-out-paths '.#homeConfigurations.samuelho-macbook.config.xdg.configFile."rex/dev-config.lua".source')
+candidate=$(nix build --no-link --print-out-paths '.#homeConfigurations.samuelho.config.xdg.configFile."rex/dev-config.lua".source')
 rex config check "$candidate"
 nvim --headless -u NONE -l scripts/test-rex-hermes.lua "$candidate"
 # Run on the Mac; this really opens/focuses the homelab Hermes tab:

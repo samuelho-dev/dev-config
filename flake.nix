@@ -229,10 +229,7 @@
         ${userConfig.username} = mkHomeConfig "aarch64-darwin";
 
         # Explicit configurations for specific systems
-        "samuelho-macbook" = mkHomeConfig "aarch64-darwin";
-        "samuelho-linux" = mkHomeConfig "x86_64-linux";
-
-        # Headless Rex configuration
+        # Headless Rex configuration (the single Linux machine)
         "rex" = home-manager.lib.homeManagerConfiguration {
           pkgs = import nixpkgs {
             system = "x86_64-linux";
