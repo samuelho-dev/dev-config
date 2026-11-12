@@ -117,7 +117,7 @@
           gpg = lib.mkIf (cfg.signing.enable && cfg.signing.format == "ssh") {
             format = "ssh";
             ssh.program =
-              if pkgs.stdenv.isDarwin
+              if pkgs.stdenv.hostPlatform.isDarwin
               then "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
               else "${pkgs._1password-gui}/bin/op-ssh-sign";
           };

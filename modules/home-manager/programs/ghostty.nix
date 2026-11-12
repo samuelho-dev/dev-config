@@ -45,7 +45,7 @@
     # - macOS: ~/Library/Application Support/com.mitchellh.ghostty/config
     # - Linux: ~/.config/ghostty/config (XDG standard)
     home.file = lib.mkIf (config.dev-config.ghostty.configSource != null) (
-      if pkgs.stdenv.isDarwin
+      if pkgs.stdenv.hostPlatform.isDarwin
       then {
         "Library/Application Support/com.mitchellh.ghostty/config".source = config.dev-config.ghostty.configSource;
       }
@@ -53,7 +53,7 @@
     );
 
     xdg.configFile = lib.mkIf (config.dev-config.ghostty.configSource != null) (
-      if pkgs.stdenv.isLinux
+      if pkgs.stdenv.hostPlatform.isLinux
       then {
         "ghostty/config".source = config.dev-config.ghostty.configSource;
       }

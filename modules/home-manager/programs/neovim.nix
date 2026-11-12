@@ -82,7 +82,7 @@ in {
       withRuby = false;
 
       # Cargo's native libraries need Darwin libiconv when linking through Nix cc.
-      extraWrapperArgs = lib.optionals pkgs.stdenv.isDarwin [
+      extraWrapperArgs = lib.optionals pkgs.stdenv.hostPlatform.isDarwin [
         "--prefix"
         "LIBRARY_PATH"
         ":"
@@ -132,7 +132,7 @@ in {
       recursive = true;
     };
 
-    launchd.agents.update-neovim-plugins = lib.mkIf (pkgs.stdenv.isDarwin && cfg.configSource != null) {
+    launchd.agents.update-neovim-plugins = lib.mkIf (pkgs.stdenv.hostPlatform.isDarwin && cfg.configSource != null) {
       enable = true;
       config = {
         ProgramArguments = ["${updater}/bin/update-neovim-plugins"];
@@ -146,14 +146,14 @@ in {
       };
     };
 
-    systemd.user.services.update-neovim-plugins = lib.mkIf (pkgs.stdenv.isLinux && cfg.configSource != null) {
+    systemd.user.services.update-neovim-plugins = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.configSource != null) {
       Unit.Description = "Update Neovim plugins";
       Service = {
         Type = "oneshot";
         ExecStart = "${updater}/bin/update-neovim-plugins";
       };
     };
-    systemd.user.timers.update-neovim-plugins = lib.mkIf (pkgs.stdenv.isLinux && cfg.configSource != null) {
+    systemd.user.timers.update-neovim-plugins = lib.mkIf (pkgs.stdenv.hostPlatform.isLinux && cfg.configSource != null) {
       Unit.Description = "Update Neovim plugins daily";
       Timer = {
         OnCalendar = "daily";
