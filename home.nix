@@ -82,11 +82,10 @@ in {
       };
     };
 
-    # base.nix nulls the managed p10k source; Rex opts back in to the
-    # repo-managed Nerd Font theme (its terminals render built-in glyphs).
+    # Single repo-managed Nerd Font theme for every profile.
     zsh = {
       enable = true;
-      p10kSource = lib.mkIf isLinux ./zsh/.p10k.zsh;
+      p10kSource = ./zsh/.p10k.zsh;
     };
 
     mcp = {
