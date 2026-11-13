@@ -48,7 +48,6 @@ return {
         folder = vim.NIL,
       },
       completion = {
-        nvim_cmp = false, -- Using blink.cmp instead
         min_chars = 2,
       },
       -- Use new command format (`:Obsidian <subcommand>` instead of `:Obsidian<Subcommand>`)
