@@ -51,13 +51,12 @@ return {
           local filetype = args.match
           -- Map filetype -> parser language (handles aliases like tsx/typescriptreact)
           local lang = vim.treesitter.language.get_lang(filetype) or filetype
-          if not vim.tbl_contains(ensure_installed, lang) then
+          -- Enable any installed parser, including languages added with :TSInstall.
+          if not pcall(vim.treesitter.start, args.buf, lang) then
             return
           end
-          -- Highlighting (no-op if parser missing)
-          pcall(vim.treesitter.start)
           -- Indentation (skip languages where treesitter indent misbehaves)
-          if filetype ~= 'ruby' then
+          if filetype ~= 'ruby' and vim.treesitter.query.get(lang, 'indents') then
             vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
           end
         end,

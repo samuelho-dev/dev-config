@@ -62,7 +62,8 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 
 ### ui.lua — interface
 - **which-key.nvim** — keybinding hints
-- **kanagawa.nvim** — `kanagawa-dragon` highlighting with the Rex Cathode Amber palette; no extra theme plugin
+- **gruvbox-material** — upstream dark `material` syntax/semantic palette; transparent editor background inherits Rex's theme
+- **rainbow-delimiters.nvim** — upstream language queries color nested brackets and JSX tags using the active theme's integration
 - **todo-comments.nvim** — highlight TODO/FIXME/NOTE
 - **mini.nvim** — mini.ai, mini.surround, mini.statusline
 - **vim-visual-multi** — multiple cursors (`<leader>m`, remapped off `<C-n>` to avoid blink conflict)
@@ -71,6 +72,8 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 ### treesitter.lua — syntax
 - **nvim-treesitter** (`main` branch) — compiles parsers locally; needs `tree-sitter` CLI + C compiler
 - Parsers: bash, c, diff, html, lua, luadoc, markdown, markdown_inline, query, vim, vimdoc, javascript, typescript, tsx, jsdoc, python, json, yaml, toml, css
+- Additional supported parsers installed with `:TSInstall <language>` activate highlighting automatically when reopening the buffer; language servers are installed separately.
+- Theme/nesting smoke: `nvim --headless -u NONE -l scripts/test-neovim-highlighting.lua` from the repo root (installs missing plugins and the Nix parser; needs network/build tools on first run).
 
 ### tools.lua / training.lua
 - **csvview.nvim** — virtual-text CSV viewer (border mode; needs CSV filetype autocmd in `config/autocmds.lua`)
