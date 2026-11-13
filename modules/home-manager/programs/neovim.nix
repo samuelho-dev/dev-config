@@ -97,7 +97,7 @@ in {
     # Expose editor tools inside Neovim's wrapper, independent of the shell PATH.
     programs.neovim.extraPackages = [
       # LSP servers
-      pkgs.typescript-language-server # TypeScript/JavaScript
+      pkgs.typescript # Native TypeScript/JavaScript LSP (tsc --lsp)
       pkgs.pyright # Python
       pkgs.lua-language-server # Lua
       pkgs.biome # JavaScript/TypeScript/JSON linter + formatter

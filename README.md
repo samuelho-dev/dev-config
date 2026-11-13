@@ -75,7 +75,7 @@ fresh-host Helm pin.
 - **zsh-autosuggestions** - Fish-like autosuggestions
 
 **Neovim editor tools (via Nix/Home Manager):**
-- **LSP servers:** TypeScript (`tsgo` when the project ships it, else `ts_ls`), Python (`pyright`), Lua (`lua_ls`), Biome and Nix (`nixd`)
+- **LSP servers:** TypeScript/JavaScript (native tsgo/TypeScript 7 LSP, installed by Home Manager as `tsc`; project-local Effect/tsgo takes precedence), Python (`pyright`), Lua (`lua_ls`), Biome and Nix (`nixd`)
 - **Formatters:** stylua, prettier, ruff, Biome and alejandra
 
 **Plugin Managers:**

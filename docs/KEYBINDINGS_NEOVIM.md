@@ -508,7 +508,7 @@ When you press `<leader>`, which-key will show you available key groups:
 ## LSP Servers Configured
 
 This configuration includes LSP support for:
-- **TypeScript/JavaScript:** `tsgo` when the project ships it (TS 7 / `@effect/tsgo` / native-preview), else `ts_ls`
+- **TypeScript/JavaScript:** native tsgo/TypeScript 7 LSP only, installed by Home Manager as `tsc`; project-local Effect tsgo (`effect-tsgo get-exe-path`) takes precedence over project-local `tsgo`, then shared `tsc`. No `ts_ls` fallback.
 - **JS/TS/JSON lint + format:** `biome`
 - **Python:** `pyright`
 - **Lua:** `lua_ls`

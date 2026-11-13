@@ -32,7 +32,7 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 - **nvim-lspconfig** with **fidget.nvim**; Neovim's native LSP API enables servers
 - **conform.nvim** — formatter runner
 - **lazydev.nvim** — Neovim Lua API completion (ft=lua)
-- Servers: `tsgo` (project-pinned, else `ts_ls`), `biome`, `pyright`, `lua_ls`, `nixd`
+- Servers: native tsgo/TypeScript 7 LSP (sole TypeScript/JavaScript server, installed by Home Manager as `tsc`; project-local `effect-tsgo get-exe-path` → project-local `tsgo` → shared `tsc`, with no `ts_ls` fallback), `biome`, `pyright`, `lua_ls`, `nixd`
 - Formatters: stylua (lua), ruff (python), **biome** (js/ts/jsx/tsx/json/jsonc), prettier (yaml/markdown), alejandra (nix)
 
 ### completion.lua — autocompletion

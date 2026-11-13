@@ -141,12 +141,10 @@ return {
 
       -- Enable the following language servers
       local servers = {
-        -- TypeScript 7 (tsgo) has no tsserver.js, so ts_ls cannot drive it.
-        -- Projects shipping @effect/tsgo (or plain tsgo) get the native LSP;
-        -- classic-TS projects keep ts_ls. Only one attaches (root_dir gates).
-        tsgo = {
+        -- Native TypeScript 7: project-pinned Effect, local tsgo, then shared tsc.
+        tsc = {
           cmd = function(dispatchers, config)
-            local dir = vim.fs.joinpath(config.root_dir, 'node_modules/.bin')
+            local dir = vim.fs.joinpath(config.root_dir or vim.fn.getcwd(), 'node_modules/.bin')
             if vim.fn.executable(vim.fs.joinpath(dir, 'effect-tsgo')) == 1 then
               -- Shim is a CLI; the native LSP ELF it prints is the server.
               local exe = vim.fn.system({ vim.fs.joinpath(dir, 'effect-tsgo'), 'get-exe-path' }):gsub('%s+$', '')
@@ -154,34 +152,18 @@ return {
                 return vim.lsp.rpc.start({ exe, '--lsp', '--stdio' }, dispatchers)
               end
             end
-            return vim.lsp.rpc.start({ vim.fs.joinpath(dir, 'tsgo'), '--lsp', '--stdio' }, dispatchers)
+            local local_tsgo = vim.fs.joinpath(dir, 'tsgo')
+            local exe = vim.fn.executable(local_tsgo) == 1 and local_tsgo or 'tsc'
+            return vim.lsp.rpc.start({ exe, '--lsp', '--stdio' }, dispatchers)
           end,
+          -- Upstream probes tsc before choosing a root; Effect supplies its own native binary.
           root_dir = function(bufnr, on_dir)
-            local root = vim.fs.root(bufnr, { 'pnpm-lock.yaml', 'package-lock.json', 'yarn.lock' })
-            if not root then
-              return
-            end
-            local bin = vim.fs.joinpath(root, 'node_modules/.bin')
-            if vim.fn.executable(vim.fs.joinpath(bin, 'effect-tsgo')) == 1 or vim.fn.executable(vim.fs.joinpath(bin, 'tsgo')) == 1 then
-              on_dir(root)
-            end
-          end,
-        },
-        ts_ls = {
-          root_dir = function(bufnr, on_dir)
-            local root = vim.fs.root(bufnr, { 'pnpm-lock.yaml', 'package-lock.json', 'yarn.lock' })
-            if not root then
-              return
-            end
-            -- tsgo is the sole TS server where installed (upstream:
-            -- duplicate servers duplicate diagnostics).
-            local bin = vim.fs.joinpath(root, 'node_modules/.bin')
-            if vim.fn.executable(vim.fs.joinpath(bin, 'tsgo')) == 1 or vim.fn.executable(vim.fs.joinpath(bin, 'effect-tsgo')) == 1 then
-              return
-            end
-            if vim.fn.filereadable(vim.fs.joinpath(root, 'node_modules/typescript/lib/tsserver.js')) == 1 then
-              on_dir(root)
-            end
+            on_dir(
+              vim.fs.root(bufnr, { 'pnpm-lock.yaml', 'package-lock.json', 'yarn.lock', 'bun.lock', 'bun.lockb' })
+                or vim.fs.root(bufnr, { 'package.json', 'tsconfig.json', 'jsconfig.json' })
+                or vim.fs.root(bufnr, '.git')
+                or vim.fn.getcwd()
+            )
           end,
         },
 
