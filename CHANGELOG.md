@@ -4,6 +4,7 @@
 
 - Remove the deprecated Obsidian `completion.nvim_cmp` option; completion uses the plugin's built-in obsidian-ls server.
 - Refresh nixpkgs to the 2026-11-12 unstable revision (`2074cc672349`); Home Manager and sops-nix inputs are already current.
+- Replace the custom Cathode Amber/Kanagawa syntax palette with upstream Gruvbox Material in dark mode, retaining Rex's terminal background through transparency. Add theme-integrated rainbow delimiters for nesting, including JSX tags, and enable highlighting for any installed supported parser rather than only the default installation list. Remove the obsolete custom palette and highlight overrides.
 - Replace deprecated `pkgs.stdenv.isDarwin`/`isLinux` with `pkgs.stdenv.hostPlatform.isDarwin`/`isLinux` across all modules and docs (nixpkgs 26.11 deprecation), clearing the remaining evaluation warnings.
 - Remove the dead npm/token sops path from the npm module: no `npm/token` secret exists anywhere, so the token-injection branch never ran. The module now generates `~/.npmrc` from `extraConfig` only; registry auth is owned by npm OIDC publishing or per-project `.npmrc`.
 - Remove the duplicate workflow age key from `.sops.yaml`: it aliased the personal key and no workflow consumed it; the personal key is now the only recipient.
