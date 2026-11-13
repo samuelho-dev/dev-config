@@ -32,12 +32,16 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 - **nvim-lspconfig** with **fidget.nvim**; Neovim's native LSP API enables servers
 - **conform.nvim** — formatter runner
 - **lazydev.nvim** — Neovim Lua API completion (ft=lua)
-- Servers: native tsgo/TypeScript 7 LSP (sole TypeScript/JavaScript server, installed by Home Manager as `tsc`; project-local `effect-tsgo get-exe-path` → project-local `tsgo` → shared `tsc`, with no `ts_ls` fallback), `biome`, `pyright`, `lua_ls`, `nixd`
-- Formatters: stylua (lua), ruff (python), **biome** (js/ts/jsx/tsx/json/jsonc), prettier (yaml/markdown), alejandra (nix)
+- Servers: native tsgo/TypeScript 7 LSP (sole TypeScript/JavaScript server, installed by Home Manager as `tsc`; project-local `effect-tsgo get-exe-path` → project-local `tsgo` → shared `tsc`, with no `ts_ls` fallback), `biome`, `pyright`, `gopls`, `lua_ls`, `nixd`
+- Formatters: stylua (lua), ruff (python), **biome** (js/ts/jsx/tsx/json/jsonc), prettier (yaml/markdown), alejandra (nix), gofumpt (go/gomod)
 
 ### completion.lua — autocompletion
 - **blink.cmp** — completion engine (super-tab preset, Lua fuzzy matcher)
 - **LuaSnip** — snippet engine
+
+### dap.lua — debugging (DAP)
+- **nvim-dap** — generic DAP client (breakpoints, stepping, REPL)
+- **nvim-dap-go** — Delve adapter + Go launch/test configs (needs `dlv` from Home Manager)
 
 ### ai.lua — AI assistance
 - **minuet-ai.nvim** — inline completion (requires a configured provider key)
@@ -71,7 +75,7 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 
 ### treesitter.lua — syntax
 - **nvim-treesitter** (`main` branch) — compiles parsers locally; needs `tree-sitter` CLI + C compiler
-- Parsers: bash, c, diff, html, lua, luadoc, markdown, markdown_inline, query, vim, vimdoc, javascript, typescript, tsx, jsdoc, python, json, yaml, toml, css
+- Parsers: bash, c, diff, html, lua, luadoc, markdown, markdown_inline, query, vim, vimdoc, javascript, typescript, tsx, jsdoc, python, go, gomod, json, yaml, toml, css
 - Additional supported parsers installed with `:TSInstall <language>` activate highlighting automatically when reopening the buffer; language servers are installed separately.
 - Theme/nesting smoke: `nvim --headless -u NONE -l scripts/test-neovim-highlighting.lua` from the repo root (installs missing plugins and the Nix parser; needs network/build tools on first run).
 
@@ -85,6 +89,11 @@ One file per category under `lua/plugins/`. The list below matches the source ex
 `grd` definition · `grr` references · `gri` implementation · `grt` type · `grD` declaration ·
 `grn` rename · `gra` code action · `gO` document symbols · `gW` workspace symbols ·
 `<leader>th` toggle inlay hints · `<leader>f` format · auto-format on save (except C/C++).
+
+### Debugging (DAP)
+`<leader>db` breakpoint · `<leader>dc` continue · `<leader>do` step over · `<leader>di` step into ·
+`<leader>du` step out · `<leader>dr` REPL · `<leader>dt` debug nearest test · `<leader>dT` rerun last test.
+Go only, via Delve (`dlv` from Home Manager); nvim-dap-go provides the launch configs.
 
 ### Fuzzy finding (Telescope)
 `<leader>sf` files · `<leader>sg` grep · `<leader>sw` word · `<leader>sh` help ·
@@ -152,6 +161,7 @@ Each tool activates only when its API key/env var is exported before launching N
 
 - **Add an LSP server:** add its package to `modules/home-manager/programs/neovim.nix` and register it in `lua/plugins/lsp.lua` (`servers` table).
 - **Add a formatter:** add its package to `neovim.nix` and configure `formatters_by_ft` in `lua/plugins/lsp.lua`.
+- **Add a debugger:** add its package to `neovim.nix` and register the adapter in `lua/plugins/dap.lua`.
 - **Add a plugin:** append to the relevant `lua/plugins/*.lua`, or create a new category file and import it at `init.lua:46-57`.
 
 ## Maintenance

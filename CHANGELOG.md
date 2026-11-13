@@ -3,7 +3,8 @@
 ## Unreleased — shared toolchain and native ownership correction
 
 - Standardize Neovim on the native tsgo/TypeScript 7 LSP as the sole TypeScript/JavaScript server, installed by Home Manager via `pkgs.typescript` as `tsc`. Prefer project-local Effect tsgo (`effect-tsgo get-exe-path`), then project-local `tsgo`, then shared `tsc`; remove the `ts_ls` fallback while preserving project-pinned Effect compilers.
-- Remove the deprecated Obsidian `completion.nvim_cmp` option; completion uses the plugin's built-in obsidian-ls server.
+- Add Go support to Neovim: `gopls` LSP with gofumpt formatting and bundled staticcheck analyses, gofumpt as the conform fallback for `go`/`gomod`, `go`/`gomod` treesitter parsers, and the Go toolchain (`go`, `gopls`, `gofumpt`, `go-tools`/staticcheck) in the shared Neovim wrapper and tool checks.
+- Add DAP debugging for Go: nvim-dap with nvim-dap-go drives Delve (`dlv` from the wrapper); breakpoint/step/REPL keymaps under `<leader>d` plus nearest-test debug (`<leader>dt`) and last-test rerun (`<leader>dT`).
 - Refresh nixpkgs to the 2026-11-12 unstable revision (`2074cc672349`); Home Manager and sops-nix inputs are already current.
 - Replace the custom Cathode Amber/Kanagawa syntax palette with upstream Gruvbox Material in dark mode, retaining Rex's terminal background through transparency. Add theme-integrated rainbow delimiters for nesting, including JSX tags, and enable highlighting for any installed supported parser rather than only the default installation list. Remove the obsolete custom palette and highlight overrides.
 - Replace deprecated `pkgs.stdenv.isDarwin`/`isLinux` with `pkgs.stdenv.hostPlatform.isDarwin`/`isLinux` across all modules and docs (nixpkgs 26.11 deprecation), clearing the remaining evaluation warnings.

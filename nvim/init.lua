@@ -54,6 +54,7 @@ local specs = {
   -- Import all plugin modules
   { import = 'plugins.editor' }, -- File explorer, fuzzy finder, search/replace
   { import = 'plugins.lsp' }, -- LSP configuration and formatting
+  { import = 'plugins.dap' }, -- Debugging (Go via Delve)
   { import = 'plugins.completion' }, -- Autocompletion (blink.cmp, LuaSnip)
   { import = 'plugins.ai' }, -- AI assistance (minuet, codecompanion, yarepl)
   { import = 'plugins.git' }, -- Git integration

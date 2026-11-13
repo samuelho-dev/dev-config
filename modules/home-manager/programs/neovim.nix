@@ -101,11 +101,14 @@ in {
       pkgs.pyright # Python
       pkgs.lua-language-server # Lua
       pkgs.biome # JavaScript/TypeScript/JSON linter + formatter
+      pkgs.gopls # Go
+      pkgs.go-tools # staticcheck (same analyzers gopls bundles; CLI for terminal)
 
       # Formatters
       pkgs.stylua # Lua formatter
       pkgs.prettier # JS/TS/JSON/YAML/Markdown
       pkgs.ruff # Python formatter + linter
+      pkgs.gofumpt # Go formatter (stricter gofmt)
       pkgs.alejandra # Nix formatter (matches `nix fmt`; used by nixd LSP)
 
       # Nix LSP (eval-based diagnostics/completion for .nix editing)
@@ -117,6 +120,8 @@ in {
       pkgs.pkg-config
       pkgs.cargo # Avante native libraries (latest main builds from source)
       pkgs.rustc
+      pkgs.go # Go toolchain (gopls drives `go` for workspace loading)
+      pkgs.delve # Go DAP debugger (dlv) for nvim-dap-go
       pkgs.imagemagick
 
       # Mermaid CLI (for mermaid diagram rendering)

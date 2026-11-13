@@ -275,6 +275,26 @@ These mappings are active only inside the Spectre results buffer.
 
 ---
 
+## Debugging (DAP)
+
+Go debugging via nvim-dap + nvim-dap-go (Delve).
+
+| Keybinding | Action | Description |
+|------------|--------|-------------|
+| `<leader>db` | Toggle Breakpoint | Toggle breakpoint on current line |
+| `<leader>dc` | Continue | Start or continue debug session |
+| `<leader>do` | Step Over | Step over current line |
+| `<leader>di` | Step Into | Step into function call |
+| `<leader>du` | Step Out | Step out of current function |
+| `<leader>dr` | Toggle REPL | Open/close debug REPL |
+| `<leader>dt` | Debug Test | Debug nearest Go test from cursor |
+| `<leader>dT` | Debug Last Test | Rerun the last debugged Go test |
+
+**Prerequisites:** `dlv` (Delve) from Home Manager and the Go treesitter parser.
+Run `<leader>dc` and pick a launch config (`Debug`, `Debug Test`, …).
+
+---
+
 ## File Explorer (Neo-tree)
 
 | Keybinding | Action |
@@ -335,6 +355,7 @@ Mark and navigate between frequently used files with minimal keystrokes.
 - **JavaScript/TypeScript/JSON:** biome (`check --fix --unsafe`)
 - **YAML/Markdown:** prettier
 - **Nix:** alejandra
+- **Go:** gofumpt
 
 ---
 
@@ -511,6 +532,7 @@ This configuration includes LSP support for:
 - **TypeScript/JavaScript:** native tsgo/TypeScript 7 LSP only, installed by Home Manager as `tsc`; project-local Effect tsgo (`effect-tsgo get-exe-path`) takes precedence over project-local `tsgo`, then shared `tsc`. No `ts_ls` fallback.
 - **JS/TS/JSON lint + format:** `biome`
 - **Python:** `pyright`
+- **Go:** `gopls` (gofumpt formatting, staticcheck analyses)
 - **Lua:** `lua_ls`
 - **Nix:** `nixd`
 

@@ -186,6 +186,16 @@ return {
         -- Python LSP (pyright is the most popular)
         pyright = {},
 
+        -- Go LSP (official). gofumpt formatting + staticcheck analyses (bundled).
+        gopls = {
+          settings = {
+            gopls = {
+              gofumpt = true,
+              staticcheck = true,
+            },
+          },
+        },
+
         -- Lua LSP (for Neovim config editing)
         lua_ls = {
           settings = {
@@ -262,6 +272,9 @@ return {
         markdown = { 'prettier' },
         -- Nix (matches `nix fmt` in dev-config repos)
         nix = { 'alejandra' },
+        -- Go (gopls already formats via gofumpt; conform fallback for non-LSP contexts)
+        go = { 'gofumpt' },
+        gomod = { 'gofumpt' },
       },
       formatters = {
         biome = {

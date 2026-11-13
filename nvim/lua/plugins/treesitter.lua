@@ -27,6 +27,9 @@ local ensure_installed = {
   'jsdoc',
   -- Python
   'python',
+  -- Go
+  'go',
+  'gomod',
   -- Common formats
   'json',
   'yaml',
