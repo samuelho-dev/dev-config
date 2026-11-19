@@ -88,12 +88,11 @@ cat > "$fixture/release/rex-worktrees" <<'SH'
 [ "$1" = help ]
 SH
 chmod +x "$fixture/release/rex-worktrees"
-printf 'bundle\n' > "$fixture/release/rex-worktrees.js"
 printf 'readme\n' > "$fixture/release/README.md"
 printf 'license\n' > "$fixture/release/LICENSE"
 printf 'notices\n' > "$fixture/release/licenses/THIRD-PARTY-NOTICES"
-tar -czf "$fixture/rex-worktrees-macos-arm64.tar.gz" -C "$fixture/release" rex-worktrees rex-worktrees.js README.md LICENSE licenses/THIRD-PARTY-NOTICES
-tar -czf "$fixture/rex-worktrees-linux-x64.tar.gz" -C "$fixture/release" rex-worktrees rex-worktrees.js README.md LICENSE licenses/THIRD-PARTY-NOTICES
+tar -czf "$fixture/rex-worktrees-macos-arm64.tar.gz" -C "$fixture/release" rex-worktrees README.md LICENSE licenses/THIRD-PARTY-NOTICES
+tar -czf "$fixture/rex-worktrees-linux-x64.tar.gz" -C "$fixture/release" rex-worktrees README.md LICENSE licenses/THIRD-PARTY-NOTICES
 if command -v sha256sum >/dev/null; then
   (cd "$fixture" && sha256sum rex-worktrees-macos-arm64.tar.gz rex-worktrees-linux-x64.tar.gz > SHA256SUMS)
 else
@@ -115,7 +114,10 @@ export REX_TEST_RELEASE="$fixture"
 /bin/bash "$source_dir/bootstrap.sh" check rex-worktrees
 target="$HOME/.local/share/dev-config/rex-worktrees"
 [ "$(readlink "$HOME/.local/bin/rex-worktrees")" = "$target/rex-worktrees" ]
-[ -f "$target/rex-worktrees.js" ] && [ -f "$target/licenses/THIRD-PARTY-NOTICES" ]
+[ -f "$target/licenses/THIRD-PARTY-NOTICES" ]
+printf 'retired companion\n' > "$target/rex-worktrees.js"
+/bin/bash "$source_dir/bootstrap.sh" update rex-worktrees
+[ ! -e "$target/rex-worktrees.js" ]
 printf 'bad checksum\n' > "$fixture/SHA256SUMS"
 if /bin/bash "$source_dir/bootstrap.sh" update rex-worktrees >/dev/null 2>&1; then
   echo 'invalid archive checksum accepted' >&2; exit 1
