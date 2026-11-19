@@ -2,6 +2,7 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Update the Rex Worktrees managed archive contract for v0.5.0's standalone executable; upgrades remove the retired JavaScript companion while retaining checksum validation and manager-owned launchers.
 - Standardize Neovim on the native tsgo/TypeScript 7 LSP as the sole TypeScript/JavaScript server, installed by Home Manager via `pkgs.typescript` as `tsc`. Prefer project-local Effect tsgo (`effect-tsgo get-exe-path`), then project-local `tsgo`, then shared `tsc`; remove the `ts_ls` fallback while preserving project-pinned Effect compilers.
 - Add Go support to Neovim: `gopls` LSP with gofumpt formatting and bundled staticcheck analyses, gofumpt as the conform fallback for `go`/`gomod`, `go`/`gomod` treesitter parsers, and the Go toolchain (`go`, `gopls`, `gofumpt`, `go-tools`/staticcheck) in the shared Neovim wrapper and tool checks.
 - Add DAP debugging for Go: nvim-dap with nvim-dap-go drives Delve (`dlv` from the wrapper); breakpoint/step/REPL keymaps under `<leader>d` plus nearest-test debug (`<leader>dt`) and last-test rerun (`<leader>dT`).

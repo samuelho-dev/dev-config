@@ -61,12 +61,12 @@ install_rex_worktrees() {
     mkdir "$stage/release"
     while IFS= read -r entry; do
       case "$entry" in
-        rex-worktrees|rex-worktrees.js|README.md|LICENSE|licenses/|licenses/THIRD-PARTY-NOTICES) ;;
+        rex-worktrees|README.md|LICENSE|licenses/|licenses/THIRD-PARTY-NOTICES) ;;
         *) echo "native-tools: unexpected archive entry: $entry" >&2; exit 1 ;;
       esac
     done < <(tar -tzf "$stage/$asset")
     tar -xzf "$stage/$asset" -C "$stage/release"
-    for entry in rex-worktrees rex-worktrees.js README.md LICENSE licenses/THIRD-PARTY-NOTICES; do
+    for entry in rex-worktrees README.md LICENSE licenses/THIRD-PARTY-NOTICES; do
       [ -f "$stage/release/$entry" ] && [ ! -L "$stage/release/$entry" ] || { echo "native-tools: missing regular archive file: $entry" >&2; exit 1; }
     done
     [ -x "$stage/release/rex-worktrees" ] && "$stage/release/rex-worktrees" help >/dev/null || exit 1
