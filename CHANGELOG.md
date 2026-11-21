@@ -3,6 +3,7 @@
 ## Unreleased — shared toolchain and native ownership correction
 
 - Pin Coordinator beta.17; native reply guidance no longer acknowledges acknowledgments.
+- Add a standalone Linux x86-64 Dagu 2.27.0 worker package with its workflow tools and CA defaults; it neither switches Home Manager nor starts a live worker.
 - Update the Rex Worktrees managed archive contract for v0.5.0's standalone executable; upgrades remove the retired JavaScript companion while retaining checksum validation and manager-owned launchers.
 - Standardize Neovim on the native tsgo/TypeScript 7 LSP as the sole TypeScript/JavaScript server, installed by Home Manager via `pkgs.typescript` as `tsc`. Prefer project-local Effect tsgo (`effect-tsgo get-exe-path`), then project-local `tsgo`, then shared `tsc`; remove the `ts_ls` fallback while preserving project-pinned Effect compilers.
 - Add Go support to Neovim: `gopls` LSP with gofumpt formatting and bundled staticcheck analyses, gofumpt as the conform fallback for `go`/`gomod`, `go`/`gomod` treesitter parsers, and the Go toolchain (`go`, `gopls`, `gofumpt`, `go-tools`/staticcheck) in the shared Neovim wrapper and tool checks.

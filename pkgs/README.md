@@ -96,6 +96,17 @@ in {
 
 ## Custom Packages
 
+### Dagu worker
+
+The standalone `packages.x86_64-linux.dagu-worker` output pins the official
+Dagu 2.27.0 Linux amd64 release. Its `bin/dagu-worker` runs `dagu worker` with
+the output's `bin` on PATH, including `dagu`, `python3`, `zstd`, `git` and
+`timeout`, and defaults `SSL_CERT_FILE` to the Nix CA bundle. Existing PATH and
+an explicitly configured CA bundle remain available. Rex and credentials are
+provided by the execution environment, not this package.
+
+Building the output does not switch Home Manager or start a worker.
+
 ### monorepo-library-generator (mlg)
 
 Effect-based library scaffolding for Nx monorepos, defined in
