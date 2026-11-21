@@ -26,6 +26,8 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+        with:
+          determinate: false
       - name: Build and smoke native worker package
         env:
           DAGU_HOME: ${{ runner.temp }}/dagu-worker
