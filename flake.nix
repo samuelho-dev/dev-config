@@ -116,12 +116,45 @@
         '';
       };
 
-    packages = forAllSystems ({pkgs, ...}: {
-      default = pkgs.buildEnv {
-        name = "dev-config-packages";
-        paths = getDevPackages pkgs;
-      };
-    });
+    packages = forAllSystems ({
+      pkgs,
+      system,
+      ...
+    }:
+      {
+        default = pkgs.buildEnv {
+          name = "dev-config-packages";
+          paths = getDevPackages pkgs;
+        };
+      }
+      // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") {
+        dagu-worker = let
+          dagu = pkgs.stdenvNoCC.mkDerivation {
+            pname = "dagu";
+            version = "2.27.0";
+            src = pkgs.fetchurl {
+              url = "https://github.com/dagucloud/dagu/releases/download/v2.27.0/dagu_2.27.0_linux_amd64.tar.gz";
+              hash = "sha256-qQRXaMl3fQuThYVpbgSRvAzkb76wQZmJs0/eY6DMb4U=";
+            };
+            dontUnpack = true;
+            installPhase = ''
+              mkdir -p $out/bin
+              tar -xzf $src -C $out/bin dagu
+            '';
+          };
+        in
+          pkgs.symlinkJoin {
+            name = "dagu-worker-2.27.0";
+            paths = [dagu pkgs.python3 pkgs.zstd pkgs.git pkgs.coreutils];
+            nativeBuildInputs = [pkgs.makeWrapper];
+            postBuild = ''
+              makeWrapper $out/bin/dagu $out/bin/dagu-worker \
+                --add-flags worker \
+                --prefix PATH : "$out/bin" \
+                --set-default SSL_CERT_FILE "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
+            '';
+          };
+      });
 
     devShells = forAllSystems ({pkgs, ...}: {
       default = pkgs.mkShellNoCC {
