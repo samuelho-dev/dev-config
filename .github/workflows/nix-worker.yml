@@ -1,0 +1,37 @@
+name: Nix worker
+
+on:
+  pull_request:
+    paths: [flake.nix, flake.lock, '.github/workflows/nix-worker.yml']
+  push:
+    branches: [main]
+    paths: [flake.nix, flake.lock, '.github/workflows/nix-worker.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nix-worker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: dev-config-runners
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - name: Build and smoke native worker package
+        env:
+          DAGU_HOME: ${{ runner.temp }}/dagu-worker
+        run: |
+          output="$(nix build --no-write-lock-file --no-link --print-out-paths .#dagu-worker)"
+          "$output/bin/dagu-worker" --help
+          "$output/bin/python3" --version
+          "$output/bin/zstd" --version
+          "$output/bin/git" --version
