@@ -145,12 +145,16 @@
         in
           pkgs.symlinkJoin {
             name = "dagu-worker-2.27.0";
-            paths = [dagu pkgs.python3 pkgs.zstd pkgs.git pkgs.coreutils];
+            paths = [dagu pkgs.python3 pkgs.zstd pkgs.git pkgs.gh pkgs.kubectl pkgs.coreutils];
             nativeBuildInputs = [pkgs.makeWrapper];
             postBuild = ''
+              # Credentialed workflows require the native ELF, not a shell launcher.
+              rm $out/bin/gh
+              ln -s ${pkgs.gh}/bin/.gh-wrapped $out/bin/gh
               makeWrapper $out/bin/dagu $out/bin/dagu-worker \
                 --add-flags worker \
                 --prefix PATH : "$out/bin" \
+                --set-default GH_TELEMETRY false \
                 --set-default SSL_CERT_FILE "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
             '';
           };
