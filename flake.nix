@@ -145,7 +145,7 @@
         in
           pkgs.symlinkJoin {
             name = "dagu-worker-2.27.0";
-            paths = [dagu pkgs.python3 pkgs.zstd pkgs.git pkgs.gh pkgs.kubectl pkgs.coreutils];
+            paths = [dagu pkgs.python3 pkgs.zstd pkgs.git pkgs.gh pkgs.coreutils];
             nativeBuildInputs = [pkgs.makeWrapper];
             postBuild = ''
               # Credentialed workflows require the native ELF, not a shell launcher.
