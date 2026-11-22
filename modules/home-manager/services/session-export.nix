@@ -4,11 +4,11 @@
   pkgs,
   ...
 }: let
-  cfg = config.dev-config.mac-session-export;
+  cfg = config.dev-config.session-export;
   key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFJVpPEazbmhLaIBygg5JpkT1eBwsskkS7FKZ80Gmxmh";
-  marker = "dev-config-mac-session-export";
+  marker = "dev-config-session-export";
   empty = pkgs.runCommand "empty-session-export" {} "mkdir -p $out";
-  server = pkgs.writeShellScript "mac-session-export" ''
+  server = pkgs.writeShellScript "session-export" ''
     set -eu
     [ "''${SSH_ORIGINAL_COMMAND-}" = 'rsync --server --daemon .' ] || exit 1
     tmp="$(${pkgs.coreutils}/bin/mktemp -d)"
@@ -29,18 +29,22 @@
     module claude-sessions .claude/sessions
     module codex-sessions .codex/sessions
     module codex-archived .codex/archived_sessions
+    module omp .omp/agent/sessions
+    module pi .pi/agent/sessions
     ${pkgs.rsync}/bin/rsync --server --daemon --config="$config" .
   '';
 in {
-  options.dev-config.mac-session-export.enable = lib.mkEnableOption "read-only Mac session export";
+  options.dev-config.session-export.enable = lib.mkEnableOption "read-only native session export to the homelab";
 
-  config = lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
-    home.activation.macSessionExport = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  config = {
+    home.activation.sessionExport = lib.hm.dag.entryAfter ["writeBoundary"] ''
       run ${pkgs.python3}/bin/python3 - ${lib.escapeShellArg config.home.homeDirectory} ${lib.escapeShellArg marker} ${lib.escapeShellArg key} ${lib.escapeShellArg "restrict,command=\"${server}\" ${key} ${marker}"} ${if cfg.enable then "1" else "0"} <<'PY'
 import os, stat, sys, tempfile
 home, marker, key, entry, enabled = sys.argv[1:]
 ssh = os.path.join(home, '.ssh')
 path = os.path.join(ssh, 'authorized_keys')
+if enabled != '1' and (not os.path.isfile(path) or os.path.islink(path)):
+    sys.exit(0)
 if not os.path.exists(ssh):
     if enabled != '1':
         sys.exit(0)

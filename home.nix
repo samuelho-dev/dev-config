@@ -12,7 +12,6 @@ in {
   imports = [
     ./modules/home-manager
     ./modules/home-manager/profiles/base.nix
-    ./modules/home-manager/services/mac-session-export.nix
   ];
 
   # Identity comes from the flake attribute (auto-detection only applies
@@ -65,7 +64,7 @@ in {
 
   # Machine-specific dev-config overrides (base.nix handles common enables)
   dev-config = {
-    mac-session-export.enable = isDarwin;
+    session-export.enable = isDarwin; # The homelab reads its own session directories directly.
     git = {
       enable = true;
       # 1Password SSH signing only where the agent exists.
