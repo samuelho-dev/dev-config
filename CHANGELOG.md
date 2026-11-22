@@ -2,6 +2,9 @@
 
 ## Unreleased — shared toolchain and native ownership correction
 
+- Offer `dev-config.session-export.enable` for authorized Rex hosts. The dedicated SSH key serves only Claude Code (`claude-projects`, `claude-sessions`), Codex (`codex-sessions`, `codex-archived`), `omp`, and `pi` JSONL modules; absent roots are empty. The personal Mac opts in; homelab reads locally and needs no exporter. Other hosts require explicit enrollment. No SSH listener or Rex tab is created.
+  Pull with `rsync -rt -e 'ssh -i /path/to/dedicated-key -o IdentitiesOnly=yes -o UserKnownHostsFile=/path/to/pinned-known-hosts -o StrictHostKeyChecking=yes' -- user@host::MODULE/ destination/`. Symlink following, shell access, writes and forwarding are disabled. Deactivate the option and activate the profile to revoke the key without replacing manual entries.
+
 - Pin Coordinator beta.17; native reply guidance no longer acknowledges acknowledgments.
 - Add a standalone Linux x86-64 Dagu 2.27.0 worker package with native GitHub CLI, workflow tools and CA defaults; it neither switches Home Manager nor starts a live worker. Cluster observation uses the workflow's standard-library HTTPS client, avoiding an unnecessary version-skewed kubectl dependency.
 - Update the Rex Worktrees managed archive contract for v0.5.0's standalone executable; upgrades remove the retired JavaScript companion while retaining checksum validation and manager-owned launchers.

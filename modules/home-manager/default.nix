@@ -26,6 +26,7 @@
     ./programs/biome.nix
     ./programs/python.nix
     ./services/direnv.nix
+    ./services/session-export.nix
     ./services/sops-env.nix
   ];
 

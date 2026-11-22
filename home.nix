@@ -64,6 +64,7 @@ in {
 
   # Machine-specific dev-config overrides (base.nix handles common enables)
   dev-config = {
+    session-export.enable = isDarwin; # The homelab reads its own session directories directly.
     git = {
       enable = true;
       # 1Password SSH signing only where the agent exists.
