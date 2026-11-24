@@ -18,8 +18,11 @@ existing non-native installation into writable `~/.local`.
   `bash ai/bootstrap.sh update claude` explicitly allows a native upgrade.
   Home Manager dry runs skip all downloads and writes.
 
-No settings, OAuth credentials, skills, agents, commands, plugins or vendor
-resources are exported, deleted or rewritten. There is no proxy routing or
+After the CLI succeeds, `apply-plugins.sh` installs any plugin in `plugins.txt`
+(adding its marketplace first) that is not already installed, mirroring
+`ai/omp/plugins.txt` (for example `ponytail`). It never uninstalls, disables or
+re-enables plugins. No settings, OAuth credentials, skills, agents, commands or
+vendor resources are exported, deleted or rewritten. There is no proxy routing or
 skip-permissions alias. MCP configuration remains independently managed by
 `dev-config.mcp` and its explicit `targets.claude` opt-in, not this bootstrap.
 Existing installs retain their credentials and configuration. Manual operations:

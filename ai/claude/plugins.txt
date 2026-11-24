@@ -1,0 +1,10 @@
+# <plugin@marketplace> <marketplace GitHub repo>; mirrors ai/omp/plugins.txt where a Claude build exists.
+ponytail@ponytail DietrichGebert/ponytail
+claude-md-management@claude-plugins-official anthropics/claude-plugins-official
+frontend-design@claude-plugins-official anthropics/claude-plugins-official
+figma@claude-plugins-official anthropics/claude-plugins-official
+pyright-lsp@claude-plugins-official anthropics/claude-plugins-official
+typescript-lsp@claude-plugins-official anthropics/claude-plugins-official
+commit-commands@claude-code-plugins anthropics/claude-code
+plugin-dev@claude-code-plugins anthropics/claude-code
+codebase-cleanup@claude-code-workflows wshobson/agents
