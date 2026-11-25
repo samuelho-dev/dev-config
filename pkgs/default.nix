@@ -39,7 +39,7 @@
   # JavaScript/TypeScript runtimes + package managers
   # On PATH for every dev surface (devShell + Home Manager).
   runtimes = [
-    pkgs.nodejs # Node.js also supplies npm and npx (not Corepack).
+    pkgs.nodejs_26 # Node.js also supplies npm and npx (not Corepack).
     (pkgs.symlinkJoin {
       # pnpm 12+ delegates to a project's packageManager pin by downloading an
       # @pnpm/exe native ELF, which links libatomic.so.1. Nix hosts have no
