@@ -30,6 +30,8 @@ local ensure_installed = {
   -- Go
   'go',
   'gomod',
+  -- Nix
+  'nix',
   -- Common formats
   'json',
   'yaml',

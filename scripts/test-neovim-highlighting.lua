@@ -51,8 +51,6 @@ local ok, err = pcall(function()
   assert(color('RainbowDelimiterRed') ~= before, 'Nesting colors must follow theme changes')
   vim.o.background = 'dark'
 
-  -- Nix is deliberately outside the default parser installation list.
-  require('nvim-treesitter').install({ 'nix' }):wait(120000)
   open('nix', { '{ answer = 42; }' })
   local plain = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_set_current_buf(plain)
